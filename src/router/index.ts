@@ -16,6 +16,12 @@ const router = createRouter({
       component: () => import('@/views/LoginView.vue'),
     },
     {
+      path: '/maps/register',
+      name: 'map-register',
+      component: () => import('@/views/MapRegisterView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('@/views/AuthCallbackView.vue'),
