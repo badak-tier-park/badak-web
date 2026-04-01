@@ -43,7 +43,7 @@
                 <circle cx="16" cy="16" r="2.5" stroke="rgba(170,59,255,0.6)" stroke-width="1.5"/>
               </svg>
               <span class="upload-label">이미지를 드래그하거나 클릭하여 업로드</span>
-              <span class="upload-hint">PNG, JPG, WebP · 권장 비율 4:3</span>
+              <span class="upload-hint">PNG, JPG, WebP</span>
             </div>
             <button v-if="previewUrl" type="button" class="image-remove" @click.stop="removeImage">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -63,7 +63,7 @@
                 v-model="form.name"
                 type="text"
                 class="field-input"
-                placeholder="예) 투혼, 폴립, 블리자드..."
+                placeholder="예) 투혼, 폴리포이드, 버미어 ..."
                 required
               />
             </div>
@@ -71,13 +71,13 @@
               <label class="field-label">인원 수</label>
               <div class="player-selector">
                 <button
-                  v-for="n in 8"
-                  :key="n"
+                  v-for="n in 7"
+                  :key="n + 1"
                   type="button"
                   class="player-btn"
-                  :class="{ active: form.playerCount === n }"
-                  @click="form.playerCount = n"
-                >{{ n }}</button>
+                  :class="{ active: form.playerCount === n + 1 }"
+                  @click="form.playerCount = n + 1"
+                >{{ n + 1 }}</button>
               </div>
             </div>
           </div>
@@ -93,7 +93,7 @@
                 v-model="aliasInput"
                 type="text"
                 class="field-input"
-                placeholder="예) Fight Spirit, 투혼 1.3 ..."
+                placeholder="예) Fight Spirit, 투혼 1.4 ..."
                 @keydown.enter.prevent="addAlias"
               />
               <button type="button" class="alias-add-btn" @click="addAlias">추가</button>
@@ -253,8 +253,7 @@ function removeImage() {
 // --- 맵 크기 ---
 const sizePresets = [
   { label: '소형', w: 64,  h: 64  },
-  { label: '중소형', w: 96,  h: 96  },
-  { label: '중형', w: 128, h: 96  },
+  { label: '중형', w: 96,  h: 96  },
   { label: '표준', w: 128, h: 128 },
   { label: '대형', w: 192, h: 192 },
   { label: '초대형', w: 256, h: 256 },
