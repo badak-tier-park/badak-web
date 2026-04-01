@@ -10,7 +10,6 @@ export interface MapRow {
   height: number
   player_count: number
   tileset: string
-  created_by: string | null
   created_at: string
   updated_at: string
 }
