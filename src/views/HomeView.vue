@@ -69,7 +69,7 @@
       <!-- ── 나머지 섹션 카드 그리드 ─────────────────────────── -->
       <div class="nav-grid">
 
-        <div class="nav-card nav-card--disabled">
+        <RouterLink to="/players" class="nav-card">
           <div class="nav-card-icon nav-card-icon--blue">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.5"/>
@@ -80,8 +80,10 @@
             <p class="nav-card-title">선수 관리</p>
             <p class="nav-card-desc">닉네임 · 종족 · 티어 변경</p>
           </div>
-          <span class="badge-soon">준비 중</span>
-        </div>
+          <svg class="nav-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </RouterLink>
 
         <div class="nav-card nav-card--disabled">
           <div class="nav-card-icon nav-card-icon--red">
