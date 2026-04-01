@@ -110,7 +110,7 @@
   position: relative;
   border: 1.5px dashed rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  min-height: 180px;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -151,9 +151,11 @@
 }
 
 .image-preview {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 220px;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;
   display: block;
 }
 

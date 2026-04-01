@@ -7,15 +7,16 @@
     <div class="grid-overlay"></div>
 
     <div class="page-inner">
-      <!-- Header -->
       <header class="page-header">
         <div class="page-title">
-          <h1>맵 등록</h1>
-          <p>스타크래프트1 리마스터 맵 정보를 입력하세요</p>
+          <h1>맵 수정</h1>
+          <p>등록된 맵 정보를 수정하세요</p>
         </div>
       </header>
 
-      <form class="register-form" @submit.prevent="handleSubmit">
+      <div v-if="loadError" class="load-error">{{ loadError }}</div>
+
+      <form v-else class="register-form" @submit.prevent="handleSubmit">
 
         <!-- 이미지 업로드 -->
         <section class="form-section">
@@ -59,13 +60,7 @@
           <div class="field-row">
             <div class="field">
               <label class="field-label">맵 이름</label>
-              <input
-                v-model="form.name"
-                type="text"
-                class="field-input"
-                placeholder="예) 투혼, 폴리포이드, 버미어 ..."
-                required
-              />
+              <input v-model="form.name" type="text" class="field-input" placeholder="예) 투혼, 폴리포이드, 버미어 ..." required />
             </div>
             <div class="field field--small">
               <label class="field-label">인원 수</label>
@@ -126,12 +121,7 @@
               <span class="size-label">{{ preset.label }}</span>
               <span class="size-value">{{ preset.w }}×{{ preset.h }}</span>
             </button>
-            <button
-              type="button"
-              class="size-btn"
-              :class="{ active: isCustomSize }"
-              @click="setCustom"
-            >
+            <button type="button" class="size-btn" :class="{ active: isCustomSize }" @click="setCustom">
               <span class="size-label">직접 입력</span>
               <span class="size-value">Custom</span>
             </button>
@@ -139,12 +129,12 @@
           <div v-if="isCustomSize" class="size-custom">
             <div class="field">
               <label class="field-label">가로 (W)</label>
-              <input v-model.number="form.width" type="number" class="field-input" min="32" max="256" placeholder="128" />
+              <input v-model.number="form.width" type="number" class="field-input" min="32" max="256" />
             </div>
             <span class="size-cross">×</span>
             <div class="field">
               <label class="field-label">세로 (H)</label>
-              <input v-model.number="form.height" type="number" class="field-input" min="32" max="256" placeholder="128" />
+              <input v-model.number="form.height" type="number" class="field-input" min="32" max="256" />
             </div>
           </div>
         </section>
@@ -164,7 +154,6 @@
             >
               <span class="tileset-dot"></span>
               <span class="tileset-name">{{ tileset.name }}</span>
-              <span class="tileset-en">{{ tileset.en }}</span>
             </button>
           </div>
         </section>
@@ -175,12 +164,12 @@
           <button type="button" class="btn-cancel" @click="router.back()">취소</button>
           <button type="submit" class="btn-submit" :disabled="submitting">
             <svg v-if="!submitting" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 8L6 12L14 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <svg v-else width="16" height="16" viewBox="0 0 16 16" fill="none" class="spin">
               <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-dasharray="28" stroke-dashoffset="10" stroke-linecap="round"/>
             </svg>
-            {{ submitting ? '저장 중...' : '맵 등록하기' }}
+            {{ submitting ? '저장 중...' : '수정 완료' }}
           </button>
         </div>
 
@@ -190,12 +179,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
-import { createMap } from '@/lib/maps'
+import { getMap, updateMap } from '@/lib/maps'
 
 const router = useRouter()
+const route = useRoute()
+const mapId = route.params.id as string
+
+// --- 기존 이미지 URL ---
+const existingImageUrl = ref<string | null>(null)
+const existingThumbnailUrl = ref<string | null>(null)
+const loadError = ref<string | null>(null)
 
 // --- 폼 상태 ---
 const form = ref({
@@ -247,15 +243,16 @@ function setImage(file: File) {
 function removeImage() {
   form.value.imageFile = null
   previewUrl.value = null
+  existingImageUrl.value = null
   if (fileInput.value) fileInput.value.value = ''
 }
 
 // --- 맵 크기 ---
 const sizePresets = [
-  { label: '소형', w: 64,  h: 64  },
-  { label: '중형', w: 96,  h: 96  },
-  { label: '표준', w: 128, h: 128 },
-  { label: '대형', w: 192, h: 192 },
+  { label: '소형',   w: 64,  h: 64  },
+  { label: '중형',   w: 96,  h: 96  },
+  { label: '표준',   w: 128, h: 128 },
+  { label: '대형',   w: 192, h: 192 },
   { label: '초대형', w: 256, h: 256 },
 ]
 
@@ -277,15 +274,37 @@ function setCustom() {
 
 // --- 타일 셋 ---
 const tilesets = [
-  { id: 'badlands',  name: '황무지',     en: 'Badlands',         color: '#c97d3a', bg: 'rgba(201,125,58,0.1)'  },
-  { id: 'space',     name: '우주 정거장', en: 'Space Platform',   color: '#4a8fcc', bg: 'rgba(74,143,204,0.1)'  },
-  { id: 'install',   name: '설치물',     en: 'Installation',     color: '#7a8a9a', bg: 'rgba(122,138,154,0.1)' },
-  { id: 'ashworld',  name: '화산 지대',  en: 'Ashworld',         color: '#cc4a2f', bg: 'rgba(204,74,47,0.1)'   },
-  { id: 'jungle',    name: '정글',       en: 'Jungle World',     color: '#3a9a4a', bg: 'rgba(58,154,74,0.1)'   },
-  { id: 'desert',    name: '사막',       en: 'Desert',           color: '#c9a83a', bg: 'rgba(201,168,58,0.1)'  },
-  { id: 'ice',       name: '얼음',       en: 'Ice',              color: '#7aaed4', bg: 'rgba(122,174,212,0.12)'},
-  { id: 'twilight',  name: '황혼',       en: 'Twilight',         color: '#9a4acc', bg: 'rgba(154,74,204,0.1)'  },
+  { id: 'badlands',  name: '황무지',     color: '#c97d3a', bg: 'rgba(201,125,58,0.1)'  },
+  { id: 'space',     name: '우주 정거장', color: '#4a8fcc', bg: 'rgba(74,143,204,0.1)'  },
+  { id: 'install',   name: '설치물',     color: '#7a8a9a', bg: 'rgba(122,138,154,0.1)' },
+  { id: 'ashworld',  name: '화산 지대',  color: '#cc4a2f', bg: 'rgba(204,74,47,0.1)'   },
+  { id: 'jungle',    name: '정글',       color: '#3a9a4a', bg: 'rgba(58,154,74,0.1)'   },
+  { id: 'desert',    name: '사막',       color: '#c9a83a', bg: 'rgba(201,168,58,0.1)'  },
+  { id: 'ice',       name: '얼음',       color: '#7aaed4', bg: 'rgba(122,174,212,0.12)'},
+  { id: 'twilight',  name: '황혼',       color: '#9a4acc', bg: 'rgba(154,74,204,0.1)'  },
 ]
+
+// --- 기존 데이터 로드 ---
+onMounted(async () => {
+  try {
+    const map = await getMap(mapId)
+    form.value.name = map.name
+    form.value.aliases = map.aliases
+    form.value.playerCount = map.player_count
+    form.value.width = map.width
+    form.value.height = map.height
+    form.value.tileset = map.tileset
+    existingImageUrl.value = map.image_url
+    existingThumbnailUrl.value = map.thumbnail_url
+
+    if (map.image_url) previewUrl.value = map.image_url
+
+    const matched = sizePresets.find(p => p.w === map.width && p.h === map.height)
+    if (!matched) isCustomSize.value = true
+  } catch (e: any) {
+    loadError.value = e.message ?? '맵 정보를 불러올 수 없습니다.'
+  }
+})
 
 // --- 제출 ---
 const submitting = ref(false)
@@ -301,7 +320,7 @@ async function handleSubmit() {
   submitError.value = null
 
   try {
-    await createMap({
+    await updateMap(mapId, {
       name: form.value.name,
       aliases: form.value.aliases,
       width: form.value.width,
@@ -309,7 +328,7 @@ async function handleSubmit() {
       player_count: form.value.playerCount,
       tileset: form.value.tileset,
       imageFile: form.value.imageFile,
-    })
+    }, existingImageUrl.value, existingThumbnailUrl.value)
     router.push({ name: 'home' })
   } catch (e: any) {
     submitError.value = e.message ?? '저장 중 오류가 발생했습니다.'
@@ -321,4 +340,11 @@ async function handleSubmit() {
 
 <style lang="scss" scoped>
 @use './MapRegisterView.scss';
+
+.load-error {
+  padding: 20px;
+  color: #f87171;
+  font-size: 14px;
+  font-family: system-ui, sans-serif;
+}
 </style>

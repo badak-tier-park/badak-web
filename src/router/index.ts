@@ -22,6 +22,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/maps/:id/edit',
+      name: 'map-edit',
+      component: () => import('@/views/MapEditView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('@/views/AuthCallbackView.vue'),
