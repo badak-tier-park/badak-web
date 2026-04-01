@@ -34,6 +34,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/leagues',
+      name: 'leagues',
+      component: () => import('@/views/LeaguesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('@/views/AuthCallbackView.vue'),

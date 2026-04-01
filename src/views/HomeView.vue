@@ -125,20 +125,22 @@
           <span class="badge-soon">준비 중</span>
         </div>
 
-        <div class="nav-card nav-card--disabled">
+        <RouterLink to="/leagues" class="nav-card">
           <div class="nav-card-icon nav-card-icon--purple">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <rect x="2" y="4" width="16" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M6 4V2M14 4V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <path d="M5 10h3M9 10h3M5 13h3M9 13h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M10 2l1.5 4.5H16l-3.7 2.7 1.4 4.3L10 11l-3.7 2.5 1.4-4.3L4 6.5h4.5L10 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+              <path d="M5 16h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              <path d="M7 18h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
             </svg>
           </div>
           <div class="nav-card-body">
-            <p class="nav-card-title">조 지명식</p>
-            <p class="nav-card-desc">리그 선수 조 편성 관리</p>
+            <p class="nav-card-title">리그 관리</p>
+            <p class="nav-card-desc">리그 생성 · 조 편성 · 일정 관리</p>
           </div>
-          <span class="badge-soon">준비 중</span>
-        </div>
+          <svg class="nav-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </RouterLink>
 
       </div>
     </div>
