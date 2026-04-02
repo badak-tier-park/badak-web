@@ -1,19 +1,26 @@
 <template>
   <div class="leagues-page">
-    <AppHeader>
-      <template #actions>
-        <RouterLink to="/" class="header-btn">← 홈</RouterLink>
-      </template>
-    </AppHeader>
+    <AppHeader />
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="grid-overlay"></div>
 
     <div class="leagues-content">
+      <button class="btn-back" @click="$router.push({ name: 'home' })">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+          <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        홈
+      </button>
+
       <div class="page-title-row">
-        <h1 class="page-title">리그 관리</h1>
+        <h1 class="page-title">정규리그 관리</h1>
         <button class="btn-create" @click="showForm = true">
           <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
             <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          리그 생성
+          정규리그 생성
         </button>
       </div>
 
@@ -29,9 +36,15 @@
             {{ leagueTypeLabel(league.type) }}
           </div>
           <div class="league-info">
-            <p class="league-name">{{ league.name }}</p>
+            <button class="league-name" @click="router.push({ name: 'league-detail', params: { id: league.id } })">{{ league.name }}</button>
             <p class="league-period">{{ league.start_date }} ~ {{ league.end_date }}</p>
           </div>
+          <span v-if="league.has_draft" class="draft-badge">
+            지목식 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}
+          </span>
+          <span class="eligibility-badge" :class="`eligibility-badge--${league.eligibility_type}`">
+            {{ { open: '전체 선수', application: '참가 신청', invitation: '선수 지목' }[league.eligibility_type] }}
+          </span>
           <div class="league-tiers">
             <span
               v-for="tier in league.eligible_tiers"
@@ -53,7 +66,7 @@
       <div v-if="showForm" class="modal-backdrop" @click.self="closeForm">
         <div class="modal">
           <div class="modal-header">
-            <span class="modal-title">{{ editTarget ? '리그 수정' : '리그 생성' }}</span>
+            <span class="modal-title">{{ editTarget ? '정규리그 수정' : '정규리그 생성' }}</span>
             <button class="modal-close" @click="closeForm">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -120,17 +133,82 @@
               </VueDatePicker>
             </div>
 
+            <!-- 팀장 인원 -->
+            <div class="field">
+              <label class="field-label">팀장 인원</label>
+              <div class="captain-count-group">
+                <button
+                  v-for="n in [2, 3, 4, 5, 6]"
+                  :key="n"
+                  class="count-btn"
+                  :class="{ active: form.captain_count === n }"
+                  type="button"
+                  @click="form.captain_count = n"
+                >{{ n }}명</button>
+              </div>
+            </div>
+
+            <!-- 참가 자격 -->
+            <div class="field">
+              <label class="field-label">참가 자격</label>
+              <div class="eligibility-group">
+                <button
+                  class="eligibility-btn"
+                  :class="{ active: form.eligibility_type === 'open' }"
+                  type="button"
+                  @click="form.eligibility_type = 'open'"
+                >전체 선수</button>
+                <button class="eligibility-btn" type="button" disabled>참가 신청</button>
+                <button class="eligibility-btn" type="button" disabled>선수 지목</button>
+              </div>
+            </div>
+
+            <!-- 팀원 지목식 -->
+            <div class="field">
+              <label class="field-label">팀원 지목식</label>
+              <div class="draft-group">
+                <button class="draft-btn" type="button" disabled>없음</button>
+                <button class="draft-btn active" type="button" disabled>있음</button>
+              </div>
+            </div>
+
+            <!-- 팀원 지목식 날짜 -->
+            <div v-if="form.has_draft" class="field">
+              <label class="field-label">지목식 날짜</label>
+              <VueDatePicker
+                v-model="draftPickerDate"
+                :enable-time-picker="false"
+                :locale="ko"
+                :dark="true"
+                auto-apply
+                :teleport="false"
+                @update:model-value="onDraftDateSelect"
+              >
+                <template #trigger>
+                  <div class="dp-custom-input">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dp-custom-icon">
+                      <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+                      <path d="M4 1v2M10 1v2M1 5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                    </svg>
+                    <span :class="draftDateDisplayText ? 'dp-date-text' : 'dp-placeholder'">
+                      {{ draftDateDisplayText || '날짜 선택' }}
+                    </span>
+                  </div>
+                </template>
+              </VueDatePicker>
+            </div>
+
             <!-- 참여 가능 티어 -->
             <div class="field">
-              <label class="field-label">참여 가능 티어 <span class="field-hint">(복수 선택 가능)</span></label>
+              <label class="field-label">참여 가능 티어</label>
               <div class="tier-group">
                 <button
                   v-for="t in tiers"
                   :key="t.value"
-                  class="tier-btn"
-                  :class="[`tier-btn--${t.value.toLowerCase()}`, { active: form.eligible_tiers.includes(t.value) }]"
+                  class="tier-btn active"
+                  :class="`tier-btn--${t.value.toLowerCase()}`"
                   type="button"
-                  @click="toggleTier(t.value)"
+                  disabled
                 >
                   {{ t.value }}
                 </button>
@@ -156,12 +234,14 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeagues, createLeague, updateLeague, getLeagueStatus, type LeagueRow, type LeagueType, type LeagueStatus } from '@/lib/leagues'
+import { getLeagues, createLeague, updateLeague, getLeagueStatus, type LeagueRow, type LeagueType, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
+
+const router = useRouter()
 
 // ── 목록 ──────────────────────────────────────────────────
 const leagues = ref<LeagueRow[]>([])
@@ -180,10 +260,8 @@ onMounted(async () => {
 
 // ── 메타 ──────────────────────────────────────────────────
 const leagueTypes = [
-  { value: 'regular_summer' as LeagueType, label: '정규리그', sub: 'Summer', defaultName: 'Summer League' },
-  { value: 'regular_winter' as LeagueType, label: '정규리그', sub: 'Winter', defaultName: 'Winter League' },
-  { value: 'jongchoe'       as LeagueType, label: '종최리그', sub: '종족최강전', defaultName: '종족최강전' },
-  { value: 'individual'     as LeagueType, label: '개인리그', sub: 'Individual', defaultName: '개인리그' },
+  { value: 'regular_summer' as LeagueType, label: '정규리그', sub: 'Summer' },
+  { value: 'regular_winter' as LeagueType, label: '정규리그', sub: 'Winter' },
 ]
 
 const tiers = ['A', 'B', 'C', 'D', 'E'].map(v => ({ value: v }))
@@ -207,28 +285,23 @@ const form = reactive({
   name: '',
   start_date: '',
   end_date: '',
-  eligible_tiers: [] as string[],
+  eligible_tiers: ['A', 'B', 'C', 'D', 'E'] as string[],
+  eligibility_type: 'open' as EligibilityType,
+  has_draft: true,
+  draft_date: '' as string,
+  captain_count: 4,
 })
 
 const pickerDates = ref<Date[] | null>(null)
 const dateDisplayText = ref('')
+const draftPickerDate = ref<Date | null>(null)
+const draftDateDisplayText = ref('')
 
 function toYMD(d: Date) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
-}
-
-function formatDateRange(dates: Date | Date[] | null) {
-  if (!Array.isArray(dates) || !dates[0] || !dates[1]) return ''
-  const fmt = (d: Date) => {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}/${m}/${day}`
-  }
-  return `${fmt(dates[0])} ~ ${fmt(dates[1])}`
 }
 
 function onDateSelect(val: Date[] | null) {
@@ -243,11 +316,16 @@ function onDateSelect(val: Date[] | null) {
   }
 }
 
-function toggleTier(tier: string) {
-  const idx = form.eligible_tiers.indexOf(tier)
-  if (idx === -1) form.eligible_tiers.push(tier)
-  else form.eligible_tiers.splice(idx, 1)
+function onDraftDateSelect(val: Date | null) {
+  if (val) {
+    form.draft_date = toYMD(val)
+    draftDateDisplayText.value = form.draft_date.replaceAll('-', '/')
+  } else {
+    form.draft_date = ''
+    draftDateDisplayText.value = ''
+  }
 }
+
 
 function openEdit(league: LeagueRow) {
   editTarget.value = league
@@ -256,9 +334,14 @@ function openEdit(league: LeagueRow) {
   form.start_date = league.start_date
   form.end_date = league.end_date
   form.eligible_tiers = [...league.eligible_tiers]
-  form.status = league.status
+  form.eligibility_type = league.eligibility_type
+  form.has_draft = league.has_draft
+  form.draft_date = league.draft_date ?? ''
+  form.captain_count = league.captain_count ?? 4
   pickerDates.value = [new Date(league.start_date), new Date(league.end_date)]
   dateDisplayText.value = `${league.start_date.replaceAll('-', '/')} ~ ${league.end_date.replaceAll('-', '/')}`
+  draftPickerDate.value = league.draft_date ? new Date(league.draft_date) : null
+  draftDateDisplayText.value = league.draft_date ? league.draft_date.replaceAll('-', '/') : ''
   saveError.value = null
   showForm.value = true
 }
@@ -275,6 +358,7 @@ async function handleCreate() {
   if (!form.end_date)    { saveError.value = '종료일을 선택해주세요.'; return }
   if (form.end_date < form.start_date) { saveError.value = '종료일이 시작일보다 빠릅니다.'; return }
   if (form.eligible_tiers.length === 0) { saveError.value = '참여 가능 티어를 하나 이상 선택해주세요.'; return }
+  if (form.has_draft && !form.draft_date) { saveError.value = '팀원 지목식 날짜를 선택해주세요.'; return }
 
   saving.value = true
   saveError.value = null
@@ -286,6 +370,10 @@ async function handleCreate() {
       start_date: form.start_date,
       end_date: form.end_date,
       eligible_tiers: [...form.eligible_tiers].sort(),
+      eligibility_type: form.eligibility_type,
+      has_draft: form.has_draft,
+      draft_date: form.has_draft ? form.draft_date : null,
+      captain_count: form.captain_count,
     })
     leagues.value.unshift(created)
     resetForm()
@@ -303,6 +391,7 @@ async function handleUpdate() {
   if (!form.end_date)    { saveError.value = '종료일을 선택해주세요.'; return }
   if (form.end_date < form.start_date) { saveError.value = '종료일이 시작일보다 빠릅니다.'; return }
   if (form.eligible_tiers.length === 0) { saveError.value = '참여 가능 티어를 하나 이상 선택해주세요.'; return }
+  if (form.has_draft && !form.draft_date) { saveError.value = '팀원 지목식 날짜를 선택해주세요.'; return }
 
   saving.value = true
   saveError.value = null
@@ -314,6 +403,10 @@ async function handleUpdate() {
       start_date: form.start_date,
       end_date: form.end_date,
       eligible_tiers: [...form.eligible_tiers].sort(),
+      eligibility_type: form.eligibility_type,
+      has_draft: form.has_draft,
+      draft_date: form.has_draft ? form.draft_date : null,
+      captain_count: form.captain_count,
     })
     const idx = leagues.value.findIndex(l => l.id === updated.id)
     if (idx !== -1) leagues.value[idx] = updated
@@ -333,8 +426,15 @@ function resetForm() {
   form.start_date = ''
   form.end_date = ''
   form.eligible_tiers = []
+  form.eligibility_type = 'open'
+  form.has_draft = true
+  form.draft_date = ''
+  form.captain_count = 4
+  form.eligible_tiers = ['A', 'B', 'C', 'D', 'E']
   pickerDates.value = null
   dateDisplayText.value = ''
+  draftPickerDate.value = null
+  draftDateDisplayText.value = ''
   saveError.value = null
 }
 </script>

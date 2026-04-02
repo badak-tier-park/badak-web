@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 
 export type LeagueType = 'regular_summer' | 'regular_winter' | 'jongchoe' | 'individual'
 export type LeagueStatus = 'upcoming' | 'ongoing' | 'finished'
+export type EligibilityType = 'open' | 'application' | 'invitation'
 
 export interface LeagueRow {
   id: string
@@ -10,6 +11,11 @@ export interface LeagueRow {
   start_date: string
   end_date: string
   eligible_tiers: string[]
+  eligibility_type: EligibilityType
+  has_draft: boolean
+  draft_date: string | null
+  description: string | null
+  captain_count: number
   created_at: string
   updated_at: string
 }
@@ -20,6 +26,10 @@ export interface LeagueInsert {
   start_date: string
   end_date: string
   eligible_tiers: string[]
+  eligibility_type: EligibilityType
+  has_draft: boolean
+  draft_date: string | null
+  captain_count: number
 }
 
 export function getLeagueStatus(league: LeagueRow): LeagueStatus {
@@ -27,6 +37,17 @@ export function getLeagueStatus(league: LeagueRow): LeagueStatus {
   if (today < league.start_date) return 'upcoming'
   if (today > league.end_date) return 'finished'
   return 'ongoing'
+}
+
+export async function getLeague(id: string): Promise<LeagueRow> {
+  const { data, error } = await supabase
+    .from('leagues')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
 }
 
 export async function getLeagues(): Promise<LeagueRow[]> {
@@ -49,6 +70,14 @@ export async function updateLeague(id: string, payload: LeagueInsert): Promise<L
 
   if (error) throw error
   return data
+}
+
+export async function updateLeagueDescription(id: string, description: string): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ description, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
 }
 
 export async function createLeague(payload: LeagueInsert): Promise<LeagueRow> {

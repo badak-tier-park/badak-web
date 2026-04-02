@@ -1,17 +1,80 @@
 .leagues-page {
+  position: relative;
   min-height: 100vh;
-  background: #0a0b10;
+  background: var(--c-bg);
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
 
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.orb-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #aa3bff, transparent);
+  top: -120px;
+  right: -80px;
+}
+
+.orb-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #5865f2, transparent);
+  bottom: 0;
+  left: -100px;
+}
+
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--c-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c-grid-line) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
 .leagues-content {
+  position: relative;
   flex: 1;
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
   padding: 40px 28px 80px;
   box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ── 뒤로가기 버튼 ─────────────────────────────────────────
+.btn-back {
+  display: flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: color 0.15s;
+  margin-bottom: 20px;
+
+  &:hover { color: var(--c-text-2); }
 }
 
 // ── 페이지 타이틀 ─────────────────────────────────────────
@@ -24,10 +87,11 @@
 
 .page-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--c-text-bright);
   font-family: system-ui, sans-serif;
+  letter-spacing: -0.5px;
 }
 
 .btn-create {
@@ -57,18 +121,14 @@
   padding: 60px 0;
   text-align: center;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--c-text-faint);
   font-family: system-ui, sans-serif;
 
   &--error { color: #f87171; }
 }
 
 // ── 리그 목록 ─────────────────────────────────────────────
-.league-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+.league-list { display: flex; flex-direction: column; gap: 10px; }
 
 .league-card {
   display: flex;
@@ -76,8 +136,8 @@
   gap: 16px;
   padding: 16px 20px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
 }
 
 .league-type-badge {
@@ -95,31 +155,32 @@
   &.type--individual     { background: rgba(52, 211, 153, 0.12); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.25); }
 }
 
-.league-info {
-  flex: 1;
-  min-width: 0;
-}
+.league-info { flex: 1; min-width: 0; }
 
 .league-name {
   margin: 0 0 3px;
+  padding: 0;
+  background: none;
+  border: none;
   font-size: 14px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--c-text);
   font-family: system-ui, sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s;
+
+  &:hover { color: #c084fc; }
 }
 
 .league-period {
   margin: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--c-text-muted);
   font-family: system-ui, sans-serif;
 }
 
-.league-tiers {
-  display: flex;
-  gap: 5px;
-  flex-shrink: 0;
-}
+.league-tiers { display: flex; gap: 5px; flex-shrink: 0; }
 
 .tier-chip {
   font-size: 11px;
@@ -139,9 +200,9 @@
   flex-shrink: 0;
   padding: 5px 13px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
   font-size: 12px;
   font-family: system-ui, sans-serif;
   cursor: pointer;
@@ -163,9 +224,9 @@
   white-space: nowrap;
   flex-shrink: 0;
 
-  &.status--upcoming  { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); }
-  &.status--ongoing   { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
-  &.status--finished  { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.2); }
+  &.status--upcoming  { background: var(--c-badge-bg);            color: var(--c-text-sub); }
+  &.status--ongoing   { background: rgba(34, 197, 94, 0.12);      color: #4ade80; }
+  &.status--finished  { background: var(--c-surface-raised);      color: var(--c-text-faint); }
 }
 
 // ── 헤더 버튼 ─────────────────────────────────────────────
@@ -175,9 +236,9 @@
   gap: 5px;
   padding: 7px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
   font-size: 13px;
   font-weight: 600;
   font-family: system-ui, sans-serif;
@@ -185,8 +246,8 @@
   transition: all 0.15s;
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.75);
+    border-color: var(--c-border-dashed);
+    color: var(--c-text-2);
   }
 }
 
@@ -205,11 +266,14 @@
 .modal {
   width: 100%;
   max-width: 480px;
-  background: #13141d;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
 }
 
 .modal-header {
@@ -217,12 +281,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 0;
+  flex-shrink: 0;
 }
 
 .modal-title {
   font-size: 15px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--c-text);
   font-family: system-ui, sans-serif;
 }
 
@@ -234,12 +299,12 @@
   justify-content: center;
   border: none;
   background: none;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--c-icon-sub);
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.15s;
 
-  &:hover { background: rgba(255, 255, 255, 0.07); color: rgba(255, 255, 255, 0.7); }
+  &:hover { background: var(--c-overlay); color: var(--c-text-2); }
 }
 
 .modal-body {
@@ -247,34 +312,32 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-y: auto;
+  flex: 1;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.field { display: flex; flex-direction: column; gap: 8px; }
 
 .field-label {
   font-size: 12px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--c-text-sub);
   font-family: system-ui, sans-serif;
   letter-spacing: 0.03em;
 }
 
 .field-hint {
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--c-text-faint);
 }
 
 .field-input {
   width: 100%;
   padding: 10px 13px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--c-input);
+  border: 1px solid var(--c-border-strong);
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--c-text);
   font-size: 14px;
   font-family: system-ui, sans-serif;
   outline: none;
@@ -282,9 +345,8 @@
   transition: border-color 0.15s;
 
   &:focus { border-color: rgba(170, 59, 255, 0.5); }
-  &::placeholder { color: rgba(255, 255, 255, 0.2); }
+  &::placeholder { color: var(--c-text-faint); }
 
-  // date input 색상
   &[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
 }
 
@@ -302,8 +364,8 @@
   gap: 3px;
   padding: 12px 8px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface-raised);
   cursor: pointer;
   transition: all 0.15s;
 
@@ -316,22 +378,22 @@
   }
 
   &:not(.active):hover {
-    border-color: rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--c-border-dashed);
+    background: var(--c-overlay);
   }
 }
 
 .type-btn-main {
   font-size: 13px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--c-text-2);
   font-family: system-ui, sans-serif;
   transition: color 0.15s;
 }
 
 .type-btn-sub {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--c-text-muted);
   font-family: system-ui, sans-serif;
   transition: color 0.15s;
 }
@@ -343,8 +405,8 @@
   gap: 10px;
   width: 100%;
   padding: 10px 13px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--c-input);
+  border: 1px solid var(--c-border-strong);
   border-radius: 8px;
   cursor: pointer;
   transition: border-color 0.15s;
@@ -353,20 +415,17 @@
   &:hover { border-color: rgba(170, 59, 255, 0.45); }
 }
 
-.dp-custom-icon {
-  color: rgba(255, 255, 255, 0.25);
-  flex-shrink: 0;
-}
+.dp-custom-icon { color: var(--c-icon); flex-shrink: 0; }
 
 .dp-date-text {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--c-text);
   font-family: system-ui, sans-serif;
 }
 
 .dp-placeholder {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--c-text-faint);
   font-family: system-ui, sans-serif;
 }
 
@@ -393,54 +452,151 @@
   --dp-border-radius: 8px;
 }
 
-:deep(.dp__input) {
-  padding: 10px 13px 10px 36px;
-  font-size: 13px;
-}
-
-:deep(.dp__input_icon) {
-  color: rgba(255, 255, 255, 0.25);
-}
+:deep(.dp__input) { padding: 10px 13px 10px 36px; font-size: 13px; }
+:deep(.dp__input_icon) { color: rgba(255, 255, 255, 0.25); }
 
 // ── 상태 선택 ─────────────────────────────────────────────
-.status-group {
-  display: flex;
-  gap: 8px;
-}
+.status-group { display: flex; gap: 8px; }
 
 .status-btn {
   flex: 1;
   padding: 9px 0;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
   font-size: 13px;
   font-weight: 600;
   font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
-  &--upcoming.active  { border-color: rgba(255,255,255,0.25);  background: rgba(255,255,255,0.08);  color: rgba(255,255,255,0.7); }
-  &--ongoing.active   { border-color: rgba(34,197,94,0.5);     background: rgba(34,197,94,0.12);    color: #4ade80; }
-  &--finished.active  { border-color: rgba(156,163,175,0.3);   background: rgba(156,163,175,0.06);  color: #9ca3af; }
+  &--upcoming.active  { border-color: var(--c-border-dashed); background: var(--c-badge-bg); color: var(--c-text-2); }
+  &--ongoing.active   { border-color: rgba(34,197,94,0.5);    background: rgba(34,197,94,0.12);    color: #4ade80; }
+  &--finished.active  { border-color: rgba(156,163,175,0.3);  background: rgba(156,163,175,0.06);  color: #9ca3af; }
 
-  &:not(.active):hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.65); }
+  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
+}
+
+// ── 팀장 인원 선택 ────────────────────────────────────────
+.captain-count-group { display: flex; gap: 8px; }
+
+.count-btn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &.active { border-color: rgba(170, 59, 255, 0.5); background: rgba(170, 59, 255, 0.12); color: #c084fc; }
+  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
+}
+
+// ── 팀원 지목식 선택 ──────────────────────────────────────
+.draft-group { display: flex; gap: 8px; }
+
+.draft-btn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &.active {
+    border-color: rgba(52, 211, 153, 0.5);
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+  }
+
+  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
+
+  &:disabled {
+    cursor: default;
+    &.active { opacity: 1; }
+    &:not(.active) { opacity: 0.3; }
+  }
+}
+
+// ── 리그 카드 지목식 뱃지 ─────────────────────────────────
+.draft-badge {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  padding: 3px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(52, 211, 153, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+// ── 참가 자격 선택 ────────────────────────────────────────
+.eligibility-group { display: flex; gap: 8px; }
+
+.eligibility-btn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &.active {
+    border-color: rgba(56, 189, 248, 0.5);
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+  }
+
+  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.3;
+  }
+}
+
+// ── 리그 카드 참가 자격 뱃지 ──────────────────────────────
+.eligibility-badge {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  padding: 3px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &--open        { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); }
+  &--application { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.25); }
 }
 
 // ── 티어 선택 ─────────────────────────────────────────────
-.tier-group {
-  display: flex;
-  gap: 8px;
-}
+.tier-group { display: flex; gap: 8px; }
 
 .tier-btn {
   flex: 1;
   padding: 9px 0;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
   font-size: 14px;
   font-weight: 700;
   font-family: system-ui, sans-serif;
@@ -453,7 +609,9 @@
   &--d.active { border-color: rgba(34, 197, 94, 0.5);   background: rgba(34, 197, 94, 0.12);   color: #4ade80; }
   &--e.active { border-color: rgba(156, 163, 175, 0.4); background: rgba(156, 163, 175, 0.08); color: #9ca3af; }
 
-  &:not(.active):hover { border-color: rgba(255, 255, 255, 0.2); color: rgba(255, 255, 255, 0.65); }
+  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
+
+  &:disabled { cursor: default; pointer-events: none; }
 }
 
 // ── 모달 푸터 ─────────────────────────────────────────────
@@ -462,6 +620,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .save-error {
@@ -471,25 +630,21 @@
   font-family: system-ui, sans-serif;
 }
 
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
 .btn-cancel {
   padding: 9px 18px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--c-border-strong);
   background: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--c-text-sub);
   font-size: 13px;
   font-weight: 600;
   font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
-  &:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.2); color: rgba(255, 255, 255, 0.65); }
+  &:hover:not(:disabled) { border-color: var(--c-border-dashed); color: var(--c-text-2); }
   &:disabled { opacity: 0.4; cursor: default; }
 }
 

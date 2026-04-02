@@ -1,0 +1,63 @@
+// ── Dark (기본) ───────────────────────────────────────────
+:root {
+  --c-bg:             #0a0b10;
+  --c-surface:        #13141d;
+  --c-surface-raised: rgba(255, 255, 255, 0.025);
+  --c-overlay:        rgba(255, 255, 255, 0.04);
+  --c-input:          rgba(255, 255, 255, 0.05);
+
+  --c-border:         rgba(255, 255, 255, 0.07);
+  --c-border-strong:  rgba(255, 255, 255, 0.10);
+  --c-border-faint:   rgba(255, 255, 255, 0.04);
+  --c-border-dashed:  rgba(255, 255, 255, 0.12);
+
+  --c-text:           rgba(255, 255, 255, 0.85);
+  --c-text-2:         rgba(255, 255, 255, 0.65);
+  --c-text-sub:       rgba(255, 255, 255, 0.45);
+  --c-text-muted:     rgba(255, 255, 255, 0.30);
+  --c-text-faint:     rgba(255, 255, 255, 0.20);
+  --c-text-bright:    #ffffff;
+
+  --c-icon:           rgba(255, 255, 255, 0.25);
+  --c-icon-sub:       rgba(255, 255, 255, 0.35);
+
+  --c-header-bg:      rgba(10, 11, 16, 0.85);
+  --c-grid-line:      rgba(255, 255, 255, 0.025);
+  --c-row-hover:      rgba(255, 255, 255, 0.025);
+  --c-badge-bg:       rgba(255, 255, 255, 0.06);
+  --c-badge-border:   rgba(255, 255, 255, 0.08);
+  --c-glass:          rgba(255, 255, 255, 0.04);
+  --c-glass-border:   rgba(255, 255, 255, 0.10);
+}
+
+// ── Light ─────────────────────────────────────────────────
+[data-theme="light"] {
+  --c-bg:             #f0f1f5;
+  --c-surface:        #ffffff;
+  --c-surface-raised: rgba(0, 0, 0, 0.02);
+  --c-overlay:        rgba(0, 0, 0, 0.04);
+  --c-input:          rgba(0, 0, 0, 0.04);
+
+  --c-border:         rgba(0, 0, 0, 0.08);
+  --c-border-strong:  rgba(0, 0, 0, 0.12);
+  --c-border-faint:   rgba(0, 0, 0, 0.05);
+  --c-border-dashed:  rgba(0, 0, 0, 0.14);
+
+  --c-text:           rgba(0, 0, 0, 0.85);
+  --c-text-2:         rgba(0, 0, 0, 0.65);
+  --c-text-sub:       rgba(0, 0, 0, 0.50);
+  --c-text-muted:     rgba(0, 0, 0, 0.40);
+  --c-text-faint:     rgba(0, 0, 0, 0.30);
+  --c-text-bright:    rgba(0, 0, 0, 0.90);
+
+  --c-icon:           rgba(0, 0, 0, 0.30);
+  --c-icon-sub:       rgba(0, 0, 0, 0.35);
+
+  --c-header-bg:      rgba(240, 241, 245, 0.88);
+  --c-grid-line:      rgba(0, 0, 0, 0.03);
+  --c-row-hover:      rgba(0, 0, 0, 0.025);
+  --c-badge-bg:       rgba(0, 0, 0, 0.05);
+  --c-badge-border:   rgba(0, 0, 0, 0.08);
+  --c-glass:          rgba(255, 255, 255, 0.80);
+  --c-glass-border:   rgba(0, 0, 0, 0.10);
+}

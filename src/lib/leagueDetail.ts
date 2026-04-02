@@ -1,0 +1,69 @@
+import { supabase } from './supabase'
+
+export interface CaptainRow {
+  league_id: string
+  player_id: number
+  order_num: number
+}
+
+export interface MatchMapRow {
+  league_id: string
+  match_number: number
+  map_ids: string[]
+}
+
+export async function getCaptains(leagueId: string): Promise<CaptainRow[]> {
+  const { data, error } = await supabase
+    .from('league_captains')
+    .select('*')
+    .eq('league_id', leagueId)
+    .order('order_num', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+export async function saveCaptains(
+  leagueId: string,
+  captains: Array<{ player_id: number; order_num: number }>,
+): Promise<void> {
+  const { error: delError } = await supabase
+    .from('league_captains')
+    .delete()
+    .eq('league_id', leagueId)
+  if (delError) throw delError
+
+  if (captains.length === 0) return
+
+  const rows = captains.map((c) => ({
+    league_id: leagueId,
+    player_id: c.player_id,
+    order_num: c.order_num,
+  }))
+  const { error } = await supabase.from('league_captains').insert(rows)
+  if (error) throw error
+}
+
+export async function getMatchMaps(leagueId: string): Promise<MatchMapRow[]> {
+  const { data, error } = await supabase
+    .from('league_match_maps')
+    .select('*')
+    .eq('league_id', leagueId)
+    .order('match_number', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+export async function saveMatchMaps(
+  leagueId: string,
+  matchMaps: Array<{ match_number: number; map_ids: string[] }>,
+): Promise<void> {
+  const rows = matchMaps.map((m) => ({
+    league_id: leagueId,
+    match_number: m.match_number,
+    map_ids: m.map_ids,
+  }))
+  const { error } = await supabase
+    .from('league_match_maps')
+    .upsert(rows, { onConflict: 'league_id,match_number' })
+  if (error) throw error
+}
