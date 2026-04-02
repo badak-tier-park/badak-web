@@ -1,0 +1,227 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+}
+
+.modal-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--c-icon-sub);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+
+  &:hover { background: var(--c-overlay); color: var(--c-text-2); }
+}
+
+// ── 툴바 ──────────────────────────────────────────────────
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 24px 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.toolbar-group { display: flex; align-items: center; gap: 3px; }
+
+.toolbar-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--c-border-strong);
+  flex-shrink: 0;
+}
+
+.toolbar-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &.active {
+    border-color: rgba(170, 59, 255, 0.5);
+    background: rgba(170, 59, 255, 0.12);
+    color: #c084fc;
+  }
+
+  &:not(.active):hover {
+    border-color: var(--c-border-dashed);
+    background: var(--c-input);
+    color: var(--c-text-2);
+  }
+}
+
+.size-btn { padding: 5px 8px; min-width: 34px; }
+.color-reset { padding: 5px 8px; font-size: 11px; }
+
+// ── 색상 스워치 ───────────────────────────────────────────
+.color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  padding: 0;
+
+  &:hover { transform: scale(1.2); }
+
+  &.active {
+    border-color: var(--c-text-2);
+    transform: scale(1.15);
+  }
+}
+
+// ── 에디터 영역 ───────────────────────────────────────────
+.editor-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+  min-height: 260px;
+}
+
+:deep(.tiptap-editor) {
+  outline: none;
+  min-height: 220px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+  caret-color: #c084fc;
+
+  p { margin: 0 0 0.6em; }
+  p:last-child { margin-bottom: 0; }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--c-text);
+    margin: 1em 0 0.4em;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--c-text);
+    margin: 0.9em 0 0.35em;
+  }
+
+  strong { color: var(--c-text-bright); }
+  em    { color: var(--c-text-2); font-style: italic; }
+
+  ul, ol { padding-left: 1.4em; margin: 0.4em 0 0.6em; }
+  li { margin-bottom: 0.2em; }
+
+  &.ProseMirror-focused { outline: none; }
+
+  p.is-editor-empty:first-child::before {
+    content: '리그 설명을 입력하세요...';
+    color: var(--c-text-faint);
+    pointer-events: none;
+    float: left;
+    height: 0;
+  }
+}
+
+// ── 푸터 ──────────────────────────────────────────────────
+.modal-footer {
+  padding: 12px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--c-border);
+}
+
+.save-error {
+  margin: 0;
+  font-size: 12px;
+  color: #f87171;
+  font-family: system-ui, sans-serif;
+}
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+.btn-cancel {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: none;
+  color: var(--c-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) { border-color: var(--c-border-dashed); color: var(--c-text-2); }
+  &:disabled { opacity: 0.4; cursor: default; }
+}
+
+.btn-save {
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: 1px solid rgba(170, 59, 255, 0.4);
+  background: rgba(170, 59, 255, 0.15);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    background: rgba(170, 59, 255, 0.25);
+    border-color: rgba(170, 59, 255, 0.65);
+    color: #d8a4ff;
+  }
+  &:disabled { opacity: 0.4; cursor: default; }
+}

@@ -1,12 +1,19 @@
 <template>
   <div class="players-page">
-    <AppHeader>
-      <template #actions>
-        <RouterLink to="/" class="header-btn">← 홈</RouterLink>
-      </template>
-    </AppHeader>
+    <AppHeader />
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="grid-overlay"></div>
 
     <div class="players-content">
+      <button class="btn-back" @click="$router.push({ name: 'home' })">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+          <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        홈
+      </button>
+
       <div class="page-title-row">
         <h1 class="page-title">선수 관리</h1>
         <span class="player-count" v-if="!loading">{{ players.length }}명</span>

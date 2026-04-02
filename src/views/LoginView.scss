@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0a0b10;
+  background: var(--c-bg);
   overflow: hidden;
 }
 
@@ -56,8 +56,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(var(--c-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c-grid-line) 1px, transparent 1px);
   background-size: 60px 60px;
   mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
 }
@@ -67,27 +67,21 @@
   position: relative;
   width: 420px;
   max-width: calc(100vw - 32px);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--c-glass);
+  border: 1px solid var(--c-glass-border);
   border-radius: 24px;
   padding: 36px;
   backdrop-filter: blur(20px);
   box-shadow:
     0 0 0 1px rgba(170, 59, 255, 0.08),
     0 32px 80px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    inset 0 1px 0 var(--c-glass-border);
   animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes cardIn {
-  from {
-    opacity: 0;
-    transform: translateY(32px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(32px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 // Glow behind card
@@ -113,21 +107,17 @@
   filter: drop-shadow(0 6px 18px rgba(170, 59, 255, 0.55));
   transition: filter 0.3s;
 
-  &:hover {
-    filter: drop-shadow(0 8px 24px rgba(170, 59, 255, 0.75));
-  }
+  &:hover { filter: drop-shadow(0 8px 24px rgba(170, 59, 255, 0.75)); }
 }
 
-.brand-text {
-  line-height: 1;
-}
+.brand-text { line-height: 1; }
 
 .brand-name {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.01em;
   font-family: system-ui, sans-serif;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--c-text-2);
 }
 
 .brand-em {
@@ -141,20 +131,17 @@
 // Divider
 .divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  background: linear-gradient(90deg, transparent, var(--c-border-strong), transparent);
   margin-bottom: 28px;
 }
 
 // Content
-.card-content {
-  display: flex;
-  flex-direction: column;
-}
+.card-content { display: flex; flex-direction: column; }
 
 .title {
   font-size: 28px;
   font-weight: 700;
-  color: #fff;
+  color: var(--c-text-bright);
   margin: 0 0 8px;
   letter-spacing: -0.5px;
   font-family: system-ui, sans-serif;
@@ -162,7 +149,7 @@
 
 .subtitle {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--c-text-sub);
   line-height: 1.6;
   margin: 0 0 28px;
 }
@@ -182,10 +169,7 @@
   font-weight: 600;
   cursor: pointer;
   font-family: system-ui, sans-serif;
-  transition:
-    background 0.2s,
-    transform 0.15s,
-    box-shadow 0.2s;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
   box-shadow: 0 4px 20px rgba(88, 101, 242, 0.4);
   position: relative;
   overflow: hidden;
@@ -201,9 +185,7 @@
     transition: opacity 0.2s;
   }
 
-  &:hover::before {
-    opacity: 1;
-  }
+  &:hover::before { opacity: 1; }
 
   &:hover:not(:disabled) {
     background: #4752c4;
@@ -211,42 +193,25 @@
     box-shadow: 0 8px 28px rgba(88, 101, 242, 0.55);
   }
 
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  &:active:not(:disabled) { transform: translateY(0); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
-.btn-icon {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.btn-text {
-  flex: 1;
-  text-align: left;
-}
+.btn-icon { display: flex; align-items: center; flex-shrink: 0; }
+.btn-text { flex: 1; text-align: left; }
 
 .btn-arrow {
   font-size: 16px;
   opacity: 0.7;
   transition: transform 0.2s;
 
-  .discord-btn:hover:not(:disabled) & {
-    transform: translateX(3px);
-    opacity: 1;
-  }
+  .discord-btn:hover:not(:disabled) & { transform: translateX(3px); opacity: 1; }
 }
 
 // Terms
 .terms {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--c-text-faint);
   text-align: center;
   margin: 0;
   line-height: 1.5;

@@ -51,6 +51,19 @@
       <!-- 액션 버튼 슬롯 (페이지별로 다른 버튼 주입 가능) -->
       <slot name="actions" />
 
+      <!-- 테마 토글 -->
+      <button class="theme-toggle" :title="theme === 'dark' ? '라이트 모드' : '다크 모드'" @click="toggle">
+        <!-- 다크 모드일 때: 태양 아이콘 -->
+        <svg v-if="theme === 'dark'" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.1 3.1l1.06 1.06M11.84 11.84l1.06 1.06M3.1 12.9l1.06-1.06M11.84 4.16l1.06-1.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <!-- 라이트 모드일 때: 달 아이콘 -->
+        <svg v-else width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M13.5 10.5A6 6 0 015.5 2.5a6 6 0 108 8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
       <!-- 로그아웃 -->
       <button class="header-btn" @click="handleLogout">로그아웃</button>
     </div>
@@ -58,12 +71,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useTheme } from '@/composables/useTheme'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { theme, toggle, init } = useTheme()
+
+onMounted(init)
 
 // 추후 네비게이션 항목 여기에 추가
 const navItems = [
@@ -91,8 +108,8 @@ async function handleLogout() {
   gap: 24px;
   padding: 0 28px;
   height: 60px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(10, 11, 16, 0.85);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-header-bg);
   backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
@@ -111,7 +128,7 @@ async function handleLogout() {
 .brand-word {
   font-size: 17px;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--c-text-2);
   font-family: system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
@@ -137,14 +154,14 @@ async function handleLogout() {
   border-radius: 7px;
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--c-text-sub);
   text-decoration: none;
   font-family: system-ui, sans-serif;
   transition: color 0.15s, background 0.15s;
 
   &:hover {
-    color: rgba(255, 255, 255, 0.8);
-    background: rgba(255, 255, 255, 0.06);
+    color: var(--c-text);
+    background: var(--c-badge-bg);
   }
 
   &--active {
@@ -168,8 +185,8 @@ async function handleLogout() {
   gap: 8px;
   padding: 4px 12px 4px 4px;
   border-radius: 100px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--c-overlay);
+  border: 1px solid var(--c-badge-border);
 }
 
 .user-avatar {
@@ -194,7 +211,7 @@ async function handleLogout() {
 .user-name {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--c-text-2);
   font-family: system-ui, sans-serif;
   max-width: 120px;
   overflow: hidden;
@@ -202,13 +219,35 @@ async function handleLogout() {
   white-space: nowrap;
 }
 
+/* 테마 토글 */
+.theme-toggle {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: rgba(170, 59, 255, 0.4);
+    background: rgba(170, 59, 255, 0.08);
+    color: #c084fc;
+  }
+}
+
 /* 버튼 공통 */
 .header-btn {
   padding: 7px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--c-border-strong);
   background: transparent;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--c-text-sub);
   font-size: 13px;
   font-weight: 600;
   font-family: system-ui, sans-serif;
@@ -217,8 +256,8 @@ async function handleLogout() {
   white-space: nowrap;
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.75);
+    border-color: var(--c-border-dashed);
+    color: var(--c-text-2);
   }
 }
 </style>
