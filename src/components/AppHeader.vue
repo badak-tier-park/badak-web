@@ -83,7 +83,7 @@ const { theme, toggle, init } = useTheme()
 onMounted(init)
 
 // 추후 네비게이션 항목 여기에 추가
-const navItems = [
+const navItems: { to: string; label: string }[] = [
   // { to: '/maps', label: '맵 목록' },
   // { to: '/rankings', label: '랭킹' },
 ]
