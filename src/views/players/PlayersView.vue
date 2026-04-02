@@ -151,7 +151,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, reactive, computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { getPlayers, updatePlayer, type PlayerRow } from '@/lib/players'
 
