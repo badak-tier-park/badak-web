@@ -430,7 +430,6 @@
 .captain-race {
   font-size: 12px;
   font-weight: 700;
-  color: var(--c-text-sub);
   font-family: system-ui, sans-serif;
   flex-shrink: 0;
   min-width: 16px;
@@ -805,9 +804,6 @@
   font-size: 12px;
   font-weight: 700;
   min-width: 16px;
-
-  // 종족 색상은 race-- 클래스에서 오버라이드
-  color: var(--c-text-sub);
 }
 
 .picker-tier {
@@ -848,17 +844,7 @@
   font-weight: 400;
 }
 
-// ── 티어 색상 (PlayersView 기준) ─────────────────────────
-.tier--a { background: rgba(239, 68, 68, 0.12);   color: #f87171; }
-.tier--b { background: rgba(170, 59, 255, 0.12);  color: #c084fc; }
-.tier--c { background: rgba(88, 166, 255, 0.12);  color: #58a6ff; }
-.tier--d { background: rgba(34, 197, 94, 0.12);   color: #4ade80; }
-.tier--e { background: rgba(156, 163, 175, 0.12); color: #9ca3af; }
-
-// ── 종족 색상 (PlayersView 기준) ─────────────────────────
-.race--t { color: #facc15; }
-.race--z { color: #bc64ff; }
-.race--p { color: #58a6ff; }
+// ── 티어/종족 색상 → theme.scss 변수 + _tokens.scss 전역 클래스 참조
 
 // ── 에이스 안내 ───────────────────────────────────────────
 .ace-notice {
