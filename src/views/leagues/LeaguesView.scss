@@ -132,11 +132,11 @@
   border-radius: 4px;
   font-family: system-ui, sans-serif;
 
-  &--a { background: rgba(239, 68, 68, 0.12);   color: #f87171; }
-  &--b { background: rgba(170, 59, 255, 0.12);  color: #c084fc; }
-  &--c { background: rgba(88, 166, 255, 0.12);  color: #58a6ff; }
-  &--d { background: rgba(34, 197, 94, 0.12);   color: #4ade80; }
-  &--e { background: rgba(156, 163, 175, 0.08); color: #9ca3af; }
+  &--a { background: var(--tier-a-bg); color: var(--tier-a); }
+  &--b { background: var(--tier-b-bg); color: var(--tier-b); }
+  &--c { background: var(--tier-c-bg); color: var(--tier-c); }
+  &--d { background: var(--tier-d-bg); color: var(--tier-d); }
+  &--e { background: var(--tier-e-bg); color: var(--tier-e); }
 }
 
 .edit-btn {
@@ -167,6 +167,7 @@
   white-space: nowrap;
   flex-shrink: 0;
 
+  &.status--preparing { background: rgba(251, 146, 60, 0.12);     color: #fb923c; }
   &.status--upcoming  { background: var(--c-badge-bg);            color: var(--c-text-sub); }
   &.status--ongoing   { background: rgba(34, 197, 94, 0.12);      color: #4ade80; }
   &.status--finished  { background: var(--c-surface-raised);      color: var(--c-text-faint); }
@@ -474,6 +475,9 @@
 
 // ── 리그 카드 지목식 뱃지 ─────────────────────────────────
 .draft-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   font-weight: 600;
   font-family: system-ui, sans-serif;
@@ -484,6 +488,29 @@
   background: rgba(52, 211, 153, 0.1);
   color: #34d399;
   border: 1px solid rgba(52, 211, 153, 0.25);
+
+  &--active {
+    cursor: pointer;
+    background: rgba(52, 211, 153, 0.18);
+    border-color: rgba(52, 211, 153, 0.5);
+
+    &:hover {
+      background: rgba(52, 211, 153, 0.28);
+      color: #6ee7b7;
+    }
+  }
+
+  &--done {
+    background: rgba(99, 102, 241, 0.1);
+    color: #818cf8;
+    border-color: rgba(99, 102, 241, 0.3);
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: rgba(99, 102, 241, 0.5);
+    }
+  }
 }
 
 // ── 참가 자격 선택 ────────────────────────────────────────
@@ -546,11 +573,11 @@
   cursor: pointer;
   transition: all 0.15s;
 
-  &--a.active { border-color: rgba(239, 68, 68, 0.5);   background: rgba(239, 68, 68, 0.12);   color: #f87171; }
-  &--b.active { border-color: rgba(170, 59, 255, 0.5);  background: rgba(170, 59, 255, 0.12);  color: #c084fc; }
-  &--c.active { border-color: rgba(88, 166, 255, 0.5);  background: rgba(88, 166, 255, 0.12);  color: #58a6ff; }
-  &--d.active { border-color: rgba(34, 197, 94, 0.5);   background: rgba(34, 197, 94, 0.12);   color: #4ade80; }
-  &--e.active { border-color: rgba(156, 163, 175, 0.4); background: rgba(156, 163, 175, 0.08); color: #9ca3af; }
+  &--a.active { border-color: var(--tier-a-border); background: var(--tier-a-bg); color: var(--tier-a); }
+  &--b.active { border-color: var(--tier-b-border); background: var(--tier-b-bg); color: var(--tier-b); }
+  &--c.active { border-color: var(--tier-c-border); background: var(--tier-c-bg); color: var(--tier-c); }
+  &--d.active { border-color: var(--tier-d-border); background: var(--tier-d-bg); color: var(--tier-d); }
+  &--e.active { border-color: var(--tier-e-border); background: var(--tier-e-bg); color: var(--tier-e); }
 
   &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
 

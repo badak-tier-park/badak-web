@@ -6,8 +6,12 @@
   position: fixed;
   border-radius: 50%;
   filter: blur(90px);
-  opacity: 0.2;
+  opacity: 0.38;
   pointer-events: none;
+}
+
+[data-theme="light"] .orb {
+  opacity: 0.12;
 }
 
 .orb-1 {

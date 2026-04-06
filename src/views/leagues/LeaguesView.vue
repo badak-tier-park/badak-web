@@ -39,8 +39,30 @@
             <button class="league-name" @click="router.push({ name: 'league-detail', params: { id: league.id } })">{{ league.name }}</button>
             <p class="league-period">{{ league.start_date }} ~ {{ league.end_date }}</p>
           </div>
-          <span v-if="league.has_draft" class="draft-badge">
-            지목식 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}
+          <span
+            v-if="league.has_draft"
+            class="draft-badge"
+            :class="{
+              'draft-badge--active': isDraftActive(league),
+              'draft-badge--done': league.draft_completed,
+            }"
+            :role="isDraftActive(league) ? 'button' : undefined"
+            :tabindex="isDraftActive(league) ? 0 : undefined"
+            @click="isDraftActive(league) && router.push({ name: 'league-draft', params: { id: league.id } })"
+            @keydown.enter="isDraftActive(league) && router.push({ name: 'league-draft', params: { id: league.id } })"
+          >
+            <template v-if="league.draft_completed">
+              지목식 완료
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M2 5l2.5 2.5 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </template>
+            <template v-else>
+              지목식 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}
+              <svg v-if="isDraftActive(league)" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </template>
           </span>
           <span class="eligibility-badge" :class="`eligibility-badge--${league.eligibility_type}`">
             {{ { open: '전체 선수', application: '참가 신청', invitation: '선수 지목' }[league.eligibility_type] }}
@@ -272,7 +294,13 @@ const leagueTypeLabel = (type: LeagueType) => {
 }
 
 const statusLabel = (s: LeagueStatus) =>
-  ({ upcoming: '예정', ongoing: '진행 중', finished: '종료' })[s]
+  ({ preparing: '준비 중', upcoming: '예정', ongoing: '진행 중', finished: '종료' })[s]
+
+function isDraftActive(league: LeagueRow): boolean {
+  if (!league.has_draft || !league.draft_date) return false
+  const today = new Date().toISOString().slice(0, 10)
+  return league.draft_date <= today
+}
 
 // ── 생성/수정 폼 ──────────────────────────────────────────
 const showForm = ref(false)

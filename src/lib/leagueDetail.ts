@@ -67,3 +67,43 @@ export async function saveMatchMaps(
     .upsert(rows, { onConflict: 'league_id,match_number' })
   if (error) throw error
 }
+
+// ── 시드권자 ──────────────────────────────────────────────
+
+export interface SeedHolderRow {
+  id: number
+  league_id: string
+  player_id: number
+  order_num: number
+}
+
+export async function getSeedHolders(leagueId: string): Promise<SeedHolderRow[]> {
+  const { data, error } = await supabase
+    .from('league_seed_holders')
+    .select('*')
+    .eq('league_id', leagueId)
+    .order('order_num', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+export async function saveSeedHolders(
+  leagueId: string,
+  holders: Array<{ player_id: number; order_num: number }>,
+): Promise<void> {
+  const { error: delError } = await supabase
+    .from('league_seed_holders')
+    .delete()
+    .eq('league_id', leagueId)
+  if (delError) throw delError
+
+  if (holders.length === 0) return
+
+  const rows = holders.map((h) => ({
+    league_id: leagueId,
+    player_id: h.player_id,
+    order_num: h.order_num,
+  }))
+  const { error } = await supabase.from('league_seed_holders').insert(rows)
+  if (error) throw error
+}
