@@ -846,6 +846,54 @@
 
 // ── 티어/종족 색상 → theme.scss 변수 + _tokens.scss 전역 클래스 참조
 
+// ── 시드권자 룰 안내 ──────────────────────────────────────
+.seed-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(250, 204, 21, 0.05);
+  border: 1px solid rgba(250, 204, 21, 0.15);
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.seed-rule-item {
+  font-size: 12px;
+  color: var(--c-text-muted);
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  line-height: 1.6;
+}
+
+// ── 피커 푸터 ─────────────────────────────────────────────
+.picker-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--c-border-faint);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.picker-confirm {
+  padding: 7px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(170, 59, 255, 0.4);
+  background: rgba(170, 59, 255, 0.12);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(170, 59, 255, 0.22);
+    border-color: rgba(170, 59, 255, 0.65);
+    color: #d8a4ff;
+  }
+}
+
 // ── 에이스 안내 ───────────────────────────────────────────
 .ace-notice {
   display: flex;

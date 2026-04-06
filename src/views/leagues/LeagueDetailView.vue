@@ -33,14 +33,10 @@
 
       <!-- 리그 헤더 -->
       <div class="league-header">
-        <span class="league-type-badge" :class="`type--${league!.type}`">
-          {{ league!.type === 'regular_summer' ? '정규리그 Summer' : '정규리그 Winter' }}
-        </span>
+        
         <h1 class="league-title">{{ league!.name }}</h1>
         <span class="league-period">{{ league!.start_date }} ~ {{ league!.end_date }}</span>
-        <span v-if="league!.has_draft && league!.draft_date" class="draft-info">
-          지목식 {{ league!.draft_date.replaceAll('-', '/') }}
-        </span>
+        
       </div>
 
       <!-- 스텝 탭 -->
@@ -198,7 +194,55 @@
         </div>
       </section>
 
-      <!-- ── 탭 3: 경기별 맵 선택 ──────────────────────── -->
+      <!-- ── 탭 3: 시드권자 ────────────────────────────── -->
+      <section v-if="activeTab === 'seed_holders'" class="detail-section">
+        <div class="captain-list">
+          <div v-for="(playerId, i) in seedHolders" :key="playerId" class="captain-row">
+            <span class="captain-order-badge">{{ i + 1 }}</span>
+            <span class="captain-tier" :class="`tier--${playerById(playerId)?.tier.toLowerCase()}`">
+              {{ playerById(playerId)?.tier }}
+            </span>
+            <span class="captain-race" :class="`race--${playerById(playerId)?.race.toLowerCase()}`">
+              {{ playerById(playerId)?.race }}
+            </span>
+            <span class="captain-name">{{ playerById(playerId)?.nickname }}</span>
+            <div class="captain-reorder">
+              <button class="reorder-btn" :disabled="i === 0" @click="moveSeedHolder(i, -1)">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M2 7l3-4 3 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button class="reorder-btn" :disabled="i === seedHolders.length - 1" @click="moveSeedHolder(i, 1)">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M2 3l3 4 3-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <button class="captain-remove" @click="removeSeedHolder(i)">×</button>
+          </div>
+          <div v-if="seedHolders.length === 0" class="captain-row captain-row--empty">
+            <span class="slot-empty">시드권자를 추가하세요</span>
+          </div>
+        </div>
+
+        <div class="captain-actions-row">
+          <button class="btn-add-captain" @click="openSeedPicker">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+              <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            시드권자 추가
+          </button>
+        </div>
+
+        <div class="section-footer">
+          <p v-if="seedError" class="save-error">{{ seedError }}</p>
+          <button class="btn-save" :disabled="seedSaving" @click="saveSeedHoldersData">
+            {{ seedSaving ? '저장 중...' : `저장 후 다음 단계 (${seedHolders.length}명)` }}
+          </button>
+        </div>
+      </section>
+
+      <!-- ── 탭 4: 경기별 맵 선택 ──────────────────────── -->
       <section v-if="activeTab === 'maps'" class="detail-section">
         <div class="section-header">
           <p class="section-desc">1·4·5·6경기는 맵 1개 고정, 2·3경기는 밴픽 풀 (2~3개) 입니다. 각 맵은 한 경기에만 사용할 수 있습니다. 7경기(에이스 결정전)는 위 경기에서 선택된 맵 중 진행됩니다.</p>
@@ -284,6 +328,46 @@
       </div>
     </Teleport>
 
+    <!-- ── 시드권자 선택 오버레이 ───────────────────── -->
+    <Teleport to="body">
+      <div v-if="showSeedPicker" class="overlay-backdrop" @click.self="showSeedPicker = false">
+        <div class="picker-panel">
+          <div class="picker-header">
+            <span class="picker-title">
+              시드권자 선택
+              <span class="picker-subtitle">{{ seedHolders.length }}명 선택됨</span>
+            </span>
+            <button class="picker-close" @click="showSeedPicker = false">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <input v-model="seedSearch" class="picker-search" placeholder="닉네임 검색..." type="text" />
+          <div class="picker-list">
+            <button
+              v-for="player in filteredSeedPlayers"
+              :key="player.id"
+              class="picker-item"
+              :class="{ selected: seedHolders.includes(player.id) }"
+              @click="assignSeedHolder(player.id)"
+            >
+              <span class="picker-tier" :class="`tier--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
+              <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
+              <span class="picker-name">{{ player.nickname }}</span>
+              <svg v-if="seedHolders.includes(player.id)" class="picker-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2.5 7l3.5 3.5 6-6" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div v-if="filteredSeedPlayers.length === 0" class="picker-empty">검색 결과 없음</div>
+          </div>
+          <div class="picker-footer">
+            <button class="picker-confirm" @click="showSeedPicker = false">확인</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- ── 맵 선택 오버레이 ───────────────────────────── -->
     <Teleport to="body">
       <div v-if="mapPickerTarget !== null" class="overlay-backdrop" @click.self="mapPickerTarget = null">
@@ -344,10 +428,10 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { Extension } from '@tiptap/core'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, updateLeagueDescription, type LeagueRow } from '@/lib/leagues'
+import { getLeague, updateLeagueDescription, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
-import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps } from '@/lib/leagueDetail'
+import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders } from '@/lib/leagueDetail'
 
 // ── FontSize 커스텀 익스텐션 ─────────────────────────────
 const FontSize = Extension.create({
@@ -387,12 +471,13 @@ function showToast(msg: string) {
 }
 
 // ── 탭 ───────────────────────────────────────────────────
-type TabKey = 'description' | 'captains' | 'maps'
+type TabKey = 'description' | 'captains' | 'seed_holders' | 'maps'
 
 const tabs: { key: TabKey; label: string }[] = [
-  { key: 'description', label: '리그 설명' },
-  { key: 'captains',    label: '팀장 선출' },
-  { key: 'maps',        label: '경기별 맵 선택' },
+  { key: 'description',  label: '리그 설명' },
+  { key: 'captains',     label: '팀장 선출' },
+  { key: 'seed_holders', label: '시드권자' },
+  { key: 'maps',         label: '경기별 맵 선택' },
 ]
 
 const activeTab = ref<TabKey>('description')
@@ -401,6 +486,7 @@ const activeTab = ref<TabKey>('description')
 function isTabDone(key: TabKey): boolean {
   if (key === 'description') return !!league.value?.description?.trim()
   if (key === 'captains') return captains.value.length === captainCount.value
+  if (key === 'seed_holders') return seedHolders.value.length > 0
   if (key === 'maps') return matchConfigs.every((m) => (matchMaps.value[m.number]?.length ?? 0) > 0)
   return false
 }
@@ -422,18 +508,20 @@ const players = ref<PlayerRow[]>([])
 const maps = ref<MapRow[]>([])
 
 const captains = ref<number[]>([])
+const seedHolders = ref<number[]>([])
 const matchMaps = ref<Record<number, string[]>>({})
 
 const captainCount = computed(() => league.value?.captain_count ?? 4)
 
 onMounted(async () => {
   try {
-    const [leagueData, playersData, mapsData, captainsData, matchMapsData] = await Promise.all([
+    const [leagueData, playersData, mapsData, captainsData, matchMapsData, seedHoldersData] = await Promise.all([
       getLeague(leagueId),
       getPlayers(),
       getMaps(),
       getCaptains(leagueId),
       getMatchMaps(leagueId),
+      getSeedHolders(leagueId),
     ])
 
     league.value = leagueData
@@ -443,6 +531,10 @@ onMounted(async () => {
     captains.value = captainsData
       .sort((a, b) => a.order_num - b.order_num)
       .map((c) => c.player_id)
+
+    seedHolders.value = seedHoldersData
+      .sort((a, b) => a.order_num - b.order_num)
+      .map((h) => h.player_id)
 
     const mm: Record<number, string[]> = {}
     for (const m of matchMapsData) mm[m.match_number] = m.map_ids
@@ -557,6 +649,7 @@ async function saveDescription() {
     const html = editor.value.getHTML()
     await updateLeagueDescription(leagueId, html)
     if (league.value) league.value.description = html
+    await checkAndUpdateReady(leagueId)
     showToast('리그 설명이 저장되었습니다.')
     goNext()
   } catch (e: any) {
@@ -624,6 +717,7 @@ async function saveCaptainsData() {
   try {
     const payload = captains.value.map((pid, i) => ({ player_id: pid, order_num: i + 1 }))
     await saveCaptains(leagueId, payload)
+    await checkAndUpdateReady(leagueId)
     showToast('팀장 정보가 저장되었습니다.')
     goNext()
   } catch (e: any) {
@@ -684,6 +778,57 @@ function removeMap(matchNumber: number, mapId: string) {
   matchMaps.value[matchNumber] = (matchMaps.value[matchNumber] ?? []).filter((id) => id !== mapId)
 }
 
+// ── 시드권자 ──────────────────────────────────────────────
+const showSeedPicker = ref(false)
+const seedSearch = ref('')
+const seedSaving = ref(false)
+const seedError = ref<string | null>(null)
+
+const filteredSeedPlayers = computed(() => {
+  const q = seedSearch.value.trim().toLowerCase()
+  return players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+})
+
+function openSeedPicker() {
+  seedSearch.value = ''
+  showSeedPicker.value = true
+}
+
+function assignSeedHolder(playerId: number) {
+  if (seedHolders.value.includes(playerId)) {
+    seedHolders.value = seedHolders.value.filter((id) => id !== playerId)
+  } else {
+    seedHolders.value = [...seedHolders.value, playerId]
+  }
+}
+
+function removeSeedHolder(index: number) {
+  seedHolders.value = seedHolders.value.filter((_, i) => i !== index)
+}
+
+function moveSeedHolder(index: number, direction: -1 | 1) {
+  const newIdx = index + direction
+  if (newIdx < 0 || newIdx >= seedHolders.value.length) return
+  const arr = [...seedHolders.value]
+  ;[arr[index], arr[newIdx]] = [arr[newIdx], arr[index]]
+  seedHolders.value = arr
+}
+
+async function saveSeedHoldersData() {
+  seedSaving.value = true
+  seedError.value = null
+  try {
+    const payload = seedHolders.value.map((pid, i) => ({ player_id: pid, order_num: i + 1 }))
+    await saveSeedHolders(leagueId, payload)
+    showToast('시드권자 정보가 저장되었습니다.')
+    goNext()
+  } catch (e: any) {
+    seedError.value = e.message ?? '저장 중 오류가 발생했습니다.'
+  } finally {
+    seedSaving.value = false
+  }
+}
+
 const mapSaving = ref(false)
 const mapError = ref<string | null>(null)
 
@@ -695,6 +840,7 @@ async function saveMapsData() {
       .filter(([, ids]) => ids.length > 0)
       .map(([n, ids]) => ({ match_number: Number(n), map_ids: ids }))
     await saveMatchMaps(leagueId, entries)
+    await checkAndUpdateReady(leagueId)
     showToast('경기별 맵이 저장되었습니다.')
   } catch (e: any) {
     mapError.value = e.message ?? '저장 중 오류가 발생했습니다.'
