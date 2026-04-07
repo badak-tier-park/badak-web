@@ -427,7 +427,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onBeforeUnmount, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { Color } from '@tiptap/extension-color'
@@ -505,6 +505,7 @@ function goNext() {
 
 // ── 페이지 데이터 로딩 ────────────────────────────────────
 const route = useRoute()
+const router = useRouter()
 const leagueId = route.params.id as string
 
 const pageLoading = ref(true)
@@ -857,7 +858,18 @@ async function saveMapsData() {
       .map(([n, ids]) => ({ match_number: Number(n), map_ids: ids }))
     await saveMatchMaps(leagueId, entries)
     await checkAndUpdateReady(leagueId)
-    showToast('경기별 맵이 저장되었습니다.')
+
+    // 이전 탭 중 미완료 탭이 있으면 해당 탭으로 이동
+    const incompleteTabs: TabKey[] = ['description', 'captains', 'seed_holders']
+    const firstIncomplete = incompleteTabs.find((k) => !isTabDone(k))
+    if (firstIncomplete) {
+      showToast('저장되었습니다. 미완료 항목을 확인해주세요.')
+      activeTab.value = firstIncomplete
+    } else {
+      showToast('모든 항목이 저장되었습니다.')
+      await new Promise((r) => setTimeout(r, 800))
+      router.push({ name: 'leagues' })
+    }
   } catch (e: any) {
     mapError.value = e.message ?? '저장 중 오류가 발생했습니다.'
   } finally {
