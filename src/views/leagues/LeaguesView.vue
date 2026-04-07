@@ -32,53 +32,76 @@
       </div>
       <div v-else class="league-list">
         <div v-for="league in leagues" :key="league.id" class="league-card">
-          <div class="league-type-badge" :class="`type--${league.type}`">
-            {{ leagueTypeLabel(league.type) }}
+          <!-- 상단: 타입 뱃지 + 이름 + 기간 + 상태 -->
+          <div class="league-card-top">
+            <div class="league-card-title-row">
+              <div class="league-type-badge" :class="`type--${league.type}`">
+                {{ leagueTypeLabel(league.type) }}
+              </div>
+              <span class="league-name">{{ league.name }}</span>
+              <span class="league-status" :class="`status--${getLeagueStatus(league)}`">
+                {{ statusLabel(getLeagueStatus(league)) }}
+              </span>
+            </div>
+            <div class="league-card-meta">
+              <span class="league-period">
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <rect x="1" y="2" width="9" height="8" rx="1.5" stroke="currentColor" stroke-width="1.1"/>
+                  <path d="M3.5 1v2M7.5 1v2M1 5h9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+                </svg>
+                {{ league.start_date }} ~ {{ league.end_date }}
+              </span>
+              <div class="league-tiers">
+                <span
+                  v-for="tier in league.eligible_tiers"
+                  :key="tier"
+                  class="tier-chip"
+                  :class="`tier-chip--${tier.toLowerCase()}`"
+                >{{ tier }}</span>
+              </div>
+              <span class="eligibility-badge" :class="`eligibility-badge--${league.eligibility_type}`">
+                {{ { open: '전체 선수', application: '참가 신청', invitation: '선수 지목' }[league.eligibility_type] }}
+              </span>
+            </div>
           </div>
-          <div class="league-info">
-            <button class="league-name" @click="router.push({ name: 'league-detail', params: { id: league.id } })">{{ league.name }}</button>
-            <p class="league-period">{{ league.start_date }} ~ {{ league.end_date }}</p>
-          </div>
-          <span
-            v-if="league.has_draft"
-            class="draft-badge"
-            :class="{
-              'draft-badge--active': isDraftActive(league),
-              'draft-badge--done': league.draft_completed,
-            }"
-            :role="isDraftActive(league) ? 'button' : undefined"
-            :tabindex="isDraftActive(league) ? 0 : undefined"
-            @click="isDraftActive(league) && router.push({ name: 'league-draft', params: { id: league.id } })"
-            @keydown.enter="isDraftActive(league) && router.push({ name: 'league-draft', params: { id: league.id } })"
-          >
-            <template v-if="league.draft_completed">
-              지목식 완료
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M2 5l2.5 2.5 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+          <!-- 하단: 액션 버튼 -->
+          <div class="league-card-actions">
+            <button class="action-btn action-btn--detail" @click="router.push({ name: 'league-detail', params: { id: league.id } })">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M1 6h10M6 1v10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
               </svg>
-            </template>
-            <template v-else>
-              지목식 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}
-              <svg v-if="isDraftActive(league)" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </template>
-          </span>
-          <span class="eligibility-badge" :class="`eligibility-badge--${league.eligibility_type}`">
-            {{ { open: '전체 선수', application: '참가 신청', invitation: '선수 지목' }[league.eligibility_type] }}
-          </span>
-          <div class="league-tiers">
+              상세 설정
+              <span v-if="!league.is_ready" class="action-badge action-badge--warning">미완료</span>
+              <span v-else class="action-badge action-badge--done">완료</span>
+            </button>
             <span
-              v-for="tier in league.eligible_tiers"
-              :key="tier"
-              class="tier-chip"
-              :class="`tier-chip--${tier.toLowerCase()}`"
-            >{{ tier }}</span>
+              v-if="league.has_draft"
+              class="action-btn"
+              :class="{
+                'action-btn--draft': isDraftActive(league),
+                'action-btn--draft-done': league.draft_completed,
+                'action-btn--draft-disabled': !isDraftActive(league) && !league.draft_completed,
+              }"
+              :role="isDraftActive(league) || league.draft_completed ? 'button' : undefined"
+              :tabindex="isDraftActive(league) || league.draft_completed ? 0 : undefined"
+              @click="(isDraftActive(league) || league.draft_completed) && router.push({ name: 'league-draft', params: { id: league.id } })"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 9V4l4-3 4 3v5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4.5 9V6.5h3V9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <template v-if="league.draft_completed">지목식 완료</template>
+              <template v-else-if="isDraftActive(league)">지목식 진행</template>
+              <template v-else>지목식 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}</template>
+            </span>
+            <button class="action-btn action-btn--edit" @click="openEdit(league)">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              수정
+            </button>
           </div>
-          <span class="league-status" :class="`status--${getLeagueStatus(league)}`">
-            {{ statusLabel(getLeagueStatus(league)) }}
-          </span>
-          <button class="edit-btn" @click="openEdit(league)">수정</button>
         </div>
       </div>
     </div>
