@@ -1,0 +1,115 @@
+import { supabase } from './supabase'
+
+export type LeagueType = 'regular_summer' | 'regular_winter' | 'jongchoe' | 'individual'
+export type LeagueStatus = 'preparing' | 'upcoming' | 'ongoing' | 'finished'
+export type EligibilityType = 'open' | 'application' | 'invitation'
+
+export interface LeagueRow {
+  id: string
+  type: LeagueType
+  name: string
+  start_date: string
+  end_date: string
+  eligible_tiers: string[]
+  eligibility_type: EligibilityType
+  has_draft: boolean
+  draft_date: string | null
+  description: string | null
+  captain_count: number
+  is_ready: boolean
+  draft_completed: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface LeagueInsert {
+  type: LeagueType
+  name: string
+  start_date: string
+  end_date: string
+  eligible_tiers: string[]
+  eligibility_type: EligibilityType
+  has_draft: boolean
+  draft_date: string | null
+  captain_count: number
+}
+
+export function getLeagueStatus(league: LeagueRow): LeagueStatus {
+  if (!league.is_ready) return 'preparing'
+  const today = new Date().toISOString().slice(0, 10)
+  if (today < league.start_date) return 'upcoming'
+  if (today > league.end_date) return 'finished'
+  return 'ongoing'
+}
+
+export async function getLeague(id: string): Promise<LeagueRow> {
+  const { data, error } = await supabase
+    .from('leagues')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getLeagues(): Promise<LeagueRow[]> {
+  const { data, error } = await supabase
+    .from('leagues')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function updateLeague(id: string, payload: LeagueInsert): Promise<LeagueRow> {
+  const { data, error } = await supabase
+    .from('leagues')
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateLeagueDescription(id: string, description: string): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ description, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function checkAndUpdateReady(id: string): Promise<void> {
+  const { data: league } = await supabase.from('leagues').select('captain_count, description').eq('id', id).single()
+  if (!league) return
+
+  const { count: captainCount } = await supabase.from('league_captains').select('*', { count: 'exact', head: true }).eq('league_id', id)
+  const { count: mapCount } = await supabase.from('league_match_maps').select('*', { count: 'exact', head: true }).eq('league_id', id)
+
+  const isReady = !!(league.description && captainCount && captainCount >= league.captain_count && mapCount && mapCount > 0)
+
+  await supabase.from('leagues').update({ is_ready: isReady, updated_at: new Date().toISOString() }).eq('id', id)
+}
+
+export async function setDraftCompleted(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ draft_completed: true, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function createLeague(payload: LeagueInsert): Promise<LeagueRow> {
+  const { data, error } = await supabase
+    .from('leagues')
+    .insert(payload)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}

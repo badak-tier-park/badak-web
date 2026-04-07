@@ -1,0 +1,913 @@
+@use '../../styles/page';
+
+.detail-page {
+  position: relative;
+  min-height: 100vh;
+  background: var(--c-bg);
+  overflow-x: hidden;
+}
+
+.state-msg {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--c-text-muted);
+  font-size: 14px;
+  font-family: system-ui, sans-serif;
+
+  &--error { color: #f87171; }
+}
+
+// ── 본문 레이아웃 ─────────────────────────────────────────
+.detail-content {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+// ── 리그 헤더 ─────────────────────────────────────────────
+.league-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.league-type-badge {
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  letter-spacing: 0.02em;
+
+  &.type--regular_summer { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+  &.type--regular_winter { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+}
+
+.league-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+  margin: 0;
+}
+
+.league-period {
+  font-size: 13px;
+  color: var(--c-text-muted);
+  font-family: system-ui, sans-serif;
+}
+
+.draft-info {
+  font-size: 12px;
+  color: var(--c-text-sub);
+  background: var(--c-overlay);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-family: system-ui, sans-serif;
+}
+
+// ── 스텝 탭 ──────────────────────────────────────────────
+.step-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 6px;
+  position: relative;
+}
+
+.step-sep {
+  flex: 1;
+  height: 1px;
+  background: var(--c-border-strong);
+  margin: 0 2px;
+  pointer-events: none;
+}
+
+.step-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover:not(.active) {
+    color: var(--c-text-2);
+    background: var(--c-overlay);
+  }
+
+  &.active {
+    background: rgba(170, 59, 255, 0.12);
+    color: #c084fc;
+
+    .step-num {
+      background: rgba(170, 59, 255, 0.3);
+      border-color: rgba(170, 59, 255, 0.5);
+      color: #d8a4ff;
+    }
+  }
+
+  &.done {
+    color: var(--c-text-sub);
+
+    .step-num {
+      background: rgba(74, 222, 128, 0.12);
+      border-color: rgba(74, 222, 128, 0.4);
+      color: #4ade80;
+    }
+  }
+}
+
+.step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.step-label {
+  font-size: 13px;
+}
+
+// ── 다음 버튼 ─────────────────────────────────────────────
+.btn-next {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(170, 59, 255, 0.4);
+  background: rgba(170, 59, 255, 0.15);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(170, 59, 255, 0.25);
+    border-color: rgba(170, 59, 255, 0.65);
+    color: #d8a4ff;
+  }
+}
+
+// ── 섹션 공통 ─────────────────────────────────────────────
+.detail-section {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 20px 24px 0;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+  margin: 0 0 6px;
+}
+
+.section-desc {
+  font-size: 13px;
+  color: var(--c-text-muted);
+  font-family: system-ui, sans-serif;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.section-footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.save-error {
+  margin: 0;
+  font-size: 12px;
+  color: #f87171;
+  font-family: system-ui, sans-serif;
+  flex: 1;
+}
+
+.btn-save {
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: 1px solid rgba(170, 59, 255, 0.4);
+  background: rgba(170, 59, 255, 0.15);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    background: rgba(170, 59, 255, 0.25);
+    border-color: rgba(170, 59, 255, 0.65);
+    color: #d8a4ff;
+  }
+  &:disabled { opacity: 0.4; cursor: default; }
+}
+
+// ── 에디터 툴바 ───────────────────────────────────────────
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 16px 24px 12px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.toolbar-group { display: flex; align-items: center; gap: 3px; }
+
+.toolbar-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--c-border-strong);
+  flex-shrink: 0;
+}
+
+.toolbar-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &.active {
+    border-color: rgba(170, 59, 255, 0.5);
+    background: rgba(170, 59, 255, 0.12);
+    color: #c084fc;
+  }
+
+  &:not(.active):hover {
+    border-color: var(--c-border-dashed);
+    background: var(--c-input);
+    color: var(--c-text-2);
+  }
+}
+
+.size-btn { padding: 5px 8px; min-width: 34px; }
+.color-reset { padding: 5px 8px; font-size: 11px; }
+.align-btn { padding: 5px 7px; }
+
+.color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  padding: 0;
+
+  &:hover { transform: scale(1.2); }
+  &.active { border-color: var(--c-text-2); transform: scale(1.15); }
+}
+
+.editor-wrap {
+  padding: 16px 24px;
+  min-height: 200px;
+}
+
+:deep(.tiptap-editor) {
+  outline: none;
+  min-height: 160px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+  caret-color: #c084fc;
+
+  p { margin: 0 0 0.6em; }
+  p:last-child { margin-bottom: 0; }
+
+  h2 { font-size: 17px; font-weight: 700; color: var(--c-text); margin: 1em 0 0.4em; }
+  h3 { font-size: 15px; font-weight: 700; color: var(--c-text); margin: 0.9em 0 0.35em; }
+
+  strong { color: var(--c-text-bright); }
+  em     { color: var(--c-text-2); font-style: italic; }
+
+  ul, ol { padding-left: 1.4em; margin: 0.4em 0 0.6em; }
+  li     { margin-bottom: 0.2em; }
+
+  &.ProseMirror-focused { outline: none; }
+
+  p.is-editor-empty:first-child::before {
+    content: '리그 설명을 입력하세요...';
+    color: var(--c-text-faint);
+    pointer-events: none;
+    float: left;
+    height: 0;
+  }
+}
+
+// ── 토스트 알림 ───────────────────────────────────────────
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  background: rgba(74, 222, 128, 0.15);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  color: #4ade80;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.toast-enter-active,
+.toast-leave-active { transition: all 0.2s ease; }
+.toast-enter-from   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+.toast-leave-to     { opacity: 0; transform: translateX(-50%) translateY(10px); }
+
+// ── 팀장 리스트 ───────────────────────────────────────────
+.captain-list {
+  padding: 8px 24px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.captain-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 9px;
+  background: var(--c-overlay);
+  border: 1px solid var(--c-border-faint);
+  transition: border-color 0.12s;
+
+  &:hover { border-color: var(--c-border-strong); }
+
+  &--empty {
+    opacity: 0.45;
+    border-style: dashed;
+  }
+}
+
+.captain-order-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(170, 59, 255, 0.15);
+  border: 1px solid rgba(170, 59, 255, 0.3);
+  color: #c084fc;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.empty {
+    background: var(--c-overlay);
+    border-color: var(--c-border-strong);
+    color: var(--c-text-muted);
+  }
+}
+
+.captain-tier {
+  font-size: 11px;
+  font-weight: 800;
+  font-family: system-ui, sans-serif;
+  padding: 2px 7px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.captain-race {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  flex-shrink: 0;
+  min-width: 16px;
+}
+
+.captain-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+  font-family: system-ui, sans-serif;
+  flex: 1;
+}
+
+.slot-empty {
+  font-size: 13px;
+  color: var(--c-text-faint);
+  font-family: system-ui, sans-serif;
+  flex: 1;
+}
+
+.captain-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.reorder-btn {
+  width: 20px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--c-icon-sub);
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0;
+  transition: all 0.1s;
+
+  &:hover:not(:disabled) { background: var(--c-overlay); color: var(--c-text-2); }
+  &:disabled { opacity: 0.25; cursor: default; }
+}
+
+.captain-remove {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--c-icon-sub);
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+  line-height: 1;
+  transition: all 0.12s;
+  flex-shrink: 0;
+
+  &:hover { background: rgba(248, 113, 113, 0.12); color: #f87171; }
+}
+
+.captain-actions-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 24px 20px;
+}
+
+.btn-add-captain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px dashed rgba(170, 59, 255, 0.4);
+  background: rgba(170, 59, 255, 0.06);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(170, 59, 255, 0.12);
+    border-color: rgba(170, 59, 255, 0.6);
+  }
+}
+
+.btn-tier-sort {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
+}
+
+// ── 경기별 맵 선택 ────────────────────────────────────────
+.match-list {
+  padding: 8px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--c-border-faint);
+
+  &:last-child { border-bottom: none; }
+}
+
+.match-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 220px;
+}
+
+.match-num {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text-2);
+  font-family: system-ui, sans-serif;
+  min-width: 44px;
+}
+
+.match-type {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  padding: 3px 8px;
+  border-radius: 5px;
+
+  &.type-fixed  { background: rgba(74, 222, 128, 0.12); color: #4ade80; }
+  &.type-banpick { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
+}
+
+.match-ace {
+  font-size: 11px;
+  color: var(--c-text-muted);
+  font-family: system-ui, sans-serif;
+}
+
+.match-maps {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.no-map {
+  font-size: 13px;
+  color: var(--c-text-faint);
+  font-family: system-ui, sans-serif;
+}
+
+.selected-maps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.map-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 6px;
+  background: var(--c-badge-bg);
+  border: 1px solid var(--c-badge-border);
+  font-size: 12px;
+  color: var(--c-text-2);
+  font-family: system-ui, sans-serif;
+  font-weight: 500;
+}
+
+.map-chip-thumb {
+  width: 24px;
+  height: 18px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.map-chip-remove {
+  background: none;
+  border: none;
+  color: var(--c-icon-sub);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 0 0 2px;
+  transition: color 0.1s;
+
+  &:hover { color: #f87171; }
+}
+
+.btn-map-pick {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+
+  &:hover { border-color: rgba(170, 59, 255, 0.4); color: #c084fc; }
+}
+
+// ── 오버레이 / 피커 공통 ──────────────────────────────────
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.picker-panel {
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
+
+.picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.picker-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.picker-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-text-muted);
+}
+
+.picker-close {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--c-icon-sub);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+
+  &:hover { background: var(--c-overlay); color: var(--c-text-2); }
+}
+
+.picker-search {
+  flex-shrink: 0;
+  margin: 12px 16px 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-input);
+  color: var(--c-text);
+  font-size: 13px;
+  font-family: system-ui, sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &::placeholder { color: var(--c-text-faint); }
+  &:focus { border-color: rgba(170, 59, 255, 0.5); }
+}
+
+.picker-list {
+  overflow-y: auto;
+  padding: 4px 8px 12px;
+}
+
+.picker-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--c-text-muted);
+  font-size: 13px;
+  font-family: system-ui, sans-serif;
+}
+
+.picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--c-text-2);
+  cursor: pointer;
+  transition: background 0.12s;
+  font-family: system-ui, sans-serif;
+  text-align: left;
+
+  &:hover:not(:disabled):not(.selected) { background: var(--c-overlay); }
+
+  &.selected {
+    background: rgba(170, 59, 255, 0.1);
+    color: #c084fc;
+  }
+
+  &:disabled:not(.selected) {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &.map-used {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.map-used-label {
+  font-size: 11px;
+  color: var(--c-text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.picker-name {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.picker-race {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 16px;
+}
+
+.picker-tier {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.picker-check {
+  flex-shrink: 0;
+}
+
+// ── 맵 피커 아이템 ────────────────────────────────────────
+.map-picker-item {
+  gap: 10px;
+}
+
+.picker-map-thumb {
+  width: 48px;
+  height: 36px;
+  border-radius: 5px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--c-overlay);
+}
+
+.picker-map-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.picker-map-meta {
+  font-size: 11px;
+  color: var(--c-text-muted);
+  font-weight: 400;
+}
+
+// ── 티어/종족 색상 → theme.scss 변수 + _tokens.scss 전역 클래스 참조
+
+// ── 시드권자 룰 안내 ──────────────────────────────────────
+.seed-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(250, 204, 21, 0.05);
+  border: 1px solid rgba(250, 204, 21, 0.15);
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.seed-rule-item {
+  font-size: 12px;
+  color: var(--c-text-muted);
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  line-height: 1.6;
+}
+
+// ── 피커 푸터 ─────────────────────────────────────────────
+.picker-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--c-border-faint);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.picker-confirm {
+  padding: 7px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(170, 59, 255, 0.4);
+  background: rgba(170, 59, 255, 0.12);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(170, 59, 255, 0.22);
+    border-color: rgba(170, 59, 255, 0.65);
+    color: #d8a4ff;
+  }
+}
+
+// ── 에이스 안내 ───────────────────────────────────────────
+.ace-notice {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 24px 4px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(250, 204, 21, 0.06);
+  border: 1px solid rgba(250, 204, 21, 0.2);
+  color: var(--c-text-muted);
+  font-size: 12px;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+
+  svg { color: #facc15; flex-shrink: 0; }
+}

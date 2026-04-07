@@ -7,18 +7,54 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue'),
+      component: () => import('@/views/home/HomeView.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue'),
+      component: () => import('@/views/auth/LoginView.vue'),
+    },
+    {
+      path: '/maps/register',
+      name: 'map-register',
+      component: () => import('@/views/maps/MapRegisterView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/maps/:id/edit',
+      name: 'map-edit',
+      component: () => import('@/views/maps/MapEditView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/players',
+      name: 'players',
+      component: () => import('@/views/players/PlayersView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/leagues',
+      name: 'leagues',
+      component: () => import('@/views/leagues/LeaguesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/leagues/:id',
+      name: 'league-detail',
+      component: () => import('@/views/leagues/LeagueDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/leagues/:id/draft',
+      name: 'league-draft',
+      component: () => import('@/views/leagues/DraftView.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/auth/callback',
       name: 'auth-callback',
-      component: () => import('@/views/AuthCallbackView.vue'),
+      component: () => import('@/views/auth/AuthCallbackView.vue'),
     },
   ],
 })
