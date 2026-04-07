@@ -110,8 +110,8 @@
             <template v-if="seedSwapMode || seedSwapDone">
               <button class="btn-seed-cancel" @click="resetSeedSwap">시드권 초기화</button>
             </template>
-            <button class="btn-save" :disabled="saving || isSaved" @click="saveDraft">
-              {{ saving ? '저장 중...' : isSaved ? '저장됨' : '저장' }}
+            <button class="btn-save" :disabled="saving || isFinalSave" @click="saveDraft">
+              {{ saving ? '저장 중...' : isFinalSave ? '최종 저장됨' : seedSwapDone ? '최종 저장' : '임시 저장' }}
             </button>
           </div>
         </div>
@@ -787,27 +787,37 @@ function showToast(msg: string) {
   toastTimer = setTimeout(() => { toast.value = '' }, 2500)
 }
 
+// 시드권 교체까지 완료된 최종 저장 여부
+const isFinalSave = computed(() => seedSwapDone.value && isSaved.value)
+
 async function saveDraft() {
   saving.value = true
+  const isFinal = seedSwapDone.value
   try {
     const allPicks: Array<{ captain_player_id: number; member_player_id: number; pick_order: number }> = []
     for (const [cIdStr, members] of Object.entries(teams.value)) {
       const cId = Number(cIdStr)
       members.forEach((m, i) => allPicks.push({ captain_player_id: cId, member_player_id: m.id, pick_order: i + 1 }))
     }
-    const logEntries = swapLog.value.map((e, i) => ({
-      order_num: i + 1,
-      seed_holder_player_id: e.seedHolderPlayerId,
-      from_player_id: e.fromPlayerId,
-      to_player_id: e.toPlayerId,
-    }))
-    await Promise.all([
-      saveDraftPicks(leagueId, allPicks),
-      saveSwapLog(leagueId, logEntries),
-      setDraftCompleted(leagueId),
-    ])
-    isSaved.value = true
-    showToast('팀 구성이 저장되었습니다.')
+
+    if (isFinal) {
+      const logEntries = swapLog.value.map((e, i) => ({
+        order_num: i + 1,
+        seed_holder_player_id: e.seedHolderPlayerId,
+        from_player_id: e.fromPlayerId,
+        to_player_id: e.toPlayerId,
+      }))
+      await Promise.all([
+        saveDraftPicks(leagueId, allPicks),
+        saveSwapLog(leagueId, logEntries),
+        setDraftCompleted(leagueId),
+      ])
+      isSaved.value = true
+      showToast('최종 저장 완료. 지목식이 종료되었습니다.')
+    } else {
+      await saveDraftPicks(leagueId, allPicks)
+      showToast('임시 저장되었습니다.')
+    }
   } catch {
     showToast('저장 중 오류가 발생했습니다.')
   } finally {
