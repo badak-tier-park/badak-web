@@ -165,13 +165,15 @@
         <main class="teams-panel" :class="{ 'teams-panel--full': seedSwapMode || isSaved }">
           <!-- 시드권 적용 안내/오류 -->
           <div v-if="seedSwapMode" class="swap-bar" :class="{ 'swap-bar--error': !!swapError }">
-            <div v-if="swapError" :key="swapErrorKey" class="swap-bar-inner" @click="swapError = null">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.2"/>
-                <path d="M6.5 4.5v3M6.5 9h.01" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-              </svg>
-              {{ swapError }}
-              <span class="swap-error-dismiss">×</span>
+            <div v-if="swapError" class="swap-bar-inner" @click="swapError = null">
+              <span :key="swapErrorKey" class="swap-bar-error-content">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M6.5 4.5v3M6.5 9h.01" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                {{ swapError }}
+                <span class="swap-error-dismiss">×</span>
+              </span>
             </div>
             <div v-else class="swap-bar-inner">
               <span v-if="!swapSel">
@@ -667,8 +669,7 @@ function resetSeedSwap() {
 
 function validateFirstClick(_captainId: number, member: PlayerRow, pickIdx: number): string | null {
   if (lockedIds.value.has(member.id)) return `${member.nickname}은 이미 교체된 멤버입니다`
-  // 현재 시드권을 행사하는 본인만 교체 불가 (다른 시드권자는 교체 가능)
-  if (member.id === currentSeedHolderId.value) return `${member.nickname}은 시드권 보유자 본인으로 교체 불가합니다`
+  if (seedHolderIds.value.has(member.id)) return `${member.nickname}은 시드권 보유자로 교체 불가합니다`
   if (pickIdx === 0) return `1번 픽(${member.nickname})은 시드권 적용 불가합니다`
   return null
 }
@@ -678,8 +679,7 @@ function validateSwap(
   b: { captainId: number; member: PlayerRow; pickIdx: number },
 ): string | null {
   if (lockedIds.value.has(b.member.id)) return `${b.member.nickname}은 이미 교체된 멤버입니다`
-  // 현재 시드권을 행사하는 본인만 교체 불가
-  if (b.member.id === currentSeedHolderId.value) return `${b.member.nickname}은 시드권 보유자 본인으로 교체 불가합니다`
+  if (seedHolderIds.value.has(b.member.id)) return `${b.member.nickname}은 시드권 보유자로 교체 불가합니다`
   if (b.pickIdx === 0) return `1번 픽(${b.member.nickname})은 시드권 적용 불가합니다`
 
   const tierDiff = Math.abs((TIER_RANK[a.member.tier] ?? 0) - (TIER_RANK[b.member.tier] ?? 0))
