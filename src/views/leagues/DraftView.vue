@@ -330,7 +330,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { getLeague, setDraftCompleted, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
@@ -338,7 +338,6 @@ import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, getSwapLog, saveSwapLog } from '@/lib/draft'
 
 const route = useRoute()
-const router = useRouter()
 const leagueId = route.params.id as string
 
 const TIER_ORDER = ['A', 'B', 'C', 'D', 'E'] as const
@@ -661,7 +660,7 @@ function resetSeedSwap() {
   showToast('시드권 적용가 초기화되었습니다')
 }
 
-function validateFirstClick(captainId: number, member: PlayerRow, pickIdx: number): string | null {
+function validateFirstClick(_captainId: number, member: PlayerRow, pickIdx: number): string | null {
   if (lockedIds.value.has(member.id)) return `${member.nickname}은 이미 교체된 멤버입니다`
   if (seedHolderIds.value.has(member.id)) return `${member.nickname}은 시드권 보유자로 교체 불가합니다`
   if (pickIdx === 0) return `1번 픽(${member.nickname})은 시드권 적용 불가합니다`
