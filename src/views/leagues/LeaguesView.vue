@@ -39,9 +39,7 @@
               <div class="league-type-badge" :class="`type--${league.type}`">
                 {{ leagueTypeLabel(league.type) }}
               </div>
-              <span class="league-status" :class="`status--${getLeagueStatus(league)}`">
-                {{ statusLabel(getLeagueStatus(league)) }}
-              </span>
+              
             </div>
             <button class="btn-card-edit" @click.stop="openEdit(league)">
               <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
@@ -53,7 +51,11 @@
 
           <!-- 바디: 리그명 + 메타 -->
           <div class="league-card-body">
-            <div class="league-name">{{ league.name }}</div>
+            <div class="league-name">{{ league.name }}&nbsp;
+              <span class="league-status" :class="`status--${getLeagueStatus(league)}`">
+                {{ statusLabel(getLeagueStatus(league)) }}
+              </span>
+            </div>
             <div class="league-card-meta">
               <span class="league-period">
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
@@ -84,7 +86,7 @@
               <span v-if="!league.is_ready" class="action-badge action-badge--warning">미완료</span>
               <span v-else class="action-badge action-badge--done">완료</span>
             </button>
-            <span
+            <button
               v-if="league.has_draft"
               class="action-btn"
               :class="{
@@ -100,10 +102,12 @@
                 <path d="M2 10V5l4-3 4 3v5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M4.5 10V7h3v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-              <template v-if="league.draft_completed">지목식 완료</template>
+              <template v-if="league.draft_completed">지목식
+                <span class="action-badge action-badge--done">완료</span>
+              </template>
               <template v-else-if="isDraftActive(league)">팀원 지목식</template>
               <template v-else>지목식 예정 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}</template>
-            </span>
+            </button>
           </div>
         </div>
       </div>
