@@ -6,8 +6,8 @@
 
       <!-- ── 히어로 ────────────────────────────────────────────── -->
       <div class="dash-hero">
-        <h1 class="dash-hero-title"><span class="dash-hero-em">바닥</span>티어 어드민</h1>
-        <p class="dash-hero-sub">스타크래프트1 리마스터 · 바닥리그 관리 시스템</p>
+        <h1 class="dash-hero-title"><span class="dash-hero-em">바닥</span>티어</h1>
+        <p class="dash-hero-sub">스타크래프트1 리마스터 · 바닥티어 관리 시스템</p>
       </div>
 
       <!-- ── 네비게이션 카드 그리드 ─────────────────────────── -->

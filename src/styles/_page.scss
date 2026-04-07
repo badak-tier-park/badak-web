@@ -1,44 +1,5 @@
-// ── 공통 페이지 장식 요소 ──────────────────────────────────
-// MapRegisterView, PlayersView, LeaguesView, LeagueDetailView 등
-// 배경 orb + 격자 오버레이가 있는 페이지에서 @use 해서 사용
-
-.orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.38;
-  pointer-events: none;
-}
-
-[data-theme="light"] .orb {
-  opacity: 0.12;
-}
-
-.orb-1 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, #aa3bff, transparent);
-  top: -120px;
-  right: -80px;
-}
-
-.orb-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, #5865f2, transparent);
-  bottom: 0;
-  left: -100px;
-}
-
-.grid-overlay {
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(var(--c-grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--c-grid-line) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
-}
+// ── 공통 페이지 유틸 ──────────────────────────────────────
+// orb / grid-overlay 는 App.vue 전역 관리로 이동
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
