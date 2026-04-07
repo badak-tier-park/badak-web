@@ -187,6 +187,7 @@
             </div>
           </div>
 
+          <div class="teams-content-row">
           <div class="teams-body">
             <div
               v-for="captainId in captainIds"
@@ -288,41 +289,42 @@
             </div>
           </div>
 
-        </main>
-
-        <!-- 우측: 시드권 적용 기록 -->
-        <aside v-if="swapLog.length > 0" class="log-panel">
-          <div class="log-panel-header">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M1 4h10M8 2l3 2-3 2M11 8H1M4 6l-3 2 3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            시드권 적용 기록
-          </div>
-          <div class="log-panel-body">
-            <div v-for="(log, i) in swapLog" :key="i" class="log-entry">
-              <div class="log-entry-num">{{ i + 1 }}</div>
-              <div class="log-entry-content">
-                <div class="log-entry-holder">
-                  <span class="log-seed-badge">SEED</span>
-                  {{ log.seedHolderName }}
-                </div>
-                <div class="log-entry-swap">
-                  <span class="log-swap-from">
-                    <span class="log-team-label">{{ log.myTeamCaptainName }}팀</span>
-                    <span class="log-player-name">{{ log.myName }}</span>
-                  </span>
-                  <svg width="14" height="10" viewBox="0 0 14 10" fill="none" class="log-swap-arrows">
-                    <path d="M1 3h12M10 1l3 2-3 2M13 7H1M4 5l-3 2 3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span class="log-swap-to">
-                    <span class="log-team-label">{{ log.theirTeamCaptainName }}팀</span>
-                    <span class="log-player-name">{{ log.theirName }}</span>
-                  </span>
+          <!-- 시드권 적용 기록 -->
+          <aside v-show="swapLog.length > 0" class="log-panel">
+            <div class="log-panel-header">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M1 4h10M8 2l3 2-3 2M11 8H1M4 6l-3 2 3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              시드권 적용 기록
+            </div>
+            <div class="log-panel-body">
+              <div v-for="(log, i) in swapLog" :key="i" class="log-entry">
+                <div class="log-entry-num">{{ i + 1 }}</div>
+                <div class="log-entry-content">
+                  <div class="log-entry-holder">
+                    <span class="log-seed-badge">SEED</span>
+                    {{ log.seedHolderName }}
+                  </div>
+                  <div class="log-entry-swap">
+                    <span class="log-swap-from">
+                      <span class="log-team-label">{{ log.myTeamCaptainName }}팀</span>
+                      <span class="log-player-name">{{ log.myName }}</span>
+                    </span>
+                    <svg width="14" height="10" viewBox="0 0 14 10" fill="none" class="log-swap-arrows">
+                      <path d="M1 3h12M10 1l3 2-3 2M13 7H1M4 5l-3 2 3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="log-swap-to">
+                      <span class="log-team-label">{{ log.theirTeamCaptainName }}팀</span>
+                      <span class="log-player-name">{{ log.theirName }}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+          </div><!-- teams-content-row -->
+
+        </main>
       </div>
     </template>
   </div>
@@ -655,6 +657,7 @@ function resetSeedSwap() {
   }
   seedSwapMode.value = false
   seedSwapDone.value = false
+  currentSeedIdx.value = 0
   swappedIds.value = new Set()
   lockedIds.value = new Set()
   swapLog.value = []
@@ -663,7 +666,7 @@ function resetSeedSwap() {
   swapErrorKey.value = 0
   preSeedTeams.value = null
   isSaved.value = false
-  showToast('시드권 적용가 초기화되었습니다')
+  showToast('시드권 적용이 초기화되었습니다')
 }
 
 function validateFirstClick(_captainId: number, member: PlayerRow, pickIdx: number): string | null {
@@ -773,7 +776,7 @@ function advanceSeed() {
   if (currentSeedIdx.value >= seedOrderIds.value.length) {
     seedSwapMode.value = false
     seedSwapDone.value = true
-    showToast('모든 시드권 적용가 완료되었습니다')
+    showToast('모든 시드권 적용이 완료되었습니다')
   }
 }
 

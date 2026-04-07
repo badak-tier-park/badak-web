@@ -255,6 +255,7 @@
               <span class="match-type" :class="match.isBanPick ? 'type-banpick' : 'type-fixed'">
                 {{ match.isBanPick ? '밴픽 풀 (2~3개)' : '고정 맵 (1개)' }}
               </span>
+              <span v-if="match.isTeamMatch" class="match-type type-team">팀전</span>
             </div>
 
             <div class="match-maps">
@@ -569,6 +570,7 @@ function mapById(id: string) {
 const matchConfigs = [1, 2, 3, 4, 5, 6].map((n) => ({
   number: n,
   isBanPick: n === 2 || n === 3,
+  isTeamMatch: n === 4,
 }))
 
 function isBanPickMatch(n: number) { return n === 2 || n === 3 }

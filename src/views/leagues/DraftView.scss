@@ -576,6 +576,13 @@
   white-space: nowrap;
 }
 
+// ── 팀 + 기록 행 래퍼 ────────────────────────────────────
+.teams-content-row {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
 // ── 팀 컬럼 영역 ──────────────────────────────────────────
 .teams-body {
   flex: 1;
