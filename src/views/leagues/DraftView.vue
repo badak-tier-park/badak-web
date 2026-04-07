@@ -2,10 +2,6 @@
   <div class="draft-page">
     <AppHeader />
 
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="grid-overlay"></div>
-
     <!-- 토스트 -->
     <Teleport to="body">
       <Transition name="toast">

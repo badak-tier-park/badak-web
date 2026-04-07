@@ -19,43 +19,43 @@ const router = createRouter({
       path: '/maps',
       name: 'maps',
       component: () => import('@/views/maps/MapsView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/maps/register',
       name: 'map-register',
       component: () => import('@/views/maps/MapRegisterView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/maps/:id/edit',
       name: 'map-edit',
       component: () => import('@/views/maps/MapEditView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/players',
       name: 'players',
       component: () => import('@/views/players/PlayersView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/leagues',
       name: 'leagues',
       component: () => import('@/views/leagues/LeaguesView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/leagues/:id',
       name: 'league-detail',
       component: () => import('@/views/leagues/LeagueDetailView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/leagues/:id/draft',
       name: 'league-draft',
       component: () => import('@/views/leagues/DraftView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/auth/callback',
@@ -74,6 +74,10 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAuth && !auth.user) {
     return { name: 'login' }
+  }
+
+  if (to.meta.requiresAdmin && !auth.isAdmin) {
+    return { name: 'home' }
   }
 
   if (to.name === 'login' && auth.user) {
