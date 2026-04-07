@@ -579,6 +579,7 @@
 
   &.type-fixed  { background: rgba(74, 222, 128, 0.12); color: #4ade80; }
   &.type-banpick { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
+  &.type-team   { background: rgba(139, 92, 246, 0.12); color: #a78bfa; }
 }
 
 .match-ace {
@@ -872,7 +873,14 @@
   padding: 12px 16px;
   border-top: 1px solid var(--c-border-faint);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker-footer-hint {
+  font-size: 12px;
+  color: var(--c-text-faint);
+  font-family: system-ui, sans-serif;
 }
 
 .picker-confirm {

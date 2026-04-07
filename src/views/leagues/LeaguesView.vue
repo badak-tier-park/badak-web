@@ -31,54 +31,84 @@
         생성된 리그가 없습니다.
       </div>
       <div v-else class="league-list">
-        <div v-for="league in leagues" :key="league.id" class="league-card">
-          <div class="league-type-badge" :class="`type--${league.type}`">
-            {{ leagueTypeLabel(league.type) }}
-          </div>
-          <div class="league-info">
-            <button class="league-name" @click="router.push({ name: 'league-detail', params: { id: league.id } })">{{ league.name }}</button>
-            <p class="league-period">{{ league.start_date }} ~ {{ league.end_date }}</p>
-          </div>
-          <span
-            v-if="league.has_draft"
-            class="draft-badge"
-            :class="{
-              'draft-badge--active': isDraftActive(league),
-              'draft-badge--done': league.draft_completed,
-            }"
-            :role="isDraftActive(league) ? 'button' : undefined"
-            :tabindex="isDraftActive(league) ? 0 : undefined"
-            @click="isDraftActive(league) && router.push({ name: 'league-draft', params: { id: league.id } })"
-            @keydown.enter="isDraftActive(league) && router.push({ name: 'league-draft', params: { id: league.id } })"
-          >
-            <template v-if="league.draft_completed">
-              지목식 완료
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M2 5l2.5 2.5 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <div v-for="league in leagues" :key="league.id" class="league-card" :class="`league-card--${league.type}`">
+
+          <!-- 헤더: 타입·상태 뱃지 + 수정 버튼 -->
+          <div class="league-card-header">
+            <div class="league-card-badges">
+              <div class="league-type-badge" :class="`type--${league.type}`">
+                {{ leagueTypeLabel(league.type) }}
+              </div>
+              
+            </div>
+            <button class="btn-card-edit" @click.stop="openEdit(league)">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
+                <path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-            </template>
-            <template v-else>
-              지목식 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}
-              <svg v-if="isDraftActive(league)" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </template>
-          </span>
-          <span class="eligibility-badge" :class="`eligibility-badge--${league.eligibility_type}`">
-            {{ { open: '전체 선수', application: '참가 신청', invitation: '선수 지목' }[league.eligibility_type] }}
-          </span>
-          <div class="league-tiers">
-            <span
-              v-for="tier in league.eligible_tiers"
-              :key="tier"
-              class="tier-chip"
-              :class="`tier-chip--${tier.toLowerCase()}`"
-            >{{ tier }}</span>
+              수정
+            </button>
           </div>
-          <span class="league-status" :class="`status--${getLeagueStatus(league)}`">
-            {{ statusLabel(getLeagueStatus(league)) }}
-          </span>
-          <button class="edit-btn" @click="openEdit(league)">수정</button>
+
+          <!-- 바디: 리그명 + 메타 -->
+          <div class="league-card-body">
+            <div class="league-name">{{ league.name }}&nbsp;
+              <span class="league-status" :class="`status--${getLeagueStatus(league)}`">
+                {{ statusLabel(getLeagueStatus(league)) }}
+              </span>
+            </div>
+            <div class="league-card-meta">
+              <span class="league-period">
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <rect x="1" y="2" width="9" height="8" rx="1.5" stroke="currentColor" stroke-width="1.1"/>
+                  <path d="M3.5 1v2M7.5 1v2M1 5h9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+                </svg>
+                {{ league.start_date.replaceAll('-', '/') }} ~ {{ league.end_date.replaceAll('-', '/') }}
+              </span>
+              <div class="league-tiers">
+                <span
+                  v-for="tier in league.eligible_tiers"
+                  :key="tier"
+                  class="tier-chip"
+                  :class="`tier-chip--${tier.toLowerCase()}`"
+                >{{ tier }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 액션: 상세 설정 | 지목식 -->
+          <div class="league-card-actions">
+            <button class="action-btn action-btn--detail" @click="router.push({ name: 'league-detail', params: { id: league.id } })">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/>
+                <path d="M6 4v2.5M6 8h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+              상세 설정
+              <span v-if="!league.is_ready" class="action-badge action-badge--warning">미완료</span>
+              <span v-else class="action-badge action-badge--done">완료</span>
+            </button>
+            <button
+              v-if="league.has_draft"
+              class="action-btn"
+              :class="{
+                'action-btn--draft': isDraftActive(league),
+                'action-btn--draft-done': league.draft_completed,
+                'action-btn--draft-disabled': !isDraftActive(league) && !league.draft_completed,
+              }"
+              :role="isDraftActive(league) || league.draft_completed ? 'button' : undefined"
+              :tabindex="isDraftActive(league) || league.draft_completed ? 0 : undefined"
+              @click="(isDraftActive(league) || league.draft_completed) && router.push({ name: 'league-draft', params: { id: league.id } })"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 10V5l4-3 4 3v5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4.5 10V7h3v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <template v-if="league.draft_completed">지목식
+                <span class="action-badge action-badge--done">완료</span>
+              </template>
+              <template v-else-if="isDraftActive(league)">팀원 지목식</template>
+              <template v-else>지목식 예정 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}</template>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -297,7 +327,7 @@ const statusLabel = (s: LeagueStatus) =>
   ({ preparing: '준비 중', upcoming: '예정', ongoing: '진행 중', finished: '종료' })[s]
 
 function isDraftActive(league: LeagueRow): boolean {
-  if (!league.has_draft || !league.draft_date) return false
+  if (!league.has_draft || !league.draft_date || !league.is_ready) return false
   const today = new Date().toISOString().slice(0, 10)
   return league.draft_date <= today
 }

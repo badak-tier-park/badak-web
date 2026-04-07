@@ -255,6 +255,7 @@
               <span class="match-type" :class="match.isBanPick ? 'type-banpick' : 'type-fixed'">
                 {{ match.isBanPick ? '밴픽 풀 (2~3개)' : '고정 맵 (1개)' }}
               </span>
+              <span v-if="match.isTeamMatch" class="match-type type-team">팀전</span>
             </div>
 
             <div class="match-maps">
@@ -412,6 +413,13 @@
             </button>
             <div v-if="filteredMaps.length === 0" class="picker-empty">검색 결과 없음</div>
           </div>
+          <div class="picker-footer">
+            <span class="picker-footer-hint">
+              {{ (matchMaps[mapPickerTarget!] ?? []).length }}
+              / {{ isBanPickMatch(mapPickerTarget!) ? '3' : '1' }}개 선택됨
+            </span>
+            <button class="picker-confirm" @click="mapPickerTarget = null">선택 완료</button>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -420,7 +428,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onBeforeUnmount, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { Color } from '@tiptap/extension-color'
@@ -498,6 +506,7 @@ function goNext() {
 
 // ── 페이지 데이터 로딩 ────────────────────────────────────
 const route = useRoute()
+const router = useRouter()
 const leagueId = route.params.id as string
 
 const pageLoading = ref(true)
@@ -561,6 +570,7 @@ function mapById(id: string) {
 const matchConfigs = [1, 2, 3, 4, 5, 6].map((n) => ({
   number: n,
   isBanPick: n === 2 || n === 3,
+  isTeamMatch: n === 4,
 }))
 
 function isBanPickMatch(n: number) { return n === 2 || n === 3 }
@@ -691,9 +701,20 @@ function removeCaptain(index: number) {
 const showPlayerPicker = ref(false)
 const playerSearch = ref('')
 
+function sortPlayers(list: PlayerRow[]) {
+  return [...list].sort((a, b) => {
+    const tierDiff = (TIER_RANK[a.tier] ?? 0) - (TIER_RANK[b.tier] ?? 0)
+    if (tierDiff !== 0) return tierDiff
+    const raceDiff = a.race.localeCompare(b.race)
+    if (raceDiff !== 0) return raceDiff
+    return a.nickname.localeCompare(b.nickname)
+  })
+}
+
 const filteredPlayers = computed(() => {
   const q = playerSearch.value.trim().toLowerCase()
-  return players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  const list = players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  return sortPlayers(list)
 })
 
 function openPlayerPicker() {
@@ -762,14 +783,11 @@ function openMapPicker(matchNumber: number) {
 function toggleMap(matchNumber: number, mapId: string) {
   if (isMapUsedElsewhere(mapId, matchNumber)) return
   const current = matchMaps.value[matchNumber] ?? []
-  const isBanPick = isBanPickMatch(matchNumber)
+  const maxCount = isBanPickMatch(matchNumber) ? 3 : 1
 
   if (current.includes(mapId)) {
     matchMaps.value[matchNumber] = current.filter((id) => id !== mapId)
-  } else if (!isBanPick) {
-    matchMaps.value[matchNumber] = [mapId]
-    mapPickerTarget.value = null
-  } else if (current.length < 3) {
+  } else if (current.length < maxCount) {
     matchMaps.value[matchNumber] = [...current, mapId]
   }
 }
@@ -786,7 +804,8 @@ const seedError = ref<string | null>(null)
 
 const filteredSeedPlayers = computed(() => {
   const q = seedSearch.value.trim().toLowerCase()
-  return players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  const list = players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  return sortPlayers(list)
 })
 
 function openSeedPicker() {
@@ -841,7 +860,18 @@ async function saveMapsData() {
       .map(([n, ids]) => ({ match_number: Number(n), map_ids: ids }))
     await saveMatchMaps(leagueId, entries)
     await checkAndUpdateReady(leagueId)
-    showToast('경기별 맵이 저장되었습니다.')
+
+    // 이전 탭 중 미완료 탭이 있으면 해당 탭으로 이동
+    const incompleteTabs: TabKey[] = ['description', 'captains', 'seed_holders']
+    const firstIncomplete = incompleteTabs.find((k) => !isTabDone(k))
+    if (firstIncomplete) {
+      showToast('저장되었습니다. 미완료 항목을 확인해주세요.')
+      activeTab.value = firstIncomplete
+    } else {
+      showToast('모든 항목이 저장되었습니다.')
+      await new Promise((r) => setTimeout(r, 800))
+      router.push({ name: 'leagues' })
+    }
   } catch (e: any) {
     mapError.value = e.message ?? '저장 중 오류가 발생했습니다.'
   } finally {

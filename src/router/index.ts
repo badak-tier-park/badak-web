@@ -16,6 +16,12 @@ const router = createRouter({
       component: () => import('@/views/auth/LoginView.vue'),
     },
     {
+      path: '/maps',
+      name: 'maps',
+      component: () => import('@/views/maps/MapsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/maps/register',
       name: 'map-register',
       component: () => import('@/views/maps/MapRegisterView.vue'),

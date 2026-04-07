@@ -108,10 +108,10 @@
               <button class="btn-seed-pass" @click="passSeed">패스</button>
             </template>
             <template v-if="seedSwapMode || seedSwapDone">
-              <button class="btn-seed-cancel" @click="resetSeedSwap">시드권 초기화</button>
+              <button class="btn-seed-cancel" :disabled="isFinalSave" @click="resetSeedSwap">시드권 초기화</button>
             </template>
-            <button class="btn-save" :disabled="saving || isSaved" @click="saveDraft">
-              {{ saving ? '저장 중...' : isSaved ? '저장됨' : '저장' }}
+            <button class="btn-save" :disabled="saving || isFinalSave" @click="saveDraft">
+              {{ saving ? '저장 중...' : isFinalSave ? '최종 저장됨' : seedSwapDone ? '최종 저장' : '임시 저장' }}
             </button>
           </div>
         </div>
@@ -187,6 +187,7 @@
             </div>
           </div>
 
+          <div class="teams-content-row">
           <div class="teams-body">
             <div
               v-for="captainId in captainIds"
@@ -288,41 +289,42 @@
             </div>
           </div>
 
-        </main>
-
-        <!-- 우측: 시드권 적용 기록 -->
-        <aside v-if="swapLog.length > 0" class="log-panel">
-          <div class="log-panel-header">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M1 4h10M8 2l3 2-3 2M11 8H1M4 6l-3 2 3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            시드권 적용 기록
-          </div>
-          <div class="log-panel-body">
-            <div v-for="(log, i) in swapLog" :key="i" class="log-entry">
-              <div class="log-entry-num">{{ i + 1 }}</div>
-              <div class="log-entry-content">
-                <div class="log-entry-holder">
-                  <span class="log-seed-badge">SEED</span>
-                  {{ log.seedHolderName }}
-                </div>
-                <div class="log-entry-swap">
-                  <span class="log-swap-from">
-                    <span class="log-team-label">{{ log.myTeamCaptainName }}팀</span>
-                    <span class="log-player-name">{{ log.myName }}</span>
-                  </span>
-                  <svg width="14" height="10" viewBox="0 0 14 10" fill="none" class="log-swap-arrows">
-                    <path d="M1 3h12M10 1l3 2-3 2M13 7H1M4 5l-3 2 3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span class="log-swap-to">
-                    <span class="log-team-label">{{ log.theirTeamCaptainName }}팀</span>
-                    <span class="log-player-name">{{ log.theirName }}</span>
-                  </span>
+          <!-- 시드권 적용 기록 -->
+          <aside v-show="swapLog.length > 0" class="log-panel">
+            <div class="log-panel-header">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M1 4h10M8 2l3 2-3 2M11 8H1M4 6l-3 2 3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              시드권 적용 기록
+            </div>
+            <div class="log-panel-body">
+              <div v-for="(log, i) in swapLog" :key="i" class="log-entry">
+                <div class="log-entry-num">{{ i + 1 }}</div>
+                <div class="log-entry-content">
+                  <div class="log-entry-holder">
+                    <span class="log-seed-badge">SEED</span>
+                    {{ log.seedHolderName }}
+                  </div>
+                  <div class="log-entry-swap">
+                    <span class="log-swap-from">
+                      <span class="log-team-label">{{ log.myTeamCaptainName }}팀</span>
+                      <span class="log-player-name">{{ log.myName }}</span>
+                    </span>
+                    <svg width="14" height="10" viewBox="0 0 14 10" fill="none" class="log-swap-arrows">
+                      <path d="M1 3h12M10 1l3 2-3 2M13 7H1M4 5l-3 2 3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="log-swap-to">
+                      <span class="log-team-label">{{ log.theirTeamCaptainName }}팀</span>
+                      <span class="log-player-name">{{ log.theirName }}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+          </div><!-- teams-content-row -->
+
+        </main>
       </div>
     </template>
   </div>
@@ -330,7 +332,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { getLeague, setDraftCompleted, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
@@ -338,6 +340,7 @@ import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, getSwapLog, saveSwapLog } from '@/lib/draft'
 
 const route = useRoute()
+const router = useRouter()
 const leagueId = route.params.id as string
 
 const TIER_ORDER = ['A', 'B', 'C', 'D', 'E'] as const
@@ -364,6 +367,11 @@ onMounted(async () => {
       getSeedHolders(leagueId),
       getSwapLog(leagueId),
     ])
+    if (!leagueData.is_ready || captainsData.length === 0) {
+      router.replace({ name: 'league-detail', params: { id: leagueId } })
+      return
+    }
+
     league.value = leagueData
     allPlayers.value = playersData
     seedHolderIds.value = new Set(seedHoldersData.map(h => h.player_id))
@@ -649,6 +657,7 @@ function resetSeedSwap() {
   }
   seedSwapMode.value = false
   seedSwapDone.value = false
+  currentSeedIdx.value = 0
   swappedIds.value = new Set()
   lockedIds.value = new Set()
   swapLog.value = []
@@ -657,12 +666,13 @@ function resetSeedSwap() {
   swapErrorKey.value = 0
   preSeedTeams.value = null
   isSaved.value = false
-  showToast('시드권 적용가 초기화되었습니다')
+  showToast('시드권 적용이 초기화되었습니다')
 }
 
 function validateFirstClick(_captainId: number, member: PlayerRow, pickIdx: number): string | null {
   if (lockedIds.value.has(member.id)) return `${member.nickname}은 이미 교체된 멤버입니다`
-  if (seedHolderIds.value.has(member.id)) return `${member.nickname}은 시드권 보유자로 교체 불가합니다`
+  // 현재 시드권을 행사하는 본인만 교체 불가 (다른 시드권자는 교체 가능)
+  if (member.id === currentSeedHolderId.value) return `${member.nickname}은 시드권 보유자 본인으로 교체 불가합니다`
   if (pickIdx === 0) return `1번 픽(${member.nickname})은 시드권 적용 불가합니다`
   return null
 }
@@ -672,7 +682,8 @@ function validateSwap(
   b: { captainId: number; member: PlayerRow; pickIdx: number },
 ): string | null {
   if (lockedIds.value.has(b.member.id)) return `${b.member.nickname}은 이미 교체된 멤버입니다`
-  if (seedHolderIds.value.has(b.member.id)) return `${b.member.nickname}은 시드권 보유자로 교체 불가합니다`
+  // 현재 시드권을 행사하는 본인만 교체 불가
+  if (b.member.id === currentSeedHolderId.value) return `${b.member.nickname}은 시드권 보유자 본인으로 교체 불가합니다`
   if (b.pickIdx === 0) return `1번 픽(${b.member.nickname})은 시드권 적용 불가합니다`
 
   const tierDiff = Math.abs((TIER_RANK[a.member.tier] ?? 0) - (TIER_RANK[b.member.tier] ?? 0))
@@ -765,7 +776,7 @@ function advanceSeed() {
   if (currentSeedIdx.value >= seedOrderIds.value.length) {
     seedSwapMode.value = false
     seedSwapDone.value = true
-    showToast('모든 시드권 적용가 완료되었습니다')
+    showToast('모든 시드권 적용이 완료되었습니다')
   }
 }
 
@@ -781,27 +792,37 @@ function showToast(msg: string) {
   toastTimer = setTimeout(() => { toast.value = '' }, 2500)
 }
 
+// 시드권 교체까지 완료된 최종 저장 여부
+const isFinalSave = computed(() => seedSwapDone.value && isSaved.value)
+
 async function saveDraft() {
   saving.value = true
+  const isFinal = seedSwapDone.value
   try {
     const allPicks: Array<{ captain_player_id: number; member_player_id: number; pick_order: number }> = []
     for (const [cIdStr, members] of Object.entries(teams.value)) {
       const cId = Number(cIdStr)
       members.forEach((m, i) => allPicks.push({ captain_player_id: cId, member_player_id: m.id, pick_order: i + 1 }))
     }
-    const logEntries = swapLog.value.map((e, i) => ({
-      order_num: i + 1,
-      seed_holder_player_id: e.seedHolderPlayerId,
-      from_player_id: e.fromPlayerId,
-      to_player_id: e.toPlayerId,
-    }))
-    await Promise.all([
-      saveDraftPicks(leagueId, allPicks),
-      saveSwapLog(leagueId, logEntries),
-      setDraftCompleted(leagueId),
-    ])
-    isSaved.value = true
-    showToast('팀 구성이 저장되었습니다.')
+
+    if (isFinal) {
+      const logEntries = swapLog.value.map((e, i) => ({
+        order_num: i + 1,
+        seed_holder_player_id: e.seedHolderPlayerId,
+        from_player_id: e.fromPlayerId,
+        to_player_id: e.toPlayerId,
+      }))
+      await Promise.all([
+        saveDraftPicks(leagueId, allPicks),
+        saveSwapLog(leagueId, logEntries),
+        setDraftCompleted(leagueId),
+      ])
+      isSaved.value = true
+      showToast('최종 저장 완료. 지목식이 종료되었습니다.')
+    } else {
+      await saveDraftPicks(leagueId, allPicks)
+      showToast('임시 저장되었습니다.')
+    }
   } catch {
     showToast('저장 중 오류가 발생했습니다.')
   } finally {
