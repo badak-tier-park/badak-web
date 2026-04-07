@@ -14,6 +14,10 @@ const route = useRoute()
 </script>
 
 <style>
+html, body, #app {
+  background: var(--c-bg);
+}
+
 .orb {
   position: fixed;
   border-radius: 50%;
