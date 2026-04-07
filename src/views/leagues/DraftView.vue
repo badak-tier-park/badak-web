@@ -330,7 +330,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { getLeague, setDraftCompleted, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
@@ -338,6 +338,7 @@ import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, getSwapLog, saveSwapLog } from '@/lib/draft'
 
 const route = useRoute()
+const router = useRouter()
 const leagueId = route.params.id as string
 
 const TIER_ORDER = ['A', 'B', 'C', 'D', 'E'] as const
@@ -364,6 +365,11 @@ onMounted(async () => {
       getSeedHolders(leagueId),
       getSwapLog(leagueId),
     ])
+    if (!leagueData.is_ready || captainsData.length === 0) {
+      router.replace({ name: 'league-detail', params: { id: leagueId } })
+      return
+    }
+
     league.value = leagueData
     allPlayers.value = playersData
     seedHolderIds.value = new Set(seedHoldersData.map(h => h.player_id))

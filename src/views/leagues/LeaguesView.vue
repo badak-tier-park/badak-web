@@ -297,7 +297,7 @@ const statusLabel = (s: LeagueStatus) =>
   ({ preparing: '준비 중', upcoming: '예정', ongoing: '진행 중', finished: '종료' })[s]
 
 function isDraftActive(league: LeagueRow): boolean {
-  if (!league.has_draft || !league.draft_date) return false
+  if (!league.has_draft || !league.draft_date || !league.is_ready) return false
   const today = new Date().toISOString().slice(0, 10)
   return league.draft_date <= today
 }
