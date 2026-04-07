@@ -165,7 +165,8 @@
   font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
-  &:hover { background: rgba(248, 113, 113, 0.14); }
+  &:hover:not(:disabled) { background: rgba(248, 113, 113, 0.14); }
+  &:disabled { opacity: 0.3; cursor: default; }
 }
 
 .btn-save {
@@ -573,6 +574,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// ── 팀 + 기록 행 래퍼 ────────────────────────────────────
+.teams-content-row {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 }
 
 // ── 팀 컬럼 영역 ──────────────────────────────────────────
