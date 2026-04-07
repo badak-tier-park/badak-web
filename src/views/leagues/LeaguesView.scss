@@ -76,36 +76,89 @@
 .league-card {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
   overflow: hidden;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
 
-  &:hover { border-color: var(--c-border-strong); }
+  // 좌측 컬러 액센트
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 14px 0 0 14px;
+    opacity: 0.7;
+  }
+
+  &--regular_summer::before { background: #fb923c; }
+  &--regular_winter::before { background: #60a5fa; }
+  &--jongchoe::before       { background: #facc15; }
+  &--individual::before     { background: #34d399; }
+
+  &:hover {
+    border-color: var(--c-border-strong);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  }
 }
 
-// 상단: 이름 + 메타
-.league-card-top {
-  padding: 14px 18px 12px;
+// 헤더: 뱃지 + 수정 버튼
+.league-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 0 18px;
+}
+
+.league-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.btn-card-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--c-text-faint);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.14s;
+
+  svg { flex-shrink: 0; }
+
+  &:hover {
+    border-color: var(--c-border-strong);
+    background: var(--c-overlay);
+    color: var(--c-text-sub);
+  }
+}
+
+// 바디: 리그명 + 메타
+.league-card-body {
+  padding: 8px 16px 14px 18px;
   display: flex;
   flex-direction: column;
   gap: 7px;
 }
 
-.league-card-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 .league-name {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
-  color: var(--c-text);
+  color: var(--c-text-bright);
   font-family: system-ui, sans-serif;
+  line-height: 1.3;
+  letter-spacing: -0.2px;
 }
 
 .league-card-meta {
@@ -123,7 +176,7 @@
   color: var(--c-text-muted);
   font-family: system-ui, sans-serif;
 
-  svg { opacity: 0.5; flex-shrink: 0; }
+  svg { opacity: 0.45; flex-shrink: 0; }
 }
 
 .league-tiers { display: flex; gap: 4px; flex-shrink: 0; }
@@ -131,7 +184,7 @@
 .tier-chip {
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: 4px;
   font-family: system-ui, sans-serif;
 
@@ -165,7 +218,6 @@
   border-radius: 20px;
   white-space: nowrap;
   flex-shrink: 0;
-  margin-left: auto;
 
   &.status--preparing { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
   &.status--upcoming  { background: var(--c-badge-bg);         color: var(--c-text-sub); }
@@ -173,63 +225,58 @@
   &.status--finished  { background: var(--c-surface-raised);   color: var(--c-text-faint); }
 }
 
-// 하단: 액션 버튼 바
+// 액션 버튼 바 (2-col 그리드)
 .league-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   border-top: 1px solid var(--c-border-faint);
-  background: var(--c-overlay);
+  background: var(--c-border-faint); // 컬럼 사이 구분선
+  gap: 1px;
 }
 
 .action-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 9px 16px;
+  padding: 10px 14px;
   font-size: 12px;
   font-weight: 600;
   font-family: system-ui, sans-serif;
   border: none;
-  border-right: 1px solid var(--c-border-faint);
-  background: none;
+  background: var(--c-surface-raised);
   color: var(--c-text-sub);
   cursor: pointer;
-  transition: all 0.14s;
+  transition: background 0.14s, color 0.14s;
   white-space: nowrap;
   text-decoration: none;
 
-  &:last-child { border-right: none; }
-
-  svg { flex-shrink: 0; opacity: 0.7; }
+  svg { flex-shrink: 0; opacity: 0.65; transition: opacity 0.14s; }
 
   &--detail {
-    &:hover { background: rgba(170, 59, 255, 0.07); color: #c084fc; svg { opacity: 1; } }
-  }
-
-  &--edit {
-    margin-left: auto;
-    &:hover { background: var(--c-surface-raised); color: var(--c-text-2); svg { opacity: 1; } }
+    &:hover {
+      background: rgba(170, 59, 255, 0.06);
+      color: #c084fc;
+      svg { opacity: 1; }
+    }
   }
 
   &--draft {
     color: #34d399;
-    cursor: pointer;
     svg { opacity: 1; }
-    &:hover { background: rgba(52, 211, 153, 0.08); }
+    &:hover { background: rgba(52, 211, 153, 0.07); color: #6ee7b7; }
   }
 
   &--draft-done {
     color: #818cf8;
-    cursor: pointer;
     svg { opacity: 1; }
-    &:hover { background: rgba(99, 102, 241, 0.08); }
+    &:hover { background: rgba(99, 102, 241, 0.07); color: #a5b4fc; }
   }
 
   &--draft-disabled {
     color: var(--c-text-faint);
     cursor: default;
-    opacity: 0.6;
+    svg { opacity: 0.4; }
   }
 }
 
@@ -241,15 +288,15 @@
   font-family: system-ui, sans-serif;
 
   &--warning {
-    background: rgba(251, 146, 60, 0.12);
+    background: rgba(251, 146, 60, 0.15);
     color: #fb923c;
-    border: 1px solid rgba(251, 146, 60, 0.25);
+    border: 1px solid rgba(251, 146, 60, 0.3);
   }
 
   &--done {
     background: rgba(34, 197, 94, 0.1);
     color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.25);
   }
 }
 
