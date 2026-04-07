@@ -87,12 +87,13 @@
               class="action-btn"
               :class="{
                 'action-btn--draft': isDraftActive(league),
+                'action-btn--picks-done': league.picks_completed && !league.draft_completed,
                 'action-btn--draft-done': league.draft_completed,
-                'action-btn--draft-disabled': !isDraftActive(league) && !league.draft_completed,
+                'action-btn--draft-disabled': !isDraftActive(league) && !league.picks_completed && !league.draft_completed,
               }"
-              :role="isDraftActive(league) || league.draft_completed ? 'button' : undefined"
-              :tabindex="isDraftActive(league) || league.draft_completed ? 0 : undefined"
-              @click="(isDraftActive(league) || league.draft_completed) && router.push({ name: 'league-draft', params: { id: league.id } })"
+              :role="isDraftActive(league) || league.picks_completed || league.draft_completed ? 'button' : undefined"
+              :tabindex="isDraftActive(league) || league.picks_completed || league.draft_completed ? 0 : undefined"
+              @click="(isDraftActive(league) || league.picks_completed || league.draft_completed) && router.push({ name: 'league-draft', params: { id: league.id } })"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 10V5l4-3 4 3v5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -100,6 +101,9 @@
               </svg>
               <template v-if="league.draft_completed">지목식
                 <span class="action-badge action-badge--done">완료</span>
+              </template>
+              <template v-else-if="league.picks_completed">선수배정
+                <span class="action-badge action-badge--picks">완료</span>
               </template>
               <template v-else-if="isDraftActive(league)">팀원 지목식</template>
               <template v-else>지목식 예정 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}</template>

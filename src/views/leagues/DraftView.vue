@@ -87,7 +87,7 @@
             <span class="topbar-round">{{ turnRound }}R {{ turnPositionLabel }}</span>
           </span>
           <span v-else-if="!seedSwapMode" class="topbar-done">
-            {{ seedSwapDone ? '시드권 적용 완료' : '지목식 완료' }}
+            {{ seedSwapDone ? '지목식 완료' : '선수배정완료' }}
           </span>
           <span v-else class="topbar-seed-mode">
             시드권 적용
@@ -332,7 +332,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, setDraftCompleted, type LeagueRow } from '@/lib/leagues'
+import { getLeague, setPicksCompleted, setDraftCompleted, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, getSwapLog, saveSwapLog } from '@/lib/draft'
@@ -816,7 +816,9 @@ async function saveDraft() {
       isSaved.value = true
       showToast('최종 저장 완료. 지목식이 종료되었습니다.')
     } else {
-      await saveDraftPicks(leagueId, allPicks)
+      const tasks: Promise<unknown>[] = [saveDraftPicks(leagueId, allPicks)]
+      if (draftDone.value) tasks.push(setPicksCompleted(leagueId))
+      await Promise.all(tasks)
       showToast('임시 저장되었습니다.')
     }
   } catch {

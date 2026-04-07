@@ -17,6 +17,7 @@ export interface LeagueRow {
   description: string | null
   captain_count: number
   is_ready: boolean
+  picks_completed: boolean
   draft_completed: boolean
   created_at: string
   updated_at: string
@@ -95,10 +96,18 @@ export async function checkAndUpdateReady(id: string): Promise<void> {
   await supabase.from('leagues').update({ is_ready: isReady, updated_at: new Date().toISOString() }).eq('id', id)
 }
 
+export async function setPicksCompleted(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ picks_completed: true, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function setDraftCompleted(id: string): Promise<void> {
   const { error } = await supabase
     .from('leagues')
-    .update({ draft_completed: true, updated_at: new Date().toISOString() })
+    .update({ picks_completed: true, draft_completed: true, updated_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw error
 }
