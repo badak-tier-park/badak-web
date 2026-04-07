@@ -108,7 +108,7 @@
               <button class="btn-seed-pass" @click="passSeed">패스</button>
             </template>
             <template v-if="seedSwapMode || seedSwapDone">
-              <button class="btn-seed-cancel" @click="resetSeedSwap">시드권 초기화</button>
+              <button class="btn-seed-cancel" :disabled="isFinalSave" @click="resetSeedSwap">시드권 초기화</button>
             </template>
             <button class="btn-save" :disabled="saving || isFinalSave" @click="saveDraft">
               {{ saving ? '저장 중...' : isFinalSave ? '최종 저장됨' : seedSwapDone ? '최종 저장' : '임시 저장' }}
@@ -668,7 +668,8 @@ function resetSeedSwap() {
 
 function validateFirstClick(_captainId: number, member: PlayerRow, pickIdx: number): string | null {
   if (lockedIds.value.has(member.id)) return `${member.nickname}은 이미 교체된 멤버입니다`
-  if (seedHolderIds.value.has(member.id)) return `${member.nickname}은 시드권 보유자로 교체 불가합니다`
+  // 현재 시드권을 행사하는 본인만 교체 불가 (다른 시드권자는 교체 가능)
+  if (member.id === currentSeedHolderId.value) return `${member.nickname}은 시드권 보유자 본인으로 교체 불가합니다`
   if (pickIdx === 0) return `1번 픽(${member.nickname})은 시드권 적용 불가합니다`
   return null
 }
@@ -678,7 +679,8 @@ function validateSwap(
   b: { captainId: number; member: PlayerRow; pickIdx: number },
 ): string | null {
   if (lockedIds.value.has(b.member.id)) return `${b.member.nickname}은 이미 교체된 멤버입니다`
-  if (seedHolderIds.value.has(b.member.id)) return `${b.member.nickname}은 시드권 보유자로 교체 불가합니다`
+  // 현재 시드권을 행사하는 본인만 교체 불가
+  if (b.member.id === currentSeedHolderId.value) return `${b.member.nickname}은 시드권 보유자 본인으로 교체 불가합니다`
   if (b.pickIdx === 0) return `1번 픽(${b.member.nickname})은 시드권 적용 불가합니다`
 
   const tierDiff = Math.abs((TIER_RANK[a.member.tier] ?? 0) - (TIER_RANK[b.member.tier] ?? 0))
