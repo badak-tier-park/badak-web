@@ -143,13 +143,14 @@
                     v-for="player in (playersByTierRace[tier]?.[race] ?? [])"
                     :key="player.id"
                     class="player-card"
+                    :class="`tier-bg--${player.tier.toLowerCase()}`"
                     draggable="true"
                     @dragstart="onDragStart($event, player.id, 'pool')"
                     @dragend="onDragEnd"
                   >
-                    <span class="card-tier" :class="`tier--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
-                    <span class="card-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
-                    <span class="card-name">{{ player.nickname }}</span>
+                    <span class="card-name">{{ player.nickname }}
+                      <span class="card-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
+                    </span>
                     <span v-if="seedHolderIds.has(player.id)" class="card-seed">SEED</span>
                   </div>
                 </template>
@@ -254,6 +255,7 @@
                   :key="member.id"
                   class="player-card player-card--member"
                   :class="{
+                    [`tier-bg--${member.tier.toLowerCase()}`]: true,
                     'swap-selected': seedSwapMode && swapSel?.member.id === member.id,
                     'swap-locked': seedSwapMode && lockedIds.has(member.id),
                     'swap-clickable': seedSwapMode && !lockedIds.has(member.id),
@@ -264,7 +266,6 @@
                   @click="seedSwapMode && onMemberClick(captainId, member, idx)"
                 >
                   <span class="card-pick-num">{{ idx + 1 }}</span>
-                  <span class="card-tier" :class="`tier--${member.tier.toLowerCase()}`">{{ member.tier }}</span>
                   <span class="card-race" :class="`race--${member.race.toLowerCase()}`">{{ member.race }}</span>
                   <span class="card-name">{{ member.nickname }}</span>
                   <span v-if="seedHolderIds.has(member.id)" class="card-seed">SEED</span>

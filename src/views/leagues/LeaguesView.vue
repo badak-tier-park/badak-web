@@ -328,7 +328,8 @@ const statusLabel = (s: LeagueStatus) =>
 
 function isDraftActive(league: LeagueRow): boolean {
   if (!league.has_draft || !league.draft_date || !league.is_ready) return false
-  const today = new Date().toISOString().slice(0, 10)
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   return league.draft_date <= today
 }
 
