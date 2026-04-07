@@ -412,6 +412,13 @@
             </button>
             <div v-if="filteredMaps.length === 0" class="picker-empty">검색 결과 없음</div>
           </div>
+          <div class="picker-footer">
+            <span class="picker-footer-hint">
+              {{ (matchMaps[mapPickerTarget!] ?? []).length }}
+              / {{ isBanPickMatch(mapPickerTarget!) ? '3' : '1' }}개 선택됨
+            </span>
+            <button class="picker-confirm" @click="mapPickerTarget = null">선택 완료</button>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -691,9 +698,20 @@ function removeCaptain(index: number) {
 const showPlayerPicker = ref(false)
 const playerSearch = ref('')
 
+function sortPlayers(list: PlayerRow[]) {
+  return [...list].sort((a, b) => {
+    const tierDiff = (TIER_RANK[a.tier] ?? 0) - (TIER_RANK[b.tier] ?? 0)
+    if (tierDiff !== 0) return tierDiff
+    const raceDiff = a.race.localeCompare(b.race)
+    if (raceDiff !== 0) return raceDiff
+    return a.nickname.localeCompare(b.nickname)
+  })
+}
+
 const filteredPlayers = computed(() => {
   const q = playerSearch.value.trim().toLowerCase()
-  return players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  const list = players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  return sortPlayers(list)
 })
 
 function openPlayerPicker() {
@@ -762,14 +780,11 @@ function openMapPicker(matchNumber: number) {
 function toggleMap(matchNumber: number, mapId: string) {
   if (isMapUsedElsewhere(mapId, matchNumber)) return
   const current = matchMaps.value[matchNumber] ?? []
-  const isBanPick = isBanPickMatch(matchNumber)
+  const maxCount = isBanPickMatch(matchNumber) ? 3 : 1
 
   if (current.includes(mapId)) {
     matchMaps.value[matchNumber] = current.filter((id) => id !== mapId)
-  } else if (!isBanPick) {
-    matchMaps.value[matchNumber] = [mapId]
-    mapPickerTarget.value = null
-  } else if (current.length < 3) {
+  } else if (current.length < maxCount) {
     matchMaps.value[matchNumber] = [...current, mapId]
   }
 }
@@ -786,7 +801,8 @@ const seedError = ref<string | null>(null)
 
 const filteredSeedPlayers = computed(() => {
   const q = seedSearch.value.trim().toLowerCase()
-  return players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  const list = players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  return sortPlayers(list)
 })
 
 function openSeedPicker() {
