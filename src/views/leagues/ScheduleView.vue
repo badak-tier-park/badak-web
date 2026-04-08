@@ -107,7 +107,29 @@
                     </select>
                   </div>
                 </div>
-                <input v-model="row.matchDate" class="date-input" type="date" />
+                <div class="date-picker-wrap">
+                  <VueDatePicker
+                    :model-value="row.matchDate ? new Date(row.matchDate) : null"
+                    :enable-time-picker="false"
+                    :locale="ko"
+                    :dark="true"
+                    auto-apply
+                    :teleport="true"
+                    @update:model-value="(val: Date | null) => row.matchDate = val ? toYMD(val) : ''"
+                  >
+                    <template #trigger>
+                      <div class="dp-custom-input">
+                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" class="dp-custom-icon">
+                          <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+                          <path d="M4 1v2M10 1v2M1 5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                        </svg>
+                        <span :class="row.matchDate ? 'dp-date-text' : 'dp-placeholder'">
+                          {{ row.matchDate ? row.matchDate.replaceAll('-', '/') : '날짜 선택' }}
+                        </span>
+                      </div>
+                    </template>
+                  </VueDatePicker>
+                </div>
                 <button class="btn-remove-match" @click="removeMatch(row)">
                   <AppIcon name="close" :size="11" />
                 </button>
@@ -132,6 +154,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
+import { VueDatePicker } from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
+import { ko } from 'date-fns/locale'
 import { getLeague, type LeagueRow } from '@/lib/leagues'
 import { getCaptains } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
@@ -209,6 +234,10 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function toYMD(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 // ── 라운드 로빈 자동 생성 ─────────────────────────────────
 function generateRoundRobin() {

@@ -308,22 +308,63 @@
   &:focus { border-color: rgba(170, 59, 255, 0.5); }
 }
 
-.date-input {
-  height: 34px;
-  padding: 0 10px;
-  border-radius: 7px;
-  border: 1px solid var(--c-border);
-  background: var(--c-surface);
-  color: var(--c-text);
-  font-size: 12px;
-  font-family: system-ui, sans-serif;
-  outline: none;
+// ── datepicker ────────────────────────────────────────────
+.date-picker-wrap {
   flex-shrink: 0;
   width: 130px;
-  transition: border-color 0.14s;
 
-  &:focus { border-color: rgba(170, 59, 255, 0.5); }
-  &::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+  :deep(.dp__main) { width: 130px; }
+}
+
+.dp-custom-input {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 130px;
+  height: 34px;
+  padding: 0 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.14s;
+  box-sizing: border-box;
+
+  &:hover { border-color: rgba(170, 59, 255, 0.45); }
+}
+
+.dp-custom-icon { color: var(--c-text-faint); flex-shrink: 0; }
+
+.dp-date-text {
+  font-size: 12px;
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+}
+
+.dp-placeholder {
+  font-size: 12px;
+  color: var(--c-text-faint);
+  font-family: system-ui, sans-serif;
+}
+
+:deep(.dp__theme_dark) {
+  --dp-background-color: #13141d;
+  --dp-text-color: rgba(255, 255, 255, 0.82);
+  --dp-hover-color: rgba(170, 59, 255, 0.12);
+  --dp-hover-text-color: #c084fc;
+  --dp-hover-icon-color: #c084fc;
+  --dp-primary-color: #aa3bff;
+  --dp-primary-text-color: #fff;
+  --dp-secondary-color: rgba(255, 255, 255, 0.07);
+  --dp-border-color: rgba(255, 255, 255, 0.1);
+  --dp-menu-border-color: rgba(255, 255, 255, 0.1);
+  --dp-border-color-hover: rgba(170, 59, 255, 0.5);
+  --dp-disabled-color: rgba(255, 255, 255, 0.15);
+  --dp-icon-color: rgba(255, 255, 255, 0.35);
+  --dp-font-family: system-ui, sans-serif;
+  --dp-font-size: 13px;
+  --dp-border-radius: 8px;
 }
 
 .btn-remove-match {
