@@ -1,0 +1,224 @@
+@use '../../styles/page';
+
+.participate-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.participate-content {
+  flex: 1;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+  box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.page-title {
+  margin: 0 0 28px;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--c-text-bright);
+  font-family: system-ui, sans-serif;
+  letter-spacing: -0.5px;
+}
+
+// ── 상태 메시지 ───────────────────────────────────────────
+.state-msg {
+  padding: 60px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--c-text-faint);
+  font-family: system-ui, sans-serif;
+}
+
+// ── 리그 목록 ─────────────────────────────────────────────
+.league-list {
+  display: flex;
+  flex-direction: column;
+  
+  gap: 10px;
+}
+
+.league-card {
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.league-card-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+// ── 상태 뱃지 ─────────────────────────────────────────────
+.status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  padding: 3px 9px;
+  border-radius: 20px;
+
+  &--ongoing   { background: rgba(34, 197, 94, 0.15);   color: #4ade80;  border: 1px solid rgba(34, 197, 94, 0.3); }
+  &--upcoming  { background: rgba(88, 101, 242, 0.15);  color: #818cf8;  border: 1px solid rgba(88, 101, 242, 0.3); }
+  &--preparing { background: rgba(234, 179, 8, 0.12);   color: #facc15;  border: 1px solid rgba(234, 179, 8, 0.25); }
+  &--finished  { background: rgba(107, 114, 128, 0.15); color: #9ca3af;  border: 1px solid rgba(107, 114, 128, 0.25); }
+}
+
+.eligibility-badge {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  color: var(--c-text-muted);
+  background: var(--c-badge-bg);
+  border: 1px solid var(--c-badge-border);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+// ── 카드 내용 ─────────────────────────────────────────────
+.league-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--c-text-bright);
+  font-family: system-ui, sans-serif;
+  letter-spacing: -0.3px;
+}
+
+.league-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--c-text-muted);
+  font-family: system-ui, sans-serif;
+
+  &--tiers { color: #c084fc; }
+}
+
+.btn-guide {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--c-border);
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  align-self: center;
+
+  &:hover {
+    border-color: rgba(170, 59, 255, 0.4);
+    color: #c084fc;
+    background: rgba(170, 59, 255, 0.06);
+  }
+}
+
+// ── 모달 ──────────────────────────────────────────────────
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.modal {
+  width: 100%;
+  max-width: 800px;
+  max-height: 80vh;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+  font-family: system-ui, sans-serif;
+}
+
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  transition: all 0.14s;
+
+  &:hover {
+    background: var(--c-surface);
+    color: var(--c-text);
+  }
+}
+
+.modal-body {
+  overflow-y: auto;
+  padding: 20px 24px 28px;
+}
+
+// ── 뷰 전용 tiptap 에디터 ─────────────────────────────────
+:deep(.tiptap-editor) {
+  outline: none;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--c-text);
+  font-family: system-ui, sans-serif;
+  user-select: text;
+  pointer-events: none;
+
+  p { margin: 0 0 0.6em; }
+  p:last-child { margin-bottom: 0; }
+
+  h2 { font-size: 17px; font-weight: 700; color: var(--c-text); margin: 1em 0 0.4em; }
+  h3 { font-size: 15px; font-weight: 700; color: var(--c-text); margin: 0.9em 0 0.35em; }
+
+  strong { color: var(--c-text-bright); }
+  em     { color: var(--c-text-2); font-style: italic; }
+
+  ul, ol { padding-left: 1.4em; margin: 0.4em 0 0.6em; }
+  li     { margin-bottom: 0.2em; }
+}

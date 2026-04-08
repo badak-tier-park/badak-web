@@ -78,6 +78,10 @@
     .nav-arrow { opacity: 0.6; }
   }
 
+  &--admin {
+    border-color: rgba(250, 204, 21, 0.35);
+  }
+
   &--disabled {
     cursor: default;
     opacity: 0.5;

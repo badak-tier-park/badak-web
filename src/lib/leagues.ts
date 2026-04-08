@@ -37,6 +37,8 @@ export interface LeagueInsert {
 
 export function getLeagueStatus(league: LeagueRow): LeagueStatus {
   if (!league.is_ready) return 'preparing'
+  const isRegular = league.type === 'regular_summer' || league.type === 'regular_winter'
+  if (isRegular && !league.draft_completed) return 'preparing'
   const today = new Date().toISOString().slice(0, 10)
   if (today < league.start_date) return 'upcoming'
   if (today > league.end_date) return 'finished'

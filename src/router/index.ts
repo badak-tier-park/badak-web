@@ -58,6 +58,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/participate',
+      name: 'participate',
+      component: () => import('@/views/participate/ParticipateView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('@/views/auth/AuthCallbackView.vue'),
