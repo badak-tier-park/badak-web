@@ -96,7 +96,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import { getLeague, type LeagueRow } from '@/lib/leagues'
@@ -107,7 +107,6 @@ import { getSchedules, updateMatchWinner, type ScheduleRow } from '@/lib/schedul
 import { withTimeout } from '@/lib/supabase'
 
 const route = useRoute()
-const router = useRouter()
 const leagueId = route.params.id as string
 
 const loading = ref(true)
