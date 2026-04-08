@@ -14,7 +14,7 @@
       <div class="nav-grid">
 
         <template v-if="auth.isAdmin">
-          <RouterLink to="/maps" class="nav-card">
+          <RouterLink to="/maps" class="nav-card nav-card--admin">
             <div class="nav-card-icon nav-card-icon--purple">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <rect x="2" y="2" width="16" height="16" rx="2.5" stroke="currentColor" stroke-width="1.4"/>
@@ -30,7 +30,7 @@
             </svg>
           </RouterLink>
 
-          <RouterLink to="/players" class="nav-card">
+          <RouterLink to="/players" class="nav-card nav-card--admin">
             <div class="nav-card-icon nav-card-icon--blue">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.5"/>
@@ -46,7 +46,7 @@
             </svg>
           </RouterLink>
 
-          <div class="nav-card nav-card--disabled">
+          <div class="nav-card nav-card--admin nav-card--disabled">
             <div class="nav-card-icon nav-card-icon--red">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M3 5h14M5 5V3.5A1.5 1.5 0 016.5 2h7A1.5 1.5 0 0115 3.5V5M8 9v6M12 9v6M4 5l1 12.5A1 1 0 006 18.5h8a1 1 0 001-.5L16 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -59,7 +59,7 @@
             <span class="badge-soon">준비 중</span>
           </div>
 
-          <RouterLink to="/leagues" class="nav-card">
+          <RouterLink to="/leagues" class="nav-card nav-card--admin">
             <div class="nav-card-icon nav-card-icon--purple">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M10 2l1.5 4.5H16l-3.7 2.7 1.4 4.3L10 11l-3.7 2.5 1.4-4.3L4 6.5h4.5L10 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
@@ -76,6 +76,23 @@
             </svg>
           </RouterLink>
         </template>
+
+        <RouterLink to="/participate" class="nav-card">
+          <div class="nav-card-icon nav-card-icon--green">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2l1.5 4.5H16l-3.7 2.7 1.4 4.3L10 11l-3.7 2.5 1.4-4.3L4 6.5h4.5L10 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+              <path d="M5 16h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              <path d="M7 18h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="nav-card-body">
+            <p class="nav-card-title">리그 참여</p>
+            <p class="nav-card-desc">진행 중인 리그 · 일정 확인</p>
+          </div>
+          <svg class="nav-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </RouterLink>
 
         <div class="nav-card nav-card--disabled">
           <div class="nav-card-icon nav-card-icon--green">

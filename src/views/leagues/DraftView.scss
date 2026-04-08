@@ -272,6 +272,13 @@
 .tier-count  { font-size: 10px; font-weight: 500; opacity: 0.7; }
 
 // ── 선수 카드 ─────────────────────────────────────────────
+// ── 티어 배경색 카드 유틸 ─────────────────────────────────
+.tier-bg--a { background: var(--tier-a-bg) !important; border-color: var(--tier-a-border) !important; }
+.tier-bg--b { background: var(--tier-b-bg) !important; border-color: var(--tier-b-border) !important; }
+.tier-bg--c { background: var(--tier-c-bg) !important; border-color: var(--tier-c-border) !important; }
+.tier-bg--d { background: var(--tier-d-bg) !important; border-color: var(--tier-d-border) !important; }
+.tier-bg--e { background: var(--tier-e-bg) !important; border-color: var(--tier-e-border) !important; }
+
 .player-card {
   display: flex;
   align-items: center;
@@ -287,8 +294,7 @@
   user-select: none;
 
   &:hover {
-    border-color: rgba(170, 59, 255, 0.35);
-    background: rgba(170, 59, 255, 0.06);
+    filter: brightness(1.15);
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
@@ -296,35 +302,25 @@
   &:active { cursor: grabbing; }
 
   &--member {
-    background: var(--c-surface);
-    border-color: var(--c-border-strong);
     cursor: default;
   }
 
   &.swap-clickable {
     cursor: pointer;
-    &:hover { border-color: rgba(250, 204, 21, 0.4); background: rgba(250, 204, 21, 0.05); }
+    &:hover { filter: brightness(1.2); }
   }
 
   &.swap-selected {
     border-color: #facc15 !important;
-    background: rgba(250, 204, 21, 0.1) !important;
-    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.2);
+    background: rgba(250, 204, 21, 0.15) !important;
+    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.25);
+    filter: none;
   }
 
   &.swap-locked {
     opacity: 0.45;
     cursor: default;
   }
-}
-
-.card-tier {
-  font-size: 11px;
-  font-weight: 800;
-  font-family: system-ui, sans-serif;
-  padding: 2px 6px;
-  border-radius: 4px;
-  flex-shrink: 0;
 }
 
 .card-race {
@@ -338,6 +334,7 @@
 .card-name {
   font-size: 12px;
   font-weight: 600;
+  text-align: start;
   color: var(--c-text);
   flex: 1;
   min-width: 0;
@@ -435,7 +432,8 @@
     border-bottom-color: rgba(248, 113, 113, 0.2);
     color: #f87171;
 
-    .swap-bar-inner { animation: shake-x 0.32s ease; cursor: pointer; }
+    .swap-bar-inner { cursor: pointer; }
+    .swap-bar-error-content { animation: shake-x 0.32s ease; }
   }
 }
 
@@ -443,6 +441,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.swap-bar-error-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
 }
 
 .swap-error-dismiss {
@@ -585,8 +590,9 @@
 // ── 팀 컬럼 영역 ──────────────────────────────────────────
 .teams-body {
   flex: 1;
+  min-height: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
   gap: 12px;
   overflow-x: auto;
@@ -600,6 +606,7 @@
 .team-column {
   flex-shrink: 0;
   width: 210px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--c-surface);
