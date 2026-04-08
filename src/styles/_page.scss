@@ -29,8 +29,9 @@
 // ── 페이지 타이틀 ─────────────────────────────────────────
 .page-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 28px;
 }
 
@@ -41,6 +42,17 @@
   color: var(--c-text-bright);
   font-family: system-ui, sans-serif;
   letter-spacing: -0.5px;
+  text-align: left;
+}
+
+.page-title--sm {
+  font-size: 26px;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--c-text-muted);
+  font-family: system-ui, sans-serif;
 }
 
 .page-title-left {

@@ -11,7 +11,7 @@
       </button>
 
       <header class="page-header">
-        <div class="page-title">
+        <div class="page-header-title">
           <h1>맵 수정</h1>
           <p>등록된 맵 정보를 수정하세요</p>
         </div>

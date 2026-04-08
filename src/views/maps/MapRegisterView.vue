@@ -12,7 +12,7 @@
 
       <!-- Header -->
       <header class="page-header">
-        <div class="page-title">
+        <div class="page-header-title">
           <h1>맵 등록</h1>
           <p>스타크래프트1 리마스터 맵 정보를 입력하세요</p>
         </div>
