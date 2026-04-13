@@ -12,7 +12,7 @@
 
       <!-- Header -->
       <header class="page-header">
-        <div class="page-title">
+        <div class="page-header-title">
           <h1>맵 등록</h1>
           <p>스타크래프트1 리마스터 맵 정보를 입력하세요</p>
         </div>
@@ -177,13 +177,10 @@
           <p v-if="submitError" class="submit-error">{{ submitError }}</p>
           <button type="button" class="btn-cancel" @click="router.back()">취소</button>
           <button type="submit" class="btn-submit" :disabled="submitting">
-            <svg v-if="!submitting" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 8H13M9 4L13 8L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg v-else width="16" height="16" viewBox="0 0 16 16" fill="none" class="spin">
+            <svg v-if="submitting" width="16" height="16" viewBox="0 0 16 16" fill="none" class="spin">
               <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-dasharray="28" stroke-dashoffset="10" stroke-linecap="round"/>
             </svg>
-            {{ submitting ? '저장 중...' : '맵 등록하기' }}
+            {{ submitting ? '등록 중...' : '등록' }}
           </button>
         </div>
 

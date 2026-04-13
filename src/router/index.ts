@@ -58,6 +58,24 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/leagues/:id/team-names',
+      name: 'league-team-names',
+      component: () => import('@/views/leagues/TeamNamesView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/leagues/:id/schedule',
+      name: 'league-schedule',
+      component: () => import('@/views/leagues/ScheduleView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/leagues/:id/match-result',
+      name: 'league-match-result',
+      component: () => import('@/views/leagues/MatchResultView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/participate',
       name: 'participate',
       component: () => import('@/views/participate/ParticipateView.vue'),
