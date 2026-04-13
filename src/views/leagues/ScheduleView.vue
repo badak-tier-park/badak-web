@@ -130,6 +130,20 @@
                     </template>
                   </VueDatePicker>
                 </div>
+                <span v-if="row.isRevealed" class="badge-revealed">공개됨</span>
+                <button
+                  v-else-if="row.id && bothSubmittedIds.has(row.id)"
+                  class="btn-reveal-entry"
+                  :disabled="revealingId === row.id"
+                  @click="revealMatch(row)"
+                  title="엔트리 공개"
+                >
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                    <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
+                    <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
+                  </svg>
+                  {{ revealingId === row.id ? '공개 중...' : '엔트리 공개' }}
+                </button>
                 <button class="btn-remove-match" @click="removeMatch(row)">
                   <AppIcon name="close" :size="11" />
                 </button>
@@ -146,6 +160,7 @@
         </div>
       </template>
     </div>
+
   </div>
 </template>
 
@@ -161,7 +176,8 @@ import { getLeague, type LeagueRow } from '@/lib/leagues'
 import { getCaptains } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
-import { getSchedules, saveSchedules } from '@/lib/schedules'
+import { getSchedules, saveSchedules, revealEntries } from '@/lib/schedules'
+import { getBothSubmittedSet } from '@/lib/entries'
 import { withTimeout } from '@/lib/supabase'
 
 const route = useRoute()
@@ -175,6 +191,8 @@ const saveError = ref<string | null>(null)
 const league = ref<LeagueRow | null>(null)
 const gamesPerTeam = ref(1)
 const numRoundsInput = ref<number | null>(null)
+const bothSubmittedIds = ref(new Set<number>())
+const revealingId = ref<number | null>(null)
 
 interface TeamInfo {
   captainId: number
@@ -185,10 +203,12 @@ interface TeamInfo {
 }
 
 interface MatchRow {
+  id?: number
   round: number
   teamA: number | ''
   teamB: number | ''
   matchDate: string
+  isRevealed?: boolean
 }
 
 const teams = ref<TeamInfo[]>([])
@@ -196,6 +216,22 @@ const rows = ref<MatchRow[]>([])
 
 const rounds = computed(() => [...new Set(rows.value.map(r => r.round))].sort((a, b) => a - b))
 function rowsByRound(round: number) { return rows.value.filter(r => r.round === round) }
+
+function teamNameOf(captainId: number): string {
+  const t = teams.value.find(t => t.captainId === captainId)
+  return t?.teamName || t?.nickname || `선수 ${captainId}`
+}
+
+async function revealMatch(row: MatchRow) {
+  if (!row.id || revealingId.value) return
+  revealingId.value = row.id
+  try {
+    await revealEntries(row.id)
+    row.isRevealed = true
+  } finally {
+    revealingId.value = null
+  }
+}
 
 onMounted(async () => {
   try {
@@ -223,11 +259,15 @@ onMounted(async () => {
     })
 
     rows.value = schedules.map(s => ({
+      id: s.id,
       round: s.round,
       teamA: s.team_a_captain_id,
       teamB: s.team_b_captain_id,
       matchDate: s.match_date ?? '',
+      isRevealed: s.is_entry_revealed,
     }))
+
+    bothSubmittedIds.value = await getBothSubmittedSet(schedules)
   } catch (e: any) {
     pageError.value = e.message ?? '데이터를 불러올 수 없습니다.'
   } finally {
