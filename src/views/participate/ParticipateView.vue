@@ -526,8 +526,7 @@ async function openMatchList(league: LeagueRow) {
   matchListModal.loading = true
 
   try {
-    const [captains, schedules, players, teamNames] = await Promise.all([
-      getCaptains(league.id),
+    const [schedules, players, teamNames] = await Promise.all([
       getSchedules(league.id),
       getPlayers(),
       getTeamNames(league.id),

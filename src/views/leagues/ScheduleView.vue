@@ -217,11 +217,6 @@ const rows = ref<MatchRow[]>([])
 const rounds = computed(() => [...new Set(rows.value.map(r => r.round))].sort((a, b) => a - b))
 function rowsByRound(round: number) { return rows.value.filter(r => r.round === round) }
 
-function teamNameOf(captainId: number): string {
-  const t = teams.value.find(t => t.captainId === captainId)
-  return t?.teamName || t?.nickname || `선수 ${captainId}`
-}
-
 async function revealMatch(row: MatchRow) {
   if (!row.id || revealingId.value) return
   revealingId.value = row.id
