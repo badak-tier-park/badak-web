@@ -2,10 +2,6 @@
   <div class="draft-page">
     <AppHeader />
 
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="grid-overlay"></div>
-
     <!-- 토스트 -->
     <Teleport to="body">
       <Transition name="toast">
@@ -91,7 +87,7 @@
             <span class="topbar-round">{{ turnRound }}R {{ turnPositionLabel }}</span>
           </span>
           <span v-else-if="!seedSwapMode" class="topbar-done">
-            {{ seedSwapDone ? '시드권 적용 완료' : '지목식 완료' }}
+            {{ seedSwapDone ? '지목식 완료' : '선수배정완료' }}
           </span>
           <span v-else class="topbar-seed-mode">
             시드권 적용
@@ -147,13 +143,14 @@
                     v-for="player in (playersByTierRace[tier]?.[race] ?? [])"
                     :key="player.id"
                     class="player-card"
+                    :class="`tier-bg--${player.tier.toLowerCase()}`"
                     draggable="true"
                     @dragstart="onDragStart($event, player.id, 'pool')"
                     @dragend="onDragEnd"
                   >
-                    <span class="card-tier" :class="`tier--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
-                    <span class="card-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
-                    <span class="card-name">{{ player.nickname }}</span>
+                    <span class="card-name">{{ player.nickname }}
+                      <span class="card-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
+                    </span>
                     <span v-if="seedHolderIds.has(player.id)" class="card-seed">SEED</span>
                   </div>
                 </template>
@@ -169,13 +166,15 @@
         <main class="teams-panel" :class="{ 'teams-panel--full': seedSwapMode || isSaved }">
           <!-- 시드권 적용 안내/오류 -->
           <div v-if="seedSwapMode" class="swap-bar" :class="{ 'swap-bar--error': !!swapError }">
-            <div v-if="swapError" :key="swapErrorKey" class="swap-bar-inner" @click="swapError = null">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.2"/>
-                <path d="M6.5 4.5v3M6.5 9h.01" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-              </svg>
-              {{ swapError }}
-              <span class="swap-error-dismiss">×</span>
+            <div v-if="swapError" class="swap-bar-inner" @click="swapError = null">
+              <span :key="swapErrorKey" class="swap-bar-error-content">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M6.5 4.5v3M6.5 9h.01" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                {{ swapError }}
+                <span class="swap-error-dismiss">×</span>
+              </span>
             </div>
             <div v-else class="swap-bar-inner">
               <span v-if="!swapSel">
@@ -256,6 +255,7 @@
                   :key="member.id"
                   class="player-card player-card--member"
                   :class="{
+                    [`tier-bg--${member.tier.toLowerCase()}`]: true,
                     'swap-selected': seedSwapMode && swapSel?.member.id === member.id,
                     'swap-locked': seedSwapMode && lockedIds.has(member.id),
                     'swap-clickable': seedSwapMode && !lockedIds.has(member.id),
@@ -266,7 +266,6 @@
                   @click="seedSwapMode && onMemberClick(captainId, member, idx)"
                 >
                   <span class="card-pick-num">{{ idx + 1 }}</span>
-                  <span class="card-tier" :class="`tier--${member.tier.toLowerCase()}`">{{ member.tier }}</span>
                   <span class="card-race" :class="`race--${member.race.toLowerCase()}`">{{ member.race }}</span>
                   <span class="card-name">{{ member.nickname }}</span>
                   <span v-if="seedHolderIds.has(member.id)" class="card-seed">SEED</span>
@@ -334,7 +333,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, setDraftCompleted, type LeagueRow } from '@/lib/leagues'
+import { getLeague, setPicksCompleted, setDraftCompleted, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, getSwapLog, saveSwapLog } from '@/lib/draft'
@@ -671,8 +670,7 @@ function resetSeedSwap() {
 
 function validateFirstClick(_captainId: number, member: PlayerRow, pickIdx: number): string | null {
   if (lockedIds.value.has(member.id)) return `${member.nickname}은 이미 교체된 멤버입니다`
-  // 현재 시드권을 행사하는 본인만 교체 불가 (다른 시드권자는 교체 가능)
-  if (member.id === currentSeedHolderId.value) return `${member.nickname}은 시드권 보유자 본인으로 교체 불가합니다`
+  if (seedHolderIds.value.has(member.id)) return `${member.nickname}은 시드권 보유자로 교체 불가합니다`
   if (pickIdx === 0) return `1번 픽(${member.nickname})은 시드권 적용 불가합니다`
   return null
 }
@@ -682,8 +680,7 @@ function validateSwap(
   b: { captainId: number; member: PlayerRow; pickIdx: number },
 ): string | null {
   if (lockedIds.value.has(b.member.id)) return `${b.member.nickname}은 이미 교체된 멤버입니다`
-  // 현재 시드권을 행사하는 본인만 교체 불가
-  if (b.member.id === currentSeedHolderId.value) return `${b.member.nickname}은 시드권 보유자 본인으로 교체 불가합니다`
+  if (seedHolderIds.value.has(b.member.id)) return `${b.member.nickname}은 시드권 보유자로 교체 불가합니다`
   if (b.pickIdx === 0) return `1번 픽(${b.member.nickname})은 시드권 적용 불가합니다`
 
   const tierDiff = Math.abs((TIER_RANK[a.member.tier] ?? 0) - (TIER_RANK[b.member.tier] ?? 0))
@@ -820,7 +817,9 @@ async function saveDraft() {
       isSaved.value = true
       showToast('최종 저장 완료. 지목식이 종료되었습니다.')
     } else {
-      await saveDraftPicks(leagueId, allPicks)
+      const tasks: Promise<unknown>[] = [saveDraftPicks(leagueId, allPicks)]
+      if (draftDone.value) tasks.push(setPicksCompleted(leagueId))
+      await Promise.all(tasks)
       showToast('임시 저장되었습니다.')
     }
   } catch {

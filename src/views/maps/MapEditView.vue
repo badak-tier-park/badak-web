@@ -2,10 +2,6 @@
   <div class="map-register-page">
     <AppHeader />
 
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="grid-overlay"></div>
-
     <div class="page-inner">
       <button class="btn-back" @click="$router.push({ name: 'home' })">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
@@ -15,7 +11,7 @@
       </button>
 
       <header class="page-header">
-        <div class="page-title">
+        <div class="page-header-title">
           <h1>맵 수정</h1>
           <p>등록된 맵 정보를 수정하세요</p>
         </div>

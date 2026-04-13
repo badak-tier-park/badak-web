@@ -2,10 +2,6 @@
   <div class="players-page">
     <AppHeader />
 
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="grid-overlay"></div>
-
     <div class="players-content">
       <button class="btn-back" @click="$router.push({ name: 'home' })">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">

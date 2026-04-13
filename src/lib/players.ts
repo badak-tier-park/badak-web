@@ -21,6 +21,15 @@ export async function getPlayers(): Promise<PlayerRow[]> {
   return data
 }
 
+export async function getPlayerByDiscordId(discordId: string): Promise<PlayerRow | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('*')
+    .eq('discord_id', discordId)
+    .single()
+  return data ?? null
+}
+
 export async function updatePlayer(
   id: number,
   fields: { nickname: string; race: 'T' | 'Z' | 'P'; tier: string },

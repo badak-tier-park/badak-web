@@ -1,6 +1,5 @@
 .home {
   min-height: 100vh;
-  background: var(--c-bg);
   display: flex;
   flex-direction: column;
 }
@@ -11,183 +10,44 @@
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  padding: 40px 28px 80px;
+  padding: 0 28px 80px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 48px;
 }
 
-// ── 섹션 공통 ─────────────────────────────────────────────
-.dash-section {
+// ── 히어로 ───────────────────────────────────────────────
+.dash-hero {
+  padding: 48px 0 8px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--c-text-2);
-  font-family: system-ui, sans-serif;
-  letter-spacing: -0.01em;
-}
-
-.section-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  background: rgba(170, 59, 255, 0.12);
-  color: #c084fc;
-  flex-shrink: 0;
-}
-
-.section-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 13px;
-  border-radius: 8px;
-  border: 1px solid rgba(170, 59, 255, 0.35);
-  background: rgba(170, 59, 255, 0.1);
-  color: #c084fc;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: system-ui, sans-serif;
-  text-decoration: none;
-  transition: all 0.15s;
-
-  &:hover {
-    background: rgba(170, 59, 255, 0.2);
-    border-color: rgba(170, 59, 255, 0.6);
-    color: #d8a4ff;
-  }
-}
-
-// ── 상태 메시지 ───────────────────────────────────────────
-.state-msg {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 40px 0;
-  font-size: 13px;
-  color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
-
-  &--error { color: #f87171; }
-}
-
-.empty-link {
-  font-size: 13px;
-  color: #c084fc;
-  text-decoration: none;
-
-  &:hover { text-decoration: underline; }
-}
-
-// ── 맵 그리드 ─────────────────────────────────────────────
-.map-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 10px;
 }
 
-.map-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--c-border);
-  background: var(--c-surface-raised);
-  text-decoration: none;
-  transition: all 0.15s;
-  cursor: pointer;
-
-  &:hover {
-    border-color: rgba(170, 59, 255, 0.3);
-    background: rgba(170, 59, 255, 0.05);
-
-    .map-edit-icon { opacity: 1; }
-  }
-}
-
-.map-thumb {
-  width: 56px;
-  height: 42px;
-  border-radius: 5px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: var(--c-overlay);
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-  }
-}
-
-.map-thumb-empty {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.map-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.map-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--c-text);
+.dash-hero-title {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--c-text-bright);
   font-family: system-ui, sans-serif;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: -1px;
+  line-height: 1.1;
 }
 
-.map-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
+.dash-hero-em {
+  background: linear-gradient(135deg, #c084fc, #aa3bff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dash-hero-sub {
+  margin: 0;
+  font-size: 14px;
   color: var(--c-text-muted);
   font-family: system-ui, sans-serif;
-
-  span + span::before {
-    content: '·';
-    margin-right: 6px;
-  }
-}
-
-.map-tileset { font-weight: 500; }
-
-.map-edit-icon {
-  flex-shrink: 0;
-  color: var(--c-icon);
-  opacity: 0;
-  transition: opacity 0.15s;
+  font-weight: 400;
 }
 
 // ── 네비게이션 카드 그리드 ─────────────────────────────────
@@ -216,6 +76,10 @@
 
     .nav-card-icon { opacity: 1; }
     .nav-arrow { opacity: 0.6; }
+  }
+
+  &--admin {
+    border-color: rgba(250, 204, 21, 0.35);
   }
 
   &--disabled {

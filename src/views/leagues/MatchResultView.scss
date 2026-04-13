@@ -1,0 +1,205 @@
+@use '../../styles/page';
+
+.match-result-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.match-result-content {
+  flex: 1;
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+  box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.state-msg {
+  padding: 60px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--c-text-faint);
+  font-family: system-ui, sans-serif;
+  &--error { color: #f87171; }
+}
+
+
+// ── 라운드 그룹 ───────────────────────────────────────────
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.round-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.round-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--c-border);
+  }
+}
+
+.round-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  font-family: system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+// ── 경기 카드 ─────────────────────────────────────────────
+.match-list { display: flex; flex-direction: column; gap: 8px; }
+
+.match-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  transition: border-color 0.15s;
+
+  &--done {
+    border-color: rgba(52, 211, 153, 0.2);
+    background: rgba(52, 211, 153, 0.03);
+  }
+}
+
+.match-date {
+  font-size: 11px;
+  color: var(--c-text-muted);
+  font-family: system-ui, sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 60px;
+
+  &--empty { color: var(--c-text-faint); }
+}
+
+.match-teams {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+// ── 팀 버튼 ───────────────────────────────────────────────
+.team-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  cursor: pointer;
+  transition: all 0.14s;
+  min-width: 0;
+
+  &:hover {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.06);
+  }
+
+  &--winner {
+    border-color: rgba(52, 211, 153, 0.5);
+    background: rgba(52, 211, 153, 0.1);
+  }
+
+  &--loser {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+.team-chip {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  padding: 2px 9px;
+  border-radius: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.win-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #34d399;
+  letter-spacing: 0.5px;
+  font-family: system-ui, sans-serif;
+  flex-shrink: 0;
+}
+
+.match-vs {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+  font-family: system-ui, sans-serif;
+  flex-shrink: 0;
+}
+
+.btn-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  border: none;
+  background: none;
+  color: var(--c-text-faint);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.13s;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+  }
+}
+
+// ── 요약 ─────────────────────────────────────────────────
+.result-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  justify-content: flex-end;
+  font-family: system-ui, sans-serif;
+}
+
+.summary-done {
+  font-size: 13px;
+  font-weight: 700;
+  color: #34d399;
+}
+
+.summary-sep {
+  font-size: 13px;
+  color: var(--c-text-faint);
+}
+
+.summary-total {
+  font-size: 13px;
+  color: var(--c-text-muted);
+}

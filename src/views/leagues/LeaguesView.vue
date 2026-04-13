@@ -2,10 +2,6 @@
   <div class="leagues-page">
     <AppHeader />
 
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="grid-overlay"></div>
-
     <div class="leagues-content">
       <button class="btn-back" @click="$router.push({ name: 'home' })">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
@@ -75,13 +71,10 @@
             </div>
           </div>
 
-          <!-- 액션: 상세 설정 | 지목식 -->
-          <div class="league-card-actions">
+          <!-- 액션: 상세 설정 | 지목식 | 팀명·일정 (지목식 완료 후) -->
+          <div class="league-card-actions" :class="league.draft_completed ? 'league-card-actions--4col' : 'league-card-actions--2col'">
             <button class="action-btn action-btn--detail" @click="router.push({ name: 'league-detail', params: { id: league.id } })">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/>
-                <path d="M6 4v2.5M6 8h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-              </svg>
+              <AppIcon name="gear" :size="12" />
               상세 설정
               <span v-if="!league.is_ready" class="action-badge action-badge--warning">미완료</span>
               <span v-else class="action-badge action-badge--done">완료</span>
@@ -91,23 +84,43 @@
               class="action-btn"
               :class="{
                 'action-btn--draft': isDraftActive(league),
+                'action-btn--picks-done': league.picks_completed && !league.draft_completed,
                 'action-btn--draft-done': league.draft_completed,
-                'action-btn--draft-disabled': !isDraftActive(league) && !league.draft_completed,
+                'action-btn--draft-disabled': !isDraftActive(league) && !league.picks_completed && !league.draft_completed,
               }"
-              :role="isDraftActive(league) || league.draft_completed ? 'button' : undefined"
-              :tabindex="isDraftActive(league) || league.draft_completed ? 0 : undefined"
-              @click="(isDraftActive(league) || league.draft_completed) && router.push({ name: 'league-draft', params: { id: league.id } })"
+              :role="isDraftActive(league) || league.picks_completed || league.draft_completed ? 'button' : undefined"
+              :tabindex="isDraftActive(league) || league.picks_completed || league.draft_completed ? 0 : undefined"
+              @click="(isDraftActive(league) || league.picks_completed || league.draft_completed) && router.push({ name: 'league-draft', params: { id: league.id } })"
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 10V5l4-3 4 3v5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M4.5 10V7h3v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+              <AppIcon name="users" :size="12" />
               <template v-if="league.draft_completed">지목식
                 <span class="action-badge action-badge--done">완료</span>
+              </template>
+              <template v-else-if="league.picks_completed">선수배정
+                <span class="action-badge action-badge--picks">완료</span>
               </template>
               <template v-else-if="isDraftActive(league)">팀원 지목식</template>
               <template v-else>지목식 예정 {{ league.draft_date ? league.draft_date.replaceAll('-', '/') : '' }}</template>
             </button>
+            <template v-if="league.draft_completed">
+              <button
+                class="action-btn action-btn--team-names"
+                @click="router.push({ name: 'league-team-names', params: { id: league.id } })"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 1l1 3h3l-2.4 1.7.9 2.8L6 7l-2.5 1.5.9-2.8L2 4h3L6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+                </svg>
+                팀명 지정
+                <span v-if="league.team_names_completed" class="action-badge action-badge--done">완료</span>
+              </button>
+              <button
+                class="action-btn action-btn--schedule"
+                @click="router.push({ name: 'league-schedule', params: { id: league.id } })"
+              >
+                <AppIcon name="calendar" :size="12" />
+                경기 관리
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -291,6 +304,7 @@ import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
+import AppIcon from '@/components/AppIcon.vue'
 import { getLeagues, createLeague, updateLeague, getLeagueStatus, type LeagueRow, type LeagueType, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
 
 const router = useRouter()
@@ -328,7 +342,8 @@ const statusLabel = (s: LeagueStatus) =>
 
 function isDraftActive(league: LeagueRow): boolean {
   if (!league.has_draft || !league.draft_date || !league.is_ready) return false
-  const today = new Date().toISOString().slice(0, 10)
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   return league.draft_date <= today
 }
 

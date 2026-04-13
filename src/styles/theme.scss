@@ -36,6 +36,7 @@
 
 // ── Dark (기본) ───────────────────────────────────────────
 :root {
+  color-scheme: dark;
   --c-bg:             #0a0b10;
   --c-surface:        #13141d;
   --c-surface-raised: rgba(255, 255, 255, 0.025);
@@ -68,6 +69,7 @@
 
 // ── Light ─────────────────────────────────────────────────
 [data-theme="light"] {
+  color-scheme: light;
   --c-bg:             #f0f1f5;
   --c-surface:        #ffffff;
   --c-surface-raised: rgba(0, 0, 0, 0.02);
