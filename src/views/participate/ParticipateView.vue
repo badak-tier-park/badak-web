@@ -79,7 +79,7 @@
 
     <!-- ── 리그 안내 모달 ──────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="guideModal.open" class="modal-overlay" @click.self="guideModal.open = false">
+      <div v-if="guideModal.open" class="modal-overlay">
         <div class="modal">
           <div class="modal-header">
             <p class="modal-title">{{ guideModal.name }}</p>
@@ -98,7 +98,7 @@
 
     <!-- ── 경기 목록 모달 ──────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="matchListModal.open" class="modal-overlay" @click.self="matchListModal.open = false">
+      <div v-if="matchListModal.open" class="modal-overlay">
         <div class="modal modal--match-list">
           <div class="modal-header">
             <p class="modal-title">엔트리 제출</p>
@@ -155,7 +155,7 @@
 
     <!-- ── 공개된 경기 목록 모달 ──────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="revealListModal.open" class="modal-overlay" @click.self="revealListModal.open = false">
+      <div v-if="revealListModal.open" class="modal-overlay">
         <div class="modal modal--match-list">
           <div class="modal-header">
             <div>
@@ -216,7 +216,7 @@
 
     <!-- ── 엔트리 제출 모달 ────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="entryModal.open" class="modal-overlay" @click.self="closeEntryModal">
+      <div v-if="entryModal.open" class="modal-overlay">
         <div class="modal modal--entry">
           <div class="modal-header">
             <div>

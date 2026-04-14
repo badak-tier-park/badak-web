@@ -17,7 +17,7 @@
 
     <!-- 시드권 순서 설정 모달 -->
     <Teleport to="body">
-      <div v-if="seedOrderSetupMode" class="modal-backdrop" @click.self="seedOrderSetupMode = false">
+      <div v-if="seedOrderSetupMode" class="modal-backdrop">
         <div class="seed-order-modal">
           <div class="seed-order-header">
             <span class="seed-order-title">시드권 적용 순서 설정</span>

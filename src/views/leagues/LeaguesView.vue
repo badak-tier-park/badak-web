@@ -128,7 +128,7 @@
 
     <!-- 리그 생성 모달 -->
     <Teleport to="body">
-      <div v-if="showForm" class="modal-backdrop" @click.self="closeForm">
+      <div v-if="showForm" class="modal-backdrop">
         <div class="modal">
           <div class="modal-header">
             <span class="modal-title">{{ editTarget ? '정규리그 수정' : '정규리그 생성' }}</span>

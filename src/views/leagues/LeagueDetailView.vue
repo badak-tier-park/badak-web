@@ -298,7 +298,7 @@
 
     <!-- ── 선수 선택 오버레이 ──────────────────────────── -->
     <Teleport to="body">
-      <div v-if="showPlayerPicker" class="overlay-backdrop" @click.self="showPlayerPicker = false">
+      <div v-if="showPlayerPicker" class="overlay-backdrop">
         <div class="picker-panel">
           <div class="picker-header">
             <span class="picker-title">
@@ -336,7 +336,7 @@
 
     <!-- ── 시드권자 선택 오버레이 ───────────────────── -->
     <Teleport to="body">
-      <div v-if="showSeedPicker" class="overlay-backdrop" @click.self="showSeedPicker = false">
+      <div v-if="showSeedPicker" class="overlay-backdrop">
         <div class="picker-panel">
           <div class="picker-header">
             <span class="picker-title">
@@ -376,7 +376,7 @@
 
     <!-- ── 맵 선택 오버레이 ───────────────────────────── -->
     <Teleport to="body">
-      <div v-if="mapPickerTarget !== null" class="overlay-backdrop" @click.self="mapPickerTarget = null">
+      <div v-if="mapPickerTarget !== null" class="overlay-backdrop">
         <div class="picker-panel">
           <div class="picker-header">
             <span class="picker-title">

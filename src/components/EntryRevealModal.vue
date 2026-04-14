@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="reveal-overlay" @click.self="$emit('close')">
+    <div class="reveal-overlay">
       <div class="reveal-modal">
         <div class="reveal-header">
           <div>
