@@ -125,7 +125,7 @@
                   공개됨
                 </button>
                 <button
-                  v-else-if="row.id && bothSubmittedIds.has(row.id)"
+                  v-else-if="row.id && bothSubmittedIds.has(row.id) && authStore.user?.id === league?.created_by"
                   class="btn-reveal-entry"
                   :disabled="revealingId === row.id"
                   @click="revealMatch(row)"
@@ -138,7 +138,7 @@
                   {{ revealingId === row.id ? '공개 중...' : '엔트리 공개' }}
                 </button>
                 <button
-                  v-if="row.id"
+                  v-if="row.id && row.isRevealed"
                   class="btn-slot-result"
                   @click="router.push({ name: 'league-match-slot-result', params: { id: leagueId, matchId: row.id } })"
                   title="결과 입력"
@@ -175,6 +175,7 @@ import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { ko } from 'date-fns/locale'
 import { getLeague, type LeagueRow } from '@/lib/leagues'
+import { useAuthStore } from '@/stores/auth'
 import { getCaptains } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
@@ -185,6 +186,7 @@ import { withTimeout } from '@/lib/supabase'
 const route = useRoute()
 const router = useRouter()
 const leagueId = route.params.id as string
+const authStore = useAuthStore()
 
 const loading = ref(true)
 const pageError = ref<string | null>(null)
