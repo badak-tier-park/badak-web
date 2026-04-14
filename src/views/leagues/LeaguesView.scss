@@ -331,8 +331,22 @@
 .modal-title {
   font-size: 15px;
   font-weight: 700;
+  margin: 0 5px 0 0;
   color: var(--c-text);
   font-family: system-ui, sans-serif;
+}
+
+.modal-locked-badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 5px;
+  padding: 2px 8px;
 }
 
 .modal-close {
