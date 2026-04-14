@@ -31,14 +31,6 @@
 
             <!-- 슬롯별 행 -->
             <div v-for="slot in SLOT_CONFIG" :key="slot.num" class="reveal-slot" :class="{ 'reveal-slot--team': slot.type === 'team' }">
-              <!-- 슬롯 라벨 -->
-              <div class="reveal-slot-label">
-                <span class="rsl-num">경기{{ slot.num }}</span>
-                <span class="rsl-type" :class="slot.type === 'team' ? 'rsl-type--team' : 'rsl-type--ind'">
-                  {{ slot.type === 'team' ? '팀전' : '개인전' }}
-                </span>
-              </div>
-
               <!-- 3컬럼: 팀A | 맵 | 팀B -->
               <div class="reveal-row">
                 <!-- 팀A 선수 -->
@@ -48,8 +40,8 @@
                     :key="pid"
                     class="rse-player"
                   >
-                    <span class="rse-name">{{ playerName(pid) }}</span>
-                    <span class="rse-tier" :class="`tier--${playerTier(pid).toLowerCase()}`">{{ playerTier(pid) }}</span>
+                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                    <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                     <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                   </div>
                   <div v-if="slot.type === 'team' && getSlotPlayerIds(teamACaptainId, slot.num).length" class="rse-total">
@@ -59,25 +51,58 @@
 
                 <!-- 맵 정보 (센터) -->
                 <div class="rse-maps">
+                  <!-- 슬롯 라벨 -->
+                  <div class="rsl-center-label">
+                    <span class="rsl-num">경기{{ slot.num }}</span>
+                    <span v-if="slot.type === 'team'" class="rsl-type">
+                      팀전
+                    </span>
+                  </div>
                   <template v-if="slotMapRows[slot.num]?.length">
-                    <div
-                      v-for="m in slotMapRows[slot.num]"
-                      :key="m.id"
-                      class="rse-map-item"
-                      :class="{
-                        'rse-map--banned': getBan(teamACaptainId, slot.num) === m.id || getBan(teamBCaptainId, slot.num) === m.id,
-                      }"
+                    <!-- 경기 맵 (밴 제외, 항상 노출) -->
+                    <template v-for="m in slotMapRows[slot.num]" :key="m.id">
+                      <div v-if="slotMapResults[slot.num].matchMapIds.has(m.id)" class="rse-map-item">
+                        <div class="rse-map-thumb-wrap">
+                          <img v-if="m.thumbnail_url" :src="m.thumbnail_url" class="rse-map-thumb" />
+                          <div v-else class="rse-map-thumb-empty" />
+                        </div>
+                        <span class="rse-map-name">{{ m.name }}</span>
+                      </div>
+                    </template>
+
+                    <!-- 사다리타기 안내 -->
+                    <div v-if="slotMapResults[slot.num].isUndecided" class="rse-undecided">사다리타기로 결정</div>
+
+                    <!-- 밴 정보 토글 버튼 -->
+                    <button
+                      v-if="slotMapResults[slot.num].bannedMapInfo.length"
+                      class="btn-ban-toggle"
+                      @click="toggleBanInfo(slot.num)"
                     >
-                      <div class="rse-map-thumb-wrap">
-                        <img v-if="m.thumbnail_url" :src="m.thumbnail_url" class="rse-map-thumb" />
-                        <div v-else class="rse-map-thumb-empty" />
+                      밴 정보
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="transition: transform 0.15s" :style="{ transform: expandedBanSlots.includes(slot.num) ? 'rotate(180deg)' : 'none' }">
+                        <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+
+                    <!-- 밴된 맵 (확장 시) -->
+                    <template v-if="expandedBanSlots.includes(slot.num)">
+                      <div
+                        v-for="ban in slotMapResults[slot.num].bannedMapInfo"
+                        :key="`ban-${ban.mapId}`"
+                        class="rse-map-item rse-map--banned"
+                      >
+                        <div class="rse-map-thumb-wrap">
+                          <img v-if="getMapInfo(slot.num, ban.mapId)?.thumbnail_url" :src="getMapInfo(slot.num, ban.mapId)!.thumbnail_url!" class="rse-map-thumb" />
+                          <div v-else class="rse-map-thumb-empty" />
+                        </div>
+                        <span class="rse-map-name">{{ getMapInfo(slot.num, ban.mapId)?.name }}</span>
+                        <div class="rse-ban-chips">
+                          <span v-if="ban.byTeamA" class="ban-chip ban-chip--a">{{ teamAName }} 밴</span>
+                          <span v-if="ban.byTeamB" class="ban-chip ban-chip--b">{{ teamBName }} 밴</span>
+                        </div>
                       </div>
-                      <span class="rse-map-name">{{ m.name }}</span>
-                      <div class="rse-ban-chips">
-                        <span v-if="getBan(teamACaptainId, slot.num) === m.id" class="ban-chip ban-chip--a">A밴</span>
-                        <span v-if="getBan(teamBCaptainId, slot.num) === m.id" class="ban-chip ban-chip--b">B밴</span>
-                      </div>
-                    </div>
+                    </template>
                   </template>
                   <div v-else class="rse-map-empty" />
                 </div>
@@ -90,8 +115,8 @@
                     class="rse-player rse-player--right"
                   >
                     <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                    <span class="rse-tier" :class="`tier--${playerTier(pid).toLowerCase()}`">{{ playerTier(pid) }}</span>
-                    <span class="rse-name">{{ playerName(pid) }}</span>
+                    <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
                   </div>
                   <div v-if="slot.type === 'team' && getSlotPlayerIds(teamBCaptainId, slot.num).length" class="rse-total rse-total--right">
                     합계 {{ slotTotal(teamBCaptainId, slot.num) }}pt
@@ -120,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getScheduleEntries, TIER_POINTS, type EntryRecord } from '@/lib/entries'
 import { getMatchMaps } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
@@ -212,6 +237,10 @@ function playerTier(id: number): string {
   return playerMap.value.get(id)?.tier ?? '?'
 }
 
+function playerRace(id: number): string {
+  return playerMap.value.get(id)?.race ?? '?'
+}
+
 function playerPt(id: number): number {
   return TIER_POINTS[playerTier(id)] ?? 0
 }
@@ -225,6 +254,87 @@ function totalPoints(captainId: number): number {
     (sum, e) => sum + e.player_ids.reduce((s, id) => s + playerPt(id), 0),
     0,
   )
+}
+
+// ── 밴 로직 ───────────────────────────────────────────────────
+
+const TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
+
+interface SlotMapResult {
+  matchMapIds: Set<string>
+  bannedMapInfo: { mapId: string; byTeamA: boolean; byTeamB: boolean }[]
+  isUndecided: boolean
+}
+
+const slotMapResults = computed<Record<number, SlotMapResult>>(() => {
+  const results: Record<number, SlotMapResult> = {}
+  for (const slot of SLOT_CONFIG) {
+    const n = slot.num
+    const maps = slotMapRows.value[n] ?? []
+    const banA = getBan(props.teamACaptainId, n)
+    const banB = getBan(props.teamBCaptainId, n)
+    const matchMapIds = new Set<string>()
+    const bannedMapInfo: SlotMapResult['bannedMapInfo'] = []
+    let isUndecided = false
+
+    if (maps.length <= 1 || (!banA && !banB)) {
+      maps.forEach(m => matchMapIds.add(m.id))
+    } else if (maps.length === 3) {
+      if (banA && banB) {
+        if (banA === banB) {
+          // 같은 맵 밴 → 나머지 2개 사다리타기
+          bannedMapInfo.push({ mapId: banA, byTeamA: true, byTeamB: true })
+          maps.filter(m => m.id !== banA).forEach(m => matchMapIds.add(m.id))
+          isUndecided = true
+        } else {
+          // 서로 다른 맵 밴 → 양쪽 밴 적용, 남은 1개가 경기 맵
+          bannedMapInfo.push({ mapId: banA, byTeamA: true, byTeamB: false })
+          bannedMapInfo.push({ mapId: banB, byTeamA: false, byTeamB: true })
+          maps.filter(m => m.id !== banA && m.id !== banB).forEach(m => matchMapIds.add(m.id))
+        }
+      } else {
+        const banId = banA ?? banB!
+        bannedMapInfo.push({ mapId: banId, byTeamA: !!banA, byTeamB: !!banB })
+        maps.filter(m => m.id !== banId).forEach(m => matchMapIds.add(m.id))
+      }
+    } else if (maps.length === 2) {
+      if (banA && banB) {
+        if (banA === banB) {
+          // 같은 맵 밴 → 나머지 1개가 경기 맵
+          bannedMapInfo.push({ mapId: banA, byTeamA: true, byTeamB: true })
+          maps.filter(m => m.id !== banA).forEach(m => matchMapIds.add(m.id))
+        } else {
+          // 서로 다른 맵 밴 → 티어 낮은 팀의 밴 우선
+          const rankA = TIER_RANK[playerTier(props.teamACaptainId)] ?? 0
+          const rankB = TIER_RANK[playerTier(props.teamBCaptainId)] ?? 0
+          const effectiveId = rankA <= rankB ? banA : banB
+          bannedMapInfo.push({ mapId: effectiveId, byTeamA: rankA <= rankB, byTeamB: rankB < rankA })
+          maps.filter(m => m.id !== effectiveId).forEach(m => matchMapIds.add(m.id))
+        }
+      } else {
+        const banId = banA ?? banB!
+        bannedMapInfo.push({ mapId: banId, byTeamA: !!banA, byTeamB: !!banB })
+        maps.filter(m => m.id !== banId).forEach(m => matchMapIds.add(m.id))
+      }
+    } else {
+      maps.forEach(m => matchMapIds.add(m.id))
+    }
+
+    results[n] = { matchMapIds, bannedMapInfo, isUndecided }
+  }
+  return results
+})
+
+const expandedBanSlots = ref<number[]>([])
+
+function toggleBanInfo(slotNum: number) {
+  const idx = expandedBanSlots.value.indexOf(slotNum)
+  if (idx >= 0) expandedBanSlots.value.splice(idx, 1)
+  else expandedBanSlots.value.push(slotNum)
+}
+
+function getMapInfo(slotNum: number, mapId: string) {
+  return slotMapRows.value[slotNum]?.find(m => m.id === mapId)
 }
 </script>
 

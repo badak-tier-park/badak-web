@@ -17,15 +17,6 @@
             <h1 class="page-title page-title--sm">경기 관리</h1>
             <span class="page-subtitle">{{ league?.name }}</span>
           </div>
-          <button
-            class="btn-result"
-            :class="{ 'btn-result--disabled': !rows.length }"
-            :disabled="!rows.length"
-            @click="rows.length && router.push({ name: 'league-match-result', params: { id: leagueId } })"
-          >
-            <AppIcon name="chart" :size="13" />
-            경기 결과 입력
-          </button>
         </div>
 
         <!-- ── 라운드 로빈 자동 생성 ───────────────────────── -->
@@ -130,7 +121,9 @@
                     </template>
                   </VueDatePicker>
                 </div>
-                <span v-if="row.isRevealed" class="badge-revealed">공개됨</span>
+                <button v-if="row.isRevealed" class="badge-revealed">
+                  공개됨
+                </button>
                 <button
                   v-else-if="row.id && bothSubmittedIds.has(row.id)"
                   class="btn-reveal-entry"
@@ -143,6 +136,15 @@
                     <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
                   </svg>
                   {{ revealingId === row.id ? '공개 중...' : '엔트리 공개' }}
+                </button>
+                <button
+                  v-if="row.id"
+                  class="btn-slot-result"
+                  @click="router.push({ name: 'league-match-slot-result', params: { id: leagueId, matchId: row.id } })"
+                  title="결과 입력"
+                >
+                  <AppIcon name="chart" :size="11" />
+                  결과 입력
                 </button>
                 <button class="btn-remove-match" @click="removeMatch(row)">
                   <AppIcon name="close" :size="11" />

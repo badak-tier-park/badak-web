@@ -51,6 +51,43 @@ export async function getRevealedSchedules(leagueId: string): Promise<ScheduleRo
   return data
 }
 
+// ── 경기별 슬롯 결과 ──────────────────────────────────────────
+
+export interface SlotResult {
+  schedule_id: number
+  slot_num: number
+  winner_captain_id: number | null
+}
+
+export async function getSlotResults(scheduleId: number): Promise<SlotResult[]> {
+  const { data, error } = await supabase
+    .from('league_match_slot_results')
+    .select('*')
+    .eq('schedule_id', scheduleId)
+  if (error) throw error
+  return data
+}
+
+export async function setSlotResult(
+  scheduleId: number,
+  slotNum: number,
+  winnerCaptainId: number | null,
+): Promise<void> {
+  if (winnerCaptainId === null) {
+    const { error } = await supabase
+      .from('league_match_slot_results')
+      .delete()
+      .eq('schedule_id', scheduleId)
+      .eq('slot_num', slotNum)
+    if (error) throw error
+  } else {
+    const { error } = await supabase
+      .from('league_match_slot_results')
+      .upsert({ schedule_id: scheduleId, slot_num: slotNum, winner_captain_id: winnerCaptainId })
+    if (error) throw error
+  }
+}
+
 export async function saveSchedules(
   leagueId: string,
   schedules: Array<{ round: number; match_date: string | null; team_a_captain_id: number; team_b_captain_id: number }>,
