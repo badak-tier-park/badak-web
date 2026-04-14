@@ -132,19 +132,25 @@
                   </span>
                 </div>
                 <div class="match-item-actions">
-                  <span v-if="entryStatusMap.get(item.schedule.id)" class="entry-done-badge">
-                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    제출됨
-                  </span>
-                  <button
-                    class="btn-entry"
-                    :class="{ 'btn-entry--edit': entryStatusMap.get(item.schedule.id) }"
-                    @click="openEntryModal(item)"
-                  >
-                    {{ entryStatusMap.get(item.schedule.id) ? '수정' : '제출' }}
-                  </button>
+                  <template v-if="entryStatusMap.get(item.schedule.id) === 'submitted'">
+                    <span class="entry-done-badge">
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      제출됨
+                    </span>
+                  </template>
+                  <template v-else-if="entryStatusMap.get(item.schedule.id) === 'saved'">
+                    <button class="btn-entry btn-entry--edit" @click="openEntryModal(item)">수정</button>
+                    <button
+                      class="btn-entry btn-entry--submit"
+                      :disabled="submittingId === item.schedule.id"
+                      @click="handleSubmitEntry(item.schedule.id)"
+                    >{{ submittingId === item.schedule.id ? '...' : '제출' }}</button>
+                  </template>
+                  <template v-else>
+                    <button class="btn-entry" @click="openEntryModal(item)">작성</button>
+                  </template>
                 </div>
               </div>
             </div>
@@ -329,7 +335,7 @@
             <p v-if="entryError" class="entry-error">{{ entryError }}</p>
             <button class="btn-cancel" @click="closeEntryModal">취소</button>
             <button class="btn-submit" :disabled="entrySaving || loadingEntry" @click="handleEntrySubmit">
-              {{ entrySaving ? '제출 중...' : '제출' }}
+              {{ entrySaving ? '저장 중...' : '저장' }}
             </button>
           </div>
         </div>
@@ -351,10 +357,10 @@ import { getSchedules, getRevealedSchedules, type ScheduleRow } from '@/lib/sche
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
 import {
-  getEntries, saveEntries, getEntryStatusMap, computeFinalRosters,
+  getEntries, saveEntries, submitEntry, getEntryStatusMap, computeFinalRosters,
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
   MAX_INDIVIDUAL_POINTS, MAX_TEAM_POINTS, MAX_TOTAL_POINTS,
-  type EntrySlot,
+  type EntrySlot, type EntryStatus,
 } from '@/lib/entries'
 import { useAuthStore } from '@/stores/auth'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
@@ -393,7 +399,8 @@ const loadingLeagues = ref(true)
 const leagues = ref<LeagueRow[]>([])
 const myPlayerId = ref<number | null>(null)
 const myCaptainLeagueIds = ref(new Set<string>())
-const entryStatusMap = ref(new Map<number, boolean>())
+const entryStatusMap = ref(new Map<number, EntryStatus>())
+const submittingId = ref<number | null>(null)
 
 // 리그 안내 모달
 const guideModal = reactive({ open: false, name: '' })
@@ -744,7 +751,7 @@ async function handleEntrySubmit() {
       banned_map_id: entryModal.banSelections[slot.num] ?? null,
     }))
     await saveEntries(entryModal.schedule!.id, myPlayerId.value!, slots)
-    entryStatusMap.value.set(entryModal.schedule!.id, true)
+    entryStatusMap.value.set(entryModal.schedule!.id, 'saved')
     // 경기 목록 모달의 상태도 갱신
     const match = matchListModal.matches.find(m => m.schedule.id === entryModal.schedule!.id)
     if (match) entryStatusMap.value = new Map(entryStatusMap.value)
@@ -753,6 +760,19 @@ async function handleEntrySubmit() {
     entryError.value = e.message ?? '제출 중 오류가 발생했습니다.'
   } finally {
     entrySaving.value = false
+  }
+}
+
+async function handleSubmitEntry(scheduleId: number) {
+  if (!myPlayerId.value) return
+  submittingId.value = scheduleId
+  try {
+    await submitEntry(scheduleId, myPlayerId.value)
+    entryStatusMap.value = new Map(entryStatusMap.value).set(scheduleId, 'submitted')
+  } catch (e: any) {
+    alert(e.message ?? '제출 중 오류가 발생했습니다.')
+  } finally {
+    submittingId.value = null
   }
 }
 
