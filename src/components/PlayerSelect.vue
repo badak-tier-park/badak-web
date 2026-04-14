@@ -2,11 +2,19 @@
   <div class="ps-wrap" ref="wrapRef">
     <button
       class="ps-trigger"
-      :class="{ 'ps-trigger--open': open, 'ps-trigger--empty': !modelValue }"
+      :class="[
+        { 'ps-trigger--open': open, 'ps-trigger--empty': !modelValue },
+        selectedOpt?.tier ? `tier-badge--${selectedOpt.tier.toLowerCase()}` : '',
+      ]"
       type="button"
       @click="toggle"
     >
-      <span class="ps-label">{{ selectedLabel }}</span>
+      <template v-if="selectedOpt?.tier">
+        <span class="ps-sel-race" v-if="selectedOpt.race" :class="`race-badge--${selectedOpt.race.toLowerCase()}`">{{ selectedOpt.race }}</span>
+        <span class="ps-label">{{ selectedOpt.label }}</span>
+        <span class="ps-sel-pts" v-if="selectedOpt.points">{{ selectedOpt.points }}pt</span>
+      </template>
+      <span v-else class="ps-label">{{ selectedLabel }}</span>
       <svg class="ps-arrow" width="10" height="10" viewBox="0 0 10 10" fill="none">
         <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -23,15 +31,20 @@
           v-for="opt in options"
           :key="opt.value"
           class="ps-option"
-          :class="{
-            'ps-option--selected': opt.value === modelValue,
-            'ps-option--disabled': opt.disabled,
-          }"
+          :class="[
+            { 'ps-option--selected': opt.value === modelValue, 'ps-option--disabled': opt.disabled },
+            opt.tier ? `ps-option--tier-${opt.tier.toLowerCase()}` : '',
+          ]"
           :disabled="opt.disabled"
           type="button"
           @click="select(opt)"
         >
-          {{ opt.label }}
+          <template v-if="opt.tier">
+            <span class="ps-opt-race" v-if="opt.race" :class="`race-badge--${opt.race.toLowerCase()}`">{{ opt.race }}</span>
+            <span class="ps-opt-name" :class="`tier-color--${opt.tier.toLowerCase()}`">{{ opt.label }}</span>
+            <span class="ps-opt-pts" :class="`tier-color--${opt.tier.toLowerCase()}`">{{ opt.points }}pt</span>
+          </template>
+          <template v-else>{{ opt.label }}</template>
         </button>
       </div>
     </Teleport>
@@ -44,6 +57,9 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 export interface SelectOption {
   value: number
   label: string
+  tier?: string
+  race?: string
+  points?: number
   disabled?: boolean
 }
 
@@ -60,9 +76,12 @@ const wrapRef = ref<HTMLElement | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
 const dropdownStyle = ref<Record<string, string>>({})
 
+const selectedOpt = computed(() =>
+  props.modelValue ? props.options.find(o => o.value === props.modelValue) ?? null : null
+)
 const selectedLabel = computed(() => {
   if (!props.modelValue) return props.placeholder ?? '선수 선택'
-  return props.options.find(o => o.value === props.modelValue)?.label ?? props.placeholder ?? '선수 선택'
+  return selectedOpt.value?.label ?? props.placeholder ?? '선수 선택'
 })
 
 function calcPosition() {
@@ -135,7 +154,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
   gap: 6px;
 
   &:hover { border-color: rgba(168, 85, 247, 0.4); }
-  &--open { border-color: rgba(168, 85, 247, 0.55); background: rgba(168, 85, 247, 0.04); }
+  &--open { border-color: rgba(168, 85, 247, 0.55); }
   &--empty {
     border-color: rgba(168, 85, 247, 0.28);
     background: rgba(168, 85, 247, 0.04);
@@ -171,8 +190,10 @@ onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
 
 .ps-option {
   width: 100%;
-  display: block;
-  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
   border: none;
   background: none;
   color: var(--c-text);
@@ -181,17 +202,59 @@ onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
   text-align: left;
   cursor: pointer;
   border-radius: 5px;
-  transition: background 0.1s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  transition: filter 0.1s;
 
-  &:hover:not(:disabled) { background: var(--c-overlay); }
-  &--selected { color: #c084fc; font-weight: 600; }
+  &--tier-a { background: var(--tier-a-bg); }
+  &--tier-b { background: var(--tier-b-bg); }
+  &--tier-c { background: var(--tier-c-bg); }
+  &--tier-d { background: var(--tier-d-bg); }
+  &--tier-e { background: var(--tier-e-bg); }
+
+  &:hover:not(:disabled) { filter: brightness(1.2); }
+  &--selected { outline: 1px solid currentColor; outline-offset: -1px; }
   &--disabled, &:disabled {
-    color: var(--c-text-faint);
+    opacity: 0.35;
     cursor: not-allowed;
     text-decoration: line-through;
   }
+}
+
+.ps-opt-race {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.ps-opt-name {
+  flex: 1;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-opt-pts {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  margin-left: auto;
+}
+
+.ps-sel-race {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.ps-sel-pts {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  margin-left: auto;
+  opacity: 0.8;
 }
 </style>

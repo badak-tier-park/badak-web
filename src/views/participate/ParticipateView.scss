@@ -653,15 +653,12 @@
 }
 
 .entry-error {
-  margin: 0 16px 12px;
-  padding: 8px 12px;
-  border-radius: 7px;
+  flex: 1;
+  margin: 0;
   font-size: 12px;
+  font-weight: 600;
   color: #f87171;
   font-family: system-ui, sans-serif;
-  text-align: center;
-  background: rgba(248, 113, 113, 0.08);
-  border: 1px solid rgba(248, 113, 113, 0.2);
 }
 
 // ── 모달 푸터 ────────────────────────────────────────────

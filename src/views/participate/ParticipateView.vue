@@ -322,11 +322,11 @@
                 </template>
               </div>
 
-              <p v-if="entryError" class="entry-error">{{ entryError }}</p>
             </template>
           </div>
 
           <div class="modal-footer">
+            <p v-if="entryError" class="entry-error">{{ entryError }}</p>
             <button class="btn-cancel" @click="closeEntryModal">취소</button>
             <button class="btn-submit" :disabled="entrySaving || loadingEntry" @click="handleEntrySubmit">
               {{ entrySaving ? '제출 중...' : '제출' }}
@@ -608,7 +608,10 @@ function buildOptions(slotNum: number, idx: number): SelectOption[] {
     })
     .map(m => ({
       value: m.id,
-      label: `${m.nickname} (${m.tier}ㆍ${TIER_POINTS[m.tier] ?? 0}pt)`,
+      label: m.nickname,
+      tier: m.tier,
+      race: m.race,
+      points: TIER_POINTS[m.tier] ?? 0,
     }))
 }
 
