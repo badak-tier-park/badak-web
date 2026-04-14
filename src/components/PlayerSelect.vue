@@ -120,22 +120,28 @@ onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--c-border);
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--c-border-strong);
   background: var(--c-surface-raised);
   color: var(--c-text);
   font-size: 12px;
+  font-weight: 600;
   font-family: system-ui, sans-serif;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.14s;
+  transition: border-color 0.14s, background 0.14s;
   text-align: left;
   gap: 6px;
 
-  &:hover { border-color: var(--c-border-strong); }
-  &--open { border-color: rgba(168, 85, 247, 0.5); }
-  &--empty .ps-label { color: var(--c-text-faint); }
+  &:hover { border-color: rgba(168, 85, 247, 0.4); }
+  &--open { border-color: rgba(168, 85, 247, 0.55); background: rgba(168, 85, 247, 0.04); }
+  &--empty {
+    border-color: rgba(168, 85, 247, 0.28);
+    background: rgba(168, 85, 247, 0.04);
+    .ps-label { color: var(--c-text-muted); }
+    .ps-arrow { color: rgba(168, 85, 247, 0.6); }
+  }
 }
 
 .ps-label {

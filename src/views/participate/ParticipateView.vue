@@ -236,6 +236,39 @@
             </button>
           </div>
 
+          <!-- 포인트 바 (항상 노출) -->
+          <div v-if="!loadingEntry" class="entry-points-bar">
+            <div class="epi" :class="{ 'epi--over': individualPoints > MAX_INDIVIDUAL_POINTS }">
+              <div class="epi-top">
+                <span class="epi-label">개인전</span>
+                <span class="epi-val">{{ individualPoints }}<span class="epi-max">/{{ MAX_INDIVIDUAL_POINTS }}</span></span>
+              </div>
+              <div class="epi-track">
+                <div class="epi-fill" :style="{ width: `${Math.min(100, individualPoints / MAX_INDIVIDUAL_POINTS * 100)}%` }" />
+              </div>
+            </div>
+            <div class="epi-divider" />
+            <div class="epi" :class="{ 'epi--over': teamPoints > MAX_TEAM_POINTS }">
+              <div class="epi-top">
+                <span class="epi-label">팀전</span>
+                <span class="epi-val">{{ teamPoints }}<span class="epi-max">/{{ MAX_TEAM_POINTS }}</span></span>
+              </div>
+              <div class="epi-track">
+                <div class="epi-fill" :style="{ width: `${Math.min(100, teamPoints / MAX_TEAM_POINTS * 100)}%` }" />
+              </div>
+            </div>
+            <div class="epi-divider" />
+            <div class="epi epi--total" :class="{ 'epi--over': totalPoints > MAX_TOTAL_POINTS }">
+              <div class="epi-top">
+                <span class="epi-label">합계</span>
+                <span class="epi-val">{{ totalPoints }}<span class="epi-max">/{{ MAX_TOTAL_POINTS }}</span></span>
+              </div>
+              <div class="epi-track">
+                <div class="epi-fill" :style="{ width: `${Math.min(100, totalPoints / MAX_TOTAL_POINTS * 100)}%` }" />
+              </div>
+            </div>
+          </div>
+
           <div class="modal-body entry-body">
             <div v-if="loadingEntry" class="state-msg">불러오는 중...</div>
 
@@ -243,67 +276,50 @@
               <div class="slot-list">
                 <template v-for="slot in SLOT_CONFIG" :key="slot.num">
                   <div class="slot-row" :class="{ 'slot-row--team': slot.type === 'team' }">
-                    <div class="slot-head">
-                      <span class="slot-num">경기{{ slot.num }}</span>
+                    <!-- 슬롯 레이블 (좌측) -->
+                    <div class="slot-label">
+                      <span class="slot-num">{{ slot.num }}</span>
                       <span class="slot-type-badge" :class="`slot-type-badge--${slot.type}`">
                         {{ slot.type === 'team' ? '팀전' : '개인전' }}
                       </span>
                     </div>
 
-                    <!-- 맵 목록 -->
-                    <div v-if="entryModal.slotMaps[slot.num]?.length" class="slot-map-list">
-                      <div
-                        v-for="map in entryModal.slotMaps[slot.num]"
-                        :key="map.id"
-                        class="slot-map-item"
-                        :class="{ 'slot-map-item--banned': entryModal.banSelections[slot.num] === map.id }"
-                      >
-                        <div class="map-thumb-wrap">
-                          <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="map-thumb" />
-                          <div v-else class="map-thumb-empty" />
-                        </div>
-                        <span class="map-name">{{ map.name }}</span>
-                        <button
-                          v-if="(BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.slotMaps[slot.num].length > 1"
-                          class="btn-ban"
-                          :class="{ 'btn-ban--active': entryModal.banSelections[slot.num] === map.id }"
-                          type="button"
-                          @click="toggleBan(slot.num, map.id)"
+                    <!-- 맵 + 선수 (우측) -->
+                    <div class="slot-content">
+                      <!-- 맵 칩 -->
+                      <div v-if="entryModal.slotMaps[slot.num]?.length" class="slot-maps-row">
+                        <div
+                          v-for="map in entryModal.slotMaps[slot.num]"
+                          :key="map.id"
+                          class="map-chip"
+                          :class="{ 'map-chip--banned': entryModal.banSelections[slot.num] === map.id }"
                         >
-                          {{ entryModal.banSelections[slot.num] === map.id ? '밴 취소' : '밴' }}
-                        </button>
+                          <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="map-chip-img" />
+                          <div v-else class="map-chip-img-empty" />
+                          <span class="map-chip-name">{{ map.name }}</span>
+                          <button
+                            v-if="(BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.slotMaps[slot.num].length > 1"
+                            class="map-chip-ban"
+                            :class="{ 'map-chip-ban--active': entryModal.banSelections[slot.num] === map.id }"
+                            type="button"
+                            @click="toggleBan(slot.num, map.id)"
+                          >{{ entryModal.banSelections[slot.num] === map.id ? '밴 취소' : '밴' }}</button>
+                        </div>
                       </div>
-                    </div>
 
-                    <!-- 선수 선택 -->
-                    <div class="slot-selects">
-                      <PlayerSelect
-                        v-for="idx in slot.count"
-                        :key="idx"
-                        :model-value="getSlotPlayer(slot.num, idx - 1)"
-                        :options="buildOptions(slot.num, idx - 1)"
-                        @update:model-value="setSlotPlayer(slot.num, idx - 1, $event)"
-                      />
+                      <!-- 선수 선택 -->
+                      <div class="slot-selects">
+                        <PlayerSelect
+                          v-for="idx in slot.count"
+                          :key="idx"
+                          :model-value="getSlotPlayer(slot.num, idx - 1)"
+                          :options="buildOptions(slot.num, idx - 1)"
+                          @update:model-value="setSlotPlayer(slot.num, idx - 1, $event)"
+                        />
+                      </div>
                     </div>
                   </div>
                 </template>
-              </div>
-
-              <div class="points-summary">
-                <div class="point-item" :class="{ 'point-item--over': individualPoints > MAX_INDIVIDUAL_POINTS }">
-                  <span class="point-label">개인전</span>
-                  <span class="point-val">{{ individualPoints }} / {{ MAX_INDIVIDUAL_POINTS }}</span>
-                </div>
-                <div class="point-sep">/</div>
-                <div class="point-item" :class="{ 'point-item--over': teamPoints > MAX_TEAM_POINTS }">
-                  <span class="point-label">팀전</span>
-                  <span class="point-val">{{ teamPoints }} / {{ MAX_TEAM_POINTS }}</span>
-                </div>
-                <div class="point-sep">/</div>
-                <div class="point-item point-item--total" :class="{ 'point-item--over': totalPoints > MAX_TOTAL_POINTS }">
-                  <span class="point-label">전체</span>
-                  <span class="point-val">{{ totalPoints }} / {{ MAX_TOTAL_POINTS }}</span>
-                </div>
               </div>
 
               <p v-if="entryError" class="entry-error">{{ entryError }}</p>
