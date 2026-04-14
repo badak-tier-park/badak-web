@@ -152,15 +152,21 @@
   flex-direction: column;
   gap: 5px;
 
-  &--right { align-items: flex-end; }
+  .rse-player { justify-content: flex-end; }
+  .rse-pt { margin-right: auto; }
+  .rse-total { text-align: right; }
+
+  &--right {
+    .rse-player { justify-content: flex-start; }
+    .rse-pt { margin-right: 0; margin-left: auto; }
+    .rse-total { text-align: left; }
+  }
 }
 
 .rse-player {
   display: flex;
   align-items: center;
-  gap: 5px;
-
-  &--right { flex-direction: row-reverse; }
+  width: 100%;
 }
 
 .rse-name-badge {
@@ -168,6 +174,7 @@
   font-weight: 700;
   font-family: system-ui, sans-serif;
   padding: 2px 7px;
+  margin: 0 5px;
   border-radius: 5px;
 }
 
@@ -184,6 +191,7 @@
   font-weight: 600;
   color: var(--c-text-muted);
   font-family: system-ui, sans-serif;
+  flex-shrink: 0;
 }
 
 .rse-total {
@@ -192,8 +200,7 @@
   font-weight: 700;
   color: var(--c-text-muted);
   font-family: system-ui, sans-serif;
-
-  &--right { text-align: right; }
+  width: 100%;
 }
 
 // ── 맵 센터 컬럼 ──────────────────────────────────────────────

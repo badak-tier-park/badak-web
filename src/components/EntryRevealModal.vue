@@ -40,9 +40,9 @@
                     :key="pid"
                     class="rse-player"
                   >
-                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
-                    <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                     <span class="rse-pt">{{ playerPt(pid) }}pt</span>
+                    <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
                   </div>
                   <div v-if="slot.type === 'team' && getSlotPlayerIds(teamACaptainId, slot.num).length" class="rse-total">
                     합계 {{ slotTotal(teamACaptainId, slot.num) }}pt
@@ -112,11 +112,11 @@
                   <div
                     v-for="pid in getSlotPlayerIds(teamBCaptainId, slot.num)"
                     :key="pid"
-                    class="rse-player rse-player--right"
+                    class="rse-player"
                   >
-                    <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                    <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                     <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                    <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                    <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                   </div>
                   <div v-if="slot.type === 'team' && getSlotPlayerIds(teamBCaptainId, slot.num).length" class="rse-total rse-total--right">
                     합계 {{ slotTotal(teamBCaptainId, slot.num) }}pt
