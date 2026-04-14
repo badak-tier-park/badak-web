@@ -76,6 +76,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/leagues/:id/schedule/:matchId/result',
+      name: 'league-match-slot-result',
+      component: () => import('@/views/leagues/MatchSlotResultView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/participate',
       name: 'participate',
       component: () => import('@/views/participate/ParticipateView.vue'),

@@ -17,26 +17,35 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin.value = data?.is_admin === true
   }
 
-  async function init() {
-    const { data } = await supabase.auth.getSession()
-    user.value = data.session?.user ?? null
+  let _initPromise: Promise<void> | null = null
 
-    if (user.value) {
-      const discordId = user.value.identities?.find(i => i.provider === 'discord')?.id ?? ''
-      if (discordId) await fetchIsAdmin(discordId)
-    }
+  function init(): Promise<void> {
+    if (_initPromise) return _initPromise
+    _initPromise = new Promise<void>((resolve) => {
+      let resolved = false
 
-    loading.value = false
+      // 콜백을 async로 만들지 않음 — Supabase v2는 auth lock 안에서 콜백을 await하므로,
+      // 콜백 안에서 supabase DB 쿼리를 await하면 getSession() → _acquireLock() 데드락 발생.
+      // setTimeout(0)으로 DB 호출을 auth lock 컨텍스트 바깥으로 꺼낸다.
+      supabase.auth.onAuthStateChange((_event, session) => {
+        user.value = session?.user ?? null
+        if (!user.value) isAdmin.value = false
 
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      user.value = session?.user ?? null
-      if (user.value) {
-        const discordId = user.value.identities?.find(i => i.provider === 'discord')?.id ?? ''
-        if (discordId) await fetchIsAdmin(discordId)
-      } else {
-        isAdmin.value = false
-      }
+        const discordId = user.value?.identities?.find(i => i.provider === 'discord')?.id ?? ''
+
+        setTimeout(async () => {
+          try {
+            if (discordId) await fetchIsAdmin(discordId)
+          } catch {}
+          if (!resolved) {
+            resolved = true
+            loading.value = false
+            resolve()
+          }
+        }, 0)
+      })
     })
+    return _initPromise
   }
 
   async function loginWithDiscord() {

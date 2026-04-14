@@ -110,19 +110,14 @@
 .reveal-slot {
   padding: 12px 0;
   border-top: 1px solid var(--c-border);
-
-  &--team .rsl-type {
-    color: #93c5fd;
-    background: rgba(96, 165, 250, 0.12);
-    border-color: rgba(96, 165, 250, 0.3);
-  }
 }
 
-.reveal-slot-label {
+.rsl-center-label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 6px;
 }
 
 .rsl-num {
@@ -168,25 +163,20 @@
   &--right { flex-direction: row-reverse; }
 }
 
-.rse-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--c-text-bright);
+.rse-name-badge {
+  font-size: 12px;
+  font-weight: 700;
   font-family: system-ui, sans-serif;
+  padding: 2px 7px;
+  border-radius: 5px;
 }
 
-.rse-tier {
+.rse-race {
   font-size: 10px;
   font-weight: 700;
   font-family: system-ui, sans-serif;
   padding: 2px 5px;
   border-radius: 4px;
-
-  &.tier--a { color: #fbbf24; background: rgba(251, 191, 36, 0.15); }
-  &.tier--b { color: #60a5fa; background: rgba(96, 165, 250, 0.15); }
-  &.tier--c { color: #4ade80; background: rgba(74, 222, 128, 0.12); }
-  &.tier--d { color: #fb923c; background: rgba(249, 115, 22, 0.12); }
-  &.tier--e { color: var(--c-text-faint); background: var(--c-badge-bg); }
 }
 
 .rse-pt {
@@ -227,7 +217,6 @@
   width: 100%;
   padding: 6px 8px;
   border-radius: 8px;
-  border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
   transition: all 0.12s;
 
@@ -277,8 +266,12 @@
   font-size: 9px;
   font-weight: 700;
   font-family: system-ui, sans-serif;
-  padding: 1px 5px;
+  padding: 2px 6px;
   border-radius: 3px;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   &--a {
     color: #fbbf24;
@@ -290,6 +283,35 @@
     background: rgba(96, 165, 250, 0.15);
     border: 1px solid rgba(96, 165, 250, 0.3);
   }
+}
+
+// ── 사다리타기 / 밴 토글 ──────────────────────────────────────
+.rse-undecided {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  color: var(--c-text-muted);
+  text-align: center;
+  padding: 4px 0;
+}
+
+.btn-ban-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  color: var(--c-text-faint);
+  cursor: pointer;
+  transition: color 0.15s;
+
+  &:hover { color: var(--c-text-muted); }
 }
 
 // ── 합계 ─────────────────────────────────────────────────────
