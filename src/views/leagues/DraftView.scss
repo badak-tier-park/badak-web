@@ -321,6 +321,12 @@
     opacity: 0.45;
     cursor: default;
   }
+
+  &.is-dragging {
+    opacity: 0;
+    pointer-events: none;
+    transition: none;
+  }
 }
 
 .card-race {
