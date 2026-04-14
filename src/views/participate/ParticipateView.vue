@@ -139,6 +139,15 @@
                       </svg>
                       제출됨
                     </span>
+                    <span v-if="consentedSet.has(item.schedule.id)" class="entry-consent-badge">
+                      공개 동의됨
+                    </span>
+                    <button
+                      v-else
+                      class="btn-entry btn-entry--consent"
+                      :disabled="consentingId === item.schedule.id"
+                      @click="handleConsentReveal(item)"
+                    >{{ consentingId === item.schedule.id ? '...' : '공개 동의' }}</button>
                   </template>
                   <template v-else-if="entryStatusMap.get(item.schedule.id) === 'saved'">
                     <button class="btn-entry btn-entry--edit" @click="openEntryModal(item)">수정</button>
@@ -358,10 +367,12 @@ import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
 import {
   getEntries, saveEntries, submitEntry, getEntryStatusMap, computeFinalRosters,
+  consentReveal, checkBothConsented, getConsentedSet,
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
   MAX_INDIVIDUAL_POINTS, MAX_TEAM_POINTS, MAX_TOTAL_POINTS,
   type EntrySlot, type EntryStatus,
 } from '@/lib/entries'
+import { revealEntries } from '@/lib/schedules'
 import { useAuthStore } from '@/stores/auth'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
@@ -401,6 +412,8 @@ const myPlayerId = ref<number | null>(null)
 const myCaptainLeagueIds = ref(new Set<string>())
 const entryStatusMap = ref(new Map<number, EntryStatus>())
 const submittingId = ref<number | null>(null)
+const consentedSet = ref(new Set<number>())
+const consentingId = ref<number | null>(null)
 
 // 리그 안내 모달
 const guideModal = reactive({ open: false, name: '' })
@@ -539,6 +552,9 @@ onMounted(async () => {
 
   // 엔트리 제출 현황
   entryStatusMap.value = await getEntryStatusMap(me.id)
+
+  // 공개 동의 현황
+  consentedSet.value = await getConsentedSet(me.id)
 })
 
 // ── 경기 목록 모달 ────────────────────────────────────────────
@@ -760,6 +776,29 @@ async function handleEntrySubmit() {
     entryError.value = e.message ?? '제출 중 오류가 발생했습니다.'
   } finally {
     entrySaving.value = false
+  }
+}
+
+async function handleConsentReveal(item: MyMatchItem) {
+  if (!myPlayerId.value) return
+  const scheduleId = item.schedule.id
+  consentingId.value = scheduleId
+  try {
+    await consentReveal(scheduleId, myPlayerId.value)
+    consentedSet.value = new Set([...consentedSet.value, scheduleId])
+
+    const bothConsented = await checkBothConsented(
+      scheduleId,
+      item.schedule.team_a_captain_id,
+      item.schedule.team_b_captain_id,
+    )
+    if (bothConsented) {
+      await revealEntries(scheduleId)
+    }
+  } catch (e: any) {
+    alert(e.message ?? '동의 처리 중 오류가 발생했습니다.')
+  } finally {
+    consentingId.value = null
   }
 }
 

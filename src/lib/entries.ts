@@ -112,6 +112,43 @@ export async function submitEntry(
   if (error) throw error
 }
 
+/** 공개 동의 처리 */
+export async function consentReveal(scheduleId: number, captainPlayerId: number): Promise<void> {
+  const { error } = await supabase
+    .from('league_match_entries')
+    .update({ consent_reveal: true })
+    .eq('schedule_id', scheduleId)
+    .eq('captain_player_id', captainPlayerId)
+  if (error) throw error
+}
+
+/** 양팀 모두 공개 동의 여부 확인 */
+export async function checkBothConsented(
+  scheduleId: number,
+  captainAId: number,
+  captainBId: number,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('league_match_entries')
+    .select('captain_player_id, consent_reveal')
+    .eq('schedule_id', scheduleId)
+    .in('captain_player_id', [captainAId, captainBId])
+  if (error) throw error
+  const map = new Map((data ?? []).map(r => [r.captain_player_id, r.consent_reveal]))
+  return map.get(captainAId) === true && map.get(captainBId) === true
+}
+
+/** 이미 공개 동의한 schedule_id 집합 반환 */
+export async function getConsentedSet(captainPlayerId: number): Promise<Set<number>> {
+  const { data, error } = await supabase
+    .from('league_match_entries')
+    .select('schedule_id')
+    .eq('captain_player_id', captainPlayerId)
+    .eq('consent_reveal', true)
+  if (error) throw error
+  return new Set((data ?? []).map(r => r.schedule_id))
+}
+
 /** 경기의 모든 팀장 엔트리 조회 (엔트리 공개용) */
 export async function getScheduleEntries(scheduleId: number): Promise<EntryRecord[]> {
   const { data, error } = await supabase
