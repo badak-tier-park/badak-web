@@ -848,8 +848,14 @@ const mapSaving = ref(false)
 const mapError = ref<string | null>(null)
 
 async function saveMapsData() {
-  mapSaving.value = true
   mapError.value = null
+  for (const n of [2, 3]) {
+    if ((matchMaps.value[n]?.length ?? 0) < 2) {
+      mapError.value = `${n}경기는 밴픽 풀 맵을 최소 2개 선택해야 합니다.`
+      return
+    }
+  }
+  mapSaving.value = true
   try {
     const entries = Object.entries(matchMaps.value)
       .filter(([, ids]) => ids.length > 0)
