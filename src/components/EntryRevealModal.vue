@@ -43,22 +43,39 @@
               <div class="reveal-row">
                 <!-- 팀A 선수 -->
                 <div class="rse-col" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamACaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamACaptainId }">
-                  <!-- 팀전 WIN: 플레이어 전체 위에 한 번 -->
-                  <span v-if="showResults && slot.type === 'team' && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge rse-win-badge--team">WIN</span>
-                  <div
-                    v-for="(pid, pidIdx) in getSlotPlayerIds(teamACaptainId, slot.num)"
-                    :key="pid"
-                    class="rse-player"
-                  >
-                    <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                    <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
-                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
-                    <!-- 개인전 WIN: 해당 플레이어 row 인라인 -->
-                    <span v-if="showResults && slot.type !== 'team' && pidIdx === 0 && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
-                  </div>
-                  <div v-if="slot.type === 'team' && getSlotPlayerIds(teamACaptainId, slot.num).length" class="rse-total">
-                    합계 {{ slotTotal(teamACaptainId, slot.num) }}pt
-                  </div>
+                  <!-- 팀전: 선수들 + WIN 배지를 한 row로 -->
+                  <template v-if="slot.type === 'team'">
+                    <div class="rse-team-group">
+                      <div class="rse-players">
+                        <div
+                          v-for="pid in getSlotPlayerIds(teamACaptainId, slot.num)"
+                          :key="pid"
+                          class="rse-player"
+                        >
+                          <span class="rse-pt">{{ playerPt(pid) }}pt</span>
+                          <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                          <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                        </div>
+                      </div>
+                      <span v-if="showResults && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
+                    </div>
+                    <div v-if="getSlotPlayerIds(teamACaptainId, slot.num).length" class="rse-total">
+                      합계 {{ slotTotal(teamACaptainId, slot.num) }}pt
+                    </div>
+                  </template>
+                  <!-- 개인전 -->
+                  <template v-else>
+                    <div
+                      v-for="(pid, pidIdx) in getSlotPlayerIds(teamACaptainId, slot.num)"
+                      :key="pid"
+                      class="rse-player"
+                    >
+                      <span class="rse-pt">{{ playerPt(pid) }}pt</span>
+                      <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                      <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                      <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
+                    </div>
+                  </template>
                 </div>
 
                 <!-- 맵 정보 (센터, 맵 이미지만) -->
@@ -79,22 +96,39 @@
 
                 <!-- 팀B 선수 -->
                 <div class="rse-col rse-col--right" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamBCaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamBCaptainId }">
-                  <!-- 팀전 WIN: 플레이어 전체 위에 한 번 -->
-                  <span v-if="showResults && slot.type === 'team' && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge rse-win-badge--team">WIN</span>
-                  <div
-                    v-for="(pid, pidIdx) in getSlotPlayerIds(teamBCaptainId, slot.num)"
-                    :key="pid"
-                    class="rse-player"
-                  >
-                    <!-- 개인전 WIN: 해당 플레이어 row 인라인 -->
-                    <span v-if="showResults && slot.type !== 'team' && pidIdx === 0 && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
-                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
-                    <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
-                    <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                  </div>
-                  <div v-if="slot.type === 'team' && getSlotPlayerIds(teamBCaptainId, slot.num).length" class="rse-total rse-total--right">
-                    합계 {{ slotTotal(teamBCaptainId, slot.num) }}pt
-                  </div>
+                  <!-- 팀전: WIN 배지 + 선수들을 한 row로 -->
+                  <template v-if="slot.type === 'team'">
+                    <div class="rse-team-group rse-team-group--right">
+                      <span v-if="showResults && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
+                      <div class="rse-players">
+                        <div
+                          v-for="pid in getSlotPlayerIds(teamBCaptainId, slot.num)"
+                          :key="pid"
+                          class="rse-player"
+                        >
+                          <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                          <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                          <span class="rse-pt">{{ playerPt(pid) }}pt</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-if="getSlotPlayerIds(teamBCaptainId, slot.num).length" class="rse-total rse-total--right">
+                      합계 {{ slotTotal(teamBCaptainId, slot.num) }}pt
+                    </div>
+                  </template>
+                  <!-- 개인전 -->
+                  <template v-else>
+                    <div
+                      v-for="(pid, pidIdx) in getSlotPlayerIds(teamBCaptainId, slot.num)"
+                      :key="pid"
+                      class="rse-player"
+                    >
+                      <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
+                      <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                      <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                      <span class="rse-pt">{{ playerPt(pid) }}pt</span>
+                    </div>
+                  </template>
                 </div>
               </div>
 

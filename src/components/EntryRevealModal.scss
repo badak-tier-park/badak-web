@@ -197,21 +197,26 @@
   border-radius: 3px;
   padding: 1px 5px;
   flex-shrink: 0;
+}
 
-  // 팀전: 플레이어 전체를 아우르는 블록 배지
-  &--team {
-    display: block;
-    text-align: right;
-    padding: 3px 8px;
-    margin: 0 5px 0 0;
-    border-radius: 4px;
-    font-size: 10px;
-    margin-bottom: 2px;
+// ── 팀전: 선수 그룹 + WIN 배지 인라인 row ─────────────────────
+.rse-team-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  width: 100%;
 
-    .rse-col--right & {
-      text-align: left;
-    }
+  &--right {
+    justify-content: flex-start;
   }
+}
+
+.rse-players {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
 }
 
 .rse-player {
