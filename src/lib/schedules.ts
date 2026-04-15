@@ -9,6 +9,7 @@ export interface ScheduleRow {
   team_b_captain_id: number
   winner_captain_id: number | null
   is_entry_revealed: boolean
+  is_completed: boolean
   created_at: string
 }
 
@@ -29,6 +30,14 @@ export async function getSchedules(leagueId: string): Promise<ScheduleRow[]> {
     .order('id', { ascending: true })
   if (error) throw error
   return data
+}
+
+export async function completeMatch(scheduleId: number, winnerCaptainId: number | null): Promise<void> {
+  const { error } = await supabase
+    .from('league_schedules')
+    .update({ is_completed: true, winner_captain_id: winnerCaptainId })
+    .eq('id', scheduleId)
+  if (error) throw error
 }
 
 export async function revealEntries(scheduleId: number): Promise<void> {

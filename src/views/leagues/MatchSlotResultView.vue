@@ -60,7 +60,7 @@
                   'slot-team-btn--loser': slotWinners.get(slot.num) != null && slotWinners.get(slot.num) !== schedule!.team_a_captain_id,
                   'slot-team-btn--saving': savingSlot === slot.num,
                 }"
-                :disabled="savingSlot === slot.num"
+                :disabled="savingSlot === slot.num || isCompleted"
                 @click="toggleWinner(slot.num, schedule!.team_a_captain_id)"
               >
                 <div class="slot-players">
@@ -86,7 +86,7 @@
                   'slot-team-btn--loser': slotWinners.get(slot.num) != null && slotWinners.get(slot.num) !== schedule!.team_b_captain_id,
                   'slot-team-btn--saving': savingSlot === slot.num,
                 }"
-                :disabled="savingSlot === slot.num"
+                :disabled="savingSlot === slot.num || isCompleted"
                 @click="toggleWinner(slot.num, schedule!.team_b_captain_id)"
               >
                 <span v-if="slotWinners.get(slot.num) === schedule!.team_b_captain_id" class="win-badge">WIN</span>
@@ -123,7 +123,7 @@
                   'slot-team-btn--loser': slotWinners.get(ACE_SLOT.num) != null && slotWinners.get(ACE_SLOT.num) !== schedule!.team_a_captain_id,
                   'slot-team-btn--saving': savingSlot === ACE_SLOT.num,
                 }"
-                :disabled="savingSlot === ACE_SLOT.num"
+                :disabled="savingSlot === ACE_SLOT.num || isCompleted"
                 @click="toggleWinner(ACE_SLOT.num, schedule!.team_a_captain_id)"
               >
                 <span class="slot-team-name" :class="`tier-badge--${teamA?.tier.toLowerCase()}`">
@@ -141,7 +141,7 @@
                   'slot-team-btn--loser': slotWinners.get(ACE_SLOT.num) != null && slotWinners.get(ACE_SLOT.num) !== schedule!.team_b_captain_id,
                   'slot-team-btn--saving': savingSlot === ACE_SLOT.num,
                 }"
-                :disabled="savingSlot === ACE_SLOT.num"
+                :disabled="savingSlot === ACE_SLOT.num || isCompleted"
                 @click="toggleWinner(ACE_SLOT.num, schedule!.team_b_captain_id)"
               >
                 <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_b_captain_id" class="win-badge">WIN</span>
@@ -151,6 +151,24 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <div class="match-result-footer">
+          <p v-if="completeError" class="complete-error">{{ completeError }}</p>
+          <span v-if="isCompleted" class="badge-completed">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            경기 종료
+          </span>
+          <button
+            v-else
+            class="btn-complete"
+            :disabled="completing || savingSlot != null"
+            @click="handleComplete"
+          >
+            {{ completing ? '저장 중...' : '저장' }}
+          </button>
         </div>
 
       </template>
@@ -167,7 +185,7 @@ import { getLeague } from '@/lib/leagues'
 import { getCaptains } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
-import { getSchedules, getSlotResults, setSlotResult, type ScheduleRow } from '@/lib/schedules'
+import { getSchedules, getSlotResults, setSlotResult, completeMatch, type ScheduleRow } from '@/lib/schedules'
 import { getScheduleEntries } from '@/lib/entries'
 import { withTimeout } from '@/lib/supabase'
 
@@ -198,6 +216,9 @@ interface TeamInfo {
 const loading = ref(true)
 const pageError = ref<string | null>(null)
 const savingSlot = ref<number | null>(null)
+const isCompleted = ref(false)
+const completing = ref(false)
+const completeError = ref<string | null>(null)
 
 interface SlotPlayerInfo { id: number; nickname: string; tier: string; race: string }
 interface SlotPlayers { teamA: SlotPlayerInfo[]; teamB: SlotPlayerInfo[] }
@@ -250,6 +271,7 @@ onMounted(async () => {
     const match = schedules.find(s => s.id === matchId)
     if (!match) throw new Error('경기를 찾을 수 없습니다.')
     schedule.value = match
+    isCompleted.value = match.is_completed
 
     const playerMap = new Map(players.map(p => [p.id, p]))
     const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
@@ -307,6 +329,24 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+async function handleComplete() {
+  completing.value = true
+  completeError.value = null
+  try {
+    const winner = scoreA.value > scoreB.value
+      ? schedule.value!.team_a_captain_id
+      : scoreB.value > scoreA.value
+        ? schedule.value!.team_b_captain_id
+        : null
+    await completeMatch(matchId, winner)
+    isCompleted.value = true
+  } catch (e: any) {
+    completeError.value = e.message ?? '저장 중 오류가 발생했습니다.'
+  } finally {
+    completing.value = false
+  }
+}
 
 async function toggleWinner(slotNum: number, captainId: number) {
   if (savingSlot.value != null) return
