@@ -7,13 +7,9 @@
 }
 
 .state-msg {
-  text-align: center;
   padding: 80px 24px;
   color: var(--c-text-muted);
   font-size: 14px;
-  font-family: system-ui, sans-serif;
-
-  &--error { color: #f87171; }
 }
 
 // ── 본문 레이아웃 ─────────────────────────────────────────
@@ -41,7 +37,6 @@
   border-radius: 100px;
   font-size: 11px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   letter-spacing: 0.02em;
 
   &.type--regular_summer { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
@@ -52,14 +47,12 @@
   font-size: 22px;
   font-weight: 800;
   color: var(--c-text);
-  font-family: system-ui, sans-serif;
   margin: 0;
 }
 
 .league-period {
   font-size: 13px;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
 }
 
 .draft-info {
@@ -68,7 +61,6 @@
   background: var(--c-overlay);
   padding: 3px 10px;
   border-radius: 6px;
-  font-family: system-ui, sans-serif;
 }
 
 // ── 지목식 완료 잠금 배너 ──────────────────────────────────
@@ -83,7 +75,6 @@
   color: #fbbf24;
   font-size: 12px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   margin-bottom: 4px;
 }
 
@@ -118,7 +109,6 @@
   color: var(--c-text-muted);
   font-size: 13px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
@@ -182,7 +172,6 @@
   color: #c084fc;
   font-size: 13px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -209,14 +198,12 @@
   font-size: 16px;
   font-weight: 700;
   color: var(--c-text);
-  font-family: system-ui, sans-serif;
   margin: 0 0 6px;
 }
 
 .section-desc {
   font-size: 13px;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
   margin: 0 0 16px;
   line-height: 1.5;
 }
@@ -230,33 +217,7 @@
   gap: 10px;
 }
 
-.save-error {
-  margin: 0;
-  font-size: 12px;
-  color: #f87171;
-  font-family: system-ui, sans-serif;
-  flex: 1;
-}
-
-.btn-save {
-  padding: 9px 22px;
-  border-radius: 8px;
-  border: 1px solid rgba(170, 59, 255, 0.4);
-  background: rgba(170, 59, 255, 0.15);
-  color: #c084fc;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: system-ui, sans-serif;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover:not(:disabled) {
-    background: rgba(170, 59, 255, 0.25);
-    border-color: rgba(170, 59, 255, 0.65);
-    color: #d8a4ff;
-  }
-  &:disabled { opacity: 0.4; cursor: default; }
-}
+.save-error { flex: 1; }
 
 // ── 에디터 툴바 ───────────────────────────────────────────
 .editor-toolbar {
@@ -285,7 +246,6 @@
   color: var(--c-text-sub);
   font-size: 12px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -331,7 +291,6 @@
   font-size: 14px;
   line-height: 1.7;
   color: var(--c-text);
-  font-family: system-ui, sans-serif;
   caret-color: #c084fc;
 
   p { margin: 0 0 0.6em; }
@@ -374,7 +333,6 @@
   color: #4ade80;
   font-size: 13px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   white-space: nowrap;
   pointer-events: none;
@@ -420,7 +378,6 @@
   color: #c084fc;
   font-size: 11px;
   font-weight: 800;
-  font-family: system-ui, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -436,7 +393,6 @@
 .captain-tier {
   font-size: 11px;
   font-weight: 800;
-  font-family: system-ui, sans-serif;
   padding: 2px 7px;
   border-radius: 5px;
   flex-shrink: 0;
@@ -445,7 +401,6 @@
 .captain-race {
   font-size: 12px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   flex-shrink: 0;
   min-width: 16px;
 }
@@ -454,14 +409,12 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--c-text-2);
-  font-family: system-ui, sans-serif;
   flex: 1;
 }
 
 .slot-empty {
   font-size: 13px;
   color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
   flex: 1;
 }
 
@@ -526,7 +479,6 @@
   color: #c084fc;
   font-size: 13px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -544,7 +496,6 @@
   color: var(--c-text-sub);
   font-size: 12px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -581,14 +532,12 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--c-text-2);
-  font-family: system-ui, sans-serif;
   min-width: 44px;
 }
 
 .match-type {
   font-size: 11px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   padding: 3px 8px;
   border-radius: 5px;
 
@@ -600,7 +549,6 @@
 .match-ace {
   font-size: 11px;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
 }
 
 .match-maps {
@@ -614,7 +562,6 @@
 .no-map {
   font-size: 13px;
   color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
 }
 
 .selected-maps {
@@ -633,7 +580,6 @@
   border: 1px solid var(--c-badge-border);
   font-size: 12px;
   color: var(--c-text-2);
-  font-family: system-ui, sans-serif;
   font-weight: 500;
 }
 
@@ -666,7 +612,6 @@
   color: var(--c-text-sub);
   font-size: 12px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -712,7 +657,6 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--c-text);
-  font-family: system-ui, sans-serif;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -749,7 +693,6 @@
   background: var(--c-input);
   color: var(--c-text);
   font-size: 13px;
-  font-family: system-ui, sans-serif;
   outline: none;
   transition: border-color 0.15s;
 
@@ -767,7 +710,6 @@
   text-align: center;
   color: var(--c-text-muted);
   font-size: 13px;
-  font-family: system-ui, sans-serif;
 }
 
 .picker-item {
@@ -782,7 +724,6 @@
   color: var(--c-text-2);
   cursor: pointer;
   transition: background 0.12s;
-  font-family: system-ui, sans-serif;
   text-align: left;
 
   &:hover:not(:disabled):not(.selected) { background: var(--c-overlay); }
@@ -878,7 +819,6 @@
 .seed-rule-item {
   font-size: 12px;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
   margin: 0;
   line-height: 1.6;
 }
@@ -895,7 +835,6 @@
 .picker-footer-hint {
   font-size: 12px;
   color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
 }
 
 .picker-confirm {
@@ -906,7 +845,6 @@
   color: #c084fc;
   font-size: 13px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -929,7 +867,6 @@
   border: 1px solid rgba(250, 204, 21, 0.2);
   color: var(--c-text-muted);
   font-size: 12px;
-  font-family: system-ui, sans-serif;
   line-height: 1.5;
 
   svg { color: #facc15; flex-shrink: 0; }

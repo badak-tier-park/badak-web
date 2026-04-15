@@ -16,16 +16,6 @@
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.state-msg {
-  padding: 60px 0;
-  text-align: center;
-  font-size: 13px;
-  color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
-  &--error { color: #f87171; }
-}
-
-
 // ── 라운드 그룹 ───────────────────────────────────────────
 .result-list {
   display: flex;
@@ -56,7 +46,6 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
   white-space: nowrap;
 }
 
@@ -82,7 +71,6 @@
 .match-date {
   font-size: 11px;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
   white-space: nowrap;
   flex-shrink: 0;
   min-width: 60px;
@@ -132,7 +120,6 @@
 .team-chip {
   font-size: 13px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   padding: 2px 9px;
   border-radius: 5px;
   white-space: nowrap;
@@ -146,7 +133,6 @@
   font-weight: 800;
   color: #34d399;
   letter-spacing: 0.5px;
-  font-family: system-ui, sans-serif;
   flex-shrink: 0;
 }
 
@@ -154,7 +140,6 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
   flex-shrink: 0;
 }
 
@@ -185,7 +170,6 @@
   gap: 6px;
   margin-top: 24px;
   justify-content: flex-end;
-  font-family: system-ui, sans-serif;
 }
 
 .summary-done {
