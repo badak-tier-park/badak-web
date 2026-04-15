@@ -77,7 +77,25 @@
                 <span v-if="slotWinners.get(slot.num) === schedule!.team_a_captain_id" class="win-badge">WIN</span>
               </button>
 
-              <span class="slot-vs">VS</span>
+              <!-- 중앙: 맵 정보 -->
+              <div class="slot-center">
+                <template v-if="slotMapStates.get(slot.num)?.type !== 'none'">
+                  <div v-if="getResolvedMap(slot.num)" class="slot-map">
+                    <div class="slot-map-thumb">
+                      <img v-if="getResolvedMap(slot.num)?.thumbnail_url" :src="getResolvedMap(slot.num)!.thumbnail_url!" />
+                      <div v-else class="slot-map-thumb-empty" />
+                    </div>
+                    <span class="slot-map-name">{{ getResolvedMap(slot.num)?.name }}</span>
+                  </div>
+                  <button
+                    v-else-if="!isCompleted"
+                    class="slot-ladder-btn"
+                    @click="openLadder(slot.num)"
+                  >
+                    사다리타기
+                  </button>
+                </template>
+              </div>
 
               <button
                 class="slot-team-btn slot-team-btn--right"
@@ -104,7 +122,8 @@
               </button>
             </div>
           </div>
-          <!-- 에이스 결정전: 6경기 3:3이고 포인트 차이 3 미만일 때만 노출 -->
+
+          <!-- 에이스 결정전 -->
           <div
             v-if="showAce"
             class="slot-row"
@@ -132,7 +151,9 @@
                 <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_a_captain_id" class="win-badge">WIN</span>
               </button>
 
-              <span class="slot-vs">VS</span>
+              <div class="slot-center">
+                <span class="slot-vs">VS</span>
+              </div>
 
               <button
                 class="slot-team-btn slot-team-btn--right"
@@ -170,9 +191,52 @@
             {{ completing ? '저장 중...' : '저장' }}
           </button>
         </div>
-
       </template>
     </div>
+
+    <!-- 사다리타기 모달 -->
+    <Teleport to="body">
+      <div v-if="ladderSlot != null" class="ladder-overlay" @click.self="ladderSlot = null">
+        <div class="ladder-modal">
+          <div class="ladder-header">
+            <span class="ladder-title">경기{{ ladderSlot }} 맵 선택</span>
+            <button class="ladder-close" @click="ladderSlot = null">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="ladder-maps">
+            <button
+              v-for="m in slotMapStates.get(ladderSlot)?.candidateMaps"
+              :key="m.id"
+              class="ladder-map-btn"
+              :class="{ 'ladder-map-btn--selected': ladderPickResult === m.id }"
+              @click="ladderPickResult = m.id"
+            >
+              <div class="ladder-map-thumb">
+                <img v-if="m.thumbnail_url" :src="m.thumbnail_url" />
+                <div v-else class="ladder-map-thumb-empty" />
+              </div>
+              <span class="ladder-map-name">{{ m.name }}</span>
+            </button>
+          </div>
+          <div class="ladder-actions">
+            <button class="ladder-random-btn" :disabled="ladderPicking" @click="randomPick">
+              {{ ladderPicking ? '선택 중...' : '랜덤 선택' }}
+            </button>
+            <button class="btn-cancel" @click="ladderSlot = null">취소</button>
+            <button
+              class="btn-complete ladder-confirm-btn"
+              :disabled="!ladderPickResult || savingLadderMap"
+              @click="confirmLadder"
+            >
+              {{ savingLadderMap ? '저장 중...' : '확정' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -182,11 +246,12 @@ import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import { getLeague } from '@/lib/leagues'
-import { getCaptains } from '@/lib/leagueDetail'
+import { getCaptains, getMatchMaps } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
-import { getSchedules, getSlotResults, setSlotResult, completeMatch, type ScheduleRow } from '@/lib/schedules'
+import { getSchedules, getSlotResults, setSlotResult, setSlotMap, completeMatch, type ScheduleRow } from '@/lib/schedules'
 import { getScheduleEntries } from '@/lib/entries'
+import { getMaps } from '@/lib/maps'
 import { withTimeout } from '@/lib/supabase'
 
 const route = useRoute()
@@ -203,14 +268,23 @@ const REGULAR_SLOTS = [
 ] as const
 
 const ACE_SLOT = { num: 7, type: 'ace' } as const
-
+const BAN_SLOTS = new Set([2, 3])
 const TIER_POINTS: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
+const TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
 
 interface TeamInfo {
   captainId: number
   nickname: string
   teamName: string
   tier: string
+}
+
+interface SlotPlayerInfo { id: number; nickname: string; tier: string; race: string }
+interface SlotPlayers { teamA: SlotPlayerInfo[]; teamB: SlotPlayerInfo[] }
+interface MapInfo { id: string; name: string; thumbnail_url: string | null }
+interface SlotMapState {
+  type: 'none' | 'fixed' | 'auto' | 'ladder'
+  candidateMaps: MapInfo[]
 }
 
 const loading = ref(true)
@@ -220,9 +294,6 @@ const isCompleted = ref(false)
 const completing = ref(false)
 const completeError = ref<string | null>(null)
 
-interface SlotPlayerInfo { id: number; nickname: string; tier: string; race: string }
-interface SlotPlayers { teamA: SlotPlayerInfo[]; teamB: SlotPlayerInfo[] }
-
 const schedule = ref<ScheduleRow | null>(null)
 const teamA = ref<TeamInfo | null>(null)
 const teamB = ref<TeamInfo | null>(null)
@@ -230,6 +301,18 @@ const slotWinners = ref(new Map<number, number>())
 const slotPlayerMap = ref(new Map<number, SlotPlayers>())
 const entryPointsA = ref(0)
 const entryPointsB = ref(0)
+
+// 맵 관련 상태
+const allMapsById = ref(new Map<string, MapInfo>())
+const matchMapConfig = ref(new Map<number, string[]>())
+const entryBanMap = ref(new Map<number, Map<number, string | null>>())
+const ladderSelectedMaps = ref(new Map<number, string>())
+
+// 사다리타기 모달 상태
+const ladderSlot = ref<number | null>(null)
+const ladderPicking = ref(false)
+const ladderPickResult = ref<string | null>(null)
+const savingLadderMap = ref(false)
 
 // 1~6경기 스코어
 const score6A = computed(() =>
@@ -247,16 +330,132 @@ const scoreB = computed(() =>
   [...slotWinners.value.entries()].filter(([, w]) => w === schedule.value?.team_b_captain_id).length
 )
 
-// 3:3이고 포인트 차이가 3 미만일 때 에이스 결정전 진행
 const showAce = computed(() => {
   if (score6A.value !== 3 || score6B.value !== 3) return false
-  if (entryPointsA.value === 0 && entryPointsB.value === 0) return true  // 엔트리 없으면 기본 진행
+  if (entryPointsA.value === 0 && entryPointsB.value === 0) return true
   return Math.abs(entryPointsA.value - entryPointsB.value) < 3
 })
 
+// ── 맵 배정 계산 ────────────────────────────────────────────────
+
+function resolveSlotMap(slotNum: number): SlotMapState {
+  const mapIds = matchMapConfig.value.get(slotNum) ?? []
+  const maps = mapIds.map(id => allMapsById.value.get(id)).filter(Boolean) as MapInfo[]
+
+  if (maps.length === 0) return { type: 'none', candidateMaps: [] }
+
+  // 밴 없는 경기 (1, 4, 5, 6) 또는 맵이 1개뿐인 경우
+  if (!BAN_SLOTS.has(slotNum) || maps.length === 1) {
+    return { type: 'fixed', candidateMaps: maps }
+  }
+
+  // 밴 슬롯 (2, 3): 밴 결과 계산
+  const captAId = schedule.value?.team_a_captain_id ?? 0
+  const captBId = schedule.value?.team_b_captain_id ?? 0
+  const banA = entryBanMap.value.get(captAId)?.get(slotNum) ?? null
+  const banB = entryBanMap.value.get(captBId)?.get(slotNum) ?? null
+
+  let candidates = [...maps]
+
+  if (banA && banB) {
+    if (banA === banB) {
+      // 같은 맵 밴 → 1개 제거
+      candidates = candidates.filter(m => m.id !== banA)
+    } else {
+      // 다른 맵 밴 → 양쪽 적용
+      const afterBoth = candidates.filter(m => m.id !== banA && m.id !== banB)
+      if (afterBoth.length === 0) {
+        // 맵 없음 → 낮은 티어 팀의 밴 적용
+        const rankA = TIER_RANK[(teamA.value?.tier ?? 'e').toUpperCase()] ?? 1
+        const rankB = TIER_RANK[(teamB.value?.tier ?? 'e').toUpperCase()] ?? 1
+        if (rankA === rankB) {
+          // 동티어 → 원래 맵 전체로 사다리타기
+          candidates = maps
+        } else {
+          const effectiveBan = rankA <= rankB ? banA : banB
+          candidates = candidates.filter(m => m.id !== effectiveBan)
+        }
+      } else {
+        candidates = afterBoth
+      }
+    }
+  } else if (banA) {
+    candidates = candidates.filter(m => m.id !== banA)
+  } else if (banB) {
+    candidates = candidates.filter(m => m.id !== banB)
+  }
+
+  if (candidates.length === 0) return { type: 'none', candidateMaps: [] }
+  if (candidates.length === 1) return { type: 'auto', candidateMaps: candidates }
+  return { type: 'ladder', candidateMaps: candidates }
+}
+
+const slotMapStates = computed(() => {
+  const result = new Map<number, SlotMapState>()
+  for (const slot of REGULAR_SLOTS) {
+    result.set(slot.num, resolveSlotMap(slot.num))
+  }
+  return result
+})
+
+function getResolvedMap(slotNum: number): MapInfo | null {
+  const state = slotMapStates.value.get(slotNum)
+  if (!state || state.type === 'none') return null
+  if (state.type === 'ladder') {
+    const selectedId = ladderSelectedMaps.value.get(slotNum)
+    return selectedId ? (allMapsById.value.get(selectedId) ?? null) : null
+  }
+  return state.candidateMaps[0] ?? null
+}
+
+// ── 사다리타기 ──────────────────────────────────────────────────
+
+function openLadder(slotNum: number) {
+  ladderSlot.value = slotNum
+  ladderPickResult.value = ladderSelectedMaps.value.get(slotNum) ?? null
+}
+
+function randomPick() {
+  if (ladderPicking.value) return
+  ladderPicking.value = true
+  ladderPickResult.value = null
+
+  const candidates = slotMapStates.value.get(ladderSlot.value!)?.candidateMaps ?? []
+  if (candidates.length === 0) { ladderPicking.value = false; return }
+
+  let count = 0
+  const totalFlashes = 10 + Math.floor(Math.random() * 8)
+  const interval = setInterval(() => {
+    ladderPickResult.value = candidates[Math.floor(Math.random() * candidates.length)].id
+    count++
+    if (count >= totalFlashes) {
+      clearInterval(interval)
+      ladderPicking.value = false
+    }
+  }, 80)
+}
+
+async function confirmLadder() {
+  if (!ladderSlot.value || !ladderPickResult.value) return
+  savingLadderMap.value = true
+  try {
+    await setSlotMap(matchId, ladderSlot.value, ladderPickResult.value)
+    const newMap = new Map(ladderSelectedMaps.value)
+    newMap.set(ladderSlot.value, ladderPickResult.value)
+    ladderSelectedMaps.value = newMap
+    ladderSlot.value = null
+  } catch (e: any) {
+    console.error(e)
+  } finally {
+    savingLadderMap.value = false
+  }
+}
+
+// ── 데이터 로딩 ─────────────────────────────────────────────────
+
 onMounted(async () => {
   try {
-    const [leagueData, captains, players, teamNames, schedules, slotResults, entries] = await withTimeout(Promise.all([
+    const [leagueData, captains, players, teamNames, schedules, slotResults, entries, matchMapsData, allMapsData] = await withTimeout(Promise.all([
       getLeague(leagueId),
       getCaptains(leagueId),
       getPlayers(),
@@ -264,6 +463,8 @@ onMounted(async () => {
       getSchedules(leagueId),
       getSlotResults(matchId),
       getScheduleEntries(matchId),
+      getMatchMaps(leagueId),
+      getMaps(),
     ]))
 
     void leagueData
@@ -296,7 +497,7 @@ onMounted(async () => {
     }
     slotWinners.value = winnerMap
 
-    // 슬롯별 선수 맵 구성 (엔트리 공개된 경우에만 데이터 있음)
+    // 슬롯별 선수 맵
     const toInfo = (id: number): SlotPlayerInfo => {
       const p = playerMap.get(id)
       return { id, nickname: p?.nickname ?? `선수${id}`, tier: p?.tier ?? 'e', race: p?.race ?? '' }
@@ -315,7 +516,7 @@ onMounted(async () => {
     }
     slotPlayerMap.value = spMap
 
-    // 팀별 총 포인트 계산 (슬롯 1~6)
+    // 팀별 총 포인트
     const calcPoints = (captainId: number) =>
       entries
         .filter(e => e.captain_player_id === captainId)
@@ -323,6 +524,35 @@ onMounted(async () => {
         .reduce((sum, pid) => sum + (TIER_POINTS[(playerMap.get(pid)?.tier ?? 'e').toUpperCase()] ?? 1), 0)
     entryPointsA.value = calcPoints(match.team_a_captain_id)
     entryPointsB.value = calcPoints(match.team_b_captain_id)
+
+    // 맵 데이터
+    const mapsById = new Map<string, MapInfo>()
+    for (const m of allMapsData) {
+      mapsById.set(m.id, { id: m.id, name: m.name, thumbnail_url: m.thumbnail_url })
+    }
+    allMapsById.value = mapsById
+
+    const mmConfig = new Map<number, string[]>()
+    for (const mm of matchMapsData) {
+      mmConfig.set(mm.match_number, mm.map_ids)
+    }
+    matchMapConfig.value = mmConfig
+
+    // 엔트리 밴 맵
+    const banMap = new Map<number, Map<number, string | null>>()
+    for (const e of entries) {
+      if (!banMap.has(e.captain_player_id)) banMap.set(e.captain_player_id, new Map())
+      banMap.get(e.captain_player_id)!.set(e.match_slot, e.banned_map_id)
+    }
+    entryBanMap.value = banMap
+
+    // 사다리타기 기선택 맵
+    const ladderMap = new Map<number, string>()
+    for (const r of slotResults) {
+      if (r.selected_map_id) ladderMap.set(r.slot_num, r.selected_map_id)
+    }
+    ladderSelectedMaps.value = ladderMap
+
   } catch (e: any) {
     pageError.value = e.message ?? '데이터를 불러올 수 없습니다.'
   } finally {

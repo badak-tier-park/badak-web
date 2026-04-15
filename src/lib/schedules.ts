@@ -78,6 +78,7 @@ export interface SlotResult {
   schedule_id: number
   slot_num: number
   winner_captain_id: number | null
+  selected_map_id: string | null
 }
 
 export async function getSlotResults(scheduleId: number): Promise<SlotResult[]> {
@@ -94,19 +95,64 @@ export async function setSlotResult(
   slotNum: number,
   winnerCaptainId: number | null,
 ): Promise<void> {
+  const { data: existing } = await supabase
+    .from('league_match_slot_results')
+    .select('selected_map_id')
+    .eq('schedule_id', scheduleId)
+    .eq('slot_num', slotNum)
+    .maybeSingle()
+
   if (winnerCaptainId === null) {
-    const { error } = await supabase
-      .from('league_match_slot_results')
-      .delete()
-      .eq('schedule_id', scheduleId)
-      .eq('slot_num', slotNum)
-    if (error) throw error
+    if (!existing) return
+    if (existing.selected_map_id) {
+      const { error } = await supabase
+        .from('league_match_slot_results')
+        .update({ winner_captain_id: null })
+        .eq('schedule_id', scheduleId)
+        .eq('slot_num', slotNum)
+      if (error) throw error
+    } else {
+      const { error } = await supabase
+        .from('league_match_slot_results')
+        .delete()
+        .eq('schedule_id', scheduleId)
+        .eq('slot_num', slotNum)
+      if (error) throw error
+    }
   } else {
     const { error } = await supabase
       .from('league_match_slot_results')
-      .upsert({ schedule_id: scheduleId, slot_num: slotNum, winner_captain_id: winnerCaptainId })
+      .upsert({
+        schedule_id: scheduleId,
+        slot_num: slotNum,
+        winner_captain_id: winnerCaptainId,
+        selected_map_id: existing?.selected_map_id ?? null,
+      })
     if (error) throw error
   }
+}
+
+export async function setSlotMap(
+  scheduleId: number,
+  slotNum: number,
+  mapId: string,
+): Promise<void> {
+  const { data: existing } = await supabase
+    .from('league_match_slot_results')
+    .select('winner_captain_id')
+    .eq('schedule_id', scheduleId)
+    .eq('slot_num', slotNum)
+    .maybeSingle()
+
+  const { error } = await supabase
+    .from('league_match_slot_results')
+    .upsert({
+      schedule_id: scheduleId,
+      slot_num: slotNum,
+      winner_captain_id: existing?.winner_captain_id ?? null,
+      selected_map_id: mapId,
+    })
+  if (error) throw error
 }
 
 export async function saveSchedules(
