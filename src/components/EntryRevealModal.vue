@@ -31,6 +31,12 @@
 
             <!-- 슬롯별 행 -->
             <div v-for="slot in SLOT_CONFIG" :key="slot.num" class="reveal-slot" :class="{ 'reveal-slot--team': slot.type === 'team' }">
+              <!-- 슬롯 라벨 (row 바깥) -->
+              <div class="rsl-center-label">
+                <span class="rsl-num">경기{{ slot.num }}</span>
+                <span v-if="slot.type === 'team'" class="rsl-type">팀전</span>
+              </div>
+
               <!-- 3컬럼: 팀A | 맵 | 팀B -->
               <div class="reveal-row">
                 <!-- 팀A 선수 -->
@@ -49,17 +55,9 @@
                   </div>
                 </div>
 
-                <!-- 맵 정보 (센터) -->
+                <!-- 맵 정보 (센터, 맵 이미지만) -->
                 <div class="rse-maps">
-                  <!-- 슬롯 라벨 -->
-                  <div class="rsl-center-label">
-                    <span class="rsl-num">경기{{ slot.num }}</span>
-                    <span v-if="slot.type === 'team'" class="rsl-type">
-                      팀전
-                    </span>
-                  </div>
                   <template v-if="slotMapRows[slot.num]?.length">
-                    <!-- 경기 맵 (밴 제외, 항상 노출) -->
                     <template v-for="m in slotMapRows[slot.num]" :key="m.id">
                       <div v-if="slotMapResults[slot.num].matchMapIds.has(m.id)" class="rse-map-item">
                         <div class="rse-map-thumb-wrap">
@@ -67,40 +65,6 @@
                           <div v-else class="rse-map-thumb-empty" />
                         </div>
                         <span class="rse-map-name">{{ m.name }}</span>
-                      </div>
-                    </template>
-
-                    <!-- 사다리타기 안내 -->
-                    <div v-if="slotMapResults[slot.num].isUndecided" class="rse-undecided">사다리타기로 결정</div>
-
-                    <!-- 밴 정보 토글 버튼 -->
-                    <button
-                      v-if="slotMapResults[slot.num].bannedMapInfo.length"
-                      class="btn-ban-toggle"
-                      @click="toggleBanInfo(slot.num)"
-                    >
-                      밴 정보
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="transition: transform 0.15s" :style="{ transform: expandedBanSlots.includes(slot.num) ? 'rotate(180deg)' : 'none' }">
-                        <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-
-                    <!-- 밴된 맵 (확장 시) -->
-                    <template v-if="expandedBanSlots.includes(slot.num)">
-                      <div
-                        v-for="ban in slotMapResults[slot.num].bannedMapInfo"
-                        :key="`ban-${ban.mapId}`"
-                        class="rse-map-item rse-map--banned"
-                      >
-                        <div class="rse-map-thumb-wrap">
-                          <img v-if="getMapInfo(slot.num, ban.mapId)?.thumbnail_url" :src="getMapInfo(slot.num, ban.mapId)!.thumbnail_url!" class="rse-map-thumb" />
-                          <div v-else class="rse-map-thumb-empty" />
-                        </div>
-                        <span class="rse-map-name">{{ getMapInfo(slot.num, ban.mapId)?.name }}</span>
-                        <div class="rse-ban-chips">
-                          <span v-if="ban.byTeamA" class="ban-chip ban-chip--a">{{ teamAName }} 밴</span>
-                          <span v-if="ban.byTeamB" class="ban-chip ban-chip--b">{{ teamBName }} 밴</span>
-                        </div>
                       </div>
                     </template>
                   </template>
@@ -122,6 +86,40 @@
                     합계 {{ slotTotal(teamBCaptainId, slot.num) }}pt
                   </div>
                 </div>
+              </div>
+
+              <!-- 밴 정보 영역 (row 아래) -->
+              <div v-if="slotMapRows[slot.num]?.length" class="rse-ban-area">
+                <div v-if="slotMapResults[slot.num].isUndecided" class="rse-undecided">사다리타기로 결정</div>
+                <button
+                  v-if="slotMapResults[slot.num].bannedMapInfo.length"
+                  class="btn-ban-toggle"
+                  @click="toggleBanInfo(slot.num)"
+                >
+                  밴 정보
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="transition: transform 0.15s" :style="{ transform: expandedBanSlots.includes(slot.num) ? 'rotate(180deg)' : 'none' }">
+                    <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <template v-if="expandedBanSlots.includes(slot.num)">
+                  <div class="rse-banned-maps">
+                    <div
+                      v-for="ban in slotMapResults[slot.num].bannedMapInfo"
+                      :key="`ban-${ban.mapId}`"
+                      class="rse-map-item rse-map--banned"
+                    >
+                      <div class="rse-map-thumb-wrap">
+                        <img v-if="getMapInfo(slot.num, ban.mapId)?.thumbnail_url" :src="getMapInfo(slot.num, ban.mapId)!.thumbnail_url!" class="rse-map-thumb" />
+                        <div v-else class="rse-map-thumb-empty" />
+                      </div>
+                      <span class="rse-map-name">{{ getMapInfo(slot.num, ban.mapId)?.name }}</span>
+                      <div class="rse-ban-chips">
+                        <span v-if="ban.byTeamA" class="ban-chip ban-chip--a">{{ teamAName }} 밴</span>
+                        <span v-if="ban.byTeamB" class="ban-chip ban-chip--b">{{ teamBName }} 밴</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
 

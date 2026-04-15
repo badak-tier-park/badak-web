@@ -141,7 +141,7 @@
 // ── 3컬럼 행 (팀A | 맵 | 팀B) ────────────────────────────────
 .reveal-row {
   display: grid;
-  grid-template-columns: 1fr 160px 1fr;
+  grid-template-columns: 1fr 130px 1fr;
   gap: 8px;
   align-items: center;
 }
@@ -207,7 +207,7 @@
 .rse-maps {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 2px;
   align-items: center;
 }
 
@@ -222,9 +222,8 @@
   align-items: center;
   gap: 4px;
   width: 100%;
-  padding: 6px 8px;
+  padding: 4px 8px;
   border-radius: 8px;
-  background: var(--c-surface-raised);
   transition: all 0.12s;
 
   &.rse-map--banned {
@@ -237,8 +236,8 @@
 }
 
 .rse-map-thumb-wrap {
-  width: 100%;
-  height: 56px;
+  width: 112px;
+  height: 84px;
   border-radius: 5px;
   overflow: hidden;
   background: var(--c-overlay);
@@ -289,6 +288,28 @@
     color: #60a5fa;
     background: rgba(96, 165, 250, 0.15);
     border: 1px solid rgba(96, 165, 250, 0.3);
+  }
+}
+
+// ── 밴 정보 하단 영역 ─────────────────────────────────────────
+.rse-ban-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.rse-banned-maps {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  padding: 4px 0;
+
+  .rse-map-item {
+    width: 130px;
+    flex-shrink: 0;
   }
 }
 
