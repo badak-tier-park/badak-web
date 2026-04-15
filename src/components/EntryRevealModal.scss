@@ -104,7 +104,19 @@
   &--right { text-align: right; }
 }
 
-.reveal-th-center { /* spacer */ }
+.reveal-th-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reveal-score {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--c-text-bright);
+  font-family: system-ui, sans-serif;
+  letter-spacing: 2px;
+}
 
 // ── 슬롯 행 ──────────────────────────────────────────────────
 .reveal-slot {
@@ -160,6 +172,53 @@
     .rse-player { justify-content: flex-start; }
     .rse-pt { margin-right: 0; margin-left: auto; }
     .rse-total { text-align: left; }
+  }
+
+  &--winner {
+    .rse-name-badge {
+      font-size: 13px;
+      padding: 3px 8px;
+    }
+    .rse-race { font-size: 11px; }
+    .rse-pt { font-size: 12px; }
+  }
+
+  &--loser {
+    opacity: 0.4;
+    .rse-name-badge {
+      font-size: 11px;
+      padding: 1px 6px;
+    }
+    .rse-race { font-size: 9px; }
+    .rse-pt { font-size: 10px; }
+  }
+}
+
+.rse-win-badge {
+  font-size: 9px;
+  font-weight: 900;
+  color: #34d399;
+  letter-spacing: 0.8px;
+  font-family: system-ui, sans-serif;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+
+  // 팀전: 플레이어 전체를 아우르는 블록 배지
+  &--team {
+    display: block;
+    text-align: right;
+    padding: 3px 8px;
+    margin: 0 5px 0 0;
+    border-radius: 4px;
+    font-size: 10px;
+    margin-bottom: 2px;
+
+    .rse-col--right & {
+      text-align: left;
+    }
   }
 }
 

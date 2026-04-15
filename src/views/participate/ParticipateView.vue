@@ -65,6 +65,13 @@
               </svg>
               엔트리 확인
             </button>
+            <button class="btn-check-result" @click="openResultList(league)">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M4.5 7h5M7 5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+              경기 결과
+            </button>
             <button
               v-if="myCaptainLeagueIds.has(league.id)"
               class="btn-entry-open"
@@ -229,6 +236,68 @@
       @close="revealModal.open = false"
     />
 
+    <!-- ── 경기 결과 목록 모달 ──────────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="resultListModal.open" class="modal-overlay">
+        <div class="modal modal--match-list">
+          <div class="modal-header">
+            <div>
+              <p class="modal-title">경기 결과</p>
+              <p class="modal-subtitle">{{ resultListModal.league?.name }}</p>
+            </div>
+            <button class="modal-close" @click="resultListModal.open = false">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body match-list-body">
+            <div v-if="resultListModal.loading" class="state-msg">불러오는 중...</div>
+            <div v-else-if="!resultListModal.matches.length" class="state-msg">
+              아직 종료된 경기가 없습니다.
+            </div>
+            <div v-else class="match-item-list">
+              <div
+                v-for="item in resultListModal.matches"
+                :key="item.schedule.id"
+                class="match-item"
+              >
+                <div class="match-item-info">
+                  <span class="round-tag">{{ item.schedule.round }}라운드</span>
+                  <span class="match-item-vs">
+                    <span class="my-team-name">{{ item.teamAName }}</span>
+                    <span class="vs-divider">VS</span>
+                    <span class="opp-team-name">{{ item.teamBName }}</span>
+                  </span>
+                  <span class="match-item-date">
+                    {{ item.schedule.match_date ? item.schedule.match_date.replaceAll('-', '/') : '날짜 미정' }}
+                  </span>
+                </div>
+                <div class="match-item-actions">
+                  <button class="btn-entry" @click="openResultEntry(item)">확인</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── 경기 결과 확인 모달 ────────────────────────────────── -->
+    <EntryRevealModal
+      v-if="resultModal.open && resultModal.item"
+      :schedule-id="resultModal.item.schedule.id"
+      :round="resultModal.item.schedule.round"
+      :match-date="resultModal.item.schedule.match_date"
+      :league-id="resultListModal.league?.id ?? ''"
+      :team-a-captain-id="resultModal.item.schedule.team_a_captain_id"
+      :team-b-captain-id="resultModal.item.schedule.team_b_captain_id"
+      :team-a-name="resultModal.item.teamAName"
+      :team-b-name="resultModal.item.teamBName"
+      :show-results="true"
+      @close="resultModal.open = false"
+    />
+
     <!-- ── 엔트리 제출 모달 ────────────────────────────────── -->
     <Teleport to="body">
       <div v-if="entryModal.open" class="modal-overlay">
@@ -362,7 +431,7 @@ import { getLeagues, getLeagueStatus, type LeagueRow, type LeagueStatus, type El
 import { getCaptains, getMatchMaps } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
-import { getSchedules, getRevealedSchedules, type ScheduleRow } from '@/lib/schedules'
+import { getSchedules, getRevealedSchedules, getCompletedSchedules, type ScheduleRow } from '@/lib/schedules'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
 import {
@@ -494,6 +563,49 @@ const revealModal = reactive({
 function openRevealEntry(item: RevealListItem) {
   revealModal.item = item
   revealModal.open = true
+}
+
+// 종료된 경기 목록 모달
+const resultListModal = reactive({
+  open: false,
+  league: null as LeagueRow | null,
+  matches: [] as RevealListItem[],
+  loading: false,
+})
+
+async function openResultList(league: LeagueRow) {
+  resultListModal.open = true
+  resultListModal.league = league
+  resultListModal.matches = []
+  resultListModal.loading = true
+  try {
+    const [schedules, players, teamNames] = await Promise.all([
+      getCompletedSchedules(league.id),
+      getPlayers(),
+      getTeamNames(league.id),
+    ])
+    const playerMap = new Map(players.map(p => [p.id, p]))
+    const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
+    const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
+    resultListModal.matches = schedules.map(s => ({
+      schedule: s,
+      teamAName: teamName(s.team_a_captain_id),
+      teamBName: teamName(s.team_b_captain_id),
+    }))
+  } finally {
+    resultListModal.loading = false
+  }
+}
+
+// 결과 확인 모달
+const resultModal = reactive({
+  open: false,
+  item: null as RevealListItem | null,
+})
+
+function openResultEntry(item: RevealListItem) {
+  resultModal.item = item
+  resultModal.open = true
 }
 
 // 엔트리 모달

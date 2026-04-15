@@ -4,7 +4,7 @@
       <div class="reveal-modal">
         <div class="reveal-header">
           <div>
-            <p class="reveal-title">엔트리 확인</p>
+            <p class="reveal-title">{{ showResults ? '경기 결과' : '엔트리 확인' }}</p>
             <p class="reveal-subtitle">
               {{ round }}라운드
               <template v-if="matchDate"> · {{ matchDate.replaceAll('-', '/') }}</template>
@@ -25,7 +25,9 @@
             <!-- 팀 헤더 -->
             <div class="reveal-teams-header">
               <div class="reveal-th">{{ teamAName }}</div>
-              <div class="reveal-th-center" />
+              <div class="reveal-th-center">
+                <span v-if="showResults" class="reveal-score">{{ scoreA }} : {{ scoreB }}</span>
+              </div>
               <div class="reveal-th reveal-th--right">{{ teamBName }}</div>
             </div>
 
@@ -40,15 +42,19 @@
               <!-- 3컬럼: 팀A | 맵 | 팀B -->
               <div class="reveal-row">
                 <!-- 팀A 선수 -->
-                <div class="rse-col">
+                <div class="rse-col" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamACaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamACaptainId }">
+                  <!-- 팀전 WIN: 플레이어 전체 위에 한 번 -->
+                  <span v-if="showResults && slot.type === 'team' && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge rse-win-badge--team">WIN</span>
                   <div
-                    v-for="pid in getSlotPlayerIds(teamACaptainId, slot.num)"
+                    v-for="(pid, pidIdx) in getSlotPlayerIds(teamACaptainId, slot.num)"
                     :key="pid"
                     class="rse-player"
                   >
                     <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                     <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                     <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                    <!-- 개인전 WIN: 해당 플레이어 row 인라인 -->
+                    <span v-if="showResults && slot.type !== 'team' && pidIdx === 0 && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
                   </div>
                   <div v-if="slot.type === 'team' && getSlotPlayerIds(teamACaptainId, slot.num).length" class="rse-total">
                     합계 {{ slotTotal(teamACaptainId, slot.num) }}pt
@@ -72,12 +78,16 @@
                 </div>
 
                 <!-- 팀B 선수 -->
-                <div class="rse-col rse-col--right">
+                <div class="rse-col rse-col--right" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamBCaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamBCaptainId }">
+                  <!-- 팀전 WIN: 플레이어 전체 위에 한 번 -->
+                  <span v-if="showResults && slot.type === 'team' && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge rse-win-badge--team">WIN</span>
                   <div
-                    v-for="pid in getSlotPlayerIds(teamBCaptainId, slot.num)"
+                    v-for="(pid, pidIdx) in getSlotPlayerIds(teamBCaptainId, slot.num)"
                     :key="pid"
                     class="rse-player"
                   >
+                    <!-- 개인전 WIN: 해당 플레이어 row 인라인 -->
+                    <span v-if="showResults && slot.type !== 'team' && pidIdx === 0 && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
                     <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
                     <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                     <span class="rse-pt">{{ playerPt(pid) }}pt</span>
@@ -148,9 +158,10 @@ import { getScheduleEntries, TIER_POINTS, type EntryRecord } from '@/lib/entries
 import { getMatchMaps } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getPlayers, type PlayerRow } from '@/lib/players'
+import { getSlotResults, type SlotResult } from '@/lib/schedules'
 import { withTimeout } from '@/lib/supabase'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   scheduleId: number
   round: number
   matchDate: string | null
@@ -159,7 +170,8 @@ const props = defineProps<{
   teamBCaptainId: number
   teamAName: string
   teamBName: string
-}>()
+  showResults?: boolean
+}>(), { showResults: false })
 
 defineEmits<{ close: [] }>()
 
@@ -180,14 +192,16 @@ interface MapInfo { id: string; name: string; thumbnail_url: string | null }
 const entriesMap = ref(new Map<number, Map<number, EntryRecord>>())
 const playerMap = ref(new Map<number, PlayerRow>())
 const slotMapRows = ref<Record<number, MapInfo[]>>({})
+const slotWinners = ref(new Map<number, number>())
 
 onMounted(async () => {
   try {
-    const [entries, players, matchMaps, allMaps] = await withTimeout(Promise.all([
+    const [entries, players, matchMaps, allMaps, slotResultsData] = await withTimeout(Promise.all([
       getScheduleEntries(props.scheduleId),
       getPlayers(),
       getMatchMaps(props.leagueId),
       getMaps(),
+      props.showResults ? getSlotResults(props.scheduleId) : Promise.resolve([] as SlotResult[]),
     ]))
 
     playerMap.value = new Map(players.map(p => [p.id, p]))
@@ -208,6 +222,15 @@ onMounted(async () => {
       em.get(e.captain_player_id)!.set(e.match_slot, e)
     }
     entriesMap.value = em
+
+    // 슬롯 결과 (showResults 모드)
+    if (slotResultsData.length) {
+      const wm = new Map<number, number>()
+      for (const r of slotResultsData) {
+        if (r.winner_captain_id != null) wm.set(r.slot_num, r.winner_captain_id)
+      }
+      slotWinners.value = wm
+    }
   } catch (e: any) {
     loadError.value = e.message ?? '데이터를 불러올 수 없습니다.'
   } finally {
@@ -253,6 +276,18 @@ function totalPoints(captainId: number): number {
     0,
   )
 }
+
+// ── 결과 로직 ─────────────────────────────────────────────────
+function slotWinner(slotNum: number): number | null {
+  return slotWinners.value.get(slotNum) ?? null
+}
+
+const scoreA = computed(() =>
+  [...slotWinners.value.values()].filter(w => w === props.teamACaptainId).length
+)
+const scoreB = computed(() =>
+  [...slotWinners.value.values()].filter(w => w === props.teamBCaptainId).length
+)
 
 // ── 밴 로직 ───────────────────────────────────────────────────
 
