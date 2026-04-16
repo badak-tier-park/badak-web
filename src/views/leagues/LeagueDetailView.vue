@@ -650,7 +650,7 @@ onBeforeUnmount(() => {
 
 // ── 팀장 선출 ─────────────────────────────────────────────
 // 티어 순위: 낮은 티어(E)가 앞 순번
-const TIER_RANK = { E: 1, D: 2, C: 3, B: 4, A: 5 } as const
+const TIER_RANK: Record<string, number> = { E: 1, D: 2, C: 3, B: 4, A: 5 }
 
 function autoSortCaptains() {
   captains.value = [...captains.value].sort((a, b) => {
