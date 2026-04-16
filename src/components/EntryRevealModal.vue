@@ -227,6 +227,8 @@ const entriesMap = ref(new Map<number, Map<number, EntryRecord>>())
 const playerMap = ref(new Map<number, PlayerRow>())
 const slotMapRows = ref<Record<number, MapInfo[]>>({})
 const slotWinners = ref(new Map<number, number>())
+// showResults 모드에서 사다리타기로 확정된 맵 (slot_num → map_id)
+const slotSelectedMaps = ref(new Map<number, string>())
 
 onMounted(async () => {
   try {
@@ -260,10 +262,13 @@ onMounted(async () => {
     // 슬롯 결과 (showResults 모드)
     if (slotResultsData.length) {
       const wm = new Map<number, number>()
+      const sm = new Map<number, string>()
       for (const r of slotResultsData) {
         if (r.winner_captain_id != null) wm.set(r.slot_num, r.winner_captain_id)
+        if (r.selected_map_id) sm.set(r.slot_num, r.selected_map_id)
       }
       slotWinners.value = wm
+      slotSelectedMaps.value = sm
     }
   } catch (e: any) {
     loadError.value = e.message ?? '데이터를 불러올 수 없습니다.'
@@ -338,6 +343,18 @@ const slotMapResults = computed<Record<number, SlotMapResult>>(() => {
   for (const slot of SLOT_CONFIG) {
     const n = slot.num
     const maps = slotMapRows.value[n] ?? []
+
+    // showResults 모드: 사다리타기로 확정된 맵이 있으면 그것만 표시
+    const confirmedMapId = slotSelectedMaps.value.get(n)
+    if (props.showResults && confirmedMapId) {
+      results[n] = {
+        matchMapIds: new Set([confirmedMapId]),
+        bannedMapInfo: [],
+        isUndecided: false,
+      }
+      continue
+    }
+
     const banA = getBan(props.teamACaptainId, n)
     const banB = getBan(props.teamBCaptainId, n)
     const matchMapIds = new Set<string>()

@@ -544,11 +544,13 @@ async function openRevealList(league: LeagueRow) {
     const playerMap = new Map(players.map(p => [p.id, p]))
     const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
-    revealListModal.matches = schedules.map(s => ({
-      schedule: s,
-      teamAName: teamName(s.team_a_captain_id),
-      teamBName: teamName(s.team_b_captain_id),
-    }))
+    revealListModal.matches = schedules
+      .filter(s => !s.is_completed)
+      .map(s => ({
+        schedule: s,
+        teamAName: teamName(s.team_a_captain_id),
+        teamBName: teamName(s.team_b_captain_id),
+      }))
   } finally {
     revealListModal.loading = false
   }
@@ -688,7 +690,7 @@ async function openMatchList(league: LeagueRow) {
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
 
     matchListModal.matches = schedules
-      .filter(s => s.team_a_captain_id === myPlayerId.value || s.team_b_captain_id === myPlayerId.value)
+      .filter(s => !s.is_completed && (s.team_a_captain_id === myPlayerId.value || s.team_b_captain_id === myPlayerId.value))
       .map(s => {
         const opponentId = s.team_a_captain_id === myPlayerId.value ? s.team_b_captain_id : s.team_a_captain_id
         return {
