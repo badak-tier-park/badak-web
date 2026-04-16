@@ -35,6 +35,15 @@
         
       </div>
 
+      <!-- 지목식 완료 후 잠금 안내 -->
+      <div v-if="draftLocked" class="draft-locked-notice">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <rect x="2" y="6" width="9" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M4.5 6V4a2 2 0 014 0v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+        지목식이 완료된 리그입니다. 설정을 변경할 수 없습니다.
+      </div>
+
       <!-- 스텝 탭 -->
       <div class="step-tabs">
         <template v-for="(tab, i) in tabs" :key="tab.key">
@@ -57,7 +66,7 @@
 
       <!-- ── 탭 1: 리그 설명 ────────────────────────────── -->
       <section v-if="activeTab === 'description'" class="detail-section">
-        <div class="editor-toolbar">
+        <div v-if="!draftLocked" class="editor-toolbar">
           <!-- 서식 -->
           <div class="toolbar-group">
             <button
@@ -124,7 +133,7 @@
           <EditorContent :editor="editor" class="editor-content" />
         </div>
 
-        <div class="section-footer">
+        <div v-if="!draftLocked" class="section-footer">
           <p v-if="descError" class="save-error">{{ descError }}</p>
           <button class="btn-save" :disabled="descSaving" @click="saveDescription">
             {{ descSaving ? '저장 중...' : '저장 후 다음 단계' }}
@@ -134,7 +143,7 @@
 
       <!-- ── 탭 2: 팀장 선출 ───────────────────────────── -->
       <section v-if="activeTab === 'captains'" class="detail-section">
-        <div class="section-header">
+        <div v-if="!draftLocked" class="section-header">
           <p class="section-desc">
             {{ captainCount }}명의 팀장을 선출합니다. 선택 시 티어 순으로 자동 정렬되며, ▲▼로 수동 조정할 수 있습니다.
           </p>
@@ -150,7 +159,7 @@
               {{ playerById(playerId)?.race }}
             </span>
             <span class="captain-name">{{ playerById(playerId)?.nickname }}</span>
-            <div class="captain-reorder">
+            <div v-if="!draftLocked" class="captain-reorder">
               <button class="reorder-btn" :disabled="i === 0" @click="moveCaptain(i, -1)">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                   <path d="M2 7l3-4 3 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -162,7 +171,7 @@
                 </svg>
               </button>
             </div>
-            <button class="captain-remove" @click="removeCaptain(i)">×</button>
+            <button v-if="!draftLocked" class="captain-remove" @click="removeCaptain(i)">×</button>
           </div>
           <div v-for="n in (captainCount - captains.length)" :key="`empty-${n}`" class="captain-row captain-row--empty">
             <span class="captain-order-badge empty">{{ captains.length + n }}</span>
@@ -170,7 +179,7 @@
           </div>
         </div>
 
-        <div class="captain-actions-row">
+        <div v-if="!draftLocked" class="captain-actions-row">
           <button v-if="captains.length < captainCount" class="btn-add-captain" @click="openPlayerPicker">
             <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
               <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -182,7 +191,7 @@
           </button>
         </div>
 
-        <div class="section-footer">
+        <div v-if="!draftLocked" class="section-footer">
           <p v-if="captainError" class="save-error">{{ captainError }}</p>
           <button class="btn-save" :disabled="captainSaving || captains.length !== captainCount" @click="saveCaptainsData">
             {{ captainSaving ? '저장 중...' : `저장 후 다음 단계 (${captains.length}/${captainCount}명)` }}
@@ -202,7 +211,7 @@
               {{ playerById(playerId)?.race }}
             </span>
             <span class="captain-name">{{ playerById(playerId)?.nickname }}</span>
-            <div class="captain-reorder">
+            <div v-if="!draftLocked" class="captain-reorder">
               <button class="reorder-btn" :disabled="i === 0" @click="moveSeedHolder(i, -1)">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                   <path d="M2 7l3-4 3 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -214,14 +223,14 @@
                 </svg>
               </button>
             </div>
-            <button class="captain-remove" @click="removeSeedHolder(i)">×</button>
+            <button v-if="!draftLocked" class="captain-remove" @click="removeSeedHolder(i)">×</button>
           </div>
           <div v-if="seedHolders.length === 0" class="captain-row captain-row--empty">
             <span class="slot-empty">시드권자를 추가하세요</span>
           </div>
         </div>
 
-        <div class="captain-actions-row">
+        <div v-if="!draftLocked" class="captain-actions-row">
           <button class="btn-add-captain" @click="openSeedPicker">
             <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
               <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -230,7 +239,7 @@
           </button>
         </div>
 
-        <div class="section-footer">
+        <div v-if="!draftLocked" class="section-footer">
           <p v-if="seedError" class="save-error">{{ seedError }}</p>
           <button class="btn-save" :disabled="seedSaving" @click="saveSeedHoldersData">
             {{ seedSaving ? '저장 중...' : `저장 후 다음 단계 (${seedHolders.length}명)` }}
@@ -241,7 +250,7 @@
       <!-- ── 탭 4: 경기별 맵 선택 ──────────────────────── -->
       <section v-if="activeTab === 'maps'" class="detail-section">
         <div class="section-header">
-          <p class="section-desc">1·4·5·6경기는 맵 1개 고정, 2·3경기는 밴픽 풀 (2~3개) 입니다. 각 맵은 한 경기에만 사용할 수 있습니다. 7경기(에이스 결정전)는 위 경기에서 선택된 맵 중 진행됩니다.</p>
+          <p class="section-desc">1·4·5·6경기는 맵 1개 고정, 2·3경기는 밴픽 풀 (2~3개) 입니다.<br />각 맵은 한 경기에만 사용할 수 있습니다.<br /></p>
         </div>
 
         <div class="match-list">
@@ -259,13 +268,13 @@
                 <span v-for="mapId in matchMaps[match.number]" :key="mapId" class="map-chip">
                   <img v-if="mapById(mapId)?.thumbnail_url" :src="mapById(mapId)!.thumbnail_url!" class="map-chip-thumb" alt="" />
                   {{ mapById(mapId)?.name ?? mapId }}
-                  <button class="map-chip-remove" @click="removeMap(match.number, mapId)">×</button>
+                  <button v-if="!draftLocked" class="map-chip-remove" @click="removeMap(match.number, mapId)">×</button>
                 </span>
               </div>
               <span v-else class="no-map">맵 미선택</span>
             </div>
 
-            <button class="btn-map-pick" @click="openMapPicker(match.number)">맵 선택</button>
+            <button v-if="!draftLocked" class="btn-map-pick" @click="openMapPicker(match.number)">맵 선택</button>
           </div>
         </div>
 
@@ -278,7 +287,7 @@
           7경기(에이스 결정전)는 위 경기에서 사용된 맵 중에서 별도로 선택합니다.
         </div>
 
-        <div class="section-footer">
+        <div v-if="!draftLocked" class="section-footer">
           <p v-if="mapError" class="save-error">{{ mapError }}</p>
           <button class="btn-save" :disabled="mapSaving" @click="saveMapsData">
             {{ mapSaving ? '저장 중...' : '저장' }}
@@ -289,7 +298,7 @@
 
     <!-- ── 선수 선택 오버레이 ──────────────────────────── -->
     <Teleport to="body">
-      <div v-if="showPlayerPicker" class="overlay-backdrop" @click.self="showPlayerPicker = false">
+      <div v-if="showPlayerPicker" class="overlay-backdrop">
         <div class="picker-panel">
           <div class="picker-header">
             <span class="picker-title">
@@ -327,7 +336,7 @@
 
     <!-- ── 시드권자 선택 오버레이 ───────────────────── -->
     <Teleport to="body">
-      <div v-if="showSeedPicker" class="overlay-backdrop" @click.self="showSeedPicker = false">
+      <div v-if="showSeedPicker" class="overlay-backdrop">
         <div class="picker-panel">
           <div class="picker-header">
             <span class="picker-title">
@@ -367,7 +376,7 @@
 
     <!-- ── 맵 선택 오버레이 ───────────────────────────── -->
     <Teleport to="body">
-      <div v-if="mapPickerTarget !== null" class="overlay-backdrop" @click.self="mapPickerTarget = null">
+      <div v-if="mapPickerTarget !== null" class="overlay-backdrop">
         <div class="picker-panel">
           <div class="picker-header">
             <span class="picker-title">
@@ -517,6 +526,7 @@ const seedHolders = ref<number[]>([])
 const matchMaps = ref<Record<number, string[]>>({})
 
 const captainCount = computed(() => league.value?.captain_count ?? 4)
+const draftLocked = computed(() => league.value?.draft_completed === true)
 
 onMounted(async () => {
   try {
@@ -546,6 +556,7 @@ onMounted(async () => {
     matchMaps.value = mm
 
     editor.value?.commands.setContent(leagueData.description ?? '')
+    if (leagueData.draft_completed) editor.value?.setEditable(false)
   } catch (e: any) {
     pageError.value = e.message ?? '데이터를 불러올 수 없습니다.'
   } finally {
@@ -848,8 +859,14 @@ const mapSaving = ref(false)
 const mapError = ref<string | null>(null)
 
 async function saveMapsData() {
-  mapSaving.value = true
   mapError.value = null
+  for (const n of [2, 3]) {
+    if ((matchMaps.value[n]?.length ?? 0) < 2) {
+      mapError.value = `${n}경기는 밴픽 풀 맵을 최소 2개 선택해야 합니다.`
+      return
+    }
+  }
+  mapSaving.value = true
   try {
     const entries = Object.entries(matchMaps.value)
       .filter(([, ids]) => ids.length > 0)

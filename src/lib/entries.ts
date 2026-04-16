@@ -69,28 +69,84 @@ export async function saveEntries(
   if (error) throw error
 }
 
-/** 팀장의 모든 경기 엔트리 제출 여부 확인 (schedule_id → 완료 여부) */
+export type EntryStatus = 'none' | 'saved' | 'submitted'
+
+/** 팀장의 모든 경기 엔트리 상태 확인 (schedule_id → 'none' | 'saved' | 'submitted') */
 export async function getEntryStatusMap(
   captainPlayerId: number,
-): Promise<Map<number, boolean>> {
+): Promise<Map<number, EntryStatus>> {
   const { data, error } = await supabase
     .from('league_match_entries')
-    .select('schedule_id, match_slot')
+    .select('schedule_id, match_slot, is_submitted')
     .eq('captain_player_id', captainPlayerId)
   if (error) throw error
 
-  const slotsBySchedule = new Map<number, Set<number>>()
+  const slotsBySchedule = new Map<number, { slots: Set<number>; submitted: boolean }>()
   for (const row of data ?? []) {
     if (!slotsBySchedule.has(row.schedule_id))
-      slotsBySchedule.set(row.schedule_id, new Set())
-    slotsBySchedule.get(row.schedule_id)!.add(row.match_slot)
+      slotsBySchedule.set(row.schedule_id, { slots: new Set(), submitted: false })
+    const entry = slotsBySchedule.get(row.schedule_id)!
+    entry.slots.add(row.match_slot)
+    if (row.is_submitted) entry.submitted = true
   }
 
-  const result = new Map<number, boolean>()
-  for (const [scheduleId, slots] of slotsBySchedule) {
-    result.set(scheduleId, [1, 2, 3, 4, 5, 6].every(s => slots.has(s)))
+  const result = new Map<number, EntryStatus>()
+  for (const [scheduleId, { slots, submitted }] of slotsBySchedule) {
+    const complete = [1, 2, 3, 4, 5, 6].every(s => slots.has(s))
+    if (!complete) continue
+    result.set(scheduleId, submitted ? 'submitted' : 'saved')
   }
   return result
+}
+
+/** 엔트리 제출 확정 */
+export async function submitEntry(
+  scheduleId: number,
+  captainPlayerId: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('league_match_entries')
+    .update({ is_submitted: true })
+    .eq('schedule_id', scheduleId)
+    .eq('captain_player_id', captainPlayerId)
+  if (error) throw error
+}
+
+/** 공개 동의 처리 */
+export async function consentReveal(scheduleId: number, captainPlayerId: number): Promise<void> {
+  const { error } = await supabase
+    .from('league_match_entries')
+    .update({ consent_reveal: true })
+    .eq('schedule_id', scheduleId)
+    .eq('captain_player_id', captainPlayerId)
+  if (error) throw error
+}
+
+/** 양팀 모두 공개 동의 여부 확인 */
+export async function checkBothConsented(
+  scheduleId: number,
+  captainAId: number,
+  captainBId: number,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('league_match_entries')
+    .select('captain_player_id, consent_reveal')
+    .eq('schedule_id', scheduleId)
+    .in('captain_player_id', [captainAId, captainBId])
+  if (error) throw error
+  const map = new Map((data ?? []).map(r => [r.captain_player_id, r.consent_reveal]))
+  return map.get(captainAId) === true && map.get(captainBId) === true
+}
+
+/** 이미 공개 동의한 schedule_id 집합 반환 */
+export async function getConsentedSet(captainPlayerId: number): Promise<Set<number>> {
+  const { data, error } = await supabase
+    .from('league_match_entries')
+    .select('schedule_id')
+    .eq('captain_player_id', captainPlayerId)
+    .eq('consent_reveal', true)
+  if (error) throw error
+  return new Set((data ?? []).map(r => r.schedule_id))
 }
 
 /** 경기의 모든 팀장 엔트리 조회 (엔트리 공개용) */
@@ -105,7 +161,7 @@ export async function getScheduleEntries(scheduleId: number): Promise<EntryRecor
   return (data ?? []) as EntryRecord[]
 }
 
-/** 양팀 모두 엔트리를 완전히 제출한 schedule_id 집합 반환 */
+/** 양팀 모두 엔트리를 제출 확정한 schedule_id 집합 반환 */
 export async function getBothSubmittedSet(
   schedules: { id: number; team_a_captain_id: number; team_b_captain_id: number }[],
 ): Promise<Set<number>> {
@@ -113,28 +169,20 @@ export async function getBothSubmittedSet(
   const ids = schedules.map(s => s.id)
   const { data, error } = await supabase
     .from('league_match_entries')
-    .select('schedule_id, captain_player_id, match_slot')
+    .select('schedule_id, captain_player_id')
     .in('schedule_id', ids)
+    .eq('is_submitted', true)
   if (error) throw error
 
-  const map = new Map<number, Map<number, Set<number>>>()
-  for (const row of data ?? []) {
-    if (!map.has(row.schedule_id)) map.set(row.schedule_id, new Map())
-    const cm = map.get(row.schedule_id)!
-    if (!cm.has(row.captain_player_id)) cm.set(row.captain_player_id, new Set())
-    cm.get(row.captain_player_id)!.add(row.match_slot)
-  }
+  const submittedSet = new Set<string>()
+  for (const row of data ?? [])
+    submittedSet.add(`${row.schedule_id}_${row.captain_player_id}`)
 
-  const REQUIRED = [1, 2, 3, 4, 5, 6]
   const result = new Set<number>()
   for (const s of schedules) {
-    const cm = map.get(s.id)
-    if (!cm) continue
-    const aSlots = cm.get(s.team_a_captain_id)
-    const bSlots = cm.get(s.team_b_captain_id)
     if (
-      aSlots && REQUIRED.every(sl => aSlots.has(sl)) &&
-      bSlots && REQUIRED.every(sl => bSlots.has(sl))
+      submittedSet.has(`${s.id}_${s.team_a_captain_id}`) &&
+      submittedSet.has(`${s.id}_${s.team_b_captain_id}`)
     ) result.add(s.id)
   }
   return result
@@ -176,4 +224,41 @@ export function computeFinalRosters(
   }
 
   return rosters
+}
+
+// ── 에이스 티어 밴 ─────────────────────────────────────────────
+export async function getAceTierBan(
+  scheduleId: number,
+  captainPlayerId: number,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('league_match_ace_bans')
+    .select('tier_ban')
+    .eq('schedule_id', scheduleId)
+    .eq('captain_player_id', captainPlayerId)
+    .maybeSingle()
+  if (error) throw error
+  return data?.tier_ban ?? null
+}
+
+export async function getAceTierBans(
+  scheduleId: number,
+): Promise<Array<{ captain_player_id: number; tier_ban: string | null }>> {
+  const { data, error } = await supabase
+    .from('league_match_ace_bans')
+    .select('captain_player_id, tier_ban')
+    .eq('schedule_id', scheduleId)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function saveAceTierBan(
+  scheduleId: number,
+  captainPlayerId: number,
+  tierBan: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('league_match_ace_bans')
+    .upsert({ schedule_id: scheduleId, captain_player_id: captainPlayerId, tier_ban: tierBan })
+  if (error) throw error
 }

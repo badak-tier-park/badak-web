@@ -71,7 +71,7 @@
 
     <!-- 수정 모달 -->
     <Teleport to="body">
-      <div v-if="editTarget" class="modal-backdrop" @click.self="closeEdit">
+      <div v-if="editTarget" class="modal-backdrop">
         <div class="modal">
           <div class="modal-header">
             <span class="modal-title">선수 정보 수정</span>

@@ -17,15 +17,6 @@
 }
 
 
-// ── 상태 메시지 ───────────────────────────────────────────
-.state-msg {
-  padding: 60px 0;
-  text-align: center;
-  font-size: 13px;
-  color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
-}
-
 // ── 리그 목록 ─────────────────────────────────────────────
 .league-list {
   display: flex;
@@ -55,7 +46,6 @@
 .status-badge {
   font-size: 10px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   padding: 3px 9px;
   border-radius: 20px;
 
@@ -68,7 +58,6 @@
 .eligibility-badge {
   font-size: 10px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   color: var(--c-text-muted);
   background: var(--c-badge-bg);
   border: 1px solid var(--c-badge-border);
@@ -82,7 +71,6 @@
   font-size: 17px;
   font-weight: 800;
   color: var(--c-text-bright);
-  font-family: system-ui, sans-serif;
   letter-spacing: -0.3px;
 }
 
@@ -98,7 +86,6 @@
   gap: 5px;
   font-size: 12px;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
 
   &--tiers { color: #c084fc; }
 }
@@ -114,7 +101,6 @@
   color: var(--c-text-muted);
   font-size: 12px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
   align-self: center;
@@ -165,7 +151,6 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--c-text-bright);
-  font-family: system-ui, sans-serif;
 }
 
 .modal-close {
@@ -210,7 +195,6 @@
   color: #c084fc;
   font-size: 12px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.14s;
 
@@ -258,7 +242,6 @@
 .round-tag {
   font-size: 11px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   color: var(--c-text-muted);
   background: var(--c-badge-bg);
   border: 1px solid var(--c-badge-border);
@@ -271,7 +254,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: system-ui, sans-serif;
 }
 
 .my-team-name {
@@ -295,7 +277,6 @@
 .match-item-date {
   font-size: 11px;
   color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
   flex-shrink: 0;
 }
 
@@ -312,7 +293,6 @@
   gap: 4px;
   font-size: 11px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   color: #4ade80;
   background: rgba(34, 197, 94, 0.1);
   border: 1px solid rgba(34, 197, 94, 0.25);
@@ -331,13 +311,32 @@
   color: #34d399;
   font-size: 12px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.14s;
 
   &:hover {
     background: rgba(52, 211, 153, 0.14);
     border-color: rgba(52, 211, 153, 0.55);
+  }
+}
+
+.btn-check-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  background: rgba(251, 146, 60, 0.07);
+  color: #fb923c;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+
+  &:hover {
+    background: rgba(251, 146, 60, 0.14);
+    border-color: rgba(251, 146, 60, 0.55);
   }
 }
 
@@ -352,7 +351,6 @@
   color: #34d399;
   font-size: 12px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.14s;
 
@@ -370,7 +368,6 @@
   color: #c084fc;
   font-size: 12px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.14s;
 
@@ -390,6 +387,45 @@
       background: rgba(168, 85, 247, 0.06);
     }
   }
+
+  &--submit {
+    border-color: rgba(34, 197, 94, 0.4);
+    background: rgba(34, 197, 94, 0.08);
+    color: #4ade80;
+
+    &:hover:not(:disabled) {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: rgba(34, 197, 94, 0.6);
+    }
+  }
+
+  &--consent {
+    border-color: rgba(251, 191, 36, 0.4);
+    background: rgba(251, 191, 36, 0.07);
+    color: #fbbf24;
+
+    &:hover:not(:disabled) {
+      background: rgba(251, 191, 36, 0.14);
+      border-color: rgba(251, 191, 36, 0.6);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.entry-consent-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 4px;
+  padding: 3px 8px;
 }
 
 // ── 엔트리 모달 ──────────────────────────────────────────
@@ -401,54 +437,170 @@
   margin: 3px 0 0;
   font-size: 12px;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
   font-weight: 400;
 }
 
+// ── 포인트 바 ─────────────────────────────────────────────
+.entry-points-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  flex-shrink: 0;
+}
+
+.epi-divider {
+  width: 1px;
+  height: 30px;
+  background: var(--c-border);
+  margin: 0 14px;
+  flex-shrink: 0;
+}
+
+.epi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+
+  &--over {
+    .epi-fill { background: #f87171 !important; }
+    .epi-val { color: #f87171; }
+  }
+
+  &--total .epi-val { font-weight: 800; }
+}
+
+.epi-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.epi-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.epi-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+}
+
+.epi-max {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--c-text-faint);
+  margin-left: 1px;
+}
+
+.epi-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--c-overlay);
+  overflow: hidden;
+}
+
+.epi-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: #34d399;
+  transition: width 0.2s ease;
+}
+
+// ── 슬롯 리스트 ───────────────────────────────────────────
 .entry-body {
-  padding: 16px 20px 20px;
+  padding: 0;
 }
 
 .slot-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
+  padding: 14px 16px;
 }
 
 .slot-row {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 8px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
 
   &--team {
-    border-color: rgba(96, 165, 250, 0.25);
-    background: rgba(96, 165, 250, 0.04);
+    border-color: rgba(96, 165, 250, 0.22);
+    background: rgba(96, 165, 250, 0.03);
   }
 }
 
-.slot-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-// ── 맵 목록 ───────────────────────────────────────────────
-.slot-map-list {
+// 슬롯 레이블 (좌측 고정)
+.slot-label {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 4px;
+  flex-shrink: 0;
+  width: 38px;
+  padding-top: 1px;
 }
 
-.slot-map-item {
+.slot-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--c-text-bright);
+  line-height: 1;
+}
+
+.slot-type-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+
+  &--individual {
+    color: var(--c-text-muted);
+    background: var(--c-badge-bg);
+    border: 1px solid var(--c-badge-border);
+  }
+  &--team {
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.12);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+  }
+}
+
+// 슬롯 컨텐츠 (우측)
+.slot-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+// ── 맵 칩 ─────────────────────────────────────────────────
+.slot-maps-row {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.map-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
+  gap: 5px;
+  padding: 3px 7px 3px 3px;
+  width: 100%;
   border-radius: 6px;
   border: 1px solid var(--c-border-faint);
   background: var(--c-surface-raised);
@@ -456,62 +608,58 @@
 
   &--banned {
     border-color: rgba(239, 68, 68, 0.3);
-    background: rgba(239, 68, 68, 0.06);
+    background: rgba(239, 68, 68, 0.05);
 
-    .map-name { color: var(--c-text-faint); text-decoration: line-through; }
+    .map-chip-name {
+      color: var(--c-text-faint);
+      text-decoration: line-through;
+    }
   }
 }
 
-.map-thumb-wrap {
-  flex-shrink: 0;
-  width: 52px;
-  height: 36px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--c-overlay);
-}
-
-.map-thumb {
-  width: 100%;
-  height: 100%;
+.map-chip-img {
+  width: 45px;
+  height: 42px;
+  border-radius: 3px;
   object-fit: cover;
   display: block;
+  flex-shrink: 0;
 }
 
-.map-thumb-empty {
-  width: 100%;
-  height: 100%;
+.map-chip-img-empty {
+  width: 38px;
+  height: 26px;
+  border-radius: 3px;
   background: var(--c-overlay);
+  flex-shrink: 0;
 }
 
-.map-name {
+.map-chip-name {
   flex: 1;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   color: var(--c-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.btn-ban {
+.map-chip-ban {
   flex-shrink: 0;
-  padding: 3px 10px;
-  border-radius: 5px;
+  padding: 2px 8px;
+  border-radius: 4px;
   border: 1px solid var(--c-border);
   background: none;
   color: var(--c-text-muted);
-  font-size: 11px;
-  font-weight: 600;
-  font-family: system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.12s;
 
   &:hover {
-    border-color: rgba(239, 68, 68, 0.4);
+    border-color: rgba(239, 68, 68, 0.45);
     color: #f87171;
-    background: rgba(239, 68, 68, 0.06);
+    background: rgba(239, 68, 68, 0.07);
   }
 
   &--active {
@@ -527,133 +675,38 @@
   }
 }
 
-.slot-num {
-  font-size: 12px;
-  font-weight: 700;
-  font-family: system-ui, sans-serif;
-  color: var(--c-text);
-}
-
-.slot-type-badge {
-  font-size: 10px;
-  font-weight: 600;
-  font-family: system-ui, sans-serif;
-  padding: 2px 6px;
-  border-radius: 4px;
-
-  &--individual {
-    color: var(--c-text-muted);
-    background: var(--c-badge-bg);
-    border: 1px solid var(--c-badge-border);
-  }
-  &--team {
-    color: #93c5fd;
-    background: rgba(96, 165, 250, 0.12);
-    border: 1px solid rgba(96, 165, 250, 0.3);
-  }
-}
-
 .slot-selects {
   display: flex;
-  gap: 8px;
-  flex: 1;
-}
-
-
-// ── 포인트 요약 ───────────────────────────────────────────
-.points-summary {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  margin-bottom: 12px;
-}
-
-.point-sep {
-  color: var(--c-border);
-  font-size: 14px;
-}
-
-.point-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-
-  &--over {
-    .point-val { color: #f87171; }
-  }
-
-  &--total .point-val { font-weight: 800; }
-}
-
-.point-label {
-  font-size: 10px;
-  color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
-  font-weight: 600;
-}
-
-.point-val {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--c-text-bright);
-  font-family: system-ui, sans-serif;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .entry-error {
+  flex: 1;
   margin: 0;
   font-size: 12px;
+  font-weight: 600;
   color: #f87171;
-  font-family: system-ui, sans-serif;
-  text-align: center;
 }
 
-// ── 모달 푸터 ────────────────────────────────────────────
+// ── 모달 푸터 (공통 오버라이드) ──────────────────────────
 .modal-footer {
-  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
   padding: 14px 20px;
   border-top: 1px solid var(--c-border);
-  flex-shrink: 0;
 }
 
 .btn-cancel {
   padding: 7px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--c-border);
-  background: none;
+  border-color: var(--c-border);
   color: var(--c-text-muted);
-  font-size: 13px;
-  font-weight: 600;
-  font-family: system-ui, sans-serif;
-  cursor: pointer;
-  transition: all 0.14s;
 
   &:hover { border-color: rgba(255,255,255,0.2); color: var(--c-text); }
 }
 
-.btn-submit {
-  padding: 7px 20px;
-  border-radius: 8px;
-  border: none;
-  background: #a855f7;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: system-ui, sans-serif;
-  cursor: pointer;
-  transition: background 0.14s;
-
-  &:hover:not(:disabled) { background: #9333ea; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
+.btn-submit { padding: 7px 20px; }
 
 // ── 뷰 전용 tiptap 에디터 ─────────────────────────────────
 :deep(.tiptap-editor) {
@@ -661,7 +714,6 @@
   font-size: 14px;
   line-height: 1.7;
   color: var(--c-text);
-  font-family: system-ui, sans-serif;
   user-select: text;
   pointer-events: none;
 
@@ -677,3 +729,79 @@
   ul, ol { padding-left: 1.4em; margin: 0.4em 0 0.6em; }
   li     { margin-bottom: 0.2em; }
 }
+
+// ── 에이스 결정전 티어 밴 ────────────────────────────────────────
+.ace-ban-section {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(170, 59, 255, 0.25);
+  background: rgba(170, 59, 255, 0.04);
+}
+
+.ace-ban-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ace-ban-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #c084fc;
+}
+
+.ace-ban-hint {
+  font-size: 11px;
+  color: var(--c-text-faint);
+}
+
+.ace-ban-tiers {
+  display: flex;
+  gap: 8px;
+}
+
+.ace-ban-tier-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0.45;
+
+  &:hover {
+    opacity: 0.75;
+    transform: translateY(-1px);
+  }
+
+  &--selected {
+    opacity: 1;
+    border-color: currentColor;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.06);
+    transform: translateY(-1px);
+
+    .ace-ban-tier-label {
+      font-size: 18px;
+    }
+  }
+}
+
+.ace-ban-tier-label {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  transition: font-size 0.1s;
+}
+
+.ace-ban-tier-sub {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.8;
+  letter-spacing: 0.3px;
+}
+

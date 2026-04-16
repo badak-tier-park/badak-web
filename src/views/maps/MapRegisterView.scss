@@ -32,7 +32,6 @@
     color: var(--c-text-bright);
     margin: 0 0 6px;
     letter-spacing: -0.5px;
-    font-family: system-ui, sans-serif;
   }
 
   p {
@@ -61,7 +60,6 @@
   text-transform: uppercase;
   color: rgba(170, 59, 255, 0.8);
   margin: 0 0 20px;
-  font-family: system-ui, sans-serif;
 }
 
 // ── 이미지 업로드 ─────────────────────────────────────────
@@ -100,13 +98,11 @@
 .upload-label {
   font-size: 14px;
   color: var(--c-text-sub);
-  font-family: system-ui, sans-serif;
 }
 
 .upload-hint {
   font-size: 12px;
   color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
 }
 
 .image-preview {
@@ -147,41 +143,18 @@
 }
 
 .field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   flex: 1;
-
   &--small { flex: 0 0 auto; }
 }
 
-.field-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-text-sub);
-  letter-spacing: 0.05em;
-  font-family: system-ui, sans-serif;
-}
+.field-label { letter-spacing: 0.05em; }
 
 .field-input {
-  background: var(--c-input);
-  border: 1px solid var(--c-border-strong);
   border-radius: 10px;
   padding: 11px 14px;
-  font-size: 14px;
-  color: var(--c-text);
-  font-family: system-ui, sans-serif;
-  outline: none;
   transition: border-color 0.2s, background 0.2s;
-  width: 100%;
-  box-sizing: border-box;
 
-  &::placeholder { color: var(--c-text-faint); }
-
-  &:focus {
-    border-color: rgba(170, 59, 255, 0.5);
-    background: rgba(170, 59, 255, 0.04);
-  }
+  &:focus { background: rgba(170, 59, 255, 0.04); }
 
   &[type='number'] {
     -moz-appearance: textfield;
@@ -202,7 +175,6 @@
   color: var(--c-text-sub);
   font-size: 14px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -235,7 +207,6 @@
   color: #c084fc;
   font-size: 13px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
@@ -259,7 +230,6 @@
   border: 1px solid rgba(170, 59, 255, 0.25);
   font-size: 13px;
   color: var(--c-text-2);
-  font-family: system-ui, sans-serif;
 }
 
 .alias-tag-remove {
@@ -309,13 +279,11 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--c-text-2);
-  font-family: system-ui, sans-serif;
 }
 
 .size-value {
   font-size: 11px;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -332,7 +300,6 @@
   font-size: 18px;
   color: var(--c-text-muted);
   padding-bottom: 10px;
-  font-family: system-ui, sans-serif;
 }
 
 // ── 타일 셋 ───────────────────────────────────────────────
@@ -383,7 +350,6 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--c-text-2);
-  font-family: system-ui, sans-serif;
   flex: 1;
 }
 
@@ -403,42 +369,21 @@
   font-size: 13px;
   color: #f87171;
   margin: 0;
-  font-family: system-ui, sans-serif;
 }
 
 .btn-cancel {
   padding: 12px 22px;
   border-radius: 10px;
-  border: 1px solid var(--c-border-strong);
-  background: transparent;
-  color: var(--c-text-sub);
   font-size: 14px;
-  font-weight: 600;
-  font-family: system-ui, sans-serif;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: var(--c-border-dashed);
-    color: var(--c-text-2);
-  }
 }
 
 .btn-submit {
-  display: flex;
-  align-items: center;
   gap: 8px;
   padding: 12px 28px;
   border-radius: 10px;
-  border: none;
   background: linear-gradient(135deg, #aa3bff, #5865f2);
-  color: #fff;
   font-size: 14px;
-  font-weight: 700;
-  font-family: system-ui, sans-serif;
-  cursor: pointer;
   box-shadow: 0 4px 20px rgba(170, 59, 255, 0.35);
-  transition: all 0.2s;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
@@ -446,7 +391,7 @@
   }
 
   &:active:not(:disabled) { transform: translateY(0); }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
+  &:disabled { opacity: 0.6; }
 }
 
 .spin { animation: spin 0.8s linear infinite; }
