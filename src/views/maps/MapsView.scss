@@ -19,6 +19,55 @@
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+// ── 검색 바 ───────────────────────────────────────────────
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 13px;
+  color: var(--c-icon);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 36px;
+  background: var(--c-overlay);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 9px;
+  color: var(--c-text);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: rgba(170, 59, 255, 0.45); }
+  &::placeholder { color: var(--c-text-faint); }
+}
+
+.search-clear {
+  position: absolute;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: var(--c-icon);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s;
+
+  &:hover { color: var(--c-text-2); }
+}
+
 // ── 상태 메시지 (공통 + 오버라이드) ──────────────────────
 .state-msg {
   display: flex;
