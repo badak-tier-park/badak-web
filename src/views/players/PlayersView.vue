@@ -95,6 +95,31 @@
               />
             </div>
 
+            <!-- Alias -->
+            <div class="field">
+              <label class="field-label">Alias</label>
+              <div class="alias-input-row">
+                <input
+                  v-model="aliasInput"
+                  class="field-input"
+                  type="text"
+                  placeholder="예) 천사, 토람"
+                  @keydown.enter.prevent="addAlias"
+                />
+                <button type="button" class="alias-add-btn" @click="addAlias">추가</button>
+              </div>
+              <div v-if="form.aliases.length" class="alias-tags">
+                <span v-for="(alias, i) in form.aliases" :key="i" class="alias-tag">
+                  {{ alias }}
+                  <button type="button" class="alias-tag-remove" @click="removeAlias(i)">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </span>
+              </div>
+            </div>
+
             <!-- 종족 -->
             <div class="field">
               <label class="field-label">종족</label>
@@ -155,11 +180,14 @@ const loading = ref(true)
 const loadError = ref<string | null>(null)
 const searchQuery = ref('')
 
-const filteredPlayers = computed(() =>
-  players.value.filter(p =>
-    p.nickname.toLowerCase().includes(searchQuery.value.toLowerCase())
+const filteredPlayers = computed(() => {
+  const q = searchQuery.value.toLowerCase()
+  if (!q) return players.value
+  return players.value.filter(p =>
+    p.nickname.toLowerCase().includes(q) ||
+    p.aliases.some(a => a.toLowerCase().includes(q))
   )
-)
+})
 
 const races = [
   { value: 'T' as const, label: '테란' },
@@ -189,15 +217,28 @@ onMounted(async () => {
 
 // ── 수정 모달 ─────────────────────────────────────────────
 const editTarget = ref<PlayerRow | null>(null)
-const form = reactive({ nickname: '', race: 'T' as 'T' | 'Z' | 'P', tier: '' })
+const form = reactive({ nickname: '', aliases: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '' })
+const aliasInput = ref('')
 const saving = ref(false)
 const saveError = ref<string | null>(null)
+
+function addAlias() {
+  const val = aliasInput.value.trim()
+  if (val && !form.aliases.includes(val)) form.aliases.push(val)
+  aliasInput.value = ''
+}
+
+function removeAlias(i: number) {
+  form.aliases.splice(i, 1)
+}
 
 function openEdit(player: PlayerRow) {
   editTarget.value = player
   form.nickname = player.nickname
+  form.aliases = [...player.aliases]
   form.race = player.race
   form.tier = player.tier
+  aliasInput.value = ''
   saveError.value = null
 }
 
@@ -217,6 +258,7 @@ async function handleSave() {
   try {
     const updated = await updatePlayer(editTarget.value.id, {
       nickname: form.nickname.trim(),
+      aliases: form.aliases,
       race: form.race,
       tier: form.tier.trim(),
     })

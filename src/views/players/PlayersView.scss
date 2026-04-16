@@ -183,6 +183,61 @@
   &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
 }
 
+// ── Alias ──────────────────────────────────────────────────
+.alias-input-row {
+  display: flex;
+  gap: 8px;
+
+  .field-input { flex: 1; }
+}
+
+.alias-add-btn {
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(170, 59, 255, 0.35);
+  background: rgba(170, 59, 255, 0.1);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(170, 59, 255, 0.2);
+    border-color: rgba(170, 59, 255, 0.6);
+  }
+}
+
+.alias-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+.alias-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(170, 59, 255, 0.12);
+  border: 1px solid rgba(170, 59, 255, 0.25);
+  font-size: 13px;
+  color: var(--c-text-2);
+}
+
+.alias-tag-remove {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--c-icon);
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.15s;
+
+  &:hover { color: rgba(255, 100, 100, 0.8); }
+}
+
 // ── 모달 (공통: _modal.scss via _page.scss) ─────────────
 .modal { max-width: 420px; }
 
