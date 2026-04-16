@@ -729,3 +729,79 @@
   ul, ol { padding-left: 1.4em; margin: 0.4em 0 0.6em; }
   li     { margin-bottom: 0.2em; }
 }
+
+// ── 에이스 결정전 티어 밴 ────────────────────────────────────────
+.ace-ban-section {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(170, 59, 255, 0.25);
+  background: rgba(170, 59, 255, 0.04);
+}
+
+.ace-ban-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ace-ban-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #c084fc;
+}
+
+.ace-ban-hint {
+  font-size: 11px;
+  color: var(--c-text-faint);
+}
+
+.ace-ban-tiers {
+  display: flex;
+  gap: 8px;
+}
+
+.ace-ban-tier-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0.45;
+
+  &:hover {
+    opacity: 0.75;
+    transform: translateY(-1px);
+  }
+
+  &--selected {
+    opacity: 1;
+    border-color: currentColor;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.06);
+    transform: translateY(-1px);
+
+    .ace-ban-tier-label {
+      font-size: 18px;
+    }
+  }
+}
+
+.ace-ban-tier-label {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  transition: font-size 0.1s;
+}
+
+.ace-ban-tier-sub {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.8;
+  letter-spacing: 0.3px;
+}
+

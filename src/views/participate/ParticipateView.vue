@@ -404,6 +404,27 @@
                     </div>
                   </div>
                 </template>
+
+                <!-- 에이스 결정전 티어 밴 -->
+                <div class="ace-ban-section">
+                  <div class="ace-ban-header">
+                    <span class="ace-ban-title">에이스 결정전 티어 밴</span>
+                    <span class="ace-ban-hint">상대가 출전시킬 수 없는 티어 1개를 선택하세요</span>
+                  </div>
+                  <div class="ace-ban-tiers">
+                    <button
+                      v-for="tier in ACE_TIERS"
+                      :key="tier"
+                      class="ace-ban-tier-btn"
+                      :class="[`tier-badge--${tier.toLowerCase()}`, { 'ace-ban-tier-btn--selected': entryModal.aceTierBan === tier }]"
+                      type="button"
+                      @click="entryModal.aceTierBan = entryModal.aceTierBan === tier ? null : tier"
+                    >
+                      <span class="ace-ban-tier-label">{{ tier }}</span>
+                      <span class="ace-ban-tier-sub">티어</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
             </template>
@@ -437,6 +458,7 @@ import { getTeamNames } from '@/lib/teamNames'
 import {
   getEntries, saveEntries, submitEntry, getEntryStatusMap, computeFinalRosters,
   consentReveal, checkBothConsented, getConsentedSet,
+  getAceTierBan, saveAceTierBan,
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
   MAX_INDIVIDUAL_POINTS, MAX_TEAM_POINTS, MAX_TOTAL_POINTS,
   type EntrySlot, type EntryStatus,
@@ -472,6 +494,8 @@ const SLOT_CONFIG = [
   { num: 5, type: 'individual', count: 1 },
   { num: 6, type: 'individual', count: 1 },
 ] as const
+
+const ACE_TIERS = ['A', 'B', 'C', 'D', 'E'] as const
 
 // ── 상태 ─────────────────────────────────────────────────────
 const auth = useAuthStore()
@@ -630,6 +654,7 @@ interface EntryModalState {
   selections: Record<number, number[]>
   slotMaps: Record<number, SlotMapInfo[]>   // match_slot → 맵 목록
   banSelections: Record<number, string | null>  // match_slot → banned_map_id
+  aceTierBan: string | null
 }
 const entryModal = reactive<EntryModalState>({
   open: false,
@@ -640,6 +665,7 @@ const entryModal = reactive<EntryModalState>({
   selections: {},
   slotMaps: {},
   banSelections: {},
+  aceTierBan: null,
 })
 
 // ── 데이터 로드 ──────────────────────────────────────────────
@@ -778,12 +804,13 @@ async function openEntryModal(item: MyMatchItem) {
   entryModal.teamMembers = []
   entryModal.slotMaps = {}
   entryModal.banSelections = {}
+  entryModal.aceTierBan = null
   entryError.value = null
   initSelections()
   loadingEntry.value = true
 
   try {
-    const [captains, picks, swapLog, players, existing, matchMaps, allMaps] = await Promise.all([
+    const [captains, picks, swapLog, players, existing, matchMaps, allMaps, existingAceBan] = await Promise.all([
       getCaptains(item.leagueId),
       getDraftPicks(item.leagueId),
       getSwapLog(item.leagueId),
@@ -791,6 +818,7 @@ async function openEntryModal(item: MyMatchItem) {
       getEntries(item.schedule.id, item.myTeamCaptainId),
       getMatchMaps(item.leagueId),
       getMaps(),
+      getAceTierBan(item.schedule.id, item.myTeamCaptainId),
     ])
 
     const mapInfoMap = new Map(allMaps.map(m => [m.id, m]))
@@ -826,6 +854,7 @@ async function openEntryModal(item: MyMatchItem) {
         }
       }
     }
+    entryModal.aceTierBan = existingAceBan
   } catch (e: any) {
     entryError.value = e.message ?? '데이터를 불러올 수 없습니다.'
   } finally {
@@ -873,6 +902,11 @@ async function handleEntrySubmit() {
     return
   }
 
+  if (!entryModal.aceTierBan) {
+    entryError.value = '에이스 결정전에서 밴할 티어를 선택해주세요.'
+    return
+  }
+
   entrySaving.value = true
   try {
     const slots: EntrySlot[] = SLOT_CONFIG.map(slot => ({
@@ -880,7 +914,10 @@ async function handleEntrySubmit() {
       player_ids: entryModal.selections[slot.num].filter(Boolean),
       banned_map_id: entryModal.banSelections[slot.num] ?? null,
     }))
-    await saveEntries(entryModal.schedule!.id, myPlayerId.value!, slots)
+    await Promise.all([
+      saveEntries(entryModal.schedule!.id, myPlayerId.value!, slots),
+      saveAceTierBan(entryModal.schedule!.id, myPlayerId.value!, entryModal.aceTierBan),
+    ])
     entryStatusMap.value.set(entryModal.schedule!.id, 'saved')
     // 경기 목록 모달의 상태도 갱신
     const match = matchListModal.matches.find(m => m.schedule.id === entryModal.schedule!.id)

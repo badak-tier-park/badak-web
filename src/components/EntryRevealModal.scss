@@ -390,6 +390,68 @@
   &:hover { color: var(--c-text-muted); }
 }
 
+// ── 에이스 결정전 ─────────────────────────────────────────────
+.reveal-ace {
+  padding: 12px 0;
+  border-top: 1px solid var(--c-border);
+}
+
+.ace-ban-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+
+  .rse-col--right & {
+    align-items: flex-start;
+  }
+}
+
+.ace-ban-display {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: flex-end;
+
+  &--right {
+    justify-content: flex-start;
+  }
+}
+
+.ace-ban-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--c-text-faint);
+}
+
+.ace-ban-tier {
+  font-size: 13px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 5px;
+}
+
+.ace-confirmed-tier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ace-tier-chip {
+  font-size: 16px;
+  font-weight: 900;
+  padding: 4px 14px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+}
+
+.ace-tier-sub {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--c-text-faint);
+}
+
 // ── 합계 ─────────────────────────────────────────────────────
 .reveal-totals {
   display: flex;

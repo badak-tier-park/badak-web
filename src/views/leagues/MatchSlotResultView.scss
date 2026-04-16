@@ -389,10 +389,13 @@
 .ladder-modal {
   width: 100%;
   max-width: 520px;
+  max-height: 90vh;
   background: var(--c-surface);
   border: 1px solid var(--c-border-strong);
   border-radius: 16px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .ladder-header {
@@ -429,9 +432,12 @@
 .ladder-maps {
   display: flex;
   gap: 12px;
-  padding: 20px;
+  padding: 16px 20px;
   justify-content: center;
   flex-wrap: wrap;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .ladder-map-btn {
@@ -482,7 +488,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 20px 20px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--c-border);
+  flex-shrink: 0;
 }
 
 .ladder-random-btn {
@@ -504,5 +512,192 @@
 .ladder-confirm-btn {
   padding: 8px 20px;
   font-size: 13px;
+}
+
+// ── 티어 사다리타기 모달 ──────────────────────────────────────────
+.ladder-tier-list {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.ladder-tier-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 2px solid var(--c-border);
+  background: var(--c-surface-raised);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+
+  &--selected {
+    border-color: rgba(52, 211, 153, 0.6);
+    background: rgba(52, 211, 153, 0.06);
+  }
+}
+
+// ── 에이스 결정전 카드 ────────────────────────────────────────────
+.ace-card {
+  border-radius: 14px;
+  border: 1px solid rgba(170, 59, 255, 0.3);
+  background: rgba(170, 59, 255, 0.04);
+  overflow: hidden;
+}
+
+.ace-card-title {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #c084fc;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid rgba(170, 59, 255, 0.2);
+}
+
+.ace-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--c-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &--locked {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
+.ace-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
+}
+
+.ace-tier-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ace-tier-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 96px;
+}
+
+.ace-tier-ban-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  min-width: 0;
+
+  &--right {
+    align-items: flex-end;
+  }
+}
+
+.ace-ban-team {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.ace-tier-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ace-tier-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.3;
+
+  &--banned {
+    opacity: 1;
+    text-decoration: line-through;
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    text-decoration: none;
+
+    &::after {
+      content: ' 밴';
+      font-size: 10px;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+  }
+}
+
+.ace-confirmed-tier {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.ace-reset-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border);
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.14s;
+
+  &:hover { background: var(--c-overlay); color: var(--c-text); }
+}
+
+.ace-locked-hint {
+  font-size: 12px;
+  color: var(--c-text-faint);
+}
+
+.ace-map {
+  justify-content: center;
+}
+
+.ace-result-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ace-player-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+
+.ace-winner-btn {
+  width: 100%;
+}
+
+.ace-vs {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+  flex-shrink: 0;
 }
 

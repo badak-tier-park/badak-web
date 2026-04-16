@@ -26,6 +26,8 @@
         class="ps-dropdown"
         :style="dropdownStyle"
         ref="dropdownRef"
+        @dragstart.prevent
+        @mousedown.stop
       >
         <button
           v-for="opt in options"
@@ -124,8 +126,18 @@ function onClickOutside(e: MouseEvent) {
   open.value = false
 }
 
-onMounted(() => document.addEventListener('mousedown', onClickOutside))
-onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
+function onScroll() {
+  if (open.value) calcPosition()
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', onClickOutside)
+  window.addEventListener('scroll', onScroll, true)
+})
+onUnmounted(() => {
+  document.removeEventListener('mousedown', onClickOutside)
+  window.removeEventListener('scroll', onScroll, true)
+})
 </script>
 
 <style scoped>

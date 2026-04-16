@@ -167,6 +167,85 @@
               </div>
             </div>
 
+            <!-- 에이스 결정전 -->
+            <div class="reveal-ace">
+              <div class="rsl-center-label">
+                <span class="rsl-num">에이스 결정전</span>
+              </div>
+
+              <!-- 티어 밴 행 -->
+              <div class="reveal-row">
+                <div class="rse-col ace-ban-col">
+                  <div v-if="aceTierBanA" class="ace-ban-display">
+                    <span class="ace-ban-label">밴</span>
+                    <span class="ace-ban-tier" :class="`tier-badge--${aceTierBanA.toLowerCase()}`">{{ aceTierBanA }}</span>
+                  </div>
+                </div>
+                <div class="rse-maps">
+                  <div v-if="aceSlotResult?.ace_tier" class="ace-confirmed-tier">
+                    <span :class="`tier-badge--${aceSlotResult.ace_tier.toLowerCase()}`" class="ace-tier-chip">{{ aceSlotResult.ace_tier }}</span>
+                    <span class="ace-tier-sub">에이스 티어</span>
+                  </div>
+                  <div v-else class="rse-undecided">티어 사다리타기</div>
+                </div>
+                <div class="rse-col rse-col--right ace-ban-col">
+                  <div v-if="aceTierBanB" class="ace-ban-display ace-ban-display--right">
+                    <span class="ace-ban-tier" :class="`tier-badge--${aceTierBanB.toLowerCase()}`">{{ aceTierBanB }}</span>
+                    <span class="ace-ban-label">밴</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 선수 & 맵 행 -->
+              <div class="reveal-row">
+                <!-- 팀A 선수 -->
+                <div
+                  class="rse-col"
+                  :class="{
+                    'rse-col--winner': showResults && slotWinner(7) === teamACaptainId,
+                    'rse-col--loser': showResults && slotWinner(7) != null && slotWinner(7) !== teamACaptainId
+                  }"
+                >
+                  <div v-if="aceSlotResult?.ace_player_a_id" class="rse-player">
+                    <span class="rse-pt">{{ playerPt(aceSlotResult.ace_player_a_id) }}pt</span>
+                    <span class="rse-race" :class="`race-badge--${playerRace(aceSlotResult.ace_player_a_id).toLowerCase()}`">{{ playerRace(aceSlotResult.ace_player_a_id) }}</span>
+                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(aceSlotResult.ace_player_a_id).toLowerCase()}`">{{ playerName(aceSlotResult.ace_player_a_id) }}</span>
+                    <span v-if="showResults && slotWinner(7) === teamACaptainId" class="rse-win-badge">WIN</span>
+                  </div>
+                </div>
+
+                <!-- 맵 -->
+                <div class="rse-maps">
+                  <template v-if="aceSlotResult?.selected_map_id && allMapsById.get(aceSlotResult.selected_map_id)">
+                    <div class="rse-map-item">
+                      <div class="rse-map-thumb-wrap">
+                        <img v-if="allMapsById.get(aceSlotResult.selected_map_id)?.thumbnail_url" :src="allMapsById.get(aceSlotResult.selected_map_id)!.thumbnail_url!" class="rse-map-thumb" />
+                        <div v-else class="rse-map-thumb-empty" />
+                      </div>
+                      <span class="rse-map-name">{{ allMapsById.get(aceSlotResult.selected_map_id)?.name }}</span>
+                    </div>
+                  </template>
+                  <div v-else class="rse-map-empty" />
+                </div>
+
+                <!-- 팀B 선수 -->
+                <div
+                  class="rse-col rse-col--right"
+                  :class="{
+                    'rse-col--winner': showResults && slotWinner(7) === teamBCaptainId,
+                    'rse-col--loser': showResults && slotWinner(7) != null && slotWinner(7) !== teamBCaptainId
+                  }"
+                >
+                  <div v-if="aceSlotResult?.ace_player_b_id" class="rse-player">
+                    <span v-if="showResults && slotWinner(7) === teamBCaptainId" class="rse-win-badge">WIN</span>
+                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(aceSlotResult.ace_player_b_id).toLowerCase()}`">{{ playerName(aceSlotResult.ace_player_b_id) }}</span>
+                    <span class="rse-race" :class="`race-badge--${playerRace(aceSlotResult.ace_player_b_id).toLowerCase()}`">{{ playerRace(aceSlotResult.ace_player_b_id) }}</span>
+                    <span class="rse-pt">{{ playerPt(aceSlotResult.ace_player_b_id) }}pt</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- 합계 -->
             <div class="reveal-totals">
               <div class="reveal-total-item">
@@ -188,7 +267,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getScheduleEntries, TIER_POINTS, type EntryRecord } from '@/lib/entries'
+import { getScheduleEntries, TIER_POINTS, getAceTierBans, type EntryRecord } from '@/lib/entries'
 import { getMatchMaps } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getPlayers, type PlayerRow } from '@/lib/players'
@@ -230,19 +309,28 @@ const slotWinners = ref(new Map<number, number>())
 // showResults 모드에서 사다리타기로 확정된 맵 (slot_num → map_id)
 const slotSelectedMaps = ref(new Map<number, string>())
 
+// 에이스 결정전
+const aceSlotResult = ref<SlotResult | null>(null)
+const aceTierBanA = ref<string | null>(null)
+const aceTierBanB = ref<string | null>(null)
+const allMapsById = ref(new Map<string, MapInfo>())
+
 onMounted(async () => {
   try {
-    const [entries, players, matchMaps, allMaps, slotResultsData] = await withTimeout(Promise.all([
+    const [entries, players, matchMaps, allMaps, slotResultsData, aceTierBans] = await withTimeout(Promise.all([
       getScheduleEntries(props.scheduleId),
       getPlayers(),
       getMatchMaps(props.leagueId),
       getMaps(),
       props.showResults ? getSlotResults(props.scheduleId) : Promise.resolve([] as SlotResult[]),
+      getAceTierBans(props.scheduleId),
     ]))
 
     playerMap.value = new Map(players.map(p => [p.id, p]))
 
-    const mapInfoMap = new Map(allMaps.map(m => [m.id, m]))
+    const mapInfoMap = new Map<string, MapInfo>(allMaps.map(m => [m.id, { id: m.id, name: m.name, thumbnail_url: m.thumbnail_url ?? null }]))
+    allMapsById.value = mapInfoMap
+
     const smr: Record<number, MapInfo[]> = {}
     for (const mm of matchMaps) {
       smr[mm.match_number] = mm.map_ids.map(id => {
@@ -259,6 +347,12 @@ onMounted(async () => {
     }
     entriesMap.value = em
 
+    // 에이스 티어 밴
+    const banForA = aceTierBans.find(b => b.captain_player_id === props.teamACaptainId)
+    const banForB = aceTierBans.find(b => b.captain_player_id === props.teamBCaptainId)
+    aceTierBanA.value = banForA?.tier_ban ?? null
+    aceTierBanB.value = banForB?.tier_ban ?? null
+
     // 슬롯 결과 (showResults 모드)
     if (slotResultsData.length) {
       const wm = new Map<number, number>()
@@ -266,6 +360,7 @@ onMounted(async () => {
       for (const r of slotResultsData) {
         if (r.winner_captain_id != null) wm.set(r.slot_num, r.winner_captain_id)
         if (r.selected_map_id) sm.set(r.slot_num, r.selected_map_id)
+        if (r.slot_num === 7) aceSlotResult.value = r
       }
       slotWinners.value = wm
       slotSelectedMaps.value = sm

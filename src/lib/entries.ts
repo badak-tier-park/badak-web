@@ -225,3 +225,40 @@ export function computeFinalRosters(
 
   return rosters
 }
+
+// ── 에이스 티어 밴 ─────────────────────────────────────────────
+export async function getAceTierBan(
+  scheduleId: number,
+  captainPlayerId: number,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('league_match_ace_bans')
+    .select('tier_ban')
+    .eq('schedule_id', scheduleId)
+    .eq('captain_player_id', captainPlayerId)
+    .maybeSingle()
+  if (error) throw error
+  return data?.tier_ban ?? null
+}
+
+export async function getAceTierBans(
+  scheduleId: number,
+): Promise<Array<{ captain_player_id: number; tier_ban: string | null }>> {
+  const { data, error } = await supabase
+    .from('league_match_ace_bans')
+    .select('captain_player_id, tier_ban')
+    .eq('schedule_id', scheduleId)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function saveAceTierBan(
+  scheduleId: number,
+  captainPlayerId: number,
+  tierBan: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('league_match_ace_bans')
+    .upsert({ schedule_id: scheduleId, captain_player_id: captainPlayerId, tier_ban: tierBan })
+  if (error) throw error
+}
