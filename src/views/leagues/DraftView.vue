@@ -17,7 +17,7 @@
 
     <!-- 시드권 순서 설정 모달 -->
     <Teleport to="body">
-      <div v-if="seedOrderSetupMode" class="modal-backdrop" @click.self="seedOrderSetupMode = false">
+      <div v-if="seedOrderSetupMode" class="modal-backdrop">
         <div class="seed-order-modal">
           <div class="seed-order-header">
             <span class="seed-order-title">시드권 적용 순서 설정</span>
@@ -120,9 +120,7 @@
           v-if="!seedSwapMode && !isSaved"
           class="pool-panel"
           :class="{ 'drop-target': dragOverPool }"
-          @dragover.prevent="dragOverPool = true"
-          @dragleave="onPoolDragLeave"
-          @drop="onDropToPool"
+          data-drop-pool
         >
           <div class="pool-header">
             <div class="pool-title-row">
@@ -143,10 +141,8 @@
                     v-for="player in (playersByTierRace[tier]?.[race] ?? [])"
                     :key="player.id"
                     class="player-card"
-                    :class="`tier-bg--${player.tier.toLowerCase()}`"
-                    draggable="true"
-                    @dragstart="onDragStart($event, player.id, 'pool')"
-                    @dragend="onDragEnd"
+                    :class="[`tier-bg--${player.tier.toLowerCase()}`, { 'is-dragging': draggingId === player.id }]"
+                    @pointerdown="onPointerDown($event, player.id, 'pool')"
                   >
                     <span class="card-name">{{ player.nickname }}
                       <span class="card-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
@@ -192,6 +188,7 @@
               v-for="captainId in captainIds"
               :key="captainId"
               class="team-column"
+              :data-captain-id="captainId"
               :class="{
                 'drag-over': !seedSwapMode && dragOverTeam === captainId && captainId === currentCaptainId,
                 'is-active': !seedSwapMode && captainId === currentCaptainId,
@@ -199,10 +196,6 @@
                 'seed-my-team': seedSwapMode && captainId === currentSeedHolderCaptainId,
                 'seed-other-team': seedSwapMode && captainId !== currentSeedHolderCaptainId,
               }"
-              @dragenter="!seedSwapMode && !isSaved && onTeamDragEnter(captainId)"
-              @dragleave="!seedSwapMode && !isSaved && onTeamDragLeave(captainId)"
-              @dragover="!seedSwapMode && !isSaved && onTeamDragOver($event, captainId)"
-              @drop="!seedSwapMode && !isSaved && onDropToTeam($event, captainId)"
             >
               <!-- 팀장 헤더 -->
               <div class="team-captain">
@@ -256,13 +249,12 @@
                   class="player-card player-card--member"
                   :class="{
                     [`tier-bg--${member.tier.toLowerCase()}`]: true,
+                    'is-dragging': !seedSwapMode && !isSaved && draggingId === member.id,
                     'swap-selected': seedSwapMode && swapSel?.member.id === member.id,
                     'swap-locked': seedSwapMode && lockedIds.has(member.id),
                     'swap-clickable': seedSwapMode && !lockedIds.has(member.id),
                   }"
-                  :draggable="!seedSwapMode && !isSaved"
-                  @dragstart="!seedSwapMode && !isSaved && onDragStart($event, member.id, captainId)"
-                  @dragend="!seedSwapMode && !isSaved && onDragEnd()"
+                  @pointerdown="!seedSwapMode && !isSaved && onPointerDown($event, member.id, captainId)"
                   @click="seedSwapMode && onMemberClick(captainId, member, idx)"
                 >
                   <span class="card-pick-num">{{ idx + 1 }}</span>
@@ -501,74 +493,115 @@ const turnPositionLabel = computed(() => {
   return round % 2 === 0 ? '↓' : '↑'
 })
 
-// ── 드래그 앤 드롭 ────────────────────────────────────────
+// ── 드래그 앤 드롭 (pointer events 기반) ─────────────────
 const draggedPlayerId = ref<number | null>(null)
 const dragSource = ref<'pool' | number>('pool')
 const dragOverTeam = ref<number | null>(null)
 const dragOverPool = ref(false)
-const teamDragCounters = ref<Record<number, number>>({})
+const draggingId = ref<number | null>(null)
 
-function onDragStart(e: DragEvent, playerId: number, source: 'pool' | number) {
+let _dragClone: HTMLElement | null = null
+let _dragOffsetX = 0
+let _dragOffsetY = 0
+
+function onPointerDown(e: PointerEvent, playerId: number, source: 'pool' | number) {
+  if (e.button !== 0) return
+  e.preventDefault()
+
+  const el = e.currentTarget as HTMLElement
+  const rect = el.getBoundingClientRect()
+  _dragOffsetX = e.clientX - rect.left
+  _dragOffsetY = e.clientY - rect.top
+
+  // 실제 카드를 그대로 복제해 body에 붙임 — 커서를 따라 움직임
+  const clone = el.cloneNode(true) as HTMLElement
+  clone.style.cssText = `
+    position: fixed;
+    left: ${rect.left}px;
+    top: ${rect.top}px;
+    width: ${rect.width - 25}px;
+    height: ${rect.height - 10}px;
+    pointer-events: none;
+    z-index: 9999;
+    margin: 0;
+    opacity: 1;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+    transform: scale(1.05);
+    transition: none;
+    border-radius: 7px;
+  `
+  document.body.appendChild(clone)
+  _dragClone = clone
+
   draggedPlayerId.value = playerId
   dragSource.value = source
-  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+  draggingId.value = playerId
+
+  document.addEventListener('pointermove', _onPointerMove)
+  document.addEventListener('pointerup', _onPointerUp)
 }
 
-function onDragEnd() {
-  draggedPlayerId.value = null
-  dragOverTeam.value = null
-  dragOverPool.value = false
-  teamDragCounters.value = {}
-}
+function _onPointerMove(e: PointerEvent) {
+  if (!_dragClone) return
+  _dragClone.style.left = `${e.clientX - _dragOffsetX}px`
+  _dragClone.style.top = `${e.clientY - _dragOffsetY}px`
 
-function onTeamDragEnter(captainId: number) {
-  if (captainId !== currentCaptainId.value) return
-  teamDragCounters.value[captainId] = (teamDragCounters.value[captainId] ?? 0) + 1
-  dragOverTeam.value = captainId
-}
+  // clone은 pointer-events: none이라 elementsFromPoint에서 건너뜀
+  const els = document.elementsFromPoint(e.clientX, e.clientY)
+  const teamCol = els.find(el => (el as HTMLElement).dataset.captainId) as HTMLElement | undefined
+  const pool = els.find(el => el.hasAttribute('data-drop-pool'))
 
-function onTeamDragLeave(captainId: number) {
-  if (captainId !== currentCaptainId.value) return
-  teamDragCounters.value[captainId] = Math.max(0, (teamDragCounters.value[captainId] ?? 0) - 1)
-  if (!teamDragCounters.value[captainId] && dragOverTeam.value === captainId) dragOverTeam.value = null
-}
-
-function onTeamDragOver(e: DragEvent, captainId: number) {
-  if (captainId === currentCaptainId.value) e.preventDefault()
-}
-
-function onPoolDragLeave(e: DragEvent) {
-  const rt = e.relatedTarget as HTMLElement | null
-  if (!rt || !(e.currentTarget as HTMLElement).contains(rt)) dragOverPool.value = false
-}
-
-function onDropToTeam(e: DragEvent, captainId: number) {
-  if (captainId !== currentCaptainId.value) return
-  e.preventDefault()
-  teamDragCounters.value[captainId] = 0
-  dragOverTeam.value = null
-  const pid = draggedPlayerId.value
-  if (!pid) return
-  if ((teams.value[captainId] ?? []).find(p => p.id === pid)) return
-  if (dragSource.value !== 'pool') {
-    const prev = dragSource.value as number
-    teams.value[prev] = (teams.value[prev] ?? []).filter(p => p.id !== pid)
+  if (teamCol) {
+    const cid = Number(teamCol.dataset.captainId)
+    dragOverTeam.value = cid === currentCaptainId.value ? cid : null
+    dragOverPool.value = false
+  } else if (pool && dragSource.value !== 'pool') {
+    dragOverPool.value = true
+    dragOverTeam.value = null
+  } else {
+    dragOverTeam.value = null
+    dragOverPool.value = false
   }
-  const player = allPlayers.value.find(p => p.id === pid)
-  if (!player) return
-  if (!teams.value[captainId]) teams.value[captainId] = []
-  teams.value[captainId] = [...teams.value[captainId], player]
-  draggedPlayerId.value = null
 }
 
-function onDropToPool(e: DragEvent) {
-  e.preventDefault()
-  dragOverPool.value = false
+function _onPointerUp(e: PointerEvent) {
+  document.removeEventListener('pointermove', _onPointerMove)
+  document.removeEventListener('pointerup', _onPointerUp)
+
+  if (_dragClone) {
+    _dragClone.remove()
+    _dragClone = null
+  }
+
   const pid = draggedPlayerId.value
-  if (!pid || dragSource.value === 'pool') return
-  const prev = dragSource.value as number
-  teams.value[prev] = (teams.value[prev] ?? []).filter(p => p.id !== pid)
+  if (pid) {
+    const els = document.elementsFromPoint(e.clientX, e.clientY)
+    const teamCol = els.find(el => (el as HTMLElement).dataset.captainId) as HTMLElement | undefined
+    const pool = els.find(el => el.hasAttribute('data-drop-pool'))
+
+    if (teamCol) {
+      const cid = Number(teamCol.dataset.captainId)
+      if (cid === currentCaptainId.value && !(teams.value[cid] ?? []).find(p => p.id === pid)) {
+        if (dragSource.value !== 'pool') {
+          const prev = dragSource.value as number
+          teams.value[prev] = (teams.value[prev] ?? []).filter(p => p.id !== pid)
+        }
+        const player = allPlayers.value.find(p => p.id === pid)
+        if (player) {
+          if (!teams.value[cid]) teams.value[cid] = []
+          teams.value[cid] = [...teams.value[cid], player]
+        }
+      }
+    } else if (pool && dragSource.value !== 'pool') {
+      const prev = dragSource.value as number
+      teams.value[prev] = (teams.value[prev] ?? []).filter(p => p.id !== pid)
+    }
+  }
+
+  draggingId.value = null
   draggedPlayerId.value = null
+  dragOverTeam.value = null
+  dragOverPool.value = false
 }
 
 function removeFromTeam(captainId: number, memberId: number) {

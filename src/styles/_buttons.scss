@@ -1,0 +1,104 @@
+// ── 공통 버튼 베이스 ──────────────────────────────────────
+// 모든 버튼에 적용되는 기본 속성
+%btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+// ── 취소 버튼 (ghost) ────────────────────────────────────
+.btn-cancel {
+  @extend %btn-base;
+  padding: 9px 18px;
+  border: 1px solid var(--c-border-strong);
+  background: none;
+  color: var(--c-text-sub);
+  font-size: 13px;
+
+  &:hover:not(:disabled) {
+    border-color: var(--c-border-dashed);
+    color: var(--c-text-2);
+  }
+}
+
+// ── 저장 버튼 (purple ghost) ─────────────────────────────
+.btn-save {
+  @extend %btn-base;
+  padding: 9px 22px;
+  border: 1px solid rgba(170, 59, 255, 0.4);
+  background: rgba(170, 59, 255, 0.15);
+  color: #c084fc;
+  font-size: 13px;
+
+  &:hover:not(:disabled) {
+    background: rgba(170, 59, 255, 0.25);
+    border-color: rgba(170, 59, 255, 0.65);
+    color: #d8a4ff;
+  }
+}
+
+// ── 제출 버튼 (solid purple) ─────────────────────────────
+.btn-submit {
+  @extend %btn-base;
+  padding: 9px 22px;
+  border: none;
+  background: #a855f7;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+
+  &:hover:not(:disabled) {
+    background: #9333ea;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ── 헤더 버튼 (ghost) ────────────────────────────────────
+.header-btn {
+  @extend %btn-base;
+  gap: 5px;
+  padding: 7px 14px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 13px;
+  text-decoration: none;
+
+  &:hover {
+    border-color: var(--c-border-dashed);
+    color: var(--c-text-2);
+  }
+}
+
+// ── 에러 메시지 ──────────────────────────────────────────
+.save-error {
+  margin: 0;
+  font-size: 12px;
+  color: #f87171;
+}
+
+// ── 상태 메시지 (로딩/빈 상태/에러) ──────────────────────
+.state-msg {
+  padding: 60px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--c-text-faint);
+
+  &--error { color: #f87171; }
+}

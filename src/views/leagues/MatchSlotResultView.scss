@@ -16,15 +16,6 @@
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.state-msg {
-  padding: 60px 0;
-  text-align: center;
-  font-size: 13px;
-  color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
-  &--error { color: #f87171; }
-}
-
 // ── 경기 헤더 ──────────────────────────────────────────────
 .match-info {
   display: flex;
@@ -42,7 +33,6 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -69,7 +59,6 @@
 .match-team-badge {
   font-size: 14px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   padding: 4px 12px;
   border-radius: 7px;
 }
@@ -78,7 +67,6 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
   letter-spacing: 0.3px;
 }
 
@@ -94,14 +82,12 @@
   font-size: 22px;
   font-weight: 800;
   color: var(--c-text-bright);
-  font-family: system-ui, sans-serif;
   letter-spacing: 2px;
 }
 
 .match-info-date {
   font-size: 11px;
   color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
 }
 
 // ── 슬롯 리스트 ───────────────────────────────────────────
@@ -141,7 +127,6 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--c-text-2);
-  font-family: system-ui, sans-serif;
   white-space: nowrap;
 }
 
@@ -149,7 +134,6 @@
   font-size: 10px;
   font-weight: 600;
   color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
   white-space: nowrap;
 
   &--team {
@@ -166,12 +150,76 @@
   min-width: 0;
 }
 
+// ── 슬롯 중앙 (맵 + VS) ──────────────────────────────────────
+.slot-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  width: 96px;
+}
+
 .slot-vs {
   font-size: 11px;
   font-weight: 700;
   color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
   flex-shrink: 0;
+}
+
+.slot-map {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+}
+
+.slot-map-thumb {
+  width: 56px;
+  height: 42px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--c-overlay);
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.slot-map-thumb-empty {
+  width: 100%;
+  height: 100%;
+}
+
+.slot-map-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.slot-ladder-btn {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(170, 59, 255, 0.4);
+  background: rgba(170, 59, 255, 0.1);
+  color: #c084fc;
+  cursor: pointer;
+  transition: all 0.14s;
+  white-space: nowrap;
+
+  &:hover { background: rgba(170, 59, 255, 0.2); border-color: rgba(170, 59, 255, 0.65); }
 }
 
 .slot-team-btn {
@@ -221,7 +269,6 @@
 .slot-team-name {
   font-size: 12px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   padding: 2px 8px;
   border-radius: 5px;
   white-space: nowrap;
@@ -255,7 +302,6 @@
 .slot-player-name {
   font-size: 12px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   padding: 2px 8px;
   border-radius: 5px;
   white-space: nowrap;
@@ -267,7 +313,6 @@
 .slot-race {
   font-size: 10px;
   font-weight: 800;
-  font-family: system-ui, sans-serif;
   padding: 2px 5px;
   border-radius: 4px;
   flex-shrink: 0;
@@ -278,7 +323,381 @@
   font-weight: 800;
   color: #34d399;
   letter-spacing: 0.5px;
-  font-family: system-ui, sans-serif;
+  flex-shrink: 0;
+}
+
+// ── 하단 저장 푸터 ────────────────────────────────────────────
+.match-result-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--c-border);
+}
+
+.complete-error {
+  flex: 1;
+  font-size: 12px;
+  color: #f87171;
+  margin: 0;
+}
+
+.btn-complete {
+  padding: 9px 24px;
+  border-radius: 8px;
+  border: none;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s;
+
+  &:hover:not(:disabled) { background: #6d28d9; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.badge-completed {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.08);
+  color: #4ade80;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+// ── 사다리타기 모달 ───────────────────────────────────────────
+.ladder-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.ladder-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ladder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.ladder-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.ladder-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  transition: all 0.14s;
+  flex-shrink: 0;
+
+  &:hover { background: var(--c-overlay); color: var(--c-text); }
+}
+
+.ladder-maps {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.ladder-map-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid var(--c-border);
+  background: var(--c-surface-raised);
+  cursor: pointer;
+  transition: all 0.14s;
+
+  &:hover { border-color: rgba(170, 59, 255, 0.4); }
+
+  &--selected {
+    border-color: rgba(52, 211, 153, 0.6);
+    background: rgba(52, 211, 153, 0.06);
+  }
+}
+
+.ladder-map-thumb {
+  width: 120px;
+  height: 90px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--c-overlay);
+  flex-shrink: 0;
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+.ladder-map-thumb-empty { width: 100%; height: 100%; }
+
+.ladder-map-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-2);
+  text-align: center;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ladder-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--c-border);
+  flex-shrink: 0;
+}
+
+.ladder-random-btn {
+  margin-right: auto;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(170, 59, 255, 0.4);
+  background: rgba(170, 59, 255, 0.12);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) { background: rgba(170, 59, 255, 0.22); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.ladder-confirm-btn {
+  padding: 8px 20px;
+  font-size: 13px;
+}
+
+// ── 티어 사다리타기 모달 ──────────────────────────────────────────
+.ladder-tier-list {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.ladder-tier-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 2px solid var(--c-border);
+  background: var(--c-surface-raised);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+
+  &--selected {
+    border-color: rgba(52, 211, 153, 0.6);
+    background: rgba(52, 211, 153, 0.06);
+  }
+}
+
+// ── 에이스 결정전 카드 ────────────────────────────────────────────
+.ace-card {
+  border-radius: 14px;
+  border: 1px solid rgba(170, 59, 255, 0.3);
+  background: rgba(170, 59, 255, 0.04);
+  overflow: hidden;
+}
+
+.ace-card-title {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #c084fc;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid rgba(170, 59, 255, 0.2);
+}
+
+.ace-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--c-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &--locked {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
+.ace-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
+}
+
+.ace-tier-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ace-tier-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 96px;
+}
+
+.ace-tier-ban-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  min-width: 0;
+
+  &--right {
+    align-items: flex-end;
+  }
+}
+
+.ace-ban-team {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.ace-tier-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ace-tier-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.3;
+
+  &--banned {
+    opacity: 1;
+    text-decoration: line-through;
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    text-decoration: none;
+
+    &::after {
+      content: ' 밴';
+      font-size: 10px;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+  }
+}
+
+.ace-confirmed-tier {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.ace-reset-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border);
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.14s;
+
+  &:hover { background: var(--c-overlay); color: var(--c-text); }
+}
+
+.ace-locked-hint {
+  font-size: 12px;
+  color: var(--c-text-faint);
+}
+
+.ace-map {
+  justify-content: center;
+}
+
+.ace-result-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ace-player-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+
+.ace-winner-btn {
+  width: 100%;
+}
+
+.ace-vs {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-faint);
   flex-shrink: 0;
 }
 

@@ -42,7 +42,6 @@
   border-radius: 9px;
   color: var(--c-text);
   font-size: 13px;
-  font-family: system-ui, sans-serif;
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.15s;
@@ -69,22 +68,10 @@
   &:hover { color: var(--c-text-2); }
 }
 
-// ── 상태 메시지 ───────────────────────────────────────────
-.state-msg {
-  padding: 60px 0;
-  text-align: center;
-  font-size: 13px;
-  color: var(--c-text-faint);
-  font-family: system-ui, sans-serif;
-
-  &--error { color: #f87171; }
-}
-
 // ── 테이블 ────────────────────────────────────────────────
 .player-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: system-ui, sans-serif;
 
   thead tr { border-bottom: 1px solid var(--c-border); }
 
@@ -138,7 +125,6 @@
 .tier-badge {
   font-size: 12px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
 
   &--a { color: var(--tier-a); }
   &--b { color: var(--tier-b); }
@@ -163,7 +149,6 @@
   background: var(--c-overlay);
   color: var(--c-text-sub);
   font-size: 12px;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -171,28 +156,6 @@
     border-color: rgba(170, 59, 255, 0.4);
     background: rgba(170, 59, 255, 0.08);
     color: #c084fc;
-  }
-}
-
-// ── 헤더 버튼 ─────────────────────────────────────────────
-.header-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-overlay);
-  color: var(--c-text-sub);
-  font-size: 13px;
-  font-weight: 600;
-  font-family: system-ui, sans-serif;
-  text-decoration: none;
-  transition: all 0.15s;
-
-  &:hover {
-    border-color: var(--c-border-dashed);
-    color: var(--c-text-2);
   }
 }
 
@@ -208,7 +171,6 @@
   color: var(--c-text-sub);
   font-size: 14px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -221,92 +183,10 @@
   &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
 }
 
-// ── 모달 ──────────────────────────────────────────────────
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
+// ── 모달 (공통: _modal.scss via _page.scss) ─────────────
+.modal { max-width: 420px; }
 
-.modal {
-  width: 100%;
-  max-width: 420px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px 0;
-}
-
-.modal-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--c-text);
-  font-family: system-ui, sans-serif;
-}
-
-.modal-close {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  color: var(--c-icon-sub);
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.15s;
-
-  &:hover { background: var(--c-overlay); color: var(--c-text-2); }
-}
-
-.modal-body {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.field { display: flex; flex-direction: column; gap: 8px; }
-
-.field-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-text-sub);
-  font-family: system-ui, sans-serif;
-  letter-spacing: 0.03em;
-}
-
-.field-input {
-  width: 100%;
-  padding: 10px 13px;
-  background: var(--c-input);
-  border: 1px solid var(--c-border-strong);
-  border-radius: 8px;
-  color: var(--c-text);
-  font-size: 14px;
-  font-family: system-ui, sans-serif;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.15s;
-
-  &:focus { border-color: rgba(170, 59, 255, 0.5); }
-  &::placeholder { color: var(--c-text-faint); }
-  &--short { max-width: 120px; }
-}
+.field-input--short { max-width: 120px; }
 
 // ── 종족 선택 ─────────────────────────────────────────────
 .race-group { display: flex; gap: 8px; }
@@ -320,7 +200,6 @@
   color: var(--c-text-sub);
   font-size: 13px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -331,55 +210,4 @@
   &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
 }
 
-// ── 모달 푸터 ─────────────────────────────────────────────
-.modal-footer {
-  padding: 0 24px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.save-error {
-  margin: 0;
-  font-size: 12px;
-  color: #f87171;
-  font-family: system-ui, sans-serif;
-}
-
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
-
-.btn-cancel {
-  padding: 9px 18px;
-  border-radius: 8px;
-  border: 1px solid var(--c-border-strong);
-  background: none;
-  color: var(--c-text-sub);
-  font-size: 13px;
-  font-weight: 600;
-  font-family: system-ui, sans-serif;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover:not(:disabled) { border-color: var(--c-border-dashed); color: var(--c-text-2); }
-  &:disabled { opacity: 0.4; cursor: default; }
-}
-
-.btn-save {
-  padding: 9px 22px;
-  border-radius: 8px;
-  border: 1px solid rgba(170, 59, 255, 0.4);
-  background: rgba(170, 59, 255, 0.15);
-  color: #c084fc;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: system-ui, sans-serif;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover:not(:disabled) {
-    background: rgba(170, 59, 255, 0.25);
-    border-color: rgba(170, 59, 255, 0.65);
-    color: #d8a4ff;
-  }
-  &:disabled { opacity: 0.4; cursor: default; }
-}
+// ── 모달 푸터 / 버튼 (공통: _buttons.scss, _modal.scss via _page.scss)

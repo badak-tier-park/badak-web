@@ -128,10 +128,13 @@
 
     <!-- 리그 생성 모달 -->
     <Teleport to="body">
-      <div v-if="showForm" class="modal-backdrop" @click.self="closeForm">
+      <div v-if="showForm" class="modal-backdrop">
         <div class="modal">
           <div class="modal-header">
-            <span class="modal-title">{{ editTarget ? '정규리그 수정' : '정규리그 생성' }}</span>
+            <div>
+              <span class="modal-title">{{ editTarget ? '정규리그 수정' : '정규리그 생성' }}</span>
+              <span v-if="editTarget?.draft_completed" class="modal-locked-badge">지목식 완료 · 수정 불가</span>
+            </div>
             <button class="modal-close" @click="closeForm">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -151,6 +154,7 @@
                   class="type-btn"
                   :class="{ active: form.type === t.value }"
                   type="button"
+                  :disabled="!!editTarget?.draft_completed"
                   @click="form.type = t.value"
                 >
                   <span class="type-btn-main">{{ t.label }}</span>
@@ -168,6 +172,7 @@
                 type="text"
                 maxlength="50"
                 placeholder="리그명 입력"
+                :disabled="!!editTarget?.draft_completed"
               />
             </div>
 
@@ -182,6 +187,7 @@
                 :dark="true"
                 auto-apply
                 :teleport="false"
+                :disabled="!!editTarget?.draft_completed"
                 @update:model-value="onDateSelect"
               >
                 <template #trigger>
@@ -208,6 +214,7 @@
                   class="count-btn"
                   :class="{ active: form.captain_count === n }"
                   type="button"
+                  :disabled="!!editTarget?.draft_completed"
                   @click="form.captain_count = n"
                 >{{ n }}명</button>
               </div>
@@ -247,6 +254,7 @@
                 :dark="true"
                 auto-apply
                 :teleport="false"
+                :disabled="!!editTarget?.draft_completed"
                 @update:model-value="onDraftDateSelect"
               >
                 <template #trigger>
@@ -285,10 +293,15 @@
           <div class="modal-footer">
             <p v-if="saveError" class="save-error">{{ saveError }}</p>
             <div class="modal-actions">
-              <button class="btn-cancel" @click="closeForm" :disabled="saving">취소</button>
-              <button class="btn-save" @click="editTarget ? handleUpdate() : handleCreate()" :disabled="saving">
-                {{ saving ? (editTarget ? '저장 중...' : '생성 중...') : (editTarget ? '저장' : '생성') }}
-              </button>
+              <template v-if="editTarget?.draft_completed">
+                <button class="btn-cancel" @click="closeForm">닫기</button>
+              </template>
+              <template v-else>
+                <button class="btn-cancel" @click="closeForm" :disabled="saving">취소</button>
+                <button class="btn-save" @click="editTarget ? handleUpdate() : handleCreate()" :disabled="saving">
+                  {{ saving ? (editTarget ? '저장 중...' : '생성 중...') : (editTarget ? '저장' : '생성') }}
+                </button>
+              </template>
             </div>
           </div>
         </div>

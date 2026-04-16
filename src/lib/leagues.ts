@@ -20,6 +20,7 @@ export interface LeagueRow {
   picks_completed: boolean
   draft_completed: boolean
   team_names_completed: boolean
+  created_by: string | null
   created_at: string
   updated_at: string
 }

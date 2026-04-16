@@ -1,3 +1,6 @@
+@use 'buttons';
+@use 'modal';
+
 // ── 공통 페이지 유틸 ──────────────────────────────────────
 // orb / grid-overlay 는 App.vue 전역 관리로 이동
 
@@ -18,7 +21,6 @@
   color: var(--c-text-muted);
   font-size: 13px;
   font-weight: 500;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: color 0.15s;
   margin-bottom: 20px;
@@ -40,7 +42,6 @@
   font-size: 30px;
   font-weight: 800;
   color: var(--c-text-bright);
-  font-family: system-ui, sans-serif;
   letter-spacing: -0.5px;
   text-align: left;
 }
@@ -52,7 +53,6 @@
 .page-subtitle {
   font-size: 13px;
   color: var(--c-text-muted);
-  font-family: system-ui, sans-serif;
 }
 
 .page-title-left {
@@ -72,7 +72,6 @@
   color: #c084fc;
   font-size: 13px;
   font-weight: 600;
-  font-family: system-ui, sans-serif;
   cursor: pointer;
   transition: all 0.15s;
 
