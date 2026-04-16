@@ -19,41 +19,43 @@
           </div>
         </div>
 
-        <!-- ── 라운드 로빈 자동 생성 ───────────────────────── -->
-        <div class="section-card">
-          <p class="section-label">라운드 로빈 자동 생성</p>
-          <div class="rr-row">
-            <div class="rr-input-group">
-              <label class="rr-input-label">라운드 수</label>
-              <input
-                v-model.number="numRoundsInput"
-                class="rr-number-input"
-                type="text"
-                min="1"
-                placeholder="자동"
-              />
+        <!-- ── 라운드 로빈 자동 생성 (저장 전에만 표시) ──────── -->
+        <template v-if="!isLocked">
+          <div class="section-card">
+            <p class="section-label">라운드 로빈 자동 생성</p>
+            <div class="rr-row">
+              <div class="rr-input-group">
+                <label class="rr-input-label">라운드 수</label>
+                <input
+                  v-model.number="numRoundsInput"
+                  class="rr-number-input"
+                  type="text"
+                  min="1"
+                  placeholder="자동"
+                />
+              </div>
+              <div class="rr-input-group">
+                <label class="rr-input-label">팀당 경기 수</label>
+                <input
+                  v-model.number="gamesPerTeam"
+                  class="rr-number-input"
+                  type="text"
+                  min="1"
+                  placeholder="1"
+                />
+              </div>
+              <button class="btn-generate" @click="generateRoundRobin">
+                <AppIcon name="refresh" :size="12" />
+                자동 생성
+              </button>
             </div>
-            <div class="rr-input-group">
-              <label class="rr-input-label">팀당 경기 수</label>
-              <input
-                v-model.number="gamesPerTeam"
-                class="rr-number-input"
-                type="text"
-                min="1"
-                placeholder="1"
-              />
-            </div>
-            <button class="btn-generate" @click="generateRoundRobin">
-              <AppIcon name="refresh" :size="12" />
-              자동 생성
-            </button>
           </div>
-        </div>
+        </template>
 
-        <!-- ── 직접 등록 ───────────────────────────────────── -->
+        <!-- ── 경기 목록 헤더 ─────────────────────────────────── -->
         <div class="section-header-row">
           <p class="section-label">경기 목록</p>
-          <div class="direct-actions">
+          <div v-if="!isLocked" class="direct-actions">
             <button class="btn-add-round" @click="addRound">
               <AppIcon name="plus" :size="11" />
               라운드 추가
@@ -73,7 +75,7 @@
           <div v-for="round in rounds" :key="round" class="round-group">
             <div class="round-header">
               <span class="round-label">{{ round }}라운드</span>
-              <button class="btn-remove-round" @click="removeRound(round)" title="라운드 삭제">
+              <button v-if="!isLocked" class="btn-remove-round" @click="removeRound(round)" title="라운드 삭제">
                 <AppIcon name="close" :size="10" />
               </button>
             </div>
@@ -81,7 +83,7 @@
               <div v-for="(row, idx) in rowsByRound(round)" :key="idx" class="match-row">
                 <div class="match-teams">
                   <div class="match-team">
-                    <select v-model="row.teamA" class="team-select">
+                    <select v-model="row.teamA" class="team-select" :disabled="isLocked">
                       <option value="">팀 선택</option>
                       <option v-for="t in teams" :key="t.captainId" :value="t.captainId">
                         {{ t.teamName || t.nickname }}
@@ -90,7 +92,7 @@
                   </div>
                   <span class="match-vs">VS</span>
                   <div class="match-team">
-                    <select v-model="row.teamB" class="team-select">
+                    <select v-model="row.teamB" class="team-select" :disabled="isLocked">
                       <option value="">팀 선택</option>
                       <option v-for="t in teams" :key="t.captainId" :value="t.captainId">
                         {{ t.teamName || t.nickname }}
@@ -106,6 +108,7 @@
                     :dark="true"
                     auto-apply
                     :teleport="true"
+                    :disabled="isLocked"
                     @update:model-value="(val: Date | null) => row.matchDate = val ? toYMD(val) : ''"
                   >
                     <template #trigger>
@@ -146,7 +149,7 @@
                   <AppIcon name="chart" :size="11" />
                   결과 입력
                 </button>
-                <button class="btn-remove-match" @click="removeMatch(row)">
+                <button v-if="!isLocked" class="btn-remove-match" @click="removeMatch(row)">
                   <AppIcon name="close" :size="11" />
                 </button>
               </div>
@@ -154,7 +157,7 @@
           </div>
         </div>
 
-        <div class="page-footer">
+        <div v-if="!isLocked" class="page-footer">
           <p v-if="saveError" class="save-error">{{ saveError }}</p>
           <button class="btn-save" :disabled="saving" @click="handleSave">
             {{ saving ? '저장 중...' : '저장' }}
@@ -220,6 +223,9 @@ const rows = ref<MatchRow[]>([])
 
 const rounds = computed(() => [...new Set(rows.value.map(r => r.round))].sort((a, b) => a - b))
 function rowsByRound(round: number) { return rows.value.filter(r => r.round === round) }
+
+// 한 번 저장된 이후(DB에 id 존재)에는 편집 불가
+const isLocked = computed(() => rows.value.some(r => r.id != null))
 
 async function revealMatch(row: MatchRow) {
   if (!row.id || revealingId.value) return
