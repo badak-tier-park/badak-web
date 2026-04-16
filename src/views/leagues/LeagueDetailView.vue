@@ -439,49 +439,16 @@ import StarterKit from '@tiptap/starter-kit'
 import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
-import { Extension } from '@tiptap/core'
 import AppHeader from '@/components/AppHeader.vue'
 import { getLeague, updateLeagueDescription, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
 import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders } from '@/lib/leagueDetail'
-
-// ── FontSize 커스텀 익스텐션 ─────────────────────────────
-const FontSize = Extension.create({
-  name: 'fontSize',
-  addOptions: () => ({ types: ['textStyle'] }),
-  addGlobalAttributes() {
-    return [{
-      types: this.options.types,
-      attributes: {
-        fontSize: {
-          default: null,
-          parseHTML: (el: HTMLElement) => el.style.fontSize || null,
-          renderHTML: (attrs: Record<string, any>) =>
-            attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {},
-        },
-      },
-    }]
-  },
-  addCommands() {
-    return {
-      setFontSize: (size: string) => ({ chain }: any) =>
-        chain().setMark('textStyle', { fontSize: size }).run(),
-      unsetFontSize: () => ({ chain }: any) =>
-        chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run(),
-    } as any
-  },
-})
+import { FontSize } from '@/lib/tiptapFontSize'
+import { useToast } from '@/composables/useToast'
 
 // ── 토스트 ────────────────────────────────────────────────
-const toast = ref('')
-let toastTimer: ReturnType<typeof setTimeout> | null = null
-
-function showToast(msg: string) {
-  toast.value = msg
-  if (toastTimer) clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { toast.value = '' }, 2500)
-}
+const { toast, showToast, clearToast } = useToast()
 
 // ── 탭 ───────────────────────────────────────────────────
 type TabKey = 'description' | 'captains' | 'seed_holders' | 'maps'
@@ -678,12 +645,12 @@ async function saveDescription() {
 
 onBeforeUnmount(() => {
   editor.value?.destroy()
-  if (toastTimer) clearTimeout(toastTimer)
+  clearToast()
 })
 
 // ── 팀장 선출 ─────────────────────────────────────────────
 // 티어 순위: 낮은 티어(E)가 앞 순번
-const TIER_RANK: Record<string, number> = { E: 1, D: 2, C: 3, B: 4, A: 5 }
+const TIER_RANK = { E: 1, D: 2, C: 3, B: 4, A: 5 } as const
 
 function autoSortCaptains() {
   captains.value = [...captains.value].sort((a, b) => {
