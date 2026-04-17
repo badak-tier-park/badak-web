@@ -470,21 +470,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
-import { Extension } from '@tiptap/core'
-
-const FontSize = Extension.create({
-  name: 'fontSize',
-  addOptions: () => ({ types: ['textStyle'] }),
-  addGlobalAttributes() {
-    return [{ types: this.options.types, attributes: { fontSize: { default: null, parseHTML: el => el.style.fontSize || null, renderHTML: attrs => attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {} } } }]
-  },
-  addCommands() {
-    return {
-      setFontSize: (size: string) => ({ chain }: any) => chain().setMark('textStyle', { fontSize: size }).run(),
-      unsetFontSize: () => ({ chain }: any) => chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run(),
-    } as any
-  },
-})
+import { FontSize } from '@/lib/tiptapFontSize'
 
 const SLOT_CONFIG = [
   { num: 1, type: 'individual', count: 1 },
