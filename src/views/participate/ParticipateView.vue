@@ -819,15 +819,6 @@ function openResultEntry(item: RevealListItem) {
   resultModal.open = true
 }
 
-function openStandingResult(match: MatchResultItem) {
-  resultModal.item = {
-    schedule: match.schedule,
-    teamAName: match.teamAName,
-    teamBName: match.teamBName,
-  }
-  resultModal.open = true
-}
-
 // 엔트리 모달
 const loadingEntry = ref(false)
 const entrySaving = ref(false)
