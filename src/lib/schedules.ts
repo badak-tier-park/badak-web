@@ -93,6 +93,16 @@ export async function getSlotResults(scheduleId: number): Promise<SlotResult[]> 
   return data
 }
 
+export async function getSlotResultsForSchedules(scheduleIds: number[]): Promise<SlotResult[]> {
+  if (!scheduleIds.length) return []
+  const { data, error } = await supabase
+    .from('league_match_slot_results')
+    .select('*')
+    .in('schedule_id', scheduleIds)
+  if (error) throw error
+  return data
+}
+
 export async function setSlotResult(
   scheduleId: number,
   slotNum: number,

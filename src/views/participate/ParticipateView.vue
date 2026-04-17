@@ -72,6 +72,14 @@
               </svg>
               경기 결과
             </button>
+            <button class="btn-check-standings" @click="openStandingsList(league)">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                <rect x="1" y="8" width="3" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                <rect x="5.5" y="5" width="3" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                <rect x="10" y="2" width="3" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/>
+              </svg>
+              리그 순위
+            </button>
             <button
               v-if="myCaptainLeagueIds.has(league.id)"
               class="btn-entry-open"
@@ -265,16 +273,67 @@
                 <div class="match-item-info">
                   <span class="round-tag">{{ item.schedule.round }}라운드</span>
                   <span class="match-item-vs">
-                    <span class="my-team-name">{{ item.teamAName }}</span>
-                    <span class="vs-divider">VS</span>
-                    <span class="opp-team-name">{{ item.teamBName }}</span>
+                    <span
+                      class="result-team-name"
+                      :class="item.schedule.winner_captain_id === item.schedule.team_a_captain_id ? 'result-team-name--win' : 'result-team-name--loss'"
+                    >{{ item.teamAName }}</span>
+                    <span class="result-score">
+                      <span :class="item.schedule.winner_captain_id === item.schedule.team_a_captain_id ? 'result-score--win' : 'result-score--loss'">{{ item.teamAWins }}</span>
+                      <span class="result-score-sep">:</span>
+                      <span :class="item.schedule.winner_captain_id === item.schedule.team_b_captain_id ? 'result-score--win' : 'result-score--loss'">{{ item.teamBWins }}</span>
+                    </span>
+                    <span
+                      class="result-team-name"
+                      :class="item.schedule.winner_captain_id === item.schedule.team_b_captain_id ? 'result-team-name--win' : 'result-team-name--loss'"
+                    >{{ item.teamBName }}</span>
                   </span>
                   <span class="match-item-date">
                     {{ item.schedule.match_date ? item.schedule.match_date.replaceAll('-', '/') : '날짜 미정' }}
                   </span>
                 </div>
                 <div class="match-item-actions">
-                  <button class="btn-entry" @click="openResultEntry(item)">확인</button>
+                  <button class="btn-entry" @click="openResultEntry(item)">결과 보기</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── 리그 순위 모달 ────────────────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="standingsModal.open" class="modal-overlay">
+        <div class="modal modal--result-standings">
+          <div class="modal-header">
+            <div>
+              <p class="modal-title">리그 순위</p>
+              <p class="modal-subtitle">{{ standingsModal.league?.name }}</p>
+            </div>
+            <button class="modal-close" @click="standingsModal.open = false">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body standings-body">
+            <div v-if="standingsModal.loading" class="state-msg">불러오는 중...</div>
+            <div v-else-if="!standingsModal.standings.length" class="state-msg">
+              아직 종료된 경기가 없습니다.
+            </div>
+            <div v-else class="standings-list">
+              <div
+                v-for="(team, idx) in standingsModal.standings"
+                :key="team.captainId"
+                class="standing-team"
+              >
+                <div class="standing-team-header">
+                  <span class="standing-rank">{{ idx + 1 }}</span>
+                  <span class="standing-name">{{ team.teamName }}</span>
+                  <div class="standing-stats">
+                    <span class="standing-record">{{ team.wins }}승 {{ team.losses }}패</span>
+                    <span class="standing-pts">{{ team.matchPoints }}<span class="standing-pts-label">pt</span></span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -452,7 +511,7 @@ import { getLeagues, getLeagueStatus, type LeagueRow, type LeagueStatus, type El
 import { getCaptains, getMatchMaps } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
-import { getSchedules, getRevealedSchedules, getCompletedSchedules, type ScheduleRow } from '@/lib/schedules'
+import { getSchedules, getRevealedSchedules, getCompletedSchedules, getSlotResultsForSchedules, type ScheduleRow } from '@/lib/schedules'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
 import {
@@ -464,6 +523,7 @@ import {
   type EntrySlot, type EntryStatus,
 } from '@/lib/entries'
 import { revealEntries } from '@/lib/schedules'
+import { notifyEntrySubmitted } from '@/lib/notifications'
 import { useAuthStore } from '@/stores/auth'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
@@ -471,6 +531,9 @@ import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { FontSize } from '@/lib/tiptapFontSize'
+
+// 슬롯별 승점
+const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
 
 const SLOT_CONFIG = [
   { num: 1, type: 'individual', count: 1 },
@@ -578,10 +641,42 @@ function openRevealEntry(item: RevealListItem) {
 }
 
 // 종료된 경기 목록 모달
+interface ResultListItem extends RevealListItem {
+  teamAWins: number
+  teamBWins: number
+}
+
 const resultListModal = reactive({
   open: false,
   league: null as LeagueRow | null,
-  matches: [] as RevealListItem[],
+  matches: [] as ResultListItem[],
+  loading: false,
+})
+
+// 리그 순위 모달
+interface MatchResultItem {
+  schedule: ScheduleRow
+  opponentName: string
+  myPoints: number
+  oppPoints: number
+  isWin: boolean
+  teamAName: string
+  teamBName: string
+}
+
+interface TeamStanding {
+  captainId: number
+  teamName: string
+  wins: number
+  losses: number
+  matchPoints: number
+  matches: MatchResultItem[]
+}
+
+const standingsModal = reactive({
+  open: false,
+  league: null as LeagueRow | null,
+  standings: [] as TeamStanding[],
   loading: false,
 })
 
@@ -596,16 +691,120 @@ async function openResultList(league: LeagueRow) {
       getPlayers(),
       getTeamNames(league.id),
     ])
+
     const playerMap = new Map(players.map(p => [p.id, p]))
     const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
-    resultListModal.matches = schedules.map(s => ({
-      schedule: s,
-      teamAName: teamName(s.team_a_captain_id),
-      teamBName: teamName(s.team_b_captain_id),
-    }))
+
+    const slotResults = schedules.length
+      ? await getSlotResultsForSchedules(schedules.map(s => s.id))
+      : []
+
+    const slotsBySchedule = new Map<number, typeof slotResults>()
+    for (const r of slotResults) {
+      if (!slotsBySchedule.has(r.schedule_id)) slotsBySchedule.set(r.schedule_id, [])
+      slotsBySchedule.get(r.schedule_id)!.push(r)
+    }
+
+    resultListModal.matches = schedules
+      .slice()
+      .sort((a, b) => {
+        const da = a.match_date ?? '0000'
+        const db = b.match_date ?? '0000'
+        return da > db ? -1 : da < db ? 1 : b.id - a.id
+      })
+      .map(s => {
+        const slots = slotsBySchedule.get(s.id) ?? []
+        let winsA = 0, winsB = 0
+        for (const slot of slots) {
+          if (slot.winner_captain_id === s.team_a_captain_id) winsA++
+          else if (slot.winner_captain_id === s.team_b_captain_id) winsB++
+        }
+        return {
+          schedule: s,
+          teamAName: teamName(s.team_a_captain_id),
+          teamBName: teamName(s.team_b_captain_id),
+          teamAWins: winsA,
+          teamBWins: winsB,
+        }
+      })
   } finally {
     resultListModal.loading = false
+  }
+}
+
+async function openStandingsList(league: LeagueRow) {
+  standingsModal.open = true
+  standingsModal.league = league
+  standingsModal.standings = []
+  standingsModal.loading = true
+  try {
+    const [schedules, captains, players, teamNames] = await Promise.all([
+      getCompletedSchedules(league.id),
+      getCaptains(league.id),
+      getPlayers(),
+      getTeamNames(league.id),
+    ])
+
+    const playerMap = new Map(players.map(p => [p.id, p]))
+    const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
+    const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
+
+    const slotResults = schedules.length
+      ? await getSlotResultsForSchedules(schedules.map(s => s.id))
+      : []
+
+    const slotsBySchedule = new Map<number, typeof slotResults>()
+    for (const r of slotResults) {
+      if (!slotsBySchedule.has(r.schedule_id)) slotsBySchedule.set(r.schedule_id, [])
+      slotsBySchedule.get(r.schedule_id)!.push(r)
+    }
+
+    const standingsMap = new Map<number, TeamStanding>()
+    for (const c of captains) {
+      standingsMap.set(c.player_id, {
+        captainId: c.player_id,
+        teamName: teamName(c.player_id),
+        wins: 0,
+        losses: 0,
+        matchPoints: 0,
+        matches: [],
+      })
+    }
+
+    for (const s of schedules) {
+      const { team_a_captain_id: capA, team_b_captain_id: capB, winner_captain_id: winner } = s
+      const slots = slotsBySchedule.get(s.id) ?? []
+
+      let ptsA = 0, ptsB = 0
+      for (const slot of slots) {
+        const pts = MATCH_SLOT_POINTS[slot.slot_num] ?? 1
+        if (slot.winner_captain_id === capA) ptsA += pts
+        else if (slot.winner_captain_id === capB) ptsB += pts
+      }
+
+      const tNameA = teamName(capA)
+      const tNameB = teamName(capB)
+
+      if (standingsMap.has(capA)) {
+        const st = standingsMap.get(capA)!
+        winner === capA ? st.wins++ : st.losses++
+        st.matchPoints += ptsA
+        st.matches.push({ schedule: s, opponentName: tNameB, myPoints: ptsA, oppPoints: ptsB, isWin: winner === capA, teamAName: tNameA, teamBName: tNameB })
+      }
+      if (standingsMap.has(capB)) {
+        const st = standingsMap.get(capB)!
+        winner === capB ? st.wins++ : st.losses++
+        st.matchPoints += ptsB
+        st.matches.push({ schedule: s, opponentName: tNameA, myPoints: ptsB, oppPoints: ptsA, isWin: winner === capB, teamAName: tNameA, teamBName: tNameB })
+      }
+    }
+
+    standingsModal.standings = [...standingsMap.values()].sort((a, b) =>
+      b.matchPoints !== a.matchPoints ? b.matchPoints - a.matchPoints : b.wins - a.wins
+    )
+  } finally {
+    standingsModal.loading = false
   }
 }
 
@@ -945,6 +1144,16 @@ async function handleSubmitEntry(scheduleId: number) {
   try {
     await submitEntry(scheduleId, myPlayerId.value)
     entryStatusMap.value = new Map(entryStatusMap.value).set(scheduleId, 'submitted')
+
+    const match = matchListModal.matches.find(m => m.schedule.id === scheduleId)
+    if (match) {
+      notifyEntrySubmitted({
+        leagueName: matchListModal.league?.name ?? '',
+        teamName: match.myTeamName,
+        matchRound: `${match.schedule.round}라운드`,
+        matchDate: match.schedule.match_date,
+      })
+    }
   } catch (e: any) {
     alert(e.message ?? '제출 중 오류가 발생했습니다.')
   } finally {
