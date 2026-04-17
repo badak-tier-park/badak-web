@@ -138,9 +138,36 @@
                 </div>
               </div>
 
-              <!-- 사다리타기 안내 -->
-              <div v-if="slotMapRows[slot.num]?.length && slotMapResults[slot.num].isUndecided" class="rse-ban-area">
-                <div class="rse-undecided">사다리타기로 결정</div>
+              <!-- 밴 정보 (엔트리 확인) / 사다리타기 안내 -->
+              <div v-if="slotMapRows[slot.num]?.length" class="rse-ban-area">
+                <div v-if="slotMapResults[slot.num].isUndecided" class="rse-undecided">사다리타기로 결정</div>
+                <template v-if="!showResults && slotMapResults[slot.num].bannedMapInfo.length">
+                  <button class="btn-ban-toggle" @click="toggleBanInfo(slot.num)">
+                    맵 밴 정보
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="transition: transform 0.15s" :style="{ transform: expandedBanSlots.includes(slot.num) ? 'rotate(180deg)' : 'none' }">
+                      <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <template v-if="expandedBanSlots.includes(slot.num)">
+                    <div class="rse-banned-maps">
+                      <div
+                        v-for="ban in slotMapResults[slot.num].bannedMapInfo"
+                        :key="`ban-${ban.mapId}`"
+                        class="rse-map-item rse-map--banned"
+                      >
+                        <div class="rse-map-thumb-wrap">
+                          <img v-if="getMapInfo(slot.num, ban.mapId)?.thumbnail_url" :src="getMapInfo(slot.num, ban.mapId)!.thumbnail_url!" class="rse-map-thumb" />
+                          <div v-else class="rse-map-thumb-empty" />
+                        </div>
+                        <span class="rse-map-name">{{ getMapInfo(slot.num, ban.mapId)?.name }}</span>
+                        <div class="rse-ban-chips">
+                          <span v-if="ban.byTeamA" class="ban-chip ban-chip--a">{{ teamAName }} 밴</span>
+                          <span v-if="ban.byTeamB" class="ban-chip ban-chip--b">{{ teamBName }} 밴</span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </template>
               </div>
             </div>
 
@@ -154,11 +181,32 @@
               <div class="reveal-row">
                 <div class="rse-col ace-ban-col"></div>
                 <div class="rse-maps">
-                  <div v-if="aceSlotResult?.ace_tier" class="ace-confirmed-tier">
-                    <span :class="`tier-badge--${aceSlotResult.ace_tier.toLowerCase()}`" class="ace-tier-chip">{{ aceSlotResult.ace_tier }}</span>
-                    <span class="ace-tier-sub">에이스 티어</span>
-                  </div>
-                  <div v-else class="rse-undecided">티어 사다리타기</div>
+                  <!-- 엔트리 확인: 전체 티어 밴 표시 -->
+                  <template v-if="!showResults">
+                    <div class="ace-tier-ban-row">
+                      <div
+                        v-for="tier in ALL_TIERS"
+                        :key="tier"
+                        class="ace-tier-ban-btn"
+                        :class="[`tier-badge--${tier.toLowerCase()}`, { 'ace-tier-ban-btn--banned': aceTierBanA === tier || aceTierBanB === tier }]"
+                      >
+                        <span class="ace-tier-ban-letter">{{ tier }}</span>
+                        <span class="ace-tier-ban-sub">티어</span>
+                        <div class="ace-tier-ban-tags">
+                          <span v-if="aceTierBanA === tier" class="ace-tier-ban-tag ace-tier-ban-tag--a">{{ teamAName }} 밴</span>
+                          <span v-if="aceTierBanB === tier" class="ace-tier-ban-tag ace-tier-ban-tag--b">{{ teamBName }} 밴</span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                  <!-- 경기 결과: 확정 티어 or 사다리타기 -->
+                  <template v-else>
+                    <div v-if="aceSlotResult?.ace_tier" class="ace-confirmed-tier">
+                      <span :class="`tier-badge--${aceSlotResult.ace_tier.toLowerCase()}`" class="ace-tier-chip">{{ aceSlotResult.ace_tier }}</span>
+                      <span class="ace-tier-sub">에이스 티어</span>
+                    </div>
+                    <div v-else class="rse-undecided">티어 사다리타기</div>
+                  </template>
                 </div>
                 <div class="rse-col rse-col--right ace-ban-col"></div>
               </div>
@@ -263,6 +311,8 @@ const props = withDefaults(defineProps<{
 }>(), { showResults: false })
 
 defineEmits<{ close: [] }>()
+
+const ALL_TIERS = ['A', 'B', 'C', 'D', 'E'] as const
 
 const SLOT_CONFIG = [
   { num: 1, type: 'individual' },

@@ -416,6 +416,11 @@
 .reveal-ace {
   padding: 12px 0;
   border-top: 1px solid var(--c-border);
+
+  // 티어 밴 행: 센터 컬럼을 넓게
+  .reveal-row:has(.ace-tier-ban-row) {
+    grid-template-columns: 0 1fr 0;
+  }
 }
 
 .ace-ban-col {
@@ -426,6 +431,85 @@
 
   .rse-col--right & {
     align-items: flex-start;
+  }
+}
+
+// 엔트리 확인 — 에이스 티어 밴 전체 표시
+.ace-tier-ban-row {
+  display: flex;
+  gap: 6px;
+  width: max-content;
+}
+
+.ace-tier-ban-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 52px;
+  padding: 10px 6px 8px;
+  border-radius: 10px;
+  position: relative;
+  transition: all 0.15s;
+
+  &--banned {
+    filter: grayscale(0.5) brightness(0.4);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 4px,
+        rgba(0, 0, 0, 0.4) 4px,
+        rgba(0, 0, 0, 0.4) 5px
+      );
+    }
+  }
+}
+
+.ace-tier-ban-letter {
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ace-tier-ban-sub {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.75;
+  letter-spacing: 0.3px;
+}
+
+.ace-tier-ban-tags {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 14px;
+}
+
+.ace-tier-ban-tag {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+
+  &--a {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+  }
+  &--b {
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.2);
+    border: 1px solid rgba(96, 165, 250, 0.4);
   }
 }
 
