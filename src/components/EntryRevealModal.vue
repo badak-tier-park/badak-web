@@ -24,11 +24,17 @@
           <template v-else>
             <!-- 팀 헤더 -->
             <div class="reveal-teams-header">
-              <div class="reveal-th">{{ teamAName }}</div>
+              <div class="reveal-th" :class="showResults && scoreA > scoreB ? 'reveal-th--winner' : showResults && scoreA < scoreB ? 'reveal-th--loser' : ''">
+                {{ teamAName }}
+                <span v-if="showResults && scoreA > scoreB" class="reveal-win-crown">👑</span>
+              </div>
               <div class="reveal-th-center">
                 <span v-if="showResults" class="reveal-score">{{ scoreA }} : {{ scoreB }}</span>
               </div>
-              <div class="reveal-th reveal-th--right">{{ teamBName }}</div>
+              <div class="reveal-th reveal-th--right" :class="showResults && scoreB > scoreA ? 'reveal-th--winner' : showResults && scoreB < scoreA ? 'reveal-th--loser' : ''">
+                <span v-if="showResults && scoreB > scoreA" class="reveal-win-crown">👑</span>
+                {{ teamBName }}
+              </div>
             </div>
 
             <!-- 슬롯별 행 -->
@@ -209,15 +215,24 @@
 
             <!-- 합계 -->
             <div class="reveal-totals">
-              <div class="reveal-total-item">
+              <div class="reveal-total-item" :class="showResults && scoreA > scoreB ? 'reveal-total-item--winner' : ''">
                 <span class="reveal-total-name">{{ teamAName }}</span>
                 <span class="reveal-total-pt">{{ totalPoints(teamACaptainId) }}pt</span>
               </div>
               <div class="reveal-total-sep" />
-              <div class="reveal-total-item reveal-total-item--right">
+              <div class="reveal-total-item reveal-total-item--right" :class="showResults && scoreB > scoreA ? 'reveal-total-item--winner' : ''">
                 <span class="reveal-total-pt">{{ totalPoints(teamBCaptainId) }}pt</span>
                 <span class="reveal-total-name">{{ teamBName }}</span>
               </div>
+            </div>
+            <!-- 승점 -->
+            <div v-if="showResults" class="reveal-match-points">
+              <span class="rmp-label">승점</span>
+              <span class="rmp-score">
+                <span class="rmp-a">{{ matchPointsA }}</span>
+                <span class="rmp-sep">:</span>
+                <span class="rmp-b">{{ matchPointsB }}</span>
+              </span>
             </div>
           </template>
         </div>
@@ -383,6 +398,23 @@ const scoreA = computed(() =>
 const scoreB = computed(() =>
   [...slotWinners.value.values()].filter(w => w === props.teamBCaptainId).length
 )
+
+const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
+
+const matchPointsA = computed(() => {
+  let pts = 0
+  for (const [slot, winner] of slotWinners.value) {
+    if (winner === props.teamACaptainId) pts += MATCH_SLOT_POINTS[slot] ?? 1
+  }
+  return pts
+})
+const matchPointsB = computed(() => {
+  let pts = 0
+  for (const [slot, winner] of slotWinners.value) {
+    if (winner === props.teamBCaptainId) pts += MATCH_SLOT_POINTS[slot] ?? 1
+  }
+  return pts
+})
 
 // ── 밴 로직 ───────────────────────────────────────────────────
 

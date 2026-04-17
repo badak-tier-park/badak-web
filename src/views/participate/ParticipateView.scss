@@ -268,6 +268,32 @@
   color: var(--c-text-faint);
 }
 
+.result-team-name {
+  font-size: 13px;
+
+  &--win  { font-weight: 800; color: var(--c-text-bright); }
+  &--loss { font-weight: 400; color: var(--c-text-faint); }
+}
+
+.result-score {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+
+  &--win  { color: #4ade80; }
+  &--loss { color: var(--c-text-faint); }
+}
+
+.result-score-sep {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+  margin: 0 1px;
+}
+
 .opp-team-name {
   font-size: 13px;
   font-weight: 500;
@@ -317,6 +343,26 @@
   &:hover {
     background: rgba(52, 211, 153, 0.14);
     border-color: rgba(52, 211, 153, 0.55);
+  }
+}
+
+.btn-check-standings {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.07);
+  color: #c084fc;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+
+  &:hover {
+    background: rgba(168, 85, 247, 0.14);
+    border-color: rgba(168, 85, 247, 0.55);
   }
 }
 
@@ -728,6 +774,163 @@
 
   ul, ol { padding-left: 1.4em; margin: 0.4em 0 0.6em; }
   li     { margin-bottom: 0.2em; }
+}
+
+// ── 경기 결과 순위표 모달 ────────────────────────────────────────
+.modal--result-standings {
+  max-width: 560px;
+}
+
+.standings-body {
+  padding: 8px 4px 12px;
+}
+
+.standings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.standing-team {
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  overflow: hidden;
+}
+
+.standing-team-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--c-surface-raised);
+}
+
+.standing-rank {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--c-text-faint);
+  width: 18px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.standing-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standing-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.standing-record {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.standing-pts {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fb923c;
+  min-width: 32px;
+  text-align: right;
+}
+
+.standing-pts-label {
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 1px;
+  opacity: 0.8;
+}
+
+.standing-matches {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--c-border-faint);
+}
+
+.standing-match-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 8px 44px;
+  border-bottom: 1px solid var(--c-border-faint);
+  transition: background 0.12s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: var(--c-overlay); }
+}
+
+.standing-vs {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standing-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+}
+
+.standing-result {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+
+  &--win  { color: #4ade80; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25); }
+  &--loss { color: #f87171; background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.22); }
+}
+
+.standing-match-date {
+  font-size: 11px;
+  color: var(--c-text-faint);
+  flex-shrink: 0;
+  min-width: 68px;
+  text-align: right;
+}
+
+.btn-result-view {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(251, 146, 60, 0.35);
+  background: rgba(251, 146, 60, 0.07);
+  color: #fb923c;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+
+  &:hover {
+    background: rgba(251, 146, 60, 0.15);
+    border-color: rgba(251, 146, 60, 0.6);
+  }
+}
+
+.standing-no-matches {
+  padding: 8px 16px 8px 44px;
+  font-size: 12px;
+  color: var(--c-text-faint);
+  border-top: 1px solid var(--c-border-faint);
 }
 
 // ── 에이스 결정전 티어 밴 ────────────────────────────────────────
