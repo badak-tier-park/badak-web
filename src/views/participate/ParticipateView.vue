@@ -523,6 +523,7 @@ import {
   type EntrySlot, type EntryStatus,
 } from '@/lib/entries'
 import { revealEntries } from '@/lib/schedules'
+import { notifyEntrySubmitted } from '@/lib/notifications'
 import { useAuthStore } from '@/stores/auth'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
@@ -1152,6 +1153,16 @@ async function handleSubmitEntry(scheduleId: number) {
   try {
     await submitEntry(scheduleId, myPlayerId.value)
     entryStatusMap.value = new Map(entryStatusMap.value).set(scheduleId, 'submitted')
+
+    const match = matchListModal.matches.find(m => m.schedule.id === scheduleId)
+    if (match) {
+      notifyEntrySubmitted({
+        leagueName: matchListModal.league?.name ?? '',
+        teamName: match.myTeamName,
+        matchRound: `${match.schedule.round}라운드`,
+        matchDate: match.schedule.match_date,
+      })
+    }
   } catch (e: any) {
     alert(e.message ?? '제출 중 오류가 발생했습니다.')
   } finally {
