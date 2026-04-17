@@ -1,0 +1,23 @@
+// ── 토글 버튼 그룹 공통 베이스 ────────────────────────────
+// 용도: tier-btn, race-btn, status-btn, count-btn, draft-btn, eligibility-btn 등
+// 사용: @extend %toggle-btn;
+
+%toggle-btn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
+
+  &:disabled {
+    cursor: default;
+    &:not(.active) { opacity: 0.3; }
+  }
+}

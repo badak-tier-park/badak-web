@@ -342,12 +342,5 @@ async function handleSubmit() {
 </script>
 
 <style lang="scss" scoped>
-@use './MapRegisterView.scss';
-
-.load-error {
-  padding: 20px;
-  color: #f87171;
-  font-size: 14px;
-  font-family: system-ui, sans-serif;
-}
+@use './MapEditView.scss';
 </style>

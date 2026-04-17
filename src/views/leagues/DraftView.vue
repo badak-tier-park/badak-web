@@ -329,14 +329,14 @@ import { getLeague, setPicksCompleted, setDraftCompleted, type LeagueRow } from 
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, getSwapLog, saveSwapLog } from '@/lib/draft'
+import { TIER_ORDER, RACE_ORDER } from '@/lib/constants'
+import { useToast } from '@/composables/useToast'
+import { useDraftDnD } from '@/composables/useDraftDnD'
+import { useSeedSwap } from '@/composables/useSeedSwap'
 
 const route = useRoute()
 const router = useRouter()
 const leagueId = route.params.id as string
-
-const TIER_ORDER = ['A', 'B', 'C', 'D', 'E'] as const
-const RACE_ORDER = ['T', 'Z', 'P'] as const
-const TIER_RANK: Record<string, number> = { A: 1, B: 2, C: 3, D: 4, E: 5 }
 
 // ── 데이터 ────────────────────────────────────────────────
 const loading = ref(true)
@@ -427,6 +427,9 @@ function playerById(id: number) {
   return allPlayers.value.find(p => p.id === id) ?? null
 }
 
+// ── 토스트 ───────────────────────────────────────────────
+const { toast, showToast } = useToast()
+
 // ── 풀 계산 ────────────────────────────────────────────────
 const assignedIds = computed(() => {
   const ids = new Set<number>()
@@ -493,333 +496,30 @@ const turnPositionLabel = computed(() => {
   return round % 2 === 0 ? '↓' : '↑'
 })
 
-// ── 드래그 앤 드롭 (pointer events 기반) ─────────────────
-const draggedPlayerId = ref<number | null>(null)
-const dragSource = ref<'pool' | number>('pool')
-const dragOverTeam = ref<number | null>(null)
-const dragOverPool = ref(false)
-const draggingId = ref<number | null>(null)
+// ── 드래그 앤 드롭 ───────────────────────────────────────
+const {
+  dragOverTeam, dragOverPool, draggingId,
+  onPointerDown, removeFromTeam,
+} = useDraftDnD(allPlayers, teams, currentCaptainId)
 
-let _dragClone: HTMLElement | null = null
-let _dragOffsetX = 0
-let _dragOffsetY = 0
-
-function onPointerDown(e: PointerEvent, playerId: number, source: 'pool' | number) {
-  if (e.button !== 0) return
-  e.preventDefault()
-
-  const el = e.currentTarget as HTMLElement
-  const rect = el.getBoundingClientRect()
-  _dragOffsetX = e.clientX - rect.left
-  _dragOffsetY = e.clientY - rect.top
-
-  // 실제 카드를 그대로 복제해 body에 붙임 — 커서를 따라 움직임
-  const clone = el.cloneNode(true) as HTMLElement
-  clone.style.cssText = `
-    position: fixed;
-    left: ${rect.left}px;
-    top: ${rect.top}px;
-    width: ${rect.width - 25}px;
-    height: ${rect.height - 10}px;
-    pointer-events: none;
-    z-index: 9999;
-    margin: 0;
-    opacity: 1;
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
-    transform: scale(1.05);
-    transition: none;
-    border-radius: 7px;
-  `
-  document.body.appendChild(clone)
-  _dragClone = clone
-
-  draggedPlayerId.value = playerId
-  dragSource.value = source
-  draggingId.value = playerId
-
-  document.addEventListener('pointermove', _onPointerMove)
-  document.addEventListener('pointerup', _onPointerUp)
-}
-
-function _onPointerMove(e: PointerEvent) {
-  if (!_dragClone) return
-  _dragClone.style.left = `${e.clientX - _dragOffsetX}px`
-  _dragClone.style.top = `${e.clientY - _dragOffsetY}px`
-
-  // clone은 pointer-events: none이라 elementsFromPoint에서 건너뜀
-  const els = document.elementsFromPoint(e.clientX, e.clientY)
-  const teamCol = els.find(el => (el as HTMLElement).dataset.captainId) as HTMLElement | undefined
-  const pool = els.find(el => el.hasAttribute('data-drop-pool'))
-
-  if (teamCol) {
-    const cid = Number(teamCol.dataset.captainId)
-    dragOverTeam.value = cid === currentCaptainId.value ? cid : null
-    dragOverPool.value = false
-  } else if (pool && dragSource.value !== 'pool') {
-    dragOverPool.value = true
-    dragOverTeam.value = null
-  } else {
-    dragOverTeam.value = null
-    dragOverPool.value = false
-  }
-}
-
-function _onPointerUp(e: PointerEvent) {
-  document.removeEventListener('pointermove', _onPointerMove)
-  document.removeEventListener('pointerup', _onPointerUp)
-
-  if (_dragClone) {
-    _dragClone.remove()
-    _dragClone = null
-  }
-
-  const pid = draggedPlayerId.value
-  if (pid) {
-    const els = document.elementsFromPoint(e.clientX, e.clientY)
-    const teamCol = els.find(el => (el as HTMLElement).dataset.captainId) as HTMLElement | undefined
-    const pool = els.find(el => el.hasAttribute('data-drop-pool'))
-
-    if (teamCol) {
-      const cid = Number(teamCol.dataset.captainId)
-      if (cid === currentCaptainId.value && !(teams.value[cid] ?? []).find(p => p.id === pid)) {
-        if (dragSource.value !== 'pool') {
-          const prev = dragSource.value as number
-          teams.value[prev] = (teams.value[prev] ?? []).filter(p => p.id !== pid)
-        }
-        const player = allPlayers.value.find(p => p.id === pid)
-        if (player) {
-          if (!teams.value[cid]) teams.value[cid] = []
-          teams.value[cid] = [...teams.value[cid], player]
-        }
-      }
-    } else if (pool && dragSource.value !== 'pool') {
-      const prev = dragSource.value as number
-      teams.value[prev] = (teams.value[prev] ?? []).filter(p => p.id !== pid)
-    }
-  }
-
-  draggingId.value = null
-  draggedPlayerId.value = null
-  dragOverTeam.value = null
-  dragOverPool.value = false
-}
-
-function removeFromTeam(captainId: number, memberId: number) {
-  teams.value[captainId] = (teams.value[captainId] ?? []).filter(p => p.id !== memberId)
-}
-
-// ── 시드권 순서 설정 ──────────────────────────────────────
-const seedOrderSetupMode = ref(false)
-const seedOrderDraft = ref<number[]>([])
-
-function openSeedOrderSetup() {
-  seedOrderDraft.value = [...seedOrderIds.value]
-  seedOrderSetupMode.value = true
-}
-
-function moveSeedOrder(i: number, dir: -1 | 1) {
-  const arr = [...seedOrderDraft.value]
-  const j = i + dir
-  ;[arr[i], arr[j]] = [arr[j], arr[i]]
-  seedOrderDraft.value = arr
-}
-
-function confirmSeedOrder() {
-  seedOrderIds.value = [...seedOrderDraft.value]
-  seedOrderSetupMode.value = false
-  startSeedSwap()
-}
-
-// ── 시드권 적용 ───────────────────────────────────────────
-const seedSwapMode = ref(false)
-const seedSwapDone = ref(false)
-const preSeedTeams = ref<Record<number, PlayerRow[]> | null>(null)
-const currentSeedIdx = ref(0)
-const swapSel = ref<{ captainId: number; member: PlayerRow; pickIdx: number } | null>(null)
-const lockedIds = ref(new Set<number>())
-const swappedIds = ref(new Set<number>())
-const swapError = ref<string | null>(null)
-const swapErrorKey = ref(0)
-
-interface SwapLogEntry {
-  seedHolderName: string
-  myName: string
-  theirName: string
-  myTeamCaptainName: string
-  theirTeamCaptainName: string
-  // DB 저장용
-  seedHolderPlayerId: number
-  fromPlayerId: number
-  toPlayerId: number
-}
-const swapLog = ref<SwapLogEntry[]>([])
-
-const currentSeedHolderId = computed(() => seedOrderIds.value[currentSeedIdx.value] ?? null)
-
-const currentSeedHolderCaptainId = computed((): number | null => {
-  const pid = currentSeedHolderId.value
-  if (pid === null) return null
-  if (captainIds.value.includes(pid)) return pid
-  for (const [cIdStr, members] of Object.entries(teams.value)) {
-    if (members.find(m => m.id === pid)) return Number(cIdStr)
-  }
-  return null
-})
-
-function startSeedSwap() {
-  preSeedTeams.value = Object.fromEntries(
-    Object.entries(teams.value).map(([k, v]) => [Number(k), [...v]]),
-  )
-  seedSwapDone.value = false
-  swappedIds.value = new Set()
-  swapLog.value = []
-  seedSwapMode.value = true
-  currentSeedIdx.value = 0
-  swapSel.value = null
-  lockedIds.value = new Set()
-  swapError.value = null
-  swapErrorKey.value = 0
-}
-
-function resetSeedSwap() {
-  if (preSeedTeams.value) {
-    teams.value = Object.fromEntries(
-      Object.entries(preSeedTeams.value).map(([k, v]) => [Number(k), [...v]]),
-    )
-  }
-  seedSwapMode.value = false
-  seedSwapDone.value = false
-  currentSeedIdx.value = 0
-  swappedIds.value = new Set()
-  lockedIds.value = new Set()
-  swapLog.value = []
-  swapSel.value = null
-  swapError.value = null
-  swapErrorKey.value = 0
-  preSeedTeams.value = null
-  isSaved.value = false
-  showToast('시드권 적용이 초기화되었습니다')
-}
-
-function validateFirstClick(_captainId: number, member: PlayerRow, pickIdx: number): string | null {
-  if (lockedIds.value.has(member.id)) return `${member.nickname}은 이미 교체된 멤버입니다`
-  if (seedHolderIds.value.has(member.id)) return `${member.nickname}은 시드권 보유자로 교체 불가합니다`
-  if (pickIdx === 0) return `1번 픽(${member.nickname})은 시드권 적용 불가합니다`
-  return null
-}
-
-function validateSwap(
-  a: { captainId: number; member: PlayerRow; pickIdx: number },
-  b: { captainId: number; member: PlayerRow; pickIdx: number },
-): string | null {
-  if (lockedIds.value.has(b.member.id)) return `${b.member.nickname}은 이미 교체된 멤버입니다`
-  if (seedHolderIds.value.has(b.member.id)) return `${b.member.nickname}은 시드권 보유자로 교체 불가합니다`
-  if (b.pickIdx === 0) return `1번 픽(${b.member.nickname})은 시드권 적용 불가합니다`
-
-  const tierDiff = Math.abs((TIER_RANK[a.member.tier] ?? 0) - (TIER_RANK[b.member.tier] ?? 0))
-  if (tierDiff >= 2) return '두 티어 이상 차이나는 멤버는 시드권 적용 불가합니다'
-
-  const aNum = a.pickIdx + 1
-  const bNum = b.pickIdx + 1
-  if (Math.abs(aNum - bNum) >= 3) return '세 픽 이상 차이나는 멤버는 시드권 적용 불가합니다'
-
-  return null
-}
-
-function onMemberClick(captainId: number, member: PlayerRow, idx: number) {
-  if (!seedSwapMode.value) return
-
-  const setError = (msg: string) => {
-    swapError.value = msg
-    swapErrorKey.value++
-  }
-
-  if (!swapSel.value) {
-    // 첫 번째 선택 — 반드시 시드권 보유 팀 멤버여야 함
-    if (captainId !== currentSeedHolderCaptainId.value) {
-      setError('시드권 보유 팀의 멤버를 먼저 선택하세요')
-      return
-    }
-    const err = validateFirstClick(captainId, member, idx)
-    if (err) { setError(err); return }
-    swapError.value = null
-    swapSel.value = { captainId, member, pickIdx: idx }
-    return
-  }
-
-  // 같은 멤버 → 선택 해제
-  if (swapSel.value.member.id === member.id) {
-    swapSel.value = null
-    swapError.value = null
-    return
-  }
-
-  // 같은 팀(시드권 보유 팀) → 선택 변경 (규칙 재검증)
-  if (swapSel.value.captainId === captainId) {
-    const err = validateFirstClick(captainId, member, idx)
-    if (err) { setError(err); return }
-    swapError.value = null
-    swapSel.value = { captainId, member, pickIdx: idx }
-    return
-  }
-
-  // 다른 팀 → 교체 시도
-  const err = validateSwap(swapSel.value, { captainId, member, pickIdx: idx })
-  if (err) { setError(err); return }
-
-  const a = swapSel.value
-  const b = { captainId, member, pickIdx: idx }
-  const aMembers = [...(teams.value[a.captainId] ?? [])]
-  const bMembers = [...(teams.value[b.captainId] ?? [])]
-  aMembers[a.pickIdx] = b.member
-  bMembers[b.pickIdx] = a.member
-  teams.value[a.captainId] = aMembers
-  teams.value[b.captainId] = bMembers
-
-  lockedIds.value = new Set([...lockedIds.value, a.member.id, b.member.id])
-  swappedIds.value = new Set([...swappedIds.value, a.member.id, b.member.id])
-  swapLog.value.push({
-    seedHolderName: playerById(currentSeedHolderId.value!)?.nickname ?? '',
-    myName: a.member.nickname,
-    theirName: b.member.nickname,
-    myTeamCaptainName: playerById(a.captainId)?.nickname ?? '',
-    theirTeamCaptainName: playerById(b.captainId)?.nickname ?? '',
-    seedHolderPlayerId: currentSeedHolderId.value!,
-    fromPlayerId: a.member.id,
-    toPlayerId: b.member.id,
-  })
-  swapSel.value = null
-  swapError.value = null
-  showToast(`${a.member.nickname} ↔ ${b.member.nickname} 교체 완료`)
-  advanceSeed()
-}
-
-function passSeed() {
-  swapSel.value = null
-  swapError.value = null
-  showToast(`${playerById(currentSeedHolderId.value!)?.nickname} 시드권 패스`)
-  advanceSeed()
-}
-
-function advanceSeed() {
-  currentSeedIdx.value++
-  if (currentSeedIdx.value >= seedOrderIds.value.length) {
-    seedSwapMode.value = false
-    seedSwapDone.value = true
-    showToast('모든 시드권 적용이 완료되었습니다')
-  }
-}
+// ── 시드권 교체 ──────────────────────────────────────────
+const {
+  seedSwapMode, seedSwapDone, currentSeedIdx, swapSel, lockedIds, swappedIds,
+  swapError, swapErrorKey, swapLog,
+  currentSeedHolderId, currentSeedHolderCaptainId,
+  seedOrderSetupMode, seedOrderDraft,
+  openSeedOrderSetup, moveSeedOrder, confirmSeedOrder,
+  resetSeedSwap: _resetSeedSwap,
+  onMemberClick, passSeed,
+} = useSeedSwap(teams, captainIds, seedHolderIds, seedOrderIds, playerById, showToast)
 
 // ── 저장 ──────────────────────────────────────────────────
 const isSaved = ref(false)
 const saving = ref(false)
-const toast = ref('')
-let toastTimer: ReturnType<typeof setTimeout> | null = null
 
-function showToast(msg: string) {
-  toast.value = msg
-  if (toastTimer) clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { toast.value = '' }, 2500)
+function resetSeedSwap() {
+  _resetSeedSwap()
+  isSaved.value = false
 }
 
 // 시드권 교체까지 완료된 최종 저장 여부

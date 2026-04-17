@@ -1,4 +1,5 @@
 @use '../../styles/page';
+@use '../../styles/toggle-group';
 
 .leagues-page {
   position: relative;
@@ -384,57 +385,27 @@
 .status-group { display: flex; gap: 8px; }
 
 .status-btn {
-  flex: 1;
-  padding: 9px 0;
-  border-radius: 8px;
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-overlay);
-  color: var(--c-text-sub);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
+  @extend %toggle-btn;
 
   &--upcoming.active  { border-color: var(--c-border-dashed); background: var(--c-badge-bg); color: var(--c-text-2); }
   &--ongoing.active   { border-color: rgba(34,197,94,0.5);    background: rgba(34,197,94,0.12);    color: #4ade80; }
   &--finished.active  { border-color: rgba(156,163,175,0.3);  background: rgba(156,163,175,0.06);  color: #9ca3af; }
-
-  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
 }
 
 // ── 팀장 인원 선택 ────────────────────────────────────────
 .captain-count-group { display: flex; gap: 8px; }
 
 .count-btn {
-  flex: 1;
-  padding: 9px 0;
-  border-radius: 8px;
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-overlay);
-  color: var(--c-text-sub);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
+  @extend %toggle-btn;
 
   &.active { border-color: rgba(170, 59, 255, 0.5); background: rgba(170, 59, 255, 0.12); color: #c084fc; }
-  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
 }
 
 // ── 팀원 지목식 선택 ──────────────────────────────────────
 .draft-group { display: flex; gap: 8px; }
 
 .draft-btn {
-  flex: 1;
-  padding: 9px 0;
-  border-radius: 8px;
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-overlay);
-  color: var(--c-text-sub);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
+  @extend %toggle-btn;
 
   &.active {
     border-color: rgba(52, 211, 153, 0.5);
@@ -442,13 +413,7 @@
     color: #34d399;
   }
 
-  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
-
-  &:disabled {
-    cursor: default;
-    &.active { opacity: 1; }
-    &:not(.active) { opacity: 0.3; }
-  }
+  &:disabled.active { opacity: 1; }
 }
 
 // ── 리그 카드 지목식 뱃지 ─────────────────────────────────
@@ -494,28 +459,12 @@
 .eligibility-group { display: flex; gap: 8px; }
 
 .eligibility-btn {
-  flex: 1;
-  padding: 9px 0;
-  border-radius: 8px;
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-overlay);
-  color: var(--c-text-sub);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
+  @extend %toggle-btn;
 
   &.active {
     border-color: rgba(56, 189, 248, 0.5);
     background: rgba(56, 189, 248, 0.1);
     color: #38bdf8;
-  }
-
-  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.3;
   }
 }
 
@@ -536,16 +485,9 @@
 .tier-group { display: flex; gap: 8px; }
 
 .tier-btn {
-  flex: 1;
-  padding: 9px 0;
-  border-radius: 8px;
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-overlay);
-  color: var(--c-text-sub);
+  @extend %toggle-btn;
   font-size: 14px;
   font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
 
   &--a.active { border-color: var(--tier-a-border); background: var(--tier-a-bg); color: var(--tier-a); }
   &--b.active { border-color: var(--tier-b-border); background: var(--tier-b-bg); color: var(--tier-b); }
@@ -553,9 +495,7 @@
   &--d.active { border-color: var(--tier-d-border); background: var(--tier-d-bg); color: var(--tier-d); }
   &--e.active { border-color: var(--tier-e-border); background: var(--tier-e-bg); color: var(--tier-e); }
 
-  &:not(.active):hover { border-color: var(--c-border-dashed); color: var(--c-text-2); }
-
-  &:disabled { cursor: default; pointer-events: none; }
+  &:disabled { pointer-events: none; }
 }
 
 // ── 모달 푸터 / 버튼 (공통: _buttons.scss, _modal.scss via _page.scss)
