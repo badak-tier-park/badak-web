@@ -15,6 +15,7 @@ export interface EntrySlot {
   match_slot: number
   player_ids: number[]
   banned_map_id?: string | null
+  picked_map_id?: string | null
 }
 
 /** 밴 선택이 필요한 경기 슬롯 번호 */
@@ -26,6 +27,7 @@ export interface EntryRecord {
   match_slot: number
   player_ids: number[]
   banned_map_id: string | null
+  picked_map_id: string | null
 }
 
 // ── DB CRUD ─────────────────────────────────────────────────
@@ -35,7 +37,7 @@ export async function getEntries(
 ): Promise<EntrySlot[]> {
   const { data, error } = await supabase
     .from('league_match_entries')
-    .select('match_slot, player_ids, banned_map_id')
+    .select('match_slot, player_ids, banned_map_id, picked_map_id')
     .eq('schedule_id', scheduleId)
     .eq('captain_player_id', captainPlayerId)
     .order('match_slot', { ascending: true })
@@ -63,6 +65,7 @@ export async function saveEntries(
     match_slot: s.match_slot,
     player_ids: s.player_ids,
     banned_map_id: s.banned_map_id ?? null,
+    picked_map_id: s.picked_map_id ?? null,
     updated_at: new Date().toISOString(),
   }))
   const { error } = await supabase.from('league_match_entries').insert(rows)
@@ -153,7 +156,7 @@ export async function getConsentedSet(captainPlayerId: number): Promise<Set<numb
 export async function getScheduleEntries(scheduleId: number): Promise<EntryRecord[]> {
   const { data, error } = await supabase
     .from('league_match_entries')
-    .select('captain_player_id, match_slot, player_ids, banned_map_id')
+    .select('captain_player_id, match_slot, player_ids, banned_map_id, picked_map_id')
     .eq('schedule_id', scheduleId)
     .order('captain_player_id', { ascending: true })
     .order('match_slot', { ascending: true })

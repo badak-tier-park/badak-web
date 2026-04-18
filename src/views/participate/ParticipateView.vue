@@ -438,22 +438,36 @@
                           v-for="map in entryModal.slotMaps[slot.num]"
                           :key="map.id"
                           class="map-chip"
-                          :class="{ 'map-chip--banned': entryModal.banSelections[slot.num] === map.id }"
+                          :class="{
+                            'map-chip--banned': entryModal.banSelections[slot.num] === map.id,
+                            'map-chip--picked': entryModal.pickSelections[slot.num] === map.id,
+                          }"
                         >
                           <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="map-chip-img" />
                           <div v-else class="map-chip-img-empty" />
                           <span class="map-chip-name">{{ map.name }}</span>
-                          <button
-                            v-if="!entryModal.readonly && (BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.slotMaps[slot.num].length > 1"
-                            class="map-chip-ban"
-                            :class="{ 'map-chip-ban--active': entryModal.banSelections[slot.num] === map.id }"
-                            type="button"
-                            @click="toggleBan(slot.num, map.id)"
-                          >{{ entryModal.banSelections[slot.num] === map.id ? '밴 취소' : '밴' }}</button>
-                          <span
-                            v-else-if="entryModal.readonly && (BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.banSelections[slot.num] === map.id"
-                            class="map-chip-ban map-chip-ban--active map-chip-ban--readonly"
-                          >밴</span>
+                          <template v-if="(BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.slotMaps[slot.num].length > 1">
+                            <template v-if="!entryModal.readonly">
+                              <button
+                                class="map-chip-ban"
+                                :class="{ 'map-chip-ban--active': entryModal.banSelections[slot.num] === map.id }"
+                                :disabled="entryModal.pickSelections[slot.num] === map.id"
+                                type="button"
+                                @click="toggleBan(slot.num, map.id)"
+                              >{{ entryModal.banSelections[slot.num] === map.id ? '밴 취소' : '밴' }}</button>
+                              <button
+                                class="map-chip-pick"
+                                :class="{ 'map-chip-pick--active': entryModal.pickSelections[slot.num] === map.id }"
+                                :disabled="entryModal.banSelections[slot.num] === map.id"
+                                type="button"
+                                @click="togglePick(slot.num, map.id)"
+                              >{{ entryModal.pickSelections[slot.num] === map.id ? '픽 취소' : '픽' }}</button>
+                            </template>
+                            <template v-else>
+                              <span v-if="entryModal.banSelections[slot.num] === map.id" class="map-chip-ban map-chip-ban--active">밴</span>
+                              <span v-if="entryModal.pickSelections[slot.num] === map.id" class="map-chip-pick map-chip-pick--active">픽</span>
+                            </template>
+                          </template>
                         </div>
                       </div>
 
@@ -854,6 +868,7 @@ interface EntryModalState {
   selections: Record<number, number[]>
   slotMaps: Record<number, SlotMapInfo[]>
   banSelections: Record<number, string | null>
+  pickSelections: Record<number, string | null>
   aceTierBan: string | null
 }
 const entryModal = reactive<EntryModalState>({
@@ -866,6 +881,7 @@ const entryModal = reactive<EntryModalState>({
   selections: {},
   slotMaps: {},
   banSelections: {},
+  pickSelections: {},
   aceTierBan: null,
 })
 
@@ -1006,13 +1022,14 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.teamMembers = []
   entryModal.slotMaps = {}
   entryModal.banSelections = {}
+  entryModal.pickSelections = {}
   entryModal.aceTierBan = null
   entryError.value = null
   initSelections()
   loadingEntry.value = true
 
   try {
-    const [captains, picks, swapLog, players, existing, matchMaps, allMaps, existingAceBan] = await Promise.all([
+    const [captains, draftPicks, swapLog, players, existing, matchMaps, allMaps, existingAceBan] = await Promise.all([
       getCaptains(item.leagueId),
       getDraftPicks(item.leagueId),
       getSwapLog(item.leagueId),
@@ -1033,12 +1050,14 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
     }
     entryModal.slotMaps = slotMaps
 
-    // 밴 초기값
+    // 밴/픽 초기값
     const bans: Record<number, string | null> = {}
-    for (const s of BAN_SLOTS) bans[s] = null
+    const picks: Record<number, string | null> = {}
+    for (const s of BAN_SLOTS) { bans[s] = null; picks[s] = null }
     entryModal.banSelections = bans
+    entryModal.pickSelections = picks
 
-    const rosters = computeFinalRosters(captains, picks, swapLog)
+    const rosters = computeFinalRosters(captains, draftPicks, swapLog)
     const myRoster = rosters.get(item.myTeamCaptainId) ?? []
     const playerMap = new Map(players.map(p => [p.id, p]))
     entryModal.teamMembers = myRoster.map(id => playerMap.get(id)).filter(Boolean) as PlayerRow[]
@@ -1053,6 +1072,9 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
         }
         if (e.banned_map_id && (BAN_SLOTS as readonly number[]).includes(e.match_slot)) {
           entryModal.banSelections[e.match_slot] = e.banned_map_id
+        }
+        if (e.picked_map_id && (BAN_SLOTS as readonly number[]).includes(e.match_slot)) {
+          entryModal.pickSelections[e.match_slot] = e.picked_map_id
         }
       }
     }
@@ -1070,6 +1092,12 @@ function closeEntryModal() {
 
 function toggleBan(slotNum: number, mapId: string) {
   entryModal.banSelections[slotNum] = entryModal.banSelections[slotNum] === mapId ? null : mapId
+  if (entryModal.pickSelections[slotNum] === mapId) entryModal.pickSelections[slotNum] = null
+}
+
+function togglePick(slotNum: number, mapId: string) {
+  if (entryModal.banSelections[slotNum] === mapId) return
+  entryModal.pickSelections[slotNum] = entryModal.pickSelections[slotNum] === mapId ? null : mapId
 }
 
 async function handleEntrySubmit() {
@@ -1085,9 +1113,15 @@ async function handleEntrySubmit() {
 
   for (const slotNum of BAN_SLOTS) {
     const maps = entryModal.slotMaps[slotNum]
-    if (maps && maps.length > 1 && !entryModal.banSelections[slotNum]) {
-      entryError.value = `경기${slotNum}에서 밴할 맵을 선택해주세요.`
-      return
+    if (maps && maps.length > 1) {
+      if (!entryModal.banSelections[slotNum]) {
+        entryError.value = `경기${slotNum}에서 밴할 맵을 선택해주세요.`
+        return
+      }
+      if (!entryModal.pickSelections[slotNum]) {
+        entryError.value = `경기${slotNum}에서 픽할 맵을 선택해주세요.`
+        return
+      }
     }
   }
 
@@ -1115,6 +1149,7 @@ async function handleEntrySubmit() {
       match_slot: slot.num,
       player_ids: entryModal.selections[slot.num].filter(Boolean),
       banned_map_id: entryModal.banSelections[slot.num] ?? null,
+      picked_map_id: (BAN_SLOTS as readonly number[]).includes(slot.num) ? (entryModal.pickSelections[slot.num] ?? null) : null,
     }))
     await Promise.all([
       saveEntries(entryModal.schedule!.id, myPlayerId.value!, slots),

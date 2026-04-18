@@ -88,12 +88,10 @@
                     <span class="slot-map-name">{{ getResolvedMap(slot.num)?.name }}</span>
                   </div>
                   <button
-                    v-else-if="!isCompleted"
+                    v-else-if="BAN_SLOTS.has(slot.num) && !isCompleted"
                     class="slot-ladder-btn"
                     @click="openLadder(slot.num)"
-                  >
-                    사다리타기
-                  </button>
+                  >사다리타기</button>
                 </template>
               </div>
 
@@ -444,6 +442,7 @@ const entryPointsB = ref(0)
 const allMapsById = ref(new Map<string, MapInfo>())
 const matchMapConfig = ref(new Map<number, string[]>())
 const entryBanMap = ref(new Map<number, Map<number, string | null>>())
+const entryPickMap = ref(new Map<number, Map<number, string | null>>())
 const ladderSelectedMaps = ref(new Map<number, string>())
 
 // 맵 사다리타기 모달 상태
@@ -505,23 +504,15 @@ const aceTierCandidates = computed((): string[] => {
 
 // 에이스 맵 후보 (리그 배정 맵 전체에서 2·3경기 확정 맵 제외)
 const aceMapCandidates = computed((): MapInfo[] => {
-  // 리그에 배정된 모든 맵 ID 수집 (중복 제거)
   const leagueMapIds = new Set<string>()
   for (const ids of matchMapConfig.value.values()) {
     for (const id of ids) leagueMapIds.add(id)
   }
 
-  // 2·3경기에서 확정된 맵 ID 수집
   const confirmedIds = new Set<string>()
   for (const slotNum of [2, 3]) {
-    const state = resolveSlotMap(slotNum)
-    if (state.type === 'fixed' || state.type === 'auto') {
-      const m = state.candidateMaps[0]
-      if (m) confirmedIds.add(m.id)
-    } else if (state.type === 'ladder') {
-      const selectedId = ladderSelectedMaps.value.get(slotNum)
-      if (selectedId) confirmedIds.add(selectedId)
-    }
+    const m = getResolvedMap(slotNum)
+    if (m) confirmedIds.add(m.id)
   }
 
   return [...leagueMapIds]
@@ -634,6 +625,33 @@ const slotMapStates = computed(() => {
   return result
 })
 
+function getSlotPlayerRank(slotNum: number, isTeamA: boolean): number {
+  const players = slotPlayerMap.value.get(slotNum)
+  const list = isTeamA ? players?.teamA : players?.teamB
+  if (!list?.length) return 0
+  return TIER_RANK[list[0].tier.toUpperCase()] ?? 0
+}
+
+function resolveByPick(slotNum: number, candidates: MapInfo[]): MapInfo | null {
+  const captAId = schedule.value?.team_a_captain_id ?? 0
+  const captBId = schedule.value?.team_b_captain_id ?? 0
+  const pickA = entryPickMap.value.get(captAId)?.get(slotNum) ?? null
+  const pickB = entryPickMap.value.get(captBId)?.get(slotNum) ?? null
+  const candidateIds = new Set(candidates.map(m => m.id))
+  const validPickA = pickA && candidateIds.has(pickA) ? pickA : null
+  const validPickB = pickB && candidateIds.has(pickB) ? pickB : null
+
+  if (!validPickA && !validPickB) return null
+  if (validPickA && validPickA === validPickB) return candidates.find(m => m.id === validPickA) ?? null
+
+  // 다른 픽 → 해당 슬롯 출전 선수 티어 비교
+  const rankA = getSlotPlayerRank(slotNum, true)
+  const rankB = getSlotPlayerRank(slotNum, false)
+  if (rankA === rankB) return null  // 동티어 → 사다리 필요
+  const winId = rankA < rankB ? (validPickA ?? validPickB) : (validPickB ?? validPickA)
+  return candidates.find(m => m.id === winId) ?? null
+}
+
 function getResolvedMap(slotNum: number): MapInfo | null {
   if (slotNum === 7) {
     const selectedId = ladderSelectedMaps.value.get(7)
@@ -642,6 +660,11 @@ function getResolvedMap(slotNum: number): MapInfo | null {
   const state = slotMapStates.value.get(slotNum)
   if (!state || state.type === 'none') return null
   if (state.type === 'ladder') {
+    if (BAN_SLOTS.has(slotNum)) {
+      const pickResolved = resolveByPick(slotNum, state.candidateMaps)
+      if (pickResolved) return pickResolved
+      // 동티어 동일하지 않은 픽 → 사다리 결과로 폴백
+    }
     const selectedId = ladderSelectedMaps.value.get(slotNum)
     return selectedId ? (allMapsById.value.get(selectedId) ?? null) : null
   }
@@ -844,13 +867,17 @@ onMounted(async () => {
     }
     matchMapConfig.value = mmConfig
 
-    // 엔트리 밴 맵
+    // 엔트리 밴/픽 맵
     const banMap = new Map<number, Map<number, string | null>>()
+    const pickMap = new Map<number, Map<number, string | null>>()
     for (const e of entries) {
       if (!banMap.has(e.captain_player_id)) banMap.set(e.captain_player_id, new Map())
       banMap.get(e.captain_player_id)!.set(e.match_slot, e.banned_map_id)
+      if (!pickMap.has(e.captain_player_id)) pickMap.set(e.captain_player_id, new Map())
+      pickMap.get(e.captain_player_id)!.set(e.match_slot, e.picked_map_id)
     }
     entryBanMap.value = banMap
+    entryPickMap.value = pickMap
 
     // 사다리타기 기선택 맵
     const ladderMap = new Map<number, string>()
@@ -878,7 +905,7 @@ onMounted(async () => {
     const finalRosters = computeFinalRosters(captains, draftPicks, swapLog)
     const makeRoster = (captainId: number): SlotPlayerInfo[] => {
       const memberIds = finalRosters.get(captainId) ?? []
-      return [captainId, ...memberIds].map(toInfo)
+      return memberIds.map(toInfo)
     }
     rosterA.value = makeRoster(match.team_a_captain_id)
     rosterB.value = makeRoster(match.team_b_captain_id)
