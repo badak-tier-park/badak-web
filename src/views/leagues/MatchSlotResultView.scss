@@ -8,7 +8,7 @@
 
 .slot-result-content {
   flex: 1;
-  max-width: 640px;
+  max-width: 720px;
   width: 100%;
   margin: 0 auto;
   padding: 40px 28px 80px;
@@ -228,49 +228,6 @@
   &:hover { background: rgba(170, 59, 255, 0.2); border-color: rgba(170, 59, 255, 0.65); }
 }
 
-.slot-team-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  justify-content: flex-end;
-  padding: 7px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--c-border);
-  background: var(--c-surface);
-  cursor: pointer;
-  transition: all 0.14s;
-  min-width: 0;
-
-  &--right {
-    justify-content: flex-start;
-  }
-
-  &:hover:not(:disabled) {
-    border-color: rgba(52, 211, 153, 0.4);
-    background: rgba(52, 211, 153, 0.06);
-  }
-
-  &--winner {
-    border-color: rgba(52, 211, 153, 0.5);
-    background: rgba(52, 211, 153, 0.1);
-
-    &:hover:not(:disabled) {
-      border-color: rgba(52, 211, 153, 0.65);
-      background: rgba(52, 211, 153, 0.15);
-    }
-  }
-
-  &--loser {
-    opacity: 0.35;
-    cursor: default;
-  }
-
-  &--saving {
-    opacity: 0.6;
-    cursor: default;
-  }
-}
 
 .slot-team-name {
   font-size: 12px;
@@ -289,9 +246,7 @@
   align-items: flex-end;
   gap: 3px;
 
-  .slot-team-btn--right & {
-    align-items: flex-start;
-  }
+  .slot-team-btn--right & { align-items: flex-start; }
 }
 
 .slot-player-row {
@@ -705,5 +660,145 @@
   font-weight: 700;
   color: var(--c-text-faint);
   flex-shrink: 0;
+}
+
+// ── 선수 교체 ────────────────────────────────────────────────
+.slot-team-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  cursor: pointer;
+  transition: all 0.14s;
+  min-width: 0;
+
+  &--right { justify-content: flex-start; }
+
+  &:hover:not(:disabled) {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.06);
+  }
+
+  &--winner {
+    border-color: rgba(52, 211, 153, 0.5);
+    background: rgba(52, 211, 153, 0.1);
+
+    &:hover:not(:disabled) {
+      border-color: rgba(52, 211, 153, 0.65);
+      background: rgba(52, 211, 153, 0.15);
+    }
+  }
+
+  &--loser { opacity: 0.35; cursor: default; }
+  &--saving { opacity: 0.6; cursor: default; }
+}
+
+// 변경 버튼 컬럼: slot-teams의 맨 왼쪽(팀A) 또는 맨 오른쪽(팀B)에 위치
+.sub-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 36px;
+}
+
+.btn-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  background: rgba(96, 165, 250, 0.08);
+  color: #93c5fd;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.14s;
+  white-space: nowrap;
+
+  &:hover { background: rgba(96, 165, 250, 0.18); border-color: rgba(96, 165, 250, 0.6); }
+
+  &--reset {
+    border-color: rgba(251, 191, 36, 0.4);
+    background: rgba(251, 191, 36, 0.08);
+    color: #fcd34d;
+    padding: 4px 7px;
+
+    &:hover { background: rgba(251, 191, 36, 0.18); border-color: rgba(251, 191, 36, 0.6); }
+  }
+}
+
+.sub-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(251, 191, 36, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  flex-shrink: 0;
+}
+
+// ── 선수 교체 모달 ───────────────────────────────────────────
+.sub-modal {
+  max-width: 380px;
+}
+
+.sub-modal-hint {
+  font-size: 11px;
+  color: var(--c-text-faint);
+  padding: 8px 20px 0;
+  margin: 0;
+}
+
+.sub-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 20px 16px;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.sub-player-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  cursor: pointer;
+  transition: all 0.14s;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.06);
+  }
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.sub-player-pts {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.sub-modal-empty {
+  padding: 24px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--c-text-faint);
 }
 

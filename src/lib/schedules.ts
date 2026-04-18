@@ -82,6 +82,8 @@ export interface SlotResult {
   ace_tier: string | null
   ace_player_a_id: number | null
   ace_player_b_id: number | null
+  sub_player_a_ids: number[] | null
+  sub_player_b_ids: number[] | null
 }
 
 export async function getSlotResults(scheduleId: number): Promise<SlotResult[]> {
@@ -206,6 +208,35 @@ export async function setAceSlotData(
     const { error } = await supabase
       .from('league_match_slot_results')
       .insert({ schedule_id: scheduleId, slot_num: 7, ...payload })
+    if (error) throw error
+  }
+}
+
+export async function setSlotSubstitution(
+  scheduleId: number,
+  slotNum: number,
+  isTeamA: boolean,
+  playerIds: number[],
+): Promise<void> {
+  const field = isTeamA ? 'sub_player_a_ids' : 'sub_player_b_ids'
+  const { data: existing } = await supabase
+    .from('league_match_slot_results')
+    .select('schedule_id')
+    .eq('schedule_id', scheduleId)
+    .eq('slot_num', slotNum)
+    .maybeSingle()
+
+  if (existing) {
+    const { error } = await supabase
+      .from('league_match_slot_results')
+      .update({ [field]: playerIds })
+      .eq('schedule_id', scheduleId)
+      .eq('slot_num', slotNum)
+    if (error) throw error
+  } else {
+    const { error } = await supabase
+      .from('league_match_slot_results')
+      .insert({ schedule_id: scheduleId, slot_num: slotNum, [field]: playerIds })
     if (error) throw error
   }
 }

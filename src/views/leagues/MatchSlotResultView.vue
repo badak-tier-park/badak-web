@@ -53,6 +53,17 @@
             </div>
 
             <div class="slot-teams">
+              <!-- 팀A 변경 버튼 컬럼 (맨 왼쪽 벽) -->
+              <div v-if="!isCompleted && slotPlayerMap.get(slot.num)?.teamA?.length" class="sub-col">
+                <button
+                  v-for="(_, idx) in slotPlayerMap.get(slot.num)!.teamA"
+                  :key="idx"
+                  class="btn-sub"
+                  :class="{ 'btn-sub--reset': isSubstituted(slot.num, true, idx) }"
+                  @click.stop="isSubstituted(slot.num, true, idx) ? resetSub(slot.num, true, idx) : openSubModal(slot.num, true, idx)"
+                ><template v-if="isSubstituted(slot.num, true, idx)"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M10 6A4 4 0 1 1 6 2a4 4 0 0 1 3.5 2.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 2v2.5H7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></template><template v-else>변경</template></button>
+              </div>
+
               <button
                 class="slot-team-btn"
                 :class="{
@@ -65,9 +76,10 @@
               >
                 <div class="slot-players">
                   <template v-if="slotPlayerMap.get(slot.num)?.teamA?.length">
-                    <div v-for="p in slotPlayerMap.get(slot.num)!.teamA" :key="p.id" class="slot-player-row">
+                    <div v-for="(p, idx) in getActivePlayers(slot.num, true)" :key="p.id" class="slot-player-row">
                       <span v-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
                       <span class="slot-player-name" :class="`tier-badge--${p.tier.toLowerCase()}`">{{ p.nickname }}</span>
+                      <span v-if="isSubstituted(slot.num, true, idx)" class="sub-badge">대체</span>
                     </div>
                   </template>
                   <span v-else class="slot-team-name" :class="`tier-badge--${teamA?.tier.toLowerCase()}`">
@@ -108,7 +120,8 @@
                 <span v-if="slotWinners.get(slot.num) === schedule!.team_b_captain_id" class="win-badge">WIN</span>
                 <div class="slot-players">
                   <template v-if="slotPlayerMap.get(slot.num)?.teamB?.length">
-                    <div v-for="p in slotPlayerMap.get(slot.num)!.teamB" :key="p.id" class="slot-player-row slot-player-row--right">
+                    <div v-for="(p, idx) in getActivePlayers(slot.num, false)" :key="p.id" class="slot-player-row slot-player-row--right">
+                      <span v-if="isSubstituted(slot.num, false, idx)" class="sub-badge">대체</span>
                       <span class="slot-player-name" :class="`tier-badge--${p.tier.toLowerCase()}`">{{ p.nickname }}</span>
                       <span v-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
                     </div>
@@ -118,6 +131,17 @@
                   </span>
                 </div>
               </button>
+
+              <!-- 팀B 변경 버튼 컬럼 (맨 오른쪽 벽) -->
+              <div v-if="!isCompleted && slotPlayerMap.get(slot.num)?.teamB?.length" class="sub-col sub-col--right">
+                <button
+                  v-for="(_, idx) in slotPlayerMap.get(slot.num)!.teamB"
+                  :key="idx"
+                  class="btn-sub"
+                  :class="{ 'btn-sub--reset': isSubstituted(slot.num, false, idx) }"
+                  @click.stop="isSubstituted(slot.num, false, idx) ? resetSub(slot.num, false, idx) : openSubModal(slot.num, false, idx)"
+                ><template v-if="isSubstituted(slot.num, false, idx)"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M10 6A4 4 0 1 1 6 2a4 4 0 0 1 3.5 2.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 2v2.5H7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></template><template v-else>변경</template></button>
+              </div>
             </div>
           </div>
 
@@ -370,6 +394,36 @@
         </div>
       </div>
     </Teleport>
+    <!-- 선수 교체 모달 -->
+    <Teleport to="body">
+      <div v-if="subModal" class="ladder-overlay" @click.self="subModal = null">
+        <div class="ladder-modal sub-modal">
+          <div class="ladder-header">
+            <span class="ladder-title">대체 선수 선택</span>
+            <button class="ladder-close" @click="subModal = null">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <p class="sub-modal-hint">원래 선수의 티어 이하 · 이 경기 미출전 선수만 표시됩니다</p>
+          <div v-if="subModal.options.length" class="sub-player-list">
+            <button
+              v-for="opt in subModal.options"
+              :key="opt.value"
+              class="sub-player-item"
+              :disabled="savingSub"
+              @click="confirmSub(opt.value)"
+            >
+              <span class="slot-player-name" :class="`tier-badge--${opt.tier!.toLowerCase()}`">{{ opt.label }}</span>
+              <span v-if="opt.race" class="slot-race" :class="`race-badge--${opt.race.toLowerCase()}`">{{ opt.race.toUpperCase() }}</span>
+              <span class="sub-player-pts">{{ opt.points }}pt</span>
+            </button>
+          </div>
+          <div v-else class="sub-modal-empty">출전 가능한 대체 선수가 없습니다</div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -383,7 +437,7 @@ import { getLeague } from '@/lib/leagues'
 import { getCaptains, getMatchMaps } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
-import { getSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, completeMatch, type ScheduleRow } from '@/lib/schedules'
+import { getSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
 import { getScheduleEntries, computeFinalRosters, getAceTierBans } from '@/lib/entries'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
@@ -471,6 +525,21 @@ const savingTier = ref(false)
 // 로스터 (에이스 선수 드롭다운용)
 const rosterA = ref<SlotPlayerInfo[]>([])
 const rosterB = ref<SlotPlayerInfo[]>([])
+
+// 선수 교체 상태
+// substitutionMap: slotNum → { teamA: number[] | null, teamB: number[] | null }
+// (각 배열은 해당 슬롯의 player_ids와 동일 길이, null이면 교체 없음)
+const substitutionMap = ref(new Map<number, { teamA: number[] | null; teamB: number[] | null }>())
+
+interface SubModal {
+  slotNum: number
+  isTeamA: boolean
+  playerIndex: number
+  originalPlayerId: number
+  options: SelectOption[]
+}
+const subModal = ref<SubModal | null>(null)
+const savingSub = ref(false)
 
 // 1~6경기 스코어
 const score6A = computed(() =>
@@ -669,6 +738,138 @@ function getResolvedMap(slotNum: number): MapInfo | null {
     return selectedId ? (allMapsById.value.get(selectedId) ?? null) : null
   }
   return state.candidateMaps[0] ?? null
+}
+
+// ── 선수 교체 ────────────────────────────────────────────────────
+
+function getActivePlayers(slotNum: number, isTeamA: boolean): SlotPlayerInfo[] {
+  const sub = substitutionMap.value.get(slotNum)
+  const subIds = isTeamA ? sub?.teamA : sub?.teamB
+  const original = slotPlayerMap.value.get(slotNum)
+  const originalList = isTeamA ? original?.teamA : original?.teamB
+  if (!originalList?.length) return []
+
+  if (subIds?.length) {
+    return subIds.map(id => {
+      const roster = isTeamA ? rosterA.value : rosterB.value
+      const found = roster.find(p => p.id === id)
+      return found ?? { id, nickname: `선수${id}`, tier: 'e', race: '' }
+    })
+  }
+  return originalList
+}
+
+function isSubstituted(slotNum: number, isTeamA: boolean, playerIndex: number): boolean {
+  const sub = substitutionMap.value.get(slotNum)
+  const subIds = isTeamA ? sub?.teamA : sub?.teamB
+  if (!subIds) return false
+  const original = slotPlayerMap.value.get(slotNum)
+  const originalList = isTeamA ? original?.teamA : original?.teamB
+  return subIds[playerIndex] !== originalList?.[playerIndex]?.id
+}
+
+function getAlreadyAssignedIds(captainId: number, excludeSlotNum: number, excludePlayerIndex: number): Set<number> {
+  const assigned = new Set<number>()
+  for (const [slotNum, slotPlayers] of slotPlayerMap.value) {
+    const isTeamA = captainId === schedule.value?.team_a_captain_id
+    const list = isTeamA ? slotPlayers.teamA : slotPlayers.teamB
+    const sub = substitutionMap.value.get(slotNum)
+    const subIds = isTeamA ? sub?.teamA : sub?.teamB
+
+    list.forEach((p, idx) => {
+      // 교체 대상인 슬롯+인덱스는 제외
+      if (slotNum === excludeSlotNum && idx === excludePlayerIndex) return
+      const activeId = subIds?.[idx] ?? p.id
+      assigned.add(activeId)
+    })
+  }
+  return assigned
+}
+
+function openSubModal(slotNum: number, isTeamA: boolean, playerIndex: number) {
+  const captainId = isTeamA ? schedule.value!.team_a_captain_id : schedule.value!.team_b_captain_id
+  const roster = isTeamA ? rosterA.value : rosterB.value
+  const original = slotPlayerMap.value.get(slotNum)
+  const originalList = isTeamA ? original?.teamA : original?.teamB
+  const originalPlayer = originalList?.[playerIndex]
+  if (!originalPlayer) return
+
+  const originalRank = TIER_RANK[originalPlayer.tier.toUpperCase()] ?? 0
+  const assigned = getAlreadyAssignedIds(captainId, slotNum, playerIndex)
+
+  const options: SelectOption[] = roster
+    .filter(p => {
+      if (assigned.has(p.id)) return false
+      const rank = TIER_RANK[p.tier.toUpperCase()] ?? 0
+      return rank <= originalRank
+    })
+    .map(p => ({
+      value: p.id,
+      label: p.nickname,
+      tier: p.tier,
+      race: p.race || undefined,
+      points: TIER_POINTS[p.tier.toUpperCase()] ?? 1,
+    }))
+
+  subModal.value = { slotNum, isTeamA, playerIndex, originalPlayerId: originalPlayer.id, options }
+}
+
+async function confirmSub(newPlayerId: number) {
+  if (!subModal.value || savingSub.value) return
+  const { slotNum, isTeamA, playerIndex } = subModal.value
+  savingSub.value = true
+  try {
+    const original = slotPlayerMap.value.get(slotNum)
+    const originalList = isTeamA ? original?.teamA : original?.teamB
+    if (!originalList) return
+
+    const existing = substitutionMap.value.get(slotNum) ?? { teamA: null, teamB: null }
+    const currentIds: number[] = (isTeamA ? existing.teamA : existing.teamB)
+      ?? originalList.map(p => p.id)
+    const newIds = [...currentIds]
+    newIds[playerIndex] = newPlayerId
+
+    await setSlotSubstitution(schedule.value!.id, slotNum, isTeamA, newIds)
+
+    const updated = new Map(substitutionMap.value)
+    updated.set(slotNum, isTeamA
+      ? { teamA: newIds, teamB: existing.teamB }
+      : { teamA: existing.teamA, teamB: newIds }
+    )
+    substitutionMap.value = updated
+    subModal.value = null
+  } catch (e: any) {
+    console.error(e)
+  } finally {
+    savingSub.value = false
+  }
+}
+
+async function resetSub(slotNum: number, isTeamA: boolean, playerIndex: number) {
+  const original = slotPlayerMap.value.get(slotNum)
+  const originalList = isTeamA ? original?.teamA : original?.teamB
+  if (!originalList) return
+
+  const existing = substitutionMap.value.get(slotNum) ?? { teamA: null, teamB: null }
+  const currentIds: number[] = (isTeamA ? existing.teamA : existing.teamB)
+    ?? originalList.map(p => p.id)
+  const newIds = [...currentIds]
+  newIds[playerIndex] = originalList[playerIndex].id
+
+  const isAllOriginal = newIds.every((id, i) => id === originalList[i]?.id)
+  const finalIds = isAllOriginal ? originalList.map(p => p.id) : newIds
+
+  try {
+    await setSlotSubstitution(schedule.value!.id, slotNum, isTeamA, finalIds)
+    const updated = new Map(substitutionMap.value)
+    updated.set(slotNum, isTeamA
+      ? { teamA: isAllOriginal ? null : finalIds, teamB: existing.teamB }
+      : { teamA: existing.teamA, teamB: isAllOriginal ? null : finalIds }
+    )
+    substitutionMap.value = updated
+  } catch (e: any) {
+    console.error(e)
+  }
 }
 
 // ── 맵 사다리타기 ──────────────────────────────────────────────────
@@ -885,6 +1086,19 @@ onMounted(async () => {
       if (r.selected_map_id) ladderMap.set(r.slot_num, r.selected_map_id)
     }
     ladderSelectedMaps.value = ladderMap
+
+    // 선수 교체 복원
+    const subMap = new Map<number, { teamA: number[] | null; teamB: number[] | null }>()
+    for (const r of slotResults) {
+      if (r.slot_num === 7) continue
+      if (r.sub_player_a_ids || r.sub_player_b_ids) {
+        subMap.set(r.slot_num, {
+          teamA: r.sub_player_a_ids ?? null,
+          teamB: r.sub_player_b_ids ?? null,
+        })
+      }
+    }
+    substitutionMap.value = subMap
 
     // 에이스 밴 복원 (엔트리 제출 시 저장된 값)
     const aceBans = await getAceTierBans(matchId)
