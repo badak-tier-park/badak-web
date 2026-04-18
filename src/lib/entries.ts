@@ -259,6 +259,9 @@ export async function saveAceTierBan(
 ): Promise<void> {
   const { error } = await supabase
     .from('league_match_ace_bans')
-    .upsert({ schedule_id: scheduleId, captain_player_id: captainPlayerId, tier_ban: tierBan })
+    .upsert(
+      { schedule_id: scheduleId, captain_player_id: captainPlayerId, tier_ban: tierBan },
+      { onConflict: 'schedule_id,captain_player_id' },
+    )
   if (error) throw error
 }

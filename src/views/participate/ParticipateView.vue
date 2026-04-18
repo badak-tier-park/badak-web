@@ -154,15 +154,18 @@
                       </svg>
                       제출됨
                     </span>
-                    <span v-if="consentedSet.has(item.schedule.id)" class="entry-consent-badge">
-                      공개 동의됨
-                    </span>
-                    <button
-                      v-else
-                      class="btn-entry btn-entry--consent"
-                      :disabled="consentingId === item.schedule.id"
-                      @click="handleConsentReveal(item)"
-                    >{{ consentingId === item.schedule.id ? '...' : '공개 동의' }}</button>
+                    <button class="btn-entry btn-entry--view" @click="openEntryModal(item, true)">확인</button>
+                    <template v-if="!item.schedule.is_entry_revealed">
+                      <span v-if="consentedSet.has(item.schedule.id)" class="entry-consent-badge">
+                        공개 동의됨
+                      </span>
+                      <button
+                        v-else
+                        class="btn-entry btn-entry--consent"
+                        :disabled="consentingId === item.schedule.id"
+                        @click="handleConsentReveal(item)"
+                      >{{ consentingId === item.schedule.id ? '...' : '공개 동의' }}</button>
+                    </template>
                   </template>
                   <template v-else-if="entryStatusMap.get(item.schedule.id) === 'saved'">
                     <button class="btn-entry btn-entry--edit" @click="openEntryModal(item)">수정</button>
@@ -363,7 +366,7 @@
         <div class="modal modal--entry">
           <div class="modal-header">
             <div>
-              <p class="modal-title">엔트리 작성</p>
+              <p class="modal-title">{{ entryModal.readonly ? '엔트리 확인' : '엔트리 작성' }}</p>
               <p class="modal-subtitle">
                 {{ entryModal.schedule?.round }}라운드
                 <span v-if="entryModal.schedule?.match_date">
@@ -441,12 +444,16 @@
                           <div v-else class="map-chip-img-empty" />
                           <span class="map-chip-name">{{ map.name }}</span>
                           <button
-                            v-if="(BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.slotMaps[slot.num].length > 1"
+                            v-if="!entryModal.readonly && (BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.slotMaps[slot.num].length > 1"
                             class="map-chip-ban"
                             :class="{ 'map-chip-ban--active': entryModal.banSelections[slot.num] === map.id }"
                             type="button"
                             @click="toggleBan(slot.num, map.id)"
                           >{{ entryModal.banSelections[slot.num] === map.id ? '밴 취소' : '밴' }}</button>
+                          <span
+                            v-else-if="entryModal.readonly && (BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.banSelections[slot.num] === map.id"
+                            class="map-chip-ban map-chip-ban--active map-chip-ban--readonly"
+                          >밴</span>
                         </div>
                       </div>
 
@@ -457,6 +464,7 @@
                           :key="idx"
                           :model-value="getSlotPlayer(slot.num, idx - 1)"
                           :options="buildOptions(slot.num, idx - 1)"
+                          :disabled="entryModal.readonly"
                           @update:model-value="setSlotPlayer(slot.num, idx - 1, $event)"
                         />
                       </div>
@@ -477,7 +485,8 @@
                       class="ace-ban-tier-btn"
                       :class="[`tier-badge--${tier.toLowerCase()}`, { 'ace-ban-tier-btn--selected': entryModal.aceTierBan === tier }]"
                       type="button"
-                      @click="entryModal.aceTierBan = entryModal.aceTierBan === tier ? null : tier"
+                      :disabled="entryModal.readonly"
+                      @click="!entryModal.readonly && (entryModal.aceTierBan = entryModal.aceTierBan === tier ? null : tier)"
                     >
                       <span class="ace-ban-tier-label">{{ tier }}</span>
                       <span class="ace-ban-tier-sub">티어</span>
@@ -490,11 +499,16 @@
           </div>
 
           <div class="modal-footer">
-            <p v-if="entryError" class="entry-error">{{ entryError }}</p>
-            <button class="btn-cancel" @click="closeEntryModal">취소</button>
-            <button class="btn-submit" :disabled="entrySaving || loadingEntry" @click="handleEntrySubmit">
-              {{ entrySaving ? '저장 중...' : '저장' }}
-            </button>
+            <template v-if="entryModal.readonly">
+              <button class="btn-submit" @click="closeEntryModal">닫기</button>
+            </template>
+            <template v-else>
+              <p v-if="entryError" class="entry-error">{{ entryError }}</p>
+              <button class="btn-cancel" @click="closeEntryModal">취소</button>
+              <button class="btn-submit" :disabled="entrySaving || loadingEntry" @click="handleEntrySubmit">
+                {{ entrySaving ? '저장 중...' : '저장' }}
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -832,17 +846,19 @@ interface SlotMapInfo {
 
 interface EntryModalState {
   open: boolean
+  readonly: boolean
   schedule: ScheduleRow | null
   leagueId: string
   opponentTeamName: string
   teamMembers: PlayerRow[]
   selections: Record<number, number[]>
-  slotMaps: Record<number, SlotMapInfo[]>   // match_slot → 맵 목록
-  banSelections: Record<number, string | null>  // match_slot → banned_map_id
+  slotMaps: Record<number, SlotMapInfo[]>
+  banSelections: Record<number, string | null>
   aceTierBan: string | null
 }
 const entryModal = reactive<EntryModalState>({
   open: false,
+  readonly: false,
   schedule: null,
   leagueId: '',
   opponentTeamName: '',
@@ -901,7 +917,7 @@ async function openMatchList(league: LeagueRow) {
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
 
     matchListModal.matches = schedules
-      .filter(s => !s.is_completed && (s.team_a_captain_id === myPlayerId.value || s.team_b_captain_id === myPlayerId.value))
+      .filter(s => !s.is_completed && !s.is_entry_revealed && (s.team_a_captain_id === myPlayerId.value || s.team_b_captain_id === myPlayerId.value))
       .map(s => {
         const opponentId = s.team_a_captain_id === myPlayerId.value ? s.team_b_captain_id : s.team_a_captain_id
         return {
@@ -981,8 +997,9 @@ const teamPoints = computed(() =>
 )
 const totalPoints = computed(() => individualPoints.value + teamPoints.value)
 
-async function openEntryModal(item: MyMatchItem) {
+async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.open = true
+  entryModal.readonly = readonly
   entryModal.schedule = item.schedule
   entryModal.leagueId = item.leagueId
   entryModal.opponentTeamName = item.opponentTeamName
