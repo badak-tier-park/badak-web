@@ -281,9 +281,7 @@
                       :class="item.schedule.winner_captain_id === item.schedule.team_a_captain_id ? 'result-team-name--win' : 'result-team-name--loss'"
                     >{{ item.teamAName }}</span>
                     <span class="result-score">
-                      <span :class="item.schedule.winner_captain_id === item.schedule.team_a_captain_id ? 'result-score--win' : 'result-score--loss'">{{ item.teamAWins }}</span>
-                      <span class="result-score-sep">:</span>
-                      <span :class="item.schedule.winner_captain_id === item.schedule.team_b_captain_id ? 'result-score--win' : 'result-score--loss'">{{ item.teamBWins }}</span>
+                      <span class="result-score-sep">vs</span>
                     </span>
                     <span
                       class="result-team-name"

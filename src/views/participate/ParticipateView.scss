@@ -270,9 +270,7 @@
 
 .result-team-name {
   font-size: 13px;
-
-  &--win  { font-weight: 800; color: var(--c-text-bright); }
-  &--loss { font-weight: 400; color: var(--c-text-faint); }
+  font-weight: 800; color: var(--c-text-bright);
 }
 
 .result-score {
