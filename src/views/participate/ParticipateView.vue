@@ -58,21 +58,21 @@
               </svg>
               리그 안내
             </button>
-            <button class="btn-check-entry" @click="openRevealList(league)">
+            <button class="btn-pill btn-pill--md btn-pill--green" @click="openRevealList(league)">
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
                 <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
               </svg>
               엔트리 확인
             </button>
-            <button class="btn-check-result" @click="openResultList(league)">
+            <button class="btn-pill btn-pill--md btn-pill--orange" @click="openResultList(league)">
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
                 <path d="M4.5 7h5M7 5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
               </svg>
               경기 결과
             </button>
-            <button class="btn-check-standings" @click="openStandingsList(league)">
+            <button class="btn-pill btn-pill--md btn-pill--purple" @click="openStandingsList(league)">
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <rect x="1" y="8" width="3" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
                 <rect x="5.5" y="5" width="3" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
@@ -82,7 +82,7 @@
             </button>
             <button
               v-if="myCaptainLeagueIds.has(league.id)"
-              class="btn-entry-open"
+              class="btn-pill btn-pill--md btn-pill--purple"
               @click="openMatchList(league)"
             >
               엔트리 제출
@@ -154,29 +154,29 @@
                       </svg>
                       제출됨
                     </span>
-                    <button class="btn-entry btn-entry--view" @click="openEntryModal(item, true)">확인</button>
+                    <button class="btn-pill btn-pill--md btn-pill--purple" @click="openEntryModal(item, true)">확인</button>
                     <template v-if="!item.schedule.is_entry_revealed">
                       <span v-if="consentedSet.has(item.schedule.id)" class="entry-consent-badge">
                         공개 동의됨
                       </span>
                       <button
                         v-else
-                        class="btn-entry btn-entry--consent"
+                        class="btn-pill btn-pill--md btn-pill--amber"
                         :disabled="consentingId === item.schedule.id"
                         @click="handleConsentReveal(item)"
                       >{{ consentingId === item.schedule.id ? '...' : '공개 동의' }}</button>
                     </template>
                   </template>
                   <template v-else-if="entryStatusMap.get(item.schedule.id) === 'saved'">
-                    <button class="btn-entry btn-entry--edit" @click="openEntryModal(item)">수정</button>
+                    <button class="btn-pill btn-pill--md btn-pill--ghost" @click="openEntryModal(item)">수정</button>
                     <button
-                      class="btn-entry btn-entry--submit"
+                      class="btn-pill btn-pill--md btn-pill--green"
                       :disabled="submittingId === item.schedule.id"
                       @click="handleSubmitEntry(item.schedule.id)"
                     >{{ submittingId === item.schedule.id ? '...' : '제출' }}</button>
                   </template>
                   <template v-else>
-                    <button class="btn-entry" @click="openEntryModal(item)">작성</button>
+                    <button class="btn-pill btn-pill--md btn-pill--purple" @click="openEntryModal(item)">작성</button>
                   </template>
                 </div>
               </div>
@@ -224,7 +224,7 @@
                   </span>
                 </div>
                 <div class="match-item-actions">
-                  <button class="btn-entry" @click="openRevealEntry(item)">확인</button>
+                  <button class="btn-pill btn-pill--md btn-pill--purple" @click="openRevealEntry(item)">확인</button>
                 </div>
               </div>
             </div>
@@ -295,10 +295,10 @@
                 <div class="match-item-actions">
                   <button
                     v-if="item.schedule.video_url"
-                    class="btn-entry"
+                    class="btn-pill btn-pill--md btn-pill--amber"
                     @click="openUrl(item.schedule.video_url!)"
                   >경기 영상</button>
-                  <button class="btn-entry" @click="openResultEntry(item)">결과 보기</button>
+                  <button class="btn-pill btn-pill--md btn-pill--purple" @click="openResultEntry(item)">결과 보기</button>
                 </div>
               </div>
             </div>
@@ -360,7 +360,6 @@
       :team-a-name="resultModal.item.teamAName"
       :team-b-name="resultModal.item.teamBName"
       :show-results="true"
-      :video-url="resultModal.item.schedule.video_url"
       @close="resultModal.open = false"
     />
 

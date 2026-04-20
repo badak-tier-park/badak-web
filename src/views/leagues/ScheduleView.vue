@@ -130,7 +130,7 @@
                   </button>
                   <button
                     v-else-if="row.id && bothSubmittedIds.has(row.id) && authStore.user?.id === league?.created_by"
-                    class="btn-reveal-entry"
+                    class="btn-pill btn-pill--green"
                     :disabled="revealingId === row.id"
                     @click="revealMatch(row)"
                     title="엔트리 공개"
@@ -143,7 +143,7 @@
                   </button>
                   <button
                     v-if="row.id && row.isRevealed"
-                    class="btn-slot-result"
+                    class="btn-pill btn-pill--blue"
                     @click="router.push({ name: 'league-match-slot-result', params: { id: leagueId, matchId: row.id } })"
                     title="결과 입력"
                   >
@@ -152,8 +152,8 @@
                   </button>
                   <button
                     v-if="row.id && row.isCompleted"
-                    class="btn-video-url"
-                    :class="{ 'btn-video-url--set': !!row.videoUrl }"
+                    class="btn-pill btn-pill--amber"
+                    :class="{ 'btn-pill--filled': !!row.videoUrl }"
                     @click="startEditVideoUrl(row)"
                     title="영상 링크"
                   >

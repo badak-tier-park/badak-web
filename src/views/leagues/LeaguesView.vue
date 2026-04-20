@@ -37,7 +37,7 @@
               </div>
               
             </div>
-            <button class="btn-card-edit" @click.stop="openEdit(league)">
+            <button class="btn-pill btn-pill--silent" @click.stop="openEdit(league)">
               <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
                 <path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
