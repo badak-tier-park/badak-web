@@ -293,6 +293,11 @@
                   </span>
                 </div>
                 <div class="match-item-actions">
+                  <button
+                    v-if="item.schedule.video_url"
+                    class="btn-entry"
+                    @click="openUrl(item.schedule.video_url!)"
+                  >경기 영상</button>
                   <button class="btn-entry" @click="openResultEntry(item)">결과 보기</button>
                 </div>
               </div>
@@ -355,6 +360,7 @@
       :team-a-name="resultModal.item.teamAName"
       :team-b-name="resultModal.item.teamBName"
       :show-results="true"
+      :video-url="resultModal.item.schedule.video_url"
       @close="resultModal.open = false"
     />
 
@@ -839,6 +845,10 @@ const resultModal = reactive({
   open: false,
   item: null as RevealListItem | null,
 })
+
+function openUrl(url: string) {
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
 
 function openResultEntry(item: RevealListItem) {
   resultModal.item = item

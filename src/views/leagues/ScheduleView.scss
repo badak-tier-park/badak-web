@@ -247,12 +247,18 @@
 
 .match-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 14px;
   border-radius: 10px;
   border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
+}
+
+.match-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .match-teams {
@@ -401,6 +407,96 @@
   &:hover {
     background: rgba(52, 211, 153, 0.14);
     border-color: rgba(52, 211, 153, 0.55);
+  }
+}
+
+.btn-video-url {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.07);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: all 0.13s;
+
+  &:hover {
+    background: rgba(251, 191, 36, 0.14);
+    border-color: rgba(251, 191, 36, 0.55);
+  }
+
+  &--set {
+    border-color: rgba(251, 191, 36, 0.55);
+    background: rgba(251, 191, 36, 0.14);
+  }
+}
+
+.match-url-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.url-input {
+  flex: 1;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.14s;
+
+  &:focus { border-color: rgba(251, 191, 36, 0.5); }
+  &::placeholder { color: var(--c-text-faint); }
+}
+
+.btn-url-save {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.13s;
+
+  &:hover:not(:disabled) {
+    background: rgba(251, 191, 36, 0.22);
+    border-color: rgba(251, 191, 36, 0.6);
+  }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
+.btn-url-cancel {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border);
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.13s;
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #f87171;
   }
 }
 

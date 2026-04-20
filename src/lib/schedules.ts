@@ -10,6 +10,7 @@ export interface ScheduleRow {
   winner_captain_id: number | null
   is_entry_revealed: boolean
   is_completed: boolean
+  video_url: string | null
   created_at: string
 }
 
@@ -239,6 +240,14 @@ export async function setSlotSubstitution(
       .insert({ schedule_id: scheduleId, slot_num: slotNum, [field]: playerIds })
     if (error) throw error
   }
+}
+
+export async function updateVideoUrl(scheduleId: number, url: string | null): Promise<void> {
+  const { error } = await supabase
+    .from('league_schedules')
+    .update({ video_url: url || null })
+    .eq('id', scheduleId)
+  if (error) throw error
 }
 
 export async function saveSchedules(

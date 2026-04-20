@@ -323,7 +323,8 @@ const props = withDefaults(defineProps<{
   teamAName: string
   teamBName: string
   showResults?: boolean
-}>(), { showResults: false })
+  videoUrl?: string | null
+}>(), { showResults: false, videoUrl: null })
 
 defineEmits<{ close: [] }>()
 
