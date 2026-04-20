@@ -802,3 +802,70 @@
   color: var(--c-text-faint);
 }
 
+// ── 라이트 테마 오버라이드 ────────────────────────────────────
+[data-theme="light"] {
+  .slot-row--done {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.06);
+  }
+
+  .slot-type--team { color: #7c3aed; }
+
+  .win-badge { color: #059669; }
+
+  .slot-team-btn--winner {
+    border-color: rgba(16, 185, 129, 0.55);
+    background: rgba(16, 185, 129, 0.12);
+  }
+
+  .slot-ladder-btn {
+    color: #7c3aed;
+    border-color: rgba(124, 58, 237, 0.4);
+    background: rgba(124, 58, 237, 0.08);
+    &:hover { background: rgba(124, 58, 237, 0.16); border-color: rgba(124, 58, 237, 0.65); }
+  }
+
+  .badge-completed {
+    color: #059669;
+    border-color: rgba(22, 163, 74, 0.4);
+    background: rgba(22, 163, 74, 0.10);
+  }
+
+  .ace-card {
+    border-color: rgba(124, 58, 237, 0.25);
+    background: rgba(124, 58, 237, 0.04);
+  }
+
+  .ace-card-title {
+    color: #7c3aed;
+    border-bottom-color: rgba(124, 58, 237, 0.18);
+  }
+
+  .btn-sub {
+    color: #2563eb;
+    border-color: rgba(37, 99, 235, 0.4);
+    background: rgba(37, 99, 235, 0.08);
+    &:hover { background: rgba(37, 99, 235, 0.16); border-color: rgba(37, 99, 235, 0.6); }
+
+    &--reset {
+      color: #b45309;
+      border-color: rgba(180, 83, 9, 0.4);
+      background: rgba(180, 83, 9, 0.08);
+      &:hover { background: rgba(180, 83, 9, 0.16); border-color: rgba(180, 83, 9, 0.6); }
+    }
+  }
+
+  .sub-badge {
+    color: #b45309;
+    background: rgba(180, 83, 9, 0.10);
+    border-color: rgba(180, 83, 9, 0.3);
+  }
+
+  .ladder-random-btn {
+    color: #7c3aed;
+    border-color: rgba(124, 58, 237, 0.4);
+    background: rgba(124, 58, 237, 0.10);
+    &:hover:not(:disabled) { background: rgba(124, 58, 237, 0.18); }
+  }
+}
+
