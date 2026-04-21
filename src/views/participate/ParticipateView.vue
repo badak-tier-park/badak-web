@@ -333,10 +333,13 @@
                 v-for="(team, idx) in standingsModal.standings"
                 :key="team.captainId"
                 class="standing-team"
+                :class="team.captainId === standingsModal.championId ? 'standing-team--champion' : team.captainId === standingsModal.runnerUpId ? 'standing-team--runner-up' : ''"
               >
                 <div class="standing-team-header">
                   <span class="standing-rank">{{ idx + 1 }}</span>
                   <span class="standing-name">{{ team.teamName }}</span>
+                  <span v-if="team.captainId === standingsModal.championId" class="standing-award standing-award--champion">우승</span>
+                  <span v-else-if="team.captainId === standingsModal.runnerUpId" class="standing-award standing-award--runner-up">준우승</span>
                   <div class="standing-stats">
                     <span class="standing-record">{{ team.wins }}승 {{ team.losses }}패</span>
                     <span class="standing-pts">{{ team.matchPoints }}<span class="standing-pts-label">pt</span></span>
@@ -711,6 +714,8 @@ const standingsModal = reactive({
   league: null as LeagueRow | null,
   standings: [] as TeamStanding[],
   loading: false,
+  championId: null as number | null,
+  runnerUpId: null as number | null,
 })
 
 async function openResultList(league: LeagueRow) {
@@ -836,6 +841,31 @@ async function openStandingsList(league: LeagueRow) {
     standingsModal.standings = [...standingsMap.values()].sort((a, b) =>
       b.matchPoints !== a.matchPoints ? b.matchPoints - a.matchPoints : b.wins - a.wins
     )
+
+    // 플레이오프 결과로 우승/준우승 판별
+    let championId: number | null = null
+    let runnerUpId: number | null = null
+
+    const superAce = schedules.find(s => s.match_type === 'super_ace' && s.is_completed)
+    if (superAce?.winner_captain_id) {
+      championId = superAce.winner_captain_id
+      runnerUpId = superAce.team_a_captain_id === championId
+        ? superAce.team_b_captain_id
+        : superAce.team_a_captain_id
+    } else {
+      const set1 = schedules.find(s => s.match_type === 'final_set1' && s.is_completed)
+      const set2 = schedules.find(s => s.match_type === 'final_set2' && s.is_completed)
+      if (set1?.winner_captain_id && set2?.winner_captain_id &&
+          set1.winner_captain_id === set2.winner_captain_id) {
+        championId = set1.winner_captain_id
+        runnerUpId = set1.team_a_captain_id === championId
+          ? set1.team_b_captain_id
+          : set1.team_a_captain_id
+      }
+    }
+
+    standingsModal.championId = championId
+    standingsModal.runnerUpId = runnerUpId
   } finally {
     standingsModal.loading = false
   }
