@@ -11,12 +11,12 @@
       </button>
 
       <div class="page-title-row">
-        <h1 class="page-title">정규리그 관리</h1>
+        <h1 class="page-title">리그 관리</h1>
         <button class="btn-create" @click="showForm = true">
           <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
             <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          정규리그 생성
+          리그 생성
         </button>
       </div>
 
@@ -141,7 +141,7 @@
         <div class="modal">
           <div class="modal-header">
             <div>
-              <span class="modal-title">{{ editTarget ? '정규리그 수정' : '정규리그 생성' }}</span>
+              <span class="modal-title">{{ editTarget ? '리그 수정' : '리그 생성' }}</span>
               <span v-if="editTarget?.draft_completed" class="modal-locked-badge">지목식 완료 · 수정 불가</span>
             </div>
             <button class="modal-close" @click="closeForm">
