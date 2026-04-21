@@ -8,6 +8,14 @@ export interface TeamNameRow {
   updated_at: string
 }
 
+export async function getAllTeamNames(): Promise<TeamNameRow[]> {
+  const { data, error } = await supabase
+    .from('league_team_names')
+    .select('*')
+  if (error) throw error
+  return data
+}
+
 export async function getTeamNames(leagueId: string): Promise<TeamNameRow[]> {
   const { data, error } = await supabase
     .from('league_team_names')

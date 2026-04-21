@@ -1,6 +1,12 @@
 <template>
   <div class="participate-page">
-    <AppHeader />
+    <AppHeader>
+      <template #actions>
+        <button class="btn-hof" @click="$router.push({ name: 'hall-of-fame' })">
+          🏆 명예의 전당
+        </button>
+      </template>
+    </AppHeader>
 
     <div class="participate-content">
       <button class="btn-back" @click="$router.push({ name: 'home' })">

@@ -17,6 +17,22 @@
 }
 
 
+.btn-hof {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+  &:hover { background: rgba(245, 158, 11, 0.16); border-color: rgba(245, 158, 11, 0.7); }
+}
+
 // ── 리그 목록 ─────────────────────────────────────────────
 .league-list {
   display: flex;

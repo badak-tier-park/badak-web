@@ -106,6 +106,16 @@ export async function revealEntries(scheduleId: number): Promise<void> {
   if (error) throw error
 }
 
+export async function getAllCompletedSchedules(): Promise<ScheduleRow[]> {
+  const { data, error } = await supabase
+    .from('league_schedules')
+    .select('*')
+    .eq('is_completed', true)
+    .order('id', { ascending: true })
+  if (error) throw error
+  return data
+}
+
 export async function getCompletedSchedules(leagueId: string): Promise<ScheduleRow[]> {
   const { data, error } = await supabase
     .from('league_schedules')
