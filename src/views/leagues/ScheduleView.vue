@@ -81,77 +81,104 @@
             </div>
             <div class="match-list">
               <div v-for="(row, idx) in rowsByRound(round)" :key="idx" class="match-row">
-                <div class="match-teams">
-                  <div class="match-team">
-                    <select v-model="row.teamA" class="team-select" :disabled="isLocked">
-                      <option value="">팀 선택</option>
-                      <option v-for="t in teams" :key="t.captainId" :value="t.captainId">
-                        {{ t.teamName || t.nickname }}
-                      </option>
-                    </select>
+                <div class="match-row-main">
+                  <div class="match-teams">
+                    <div class="match-team">
+                      <select v-model="row.teamA" class="team-select" :disabled="isLocked">
+                        <option value="">팀 선택</option>
+                        <option v-for="t in teams" :key="t.captainId" :value="t.captainId">
+                          {{ t.teamName || t.nickname }}
+                        </option>
+                      </select>
+                    </div>
+                    <span class="match-vs">VS</span>
+                    <div class="match-team">
+                      <select v-model="row.teamB" class="team-select" :disabled="isLocked">
+                        <option value="">팀 선택</option>
+                        <option v-for="t in teams" :key="t.captainId" :value="t.captainId">
+                          {{ t.teamName || t.nickname }}
+                        </option>
+                      </select>
+                    </div>
                   </div>
-                  <span class="match-vs">VS</span>
-                  <div class="match-team">
-                    <select v-model="row.teamB" class="team-select" :disabled="isLocked">
-                      <option value="">팀 선택</option>
-                      <option v-for="t in teams" :key="t.captainId" :value="t.captainId">
-                        {{ t.teamName || t.nickname }}
-                      </option>
-                    </select>
+                  <div class="date-picker-wrap">
+                    <VueDatePicker
+                      :model-value="row.matchDate ? new Date(row.matchDate) : null"
+                      :enable-time-picker="false"
+                      :locale="ko"
+                      :dark="true"
+                      auto-apply
+                      :teleport="true"
+                      :disabled="isLocked"
+                      @update:model-value="(val: Date | null) => row.matchDate = val ? toYMD(val) : ''"
+                    >
+                      <template #trigger>
+                        <div class="dp-custom-input">
+                          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" class="dp-custom-icon">
+                            <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+                            <path d="M4 1v2M10 1v2M1 5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                          </svg>
+                          <span :class="row.matchDate ? 'dp-date-text' : 'dp-placeholder'">
+                            {{ row.matchDate ? row.matchDate.replaceAll('-', '/') : '날짜 선택' }}
+                          </span>
+                        </div>
+                      </template>
+                    </VueDatePicker>
                   </div>
-                </div>
-                <div class="date-picker-wrap">
-                  <VueDatePicker
-                    :model-value="row.matchDate ? new Date(row.matchDate) : null"
-                    :enable-time-picker="false"
-                    :locale="ko"
-                    :dark="true"
-                    auto-apply
-                    :teleport="true"
-                    :disabled="isLocked"
-                    @update:model-value="(val: Date | null) => row.matchDate = val ? toYMD(val) : ''"
+                  <button v-if="row.isRevealed" class="badge-revealed">
+                    공개됨
+                  </button>
+                  <button
+                    v-else-if="row.id && bothSubmittedIds.has(row.id) && authStore.user?.id === league?.created_by"
+                    class="btn-pill btn-pill--green"
+                    :disabled="revealingId === row.id"
+                    @click="revealMatch(row)"
+                    title="엔트리 공개"
                   >
-                    <template #trigger>
-                      <div class="dp-custom-input">
-                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" class="dp-custom-icon">
-                          <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-                          <path d="M4 1v2M10 1v2M1 5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                        </svg>
-                        <span :class="row.matchDate ? 'dp-date-text' : 'dp-placeholder'">
-                          {{ row.matchDate ? row.matchDate.replaceAll('-', '/') : '날짜 선택' }}
-                        </span>
-                      </div>
-                    </template>
-                  </VueDatePicker>
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                      <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
+                      <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
+                    </svg>
+                    {{ revealingId === row.id ? '공개 중...' : '엔트리 공개' }}
+                  </button>
+                  <button
+                    v-if="row.id && row.isRevealed"
+                    class="btn-pill btn-pill--blue"
+                    @click="router.push({ name: 'league-match-slot-result', params: { id: leagueId, matchId: row.id } })"
+                    title="결과 입력"
+                  >
+                    <AppIcon name="chart" :size="11" />
+                    결과 입력
+                  </button>
+                  <button
+                    v-if="row.id && row.isCompleted"
+                    class="btn-pill btn-pill--amber"
+                    :class="{ 'btn-pill--filled': !!row.videoUrl }"
+                    @click="startEditVideoUrl(row)"
+                    title="영상 링크"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                      <path d="M5.5 8.5l3-3M4 9.5a2.5 2.5 0 01-3.5-3.5l2-2a2.5 2.5 0 013.2-.3M10 4.5a2.5 2.5 0 013.5 3.5l-2 2a2.5 2.5 0 01-3.2.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                    </svg>
+                    {{ row.videoUrl ? '영상 수정' : '영상 링크' }}
+                  </button>
+                  <button v-if="!isLocked" class="btn-remove-match" @click="removeMatch(row)">
+                    <AppIcon name="close" :size="11" />
+                  </button>
                 </div>
-                <button v-if="row.isRevealed" class="badge-revealed">
-                  공개됨
-                </button>
-                <button
-                  v-else-if="row.id && bothSubmittedIds.has(row.id) && authStore.user?.id === league?.created_by"
-                  class="btn-reveal-entry"
-                  :disabled="revealingId === row.id"
-                  @click="revealMatch(row)"
-                  title="엔트리 공개"
-                >
-                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                    <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
-                    <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
-                  </svg>
-                  {{ revealingId === row.id ? '공개 중...' : '엔트리 공개' }}
-                </button>
-                <button
-                  v-if="row.id && row.isRevealed"
-                  class="btn-slot-result"
-                  @click="router.push({ name: 'league-match-slot-result', params: { id: leagueId, matchId: row.id } })"
-                  title="결과 입력"
-                >
-                  <AppIcon name="chart" :size="11" />
-                  결과 입력
-                </button>
-                <button v-if="!isLocked" class="btn-remove-match" @click="removeMatch(row)">
-                  <AppIcon name="close" :size="11" />
-                </button>
+                <div v-if="editingVideoUrlId === row.id" class="match-url-edit">
+                  <input
+                    v-model="videoUrlInput"
+                    class="url-input"
+                    placeholder="https://..."
+                    @keydown.enter="saveVideoUrl(row)"
+                    @keydown.esc="editingVideoUrlId = null"
+                  />
+                  <button class="btn-url-save" :disabled="savingVideoUrl" @click="saveVideoUrl(row)">
+                    {{ savingVideoUrl ? '저장 중...' : '저장' }}
+                  </button>
+                  <button class="btn-url-cancel" @click="editingVideoUrlId = null">취소</button>
+                </div>
               </div>
             </div>
           </div>
@@ -182,7 +209,7 @@ import { useAuthStore } from '@/stores/auth'
 import { getCaptains } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
-import { getSchedules, saveSchedules, revealEntries } from '@/lib/schedules'
+import { getSchedules, saveSchedules, revealEntries, updateVideoUrl } from '@/lib/schedules'
 import { getBothSubmittedSet } from '@/lib/entries'
 import { withTimeout } from '@/lib/supabase'
 
@@ -200,6 +227,9 @@ const gamesPerTeam = ref(1)
 const numRoundsInput = ref<number | null>(null)
 const bothSubmittedIds = ref(new Set<number>())
 const revealingId = ref<number | null>(null)
+const editingVideoUrlId = ref<number | null>(null)
+const videoUrlInput = ref('')
+const savingVideoUrl = ref(false)
 
 interface TeamInfo {
   captainId: number
@@ -216,6 +246,8 @@ interface MatchRow {
   teamB: number | ''
   matchDate: string
   isRevealed?: boolean
+  isCompleted?: boolean
+  videoUrl?: string | null
 }
 
 const teams = ref<TeamInfo[]>([])
@@ -226,6 +258,23 @@ function rowsByRound(round: number) { return rows.value.filter(r => r.round === 
 
 // 한 번 저장된 이후(DB에 id 존재)에는 편집 불가
 const isLocked = computed(() => rows.value.some(r => r.id != null))
+
+function startEditVideoUrl(row: MatchRow) {
+  editingVideoUrlId.value = row.id ?? null
+  videoUrlInput.value = row.videoUrl ?? ''
+}
+
+async function saveVideoUrl(row: MatchRow) {
+  if (!row.id || savingVideoUrl.value) return
+  savingVideoUrl.value = true
+  try {
+    await updateVideoUrl(row.id, videoUrlInput.value.trim() || null)
+    row.videoUrl = videoUrlInput.value.trim() || null
+    editingVideoUrlId.value = null
+  } finally {
+    savingVideoUrl.value = false
+  }
+}
 
 async function revealMatch(row: MatchRow) {
   if (!row.id || revealingId.value) return
@@ -270,6 +319,8 @@ onMounted(async () => {
       teamB: s.team_b_captain_id,
       matchDate: s.match_date ?? '',
       isRevealed: s.is_entry_revealed,
+      isCompleted: s.is_completed,
+      videoUrl: s.video_url,
     }))
 
     bothSubmittedIds.value = await getBothSubmittedSet(schedules)

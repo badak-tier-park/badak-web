@@ -8,7 +8,7 @@
 
 .slot-result-content {
   flex: 1;
-  max-width: 640px;
+  max-width: 720px;
   width: 100%;
   margin: 0 auto;
   padding: 40px 28px 80px;
@@ -207,6 +207,12 @@
   max-width: 100%;
 }
 
+.slot-map-pending {
+  font-size: 10px;
+  color: var(--c-text-faint);
+  font-weight: 500;
+}
+
 .slot-ladder-btn {
   font-size: 10px;
   font-weight: 700;
@@ -222,49 +228,6 @@
   &:hover { background: rgba(170, 59, 255, 0.2); border-color: rgba(170, 59, 255, 0.65); }
 }
 
-.slot-team-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  justify-content: flex-end;
-  padding: 7px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--c-border);
-  background: var(--c-surface);
-  cursor: pointer;
-  transition: all 0.14s;
-  min-width: 0;
-
-  &--right {
-    justify-content: flex-start;
-  }
-
-  &:hover:not(:disabled) {
-    border-color: rgba(52, 211, 153, 0.4);
-    background: rgba(52, 211, 153, 0.06);
-  }
-
-  &--winner {
-    border-color: rgba(52, 211, 153, 0.5);
-    background: rgba(52, 211, 153, 0.1);
-
-    &:hover:not(:disabled) {
-      border-color: rgba(52, 211, 153, 0.65);
-      background: rgba(52, 211, 153, 0.15);
-    }
-  }
-
-  &--loser {
-    opacity: 0.35;
-    cursor: default;
-  }
-
-  &--saving {
-    opacity: 0.6;
-    cursor: default;
-  }
-}
 
 .slot-team-name {
   font-size: 12px;
@@ -283,9 +246,7 @@
   align-items: flex-end;
   gap: 3px;
 
-  .slot-team-btn--right & {
-    align-items: flex-start;
-  }
+  .slot-team-btn--right & { align-items: flex-start; }
 }
 
 .slot-player-row {
@@ -550,6 +511,39 @@
   overflow: hidden;
 }
 
+.super-ace-ban-summary {
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-bottom: 1px solid rgba(170, 59, 255, 0.15);
+}
+
+.super-ace-ban-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.super-ace-ban-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.super-ace-ban-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
 .ace-card-title {
   padding: 12px 16px;
   font-size: 12px;
@@ -622,27 +616,30 @@
 }
 
 .ace-tier-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 700;
   opacity: 0.3;
+  gap: 2px;
 
   &--banned {
     opacity: 1;
-    text-decoration: line-through;
     background: rgba(239, 68, 68, 0.12);
     color: #f87171;
     border: 1px solid rgba(239, 68, 68, 0.35);
-    text-decoration: none;
-
-    &::after {
-      content: ' 밴';
-      font-size: 10px;
-      font-weight: 600;
-      opacity: 0.8;
-    }
   }
+}
+
+.ace-tier-ban-src {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.75;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
 }
 
 .ace-confirmed-tier {
@@ -669,6 +666,15 @@
 .ace-locked-hint {
   font-size: 12px;
   color: var(--c-text-faint);
+}
+
+.ace-no-players {
+  font-size: 11px;
+  color: var(--c-text-muted);
+  padding: 4px 8px;
+  border: 1px dashed var(--c-border);
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
 .ace-map {
@@ -699,5 +705,212 @@
   font-weight: 700;
   color: var(--c-text-faint);
   flex-shrink: 0;
+}
+
+// ── 선수 교체 ────────────────────────────────────────────────
+.slot-team-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  cursor: pointer;
+  transition: all 0.14s;
+  min-width: 0;
+
+  &--right { justify-content: flex-start; }
+
+  &:hover:not(:disabled) {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.06);
+  }
+
+  &--winner {
+    border-color: rgba(52, 211, 153, 0.5);
+    background: rgba(52, 211, 153, 0.1);
+
+    &:hover:not(:disabled) {
+      border-color: rgba(52, 211, 153, 0.65);
+      background: rgba(52, 211, 153, 0.15);
+    }
+  }
+
+  &--loser { opacity: 0.35; cursor: default; }
+  &--saving { opacity: 0.6; cursor: default; }
+}
+
+// 변경 버튼 컬럼: slot-teams의 맨 왼쪽(팀A) 또는 맨 오른쪽(팀B)에 위치
+.sub-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 36px;
+}
+
+.btn-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  background: rgba(96, 165, 250, 0.08);
+  color: #93c5fd;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.14s;
+  white-space: nowrap;
+
+  &:hover { background: rgba(96, 165, 250, 0.18); border-color: rgba(96, 165, 250, 0.6); }
+
+  &--reset {
+    border-color: rgba(251, 191, 36, 0.4);
+    background: rgba(251, 191, 36, 0.08);
+    color: #fcd34d;
+    padding: 4px 7px;
+
+    &:hover { background: rgba(251, 191, 36, 0.18); border-color: rgba(251, 191, 36, 0.6); }
+  }
+}
+
+.sub-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(251, 191, 36, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  flex-shrink: 0;
+}
+
+// ── 선수 교체 모달 ───────────────────────────────────────────
+.sub-modal {
+  max-width: 380px;
+}
+
+.sub-modal-hint {
+  font-size: 11px;
+  color: var(--c-text-faint);
+  padding: 8px 20px 0;
+  margin: 0;
+}
+
+.sub-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 20px 16px;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.sub-player-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  cursor: pointer;
+  transition: all 0.14s;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.06);
+  }
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.sub-player-pts {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.sub-modal-empty {
+  padding: 24px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--c-text-faint);
+}
+
+// ── 라이트 테마 오버라이드 ────────────────────────────────────
+[data-theme="light"] {
+  .slot-row--done {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.06);
+  }
+
+  .slot-type--team { color: #7c3aed; }
+
+  .win-badge { color: #059669; }
+
+  .slot-team-btn--winner {
+    border-color: rgba(16, 185, 129, 0.55);
+    background: rgba(16, 185, 129, 0.12);
+  }
+
+  .slot-ladder-btn {
+    color: #7c3aed;
+    border-color: rgba(124, 58, 237, 0.4);
+    background: rgba(124, 58, 237, 0.08);
+    &:hover { background: rgba(124, 58, 237, 0.16); border-color: rgba(124, 58, 237, 0.65); }
+  }
+
+  .badge-completed {
+    color: #059669;
+    border-color: rgba(22, 163, 74, 0.4);
+    background: rgba(22, 163, 74, 0.10);
+  }
+
+  .ace-card {
+    border-color: rgba(124, 58, 237, 0.25);
+    background: rgba(124, 58, 237, 0.04);
+  }
+
+  .ace-card-title {
+    color: #7c3aed;
+    border-bottom-color: rgba(124, 58, 237, 0.18);
+  }
+
+  .btn-sub {
+    color: #2563eb;
+    border-color: rgba(37, 99, 235, 0.4);
+    background: rgba(37, 99, 235, 0.08);
+    &:hover { background: rgba(37, 99, 235, 0.16); border-color: rgba(37, 99, 235, 0.6); }
+
+    &--reset {
+      color: #b45309;
+      border-color: rgba(180, 83, 9, 0.4);
+      background: rgba(180, 83, 9, 0.08);
+      &:hover { background: rgba(180, 83, 9, 0.16); border-color: rgba(180, 83, 9, 0.6); }
+    }
+  }
+
+  .sub-badge {
+    color: #b45309;
+    background: rgba(180, 83, 9, 0.10);
+    border-color: rgba(180, 83, 9, 0.3);
+  }
+
+  .ladder-random-btn {
+    color: #7c3aed;
+    border-color: rgba(124, 58, 237, 0.4);
+    background: rgba(124, 58, 237, 0.10);
+    &:hover:not(:disabled) { background: rgba(124, 58, 237, 0.18); }
+  }
 }
 

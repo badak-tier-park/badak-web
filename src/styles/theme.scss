@@ -72,12 +72,32 @@ body {
   --c-glass-border:   rgba(255, 255, 255, 0.10);
 }
 
+// ── Light 종족/티어 색상 오버라이드 ───────────────────────────
+// 밝은 배경에서 배지 배경 대비가 낮아지므로 불투명도 상향
+[data-theme="light"] {
+  --race-t-bg:      rgba(88, 166, 255, 0.16);
+  --race-z-bg:      rgba(188, 100, 255, 0.14);
+  --race-p-bg:      rgba(202, 138, 4, 0.14);
+  --race-p:         #a16207;
+
+  --tier-a-bg:      rgba(220, 38, 38, 0.12);
+  --tier-a:         #dc2626;
+  --tier-b-bg:      rgba(124, 58, 237, 0.12);
+  --tier-b:         #7c3aed;
+  --tier-c-bg:      rgba(37, 99, 235, 0.12);
+  --tier-c:         #2563eb;
+  --tier-d-bg:      rgba(22, 163, 74, 0.12);
+  --tier-d:         #16a34a;
+  --tier-e-bg:      rgba(107, 114, 128, 0.12);
+  --tier-e:         #6b7280;
+}
+
 // ── Light ─────────────────────────────────────────────────
 [data-theme="light"] {
   color-scheme: light;
   --c-bg:             #f0f1f5;
   --c-surface:        #ffffff;
-  --c-surface-raised: rgba(0, 0, 0, 0.02);
+  --c-surface-raised: #ffffff;
   --c-overlay:        rgba(0, 0, 0, 0.04);
   --c-input:          rgba(0, 0, 0, 0.04);
 

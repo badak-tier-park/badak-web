@@ -1,4 +1,40 @@
 import { supabase } from './supabase'
+import type { ScheduleRow } from './schedules'
+
+export interface StandingEntry {
+  captainId: number
+  wins: number
+  losses: number
+  rank: number
+}
+
+// 정규경기 기반 순위 계산 (wins 내림차순, 동률이면 captainId 오름차순)
+export function calculateStandings(
+  captainIds: number[],
+  regularSchedules: ScheduleRow[],
+): StandingEntry[] {
+  const completed = regularSchedules.filter(s => s.is_completed && s.match_type === 'regular')
+  const winsMap = new Map<number, number>(captainIds.map(id => [id, 0]))
+  const lossesMap = new Map<number, number>(captainIds.map(id => [id, 0]))
+
+  for (const s of completed) {
+    if (s.winner_captain_id == null) continue
+    winsMap.set(s.winner_captain_id, (winsMap.get(s.winner_captain_id) ?? 0) + 1)
+    const loserId = s.winner_captain_id === s.team_a_captain_id ? s.team_b_captain_id : s.team_a_captain_id
+    lossesMap.set(loserId, (lossesMap.get(loserId) ?? 0) + 1)
+  }
+
+  const sorted = captainIds
+    .map(id => ({ captainId: id, wins: winsMap.get(id) ?? 0, losses: lossesMap.get(id) ?? 0 }))
+    .sort((a, b) => b.wins - a.wins || a.captainId - b.captainId)
+
+  return sorted.map((e, i) => ({ ...e, rank: i + 1 }))
+}
+
+export function allRegularMatchesDone(regularSchedules: ScheduleRow[]): boolean {
+  const regular = regularSchedules.filter(s => s.match_type === 'regular')
+  return regular.length > 0 && regular.every(s => s.is_completed)
+}
 
 export type LeagueType = 'regular_summer' | 'regular_winter' | 'jongchoe' | 'individual'
 export type LeagueStatus = 'preparing' | 'upcoming' | 'ongoing' | 'finished'

@@ -3,10 +3,11 @@
     <button
       class="ps-trigger"
       :class="[
-        { 'ps-trigger--open': open, 'ps-trigger--empty': !modelValue },
+        { 'ps-trigger--open': open, 'ps-trigger--empty': !modelValue, 'ps-trigger--disabled': disabled },
         selectedOpt?.tier ? `tier-badge--${selectedOpt.tier.toLowerCase()}` : '',
       ]"
       type="button"
+      :disabled="disabled"
       @click="toggle"
     >
       <template v-if="selectedOpt?.tier">
@@ -69,6 +70,7 @@ const props = defineProps<{
   modelValue: number
   options: SelectOption[]
   placeholder?: string
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: number] }>()

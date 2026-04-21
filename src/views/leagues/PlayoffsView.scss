@@ -1,0 +1,544 @@
+@use '../../styles/page';
+
+.playoffs-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.playoffs-content {
+  flex: 1;
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+  box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+// ── 페이지 헤더 ──────────────────────────────────────────────
+.playoffs-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.playoffs-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(170, 59, 255, 0.1);
+  border: 1px solid rgba(170, 59, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c084fc;
+  flex-shrink: 0;
+}
+
+// ── 단계 섹션 ────────────────────────────────────────────────
+.bracket-stage {
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  background: var(--c-surface-raised);
+
+  &--locked {
+    opacity: 0.55;
+  }
+}
+
+.stage-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--c-border-faint);
+}
+
+.stage-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+  border: 1.5px solid var(--c-border);
+  color: var(--c-text-faint);
+
+  &--active {
+    border-color: rgba(170, 59, 255, 0.6);
+    background: rgba(170, 59, 255, 0.1);
+    color: #c084fc;
+  }
+
+  &--done {
+    border-color: rgba(52, 211, 153, 0.5);
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+  }
+
+  &--locked {
+    border-color: var(--c-border-faint);
+    color: var(--c-text-faint);
+  }
+}
+
+.stage-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text);
+  flex: 1;
+}
+
+.stage-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-text-muted);
+  margin-left: 6px;
+}
+
+.stage-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  flex-shrink: 0;
+
+  &--done {
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.25);
+  }
+
+  &--wip {
+    background: rgba(251, 146, 60, 0.1);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.25);
+  }
+
+  &--locked {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--c-text-faint);
+    border: 1px solid var(--c-border-faint);
+  }
+}
+
+.stage-locked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 18px;
+  font-size: 13px;
+  color: var(--c-text-muted);
+}
+
+.stage-lock-icon {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+// ── 흐름 연결선 ──────────────────────────────────────────────
+.stage-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+  gap: 1px;
+  color: var(--c-border);
+
+  &--active {
+    color: rgba(170, 59, 255, 0.4);
+  }
+}
+
+.stage-flow-line {
+  width: 1.5px;
+  height: 20px;
+  background: currentColor;
+}
+
+.stage-flow-arrow {
+  color: inherit;
+}
+
+// ── 순위표 ───────────────────────────────────────────────────
+.standings-list {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.standing-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-faint);
+  background: var(--c-surface);
+
+  &--1 { border-color: rgba(250, 204, 21, 0.3); background: rgba(250, 204, 21, 0.04); }
+  &--2 { border-color: rgba(148, 163, 184, 0.25); }
+  &--3 { border-color: rgba(148, 163, 184, 0.25); }
+}
+
+.standing-rank {
+  font-size: 13px;
+  font-weight: 800;
+  width: 20px;
+  flex-shrink: 0;
+  color: var(--c-text-muted);
+  text-align: center;
+
+  .standing-row--1 & { color: #facc15; }
+  .standing-row--2 & { color: #94a3b8; }
+  .standing-row--3 & { color: #94a3b8; }
+}
+
+.standing-team {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standing-record {
+  font-size: 12px;
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+}
+
+.standing-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  flex-shrink: 0;
+
+  &--gold {
+    background: rgba(250, 204, 21, 0.12);
+    color: #facc15;
+    border: 1px solid rgba(250, 204, 21, 0.3);
+  }
+
+  &--silver {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+  }
+}
+
+// ── 결승 세트 블록 ────────────────────────────────────────────
+.final-set-block {
+  padding: 14px 18px;
+  border-top: 1px solid var(--c-border-faint);
+
+  &:first-of-type { border-top: none; }
+}
+
+.final-set-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.final-set-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &--ace { color: #fbbf24; }
+}
+
+.final-set-done {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(52, 211, 153, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+// ── 셋업 행 ──────────────────────────────────────────────────
+.setup-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+}
+
+// 결승 세트 블록 내부에서는 패딩 제거
+.final-set-block .setup-row {
+  padding: 0;
+}
+
+.setup-hint {
+  font-size: 12px;
+  color: var(--c-text-faint);
+}
+
+// ── 브라켓 카드 ───────────────────────────────────────────────
+.bracket-card {
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  background: var(--c-surface);
+  overflow: hidden;
+
+  &--done {
+    border-color: rgba(52, 211, 153, 0.25);
+    background: rgba(52, 211, 153, 0.03);
+  }
+}
+
+.bracket-matchup {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.bracket-team-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  padding: 12px 16px;
+  min-width: 0;
+
+  &--winner {
+    background: rgba(52, 211, 153, 0.06);
+
+    .bracket-seed { color: #34d399; }
+    .bracket-team-name { color: #34d399; }
+  }
+}
+
+.bracket-seed {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--c-text-faint);
+  letter-spacing: 0.3px;
+}
+
+.bracket-team-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket-vs {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--c-border-faint);
+  border-right: 1px solid var(--c-border-faint);
+}
+
+.bracket-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-top: 1px solid var(--c-border-faint);
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bracket-date {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+}
+
+.bracket-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.badge-revealed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  background: rgba(52, 211, 153, 0.08);
+  color: #34d399;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+// ── 슈퍼에이스 밴 요약 ───────────────────────────────────────────
+.ace-ban-summary {
+  padding: 10px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ace-ban-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ace-ban-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.ace-ban-tiers {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ace-ban-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+// ── 우승 카드 ─────────────────────────────────────────────────
+.champion-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  margin: 12px 18px 0;
+  border-radius: 10px;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  background: rgba(250, 204, 21, 0.05);
+}
+
+.champion-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #facc15;
+  flex-shrink: 0;
+}
+
+.champion-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #facc15;
+  margin: 0 0 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.champion-team {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--c-text);
+  margin: 0;
+}
+
+// ── datepicker ────────────────────────────────────────────────
+.date-picker-wrap {
+  flex-shrink: 0;
+  width: 130px;
+
+  :deep(.dp__main) { width: 130px; }
+}
+
+.dp-custom-input {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 130px;
+  height: 34px;
+  padding: 0 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.14s;
+  box-sizing: border-box;
+
+  &:hover { border-color: rgba(170, 59, 255, 0.45); }
+}
+
+.dp-custom-icon { color: var(--c-text-faint); flex-shrink: 0; }
+.dp-date-text { font-size: 12px; color: var(--c-text); }
+.dp-placeholder { font-size: 12px; color: var(--c-text-faint); }
+
+:deep(.dp__theme_dark) {
+  --dp-background-color: #13141d;
+  --dp-text-color: rgba(255, 255, 255, 0.82);
+  --dp-hover-color: rgba(170, 59, 255, 0.12);
+  --dp-hover-text-color: #c084fc;
+  --dp-primary-color: #aa3bff;
+  --dp-primary-text-color: #fff;
+  --dp-secondary-color: rgba(255, 255, 255, 0.07);
+  --dp-border-color: rgba(255, 255, 255, 0.1);
+  --dp-menu-border-color: rgba(255, 255, 255, 0.1);
+  --dp-border-color-hover: rgba(170, 59, 255, 0.5);
+  --dp-disabled-color: rgba(255, 255, 255, 0.15);
+  --dp-icon-color: rgba(255, 255, 255, 0.35);
+  --dp-font-family: system-ui, sans-serif;
+  --dp-font-size: 13px;
+  --dp-border-radius: 8px;
+}
+
+// ── 라이트 테마 ────────────────────────────────────────────────
+[data-theme="light"] {
+  .standing-row--1 { border-color: rgba(202, 138, 4, 0.4); background: rgba(202, 138, 4, 0.04); }
+  .standing-rank { .standing-row--1 & { color: #a16207; } }
+  .standing-badge--gold { background: rgba(202, 138, 4, 0.1); color: #a16207; border-color: rgba(202, 138, 4, 0.3); }
+  .bracket-team-block--winner { background: rgba(16, 185, 129, 0.06); .bracket-seed, .bracket-team-name { color: #059669; } }
+  .bracket-card--done { border-color: rgba(16, 185, 129, 0.3); }
+  .badge-revealed { color: #059669; border-color: rgba(22, 163, 74, 0.3); background: rgba(22, 163, 74, 0.07); }
+  .champion-card { border-color: rgba(202, 138, 4, 0.45); background: rgba(202, 138, 4, 0.06); }
+  .champion-icon { background: rgba(202, 138, 4, 0.1); border-color: rgba(202, 138, 4, 0.25); color: #a16207; }
+  .champion-label { color: #a16207; }
+  .stage-num--done { border-color: rgba(5, 150, 105, 0.5); background: rgba(5, 150, 105, 0.08); color: #059669; }
+  .stage-badge--done { background: rgba(5, 150, 105, 0.08); color: #059669; border-color: rgba(5, 150, 105, 0.25); }
+  .final-set-done { background: rgba(5, 150, 105, 0.08); color: #059669; border-color: rgba(5, 150, 105, 0.25); }
+  .playoffs-header-icon { background: rgba(170, 59, 255, 0.07); }
+}

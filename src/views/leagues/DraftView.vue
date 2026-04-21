@@ -51,8 +51,8 @@
             </div>
           </div>
           <div class="seed-order-footer">
-            <button class="btn-seed-order-cancel" @click="seedOrderSetupMode = false">취소</button>
-            <button class="btn-seed-order-confirm" @click="confirmSeedOrder">순서 확정 후 시작</button>
+            <button class="btn-pill btn-pill--md btn-pill--ghost" @click="seedOrderSetupMode = false">취소</button>
+            <button class="btn-pill btn-pill--md btn-pill--yellow btn-pill--filled" @click="confirmSeedOrder">순서 확정 후 시작</button>
           </div>
         </div>
       </div>
@@ -98,13 +98,13 @@
 
           <div class="topbar-actions">
             <template v-if="draftDone && !seedSwapMode && !seedSwapDone && seedOrderIds.length > 0">
-              <button class="btn-seed" @click="openSeedOrderSetup">시드권 적용</button>
+              <button class="btn-pill btn-pill--md btn-pill--yellow" @click="openSeedOrderSetup">시드권 적용</button>
             </template>
             <template v-if="seedSwapMode">
-              <button class="btn-seed-pass" @click="passSeed">패스</button>
+              <button class="btn-pill btn-pill--md btn-pill--ghost" @click="passSeed">패스</button>
             </template>
             <template v-if="seedSwapMode || seedSwapDone">
-              <button class="btn-seed-cancel" :disabled="isFinalSave" @click="resetSeedSwap">시드권 초기화</button>
+              <button class="btn-pill btn-pill--md btn-pill--red" :disabled="isFinalSave" @click="resetSeedSwap">시드권 초기화</button>
             </template>
             <button class="btn-save" :disabled="saving || isFinalSave" @click="saveDraft">
               {{ saving ? '저장 중...' : isFinalSave ? '최종 저장됨' : seedSwapDone ? '최종 저장' : '임시 저장' }}
