@@ -136,7 +136,7 @@
                 class="match-item"
               >
                 <div class="match-item-info">
-                  <span class="round-tag">{{ item.schedule.round }}라운드</span>
+                  <span class="round-tag">{{ matchTypeLabel(item.schedule) }}</span>
                   <span class="match-item-vs">
                     <span class="my-team-name">{{ item.myTeamName }}</span>
                     <span class="vs-divider">VS</span>
@@ -213,7 +213,7 @@
                 class="match-item"
               >
                 <div class="match-item-info">
-                  <span class="round-tag">{{ item.schedule.round }}라운드</span>
+                  <span class="round-tag">{{ matchTypeLabel(item.schedule) }}</span>
                   <span class="match-item-vs">
                     <span class="my-team-name">{{ item.teamAName }}</span>
                     <span class="vs-divider">VS</span>
@@ -238,6 +238,7 @@
       v-if="revealModal.open && revealModal.item"
       :schedule-id="revealModal.item.schedule.id"
       :round="revealModal.item.schedule.round"
+      :match-type="revealModal.item.schedule.match_type"
       :match-date="revealModal.item.schedule.match_date"
       :league-id="revealListModal.league?.id ?? ''"
       :team-a-captain-id="revealModal.item.schedule.team_a_captain_id"
@@ -274,7 +275,7 @@
                 class="match-item"
               >
                 <div class="match-item-info">
-                  <span class="round-tag">{{ item.schedule.round }}라운드</span>
+                  <span class="round-tag">{{ matchTypeLabel(item.schedule) }}</span>
                   <span class="match-item-vs">
                     <span
                       class="result-team-name"
@@ -353,6 +354,7 @@
       v-if="resultModal.open && resultModal.item"
       :schedule-id="resultModal.item.schedule.id"
       :round="resultModal.item.schedule.round"
+      :match-type="resultModal.item.schedule.match_type"
       :match-date="resultModal.item.schedule.match_date"
       :league-id="resultListModal.league?.id ?? ''"
       :team-a-captain-id="resultModal.item.schedule.team_a_captain_id"
@@ -371,7 +373,7 @@
             <div>
               <p class="modal-title">{{ entryModal.readonly ? '엔트리 확인' : '엔트리 작성' }}</p>
               <p class="modal-subtitle">
-                {{ entryModal.schedule?.round }}라운드
+                {{ entryModal.schedule ? matchTypeLabel(entryModal.schedule) : '' }}
                 <span v-if="entryModal.schedule?.match_date">
                   · {{ entryModal.schedule.match_date.replaceAll('-', '/') }}
                 </span>
@@ -940,7 +942,7 @@ async function openMatchList(league: LeagueRow) {
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
 
     matchListModal.matches = schedules
-      .filter(s => !s.is_completed && !s.is_entry_revealed && (s.team_a_captain_id === myPlayerId.value || s.team_b_captain_id === myPlayerId.value))
+      .filter(s => !s.is_completed && !s.is_entry_revealed && s.match_type !== 'super_ace' && (s.team_a_captain_id === myPlayerId.value || s.team_b_captain_id === myPlayerId.value))
       .map(s => {
         const opponentId = s.team_a_captain_id === myPlayerId.value ? s.team_b_captain_id : s.team_a_captain_id
         return {
@@ -1209,7 +1211,7 @@ async function handleSubmitEntry(scheduleId: number) {
       notifyEntrySubmitted({
         leagueName: matchListModal.league?.name ?? '',
         teamName: match.myTeamName,
-        matchRound: `${match.schedule.round}라운드`,
+        matchRound: matchTypeLabel(match.schedule),
         matchDate: match.schedule.match_date,
       })
     }
@@ -1218,6 +1220,11 @@ async function handleSubmitEntry(scheduleId: number) {
   } finally {
     submittingId.value = null
   }
+}
+
+function matchTypeLabel(schedule: ScheduleRow): string {
+  if (schedule.match_type === 'regular') return `${schedule.round}라운드`
+  return { semifinal: '준결승', final_set1: '결승 1세트', final_set2: '결승 2세트', super_ace: '슈퍼에이스' }[schedule.match_type] ?? schedule.match_type
 }
 
 function statusLabel(status: LeagueStatus) {

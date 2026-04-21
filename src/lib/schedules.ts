@@ -1,5 +1,7 @@
 import { supabase } from './supabase'
 
+export type MatchType = 'regular' | 'semifinal' | 'final_set1' | 'final_set2' | 'super_ace'
+
 export interface ScheduleRow {
   id: number
   league_id: string
@@ -11,6 +13,7 @@ export interface ScheduleRow {
   is_entry_revealed: boolean
   is_completed: boolean
   video_url: string | null
+  match_type: MatchType
   created_at: string
 }
 
@@ -31,6 +34,60 @@ export async function getSchedules(leagueId: string): Promise<ScheduleRow[]> {
     .order('id', { ascending: true })
   if (error) throw error
   return data
+}
+
+export async function getRegularSchedules(leagueId: string): Promise<ScheduleRow[]> {
+  const { data, error } = await supabase
+    .from('league_schedules')
+    .select('*')
+    .eq('league_id', leagueId)
+    .eq('match_type', 'regular')
+    .order('round', { ascending: true })
+    .order('id', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+export async function getPlayoffSchedules(leagueId: string): Promise<ScheduleRow[]> {
+  const { data, error } = await supabase
+    .from('league_schedules')
+    .select('*')
+    .eq('league_id', leagueId)
+    .in('match_type', ['semifinal', 'final_set1', 'final_set2', 'super_ace'])
+    .order('id', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+export async function createPlayoffMatch(
+  leagueId: string,
+  matchType: Exclude<MatchType, 'regular'>,
+  teamACaptainId: number,
+  teamBCaptainId: number,
+  matchDate: string | null,
+): Promise<ScheduleRow> {
+  const { data, error } = await supabase
+    .from('league_schedules')
+    .insert({
+      league_id: leagueId,
+      round: 0,
+      match_type: matchType,
+      team_a_captain_id: teamACaptainId,
+      team_b_captain_id: teamBCaptainId,
+      match_date: matchDate,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deletePlayoffMatch(scheduleId: number): Promise<void> {
+  const { error } = await supabase
+    .from('league_schedules')
+    .delete()
+    .eq('id', scheduleId)
+  if (error) throw error
 }
 
 export async function completeMatch(scheduleId: number, winnerCaptainId: number | null): Promise<void> {
@@ -254,15 +311,17 @@ export async function saveSchedules(
   leagueId: string,
   schedules: Array<{ round: number; match_date: string | null; team_a_captain_id: number; team_b_captain_id: number }>,
 ): Promise<void> {
+  // 정규경기만 삭제 (플레이오프 경기는 유지)
   const { error: delError } = await supabase
     .from('league_schedules')
     .delete()
     .eq('league_id', leagueId)
+    .eq('match_type', 'regular')
   if (delError) throw delError
 
   if (schedules.length === 0) return
 
-  const rows = schedules.map(s => ({ league_id: leagueId, ...s }))
+  const rows = schedules.map(s => ({ league_id: leagueId, match_type: 'regular', ...s }))
   const { error } = await supabase.from('league_schedules').insert(rows)
   if (error) throw error
 }

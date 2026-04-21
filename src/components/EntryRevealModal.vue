@@ -6,7 +6,7 @@
           <div>
             <p class="reveal-title">{{ showResults ? '경기 결과' : '엔트리 확인' }}</p>
             <p class="reveal-subtitle">
-              {{ round }}라운드
+              {{ roundLabel }}
               <template v-if="matchDate"> · {{ matchDate.replaceAll('-', '/') }}</template>
             </p>
           </div>
@@ -316,6 +316,7 @@ import { withTimeout } from '@/lib/supabase'
 const props = withDefaults(defineProps<{
   scheduleId: number
   round: number
+  matchType?: string
   matchDate: string | null
   leagueId: string
   teamACaptainId: number
@@ -323,7 +324,17 @@ const props = withDefaults(defineProps<{
   teamAName: string
   teamBName: string
   showResults?: boolean
-}>(), { showResults: false })
+}>(), { showResults: false, matchType: 'regular' })
+
+const roundLabel = computed(() => {
+  const labels: Record<string, string> = {
+    semifinal: '준결승',
+    final_set1: '결승 1세트',
+    final_set2: '결승 2세트',
+    super_ace: '슈퍼에이스',
+  }
+  return labels[props.matchType ?? ''] ?? `${props.round}라운드`
+})
 
 defineEmits<{ close: [] }>()
 

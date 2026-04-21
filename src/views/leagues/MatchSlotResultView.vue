@@ -3,9 +3,9 @@
     <AppHeader />
 
     <div class="slot-result-content">
-      <button class="btn-back" @click="$router.push({ name: 'league-schedule', params: { id: leagueId } })">
+      <button class="btn-back" @click="$router.push({ name: schedule?.match_type === 'regular' ? 'league-schedule' : 'league-playoffs', params: { id: leagueId } })">
         <AppIcon name="chevron-left" :size="13" />
-        경기 관리
+        {{ schedule?.match_type === 'regular' ? '경기 관리' : '본선' }}
       </button>
 
       <div v-if="loading" class="state-msg">불러오는 중...</div>
@@ -40,7 +40,7 @@
         <!-- 슬롯별 결과 -->
         <div class="slot-list">
           <div
-            v-for="slot in REGULAR_SLOTS"
+            v-for="slot in (isSuperAce ? [] : REGULAR_SLOTS)"
             :key="slot.num"
             class="slot-row"
             :class="{ 'slot-row--done': slotWinners.get(slot.num) != null }"
@@ -146,7 +146,7 @@
           </div>
 
           <!-- 에이스 결정전 -->
-          <div v-if="showAce" class="ace-card">
+          <div v-if="showAce || isSuperAce" class="ace-card">
             <div class="ace-card-title">에이스 결정전</div>
 
             <!-- 1단계: 티어 밴 결과 표시 + 사다리 -->
@@ -160,8 +160,13 @@
                       v-for="tier in ALL_TIERS"
                       :key="'a' + tier"
                       class="ace-tier-chip"
-                      :class="{ 'ace-tier-chip--banned': aceTierBanA === tier }"
-                    >{{ tier }}</span>
+                      :class="{
+                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_a_captain_id) : aceTierBanA === tier
+                      }"
+                    >
+                      {{ tier }}
+                      <span v-if="isSuperAce && superAceBanFor(tier, schedule!.team_a_captain_id)" class="ace-tier-ban-src">{{ superAceBanFor(tier, schedule!.team_a_captain_id) }}</span>
+                    </span>
                   </div>
                 </div>
 
@@ -171,16 +176,17 @@
                     <span class="ace-confirmed-tier" :class="`tier-badge--${aceData.aceTier.toLowerCase()}`">
                       {{ aceData.aceTier }} 티어
                     </span>
-                    <button v-if="!isCompleted" class="ace-reset-btn" @click="resetAceTier">초기화</button>
+                    <button v-if="!isCompleted && (!(isSuperAce && aceTierCandidates.length === 1) || noEligiblePlayers)" class="ace-reset-btn" @click="resetAceTier">초기화</button>
                   </template>
-                  <button
-                    v-else
-                    class="slot-ladder-btn"
-                    :disabled="aceTierCandidates.length === 0 || isCompleted"
-                    @click="openTierLadder"
-                  >
-                    티어 사다리타기
-                  </button>
+                  <template v-else-if="!isCompleted">
+                    <button
+                      class="slot-ladder-btn"
+                      :disabled="aceTierCandidates.length === 0"
+                      @click="openTierLadder"
+                    >
+                      티어 사다리타기
+                    </button>
+                  </template>
                 </div>
 
                 <div class="ace-tier-ban-col ace-tier-ban-col--right">
@@ -190,8 +196,13 @@
                       v-for="tier in ALL_TIERS"
                       :key="'b' + tier"
                       class="ace-tier-chip"
-                      :class="{ 'ace-tier-chip--banned': aceTierBanB === tier }"
-                    >{{ tier }}</span>
+                      :class="{
+                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_b_captain_id) : aceTierBanB === tier
+                      }"
+                    >
+                      {{ tier }}
+                      <span v-if="isSuperAce && superAceBanFor(tier, schedule!.team_b_captain_id)" class="ace-tier-ban-src">{{ superAceBanFor(tier, schedule!.team_b_captain_id) }}</span>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -226,8 +237,9 @@
               <template v-if="aceData.aceTier">
                 <div class="ace-result-row">
                   <div class="ace-player-col">
+                    <span v-if="!isCompleted && noEligibleA" class="ace-no-players">{{ noEligibleB ? '밴 무효 재선택' : '출전 가능 선수 없음 (상대팀 자동 승리)' }}</span>
                     <PlayerSelect
-                      v-if="!isCompleted"
+                      v-if="!isCompleted && eligibleOptionsA.length > 0"
                       :model-value="aceData.playerAId ?? 0"
                       :options="eligibleOptionsA"
                       @update:model-value="setAcePlayer('A', $event)"
@@ -256,8 +268,9 @@
                   </div>
                   <span class="ace-vs">VS</span>
                   <div class="ace-player-col ace-player-col--right">
+                    <span v-if="!isCompleted && noEligibleB" class="ace-no-players">{{ noEligibleA ? '밴 무효 재선택' : '출전 가능 선수 없음 (상대팀 자동 승리)' }}</span>
                     <PlayerSelect
-                      v-if="!isCompleted"
+                      v-if="!isCompleted && eligibleOptionsB.length > 0"
                       :model-value="aceData.playerBId ?? 0"
                       :options="eligibleOptionsB"
                       @update:model-value="setAcePlayer('B', $event)"
@@ -428,7 +441,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
@@ -437,7 +450,7 @@ import { getLeague } from '@/lib/leagues'
 import { getCaptains, getMatchMaps } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
-import { getSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
+import { getSchedules, getPlayoffSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
 import { getScheduleEntries, computeFinalRosters, getAceTierBans } from '@/lib/entries'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
@@ -505,10 +518,19 @@ const ladderPicking = ref(false)
 const ladderPickResult = ref<string | null>(null)
 const savingLadderMap = ref(false)
 
+const isSuperAce = computed(() => schedule.value?.match_type === 'super_ace')
+
 // 에이스 결정전 상태
 // 에이스 티어 밴 (엔트리 제출 시 각 팀장이 선택한 값)
 const aceTierBanA = ref<string | null>(null)
 const aceTierBanB = ref<string | null>(null)
+
+// 슈퍼에이스: 결승 1·2세트에서 사용된 에이스 티어 (제외 대상)
+const superAceExcludedTiers = ref<string[]>([])
+// captainId → [{tier, setLabel}]
+const superAceBansByCapt = ref(new Map<number, Array<{ tier: string; setLabel: string }>>())
+// 양팀 모두 해당 티어 선수 없을 때 밴 무효 처리 플래그
+const aceBansIgnored = ref(false)
 
 const aceData = reactive<{
   aceTier: string | null
@@ -563,12 +585,38 @@ const showAce = computed(() => {
   return Math.abs(entryPointsA.value - entryPointsB.value) < 3
 })
 
-// 에이스 티어 후보 (양팀 밴 제외한 나머지)
+// 에이스 티어 후보 (super_ace: 결승 세트 사용 티어 제외 / 일반: 양팀 밴 제외)
+// aceBansIgnored = true 이면 밴 무효 → 전 티어 선택 가능
 const aceTierCandidates = computed((): string[] => {
+  if (aceBansIgnored.value) return [...ALL_TIERS]
+  if (isSuperAce.value) {
+    const excluded = new Set(superAceExcludedTiers.value)
+    return ALL_TIERS.filter(t => !excluded.has(t))
+  }
   const bans = new Set<string>()
   if (aceTierBanA.value) bans.add(aceTierBanA.value)
   if (aceTierBanB.value) bans.add(aceTierBanB.value)
   return ALL_TIERS.filter(t => !bans.has(t))
+})
+
+function superAceBanFor(tier: string, captainId: number): string | null {
+  const bans = superAceBansByCapt.value.get(captainId)
+  const match = bans?.find(b => b.tier === tier)
+  return match?.setLabel ?? null
+}
+
+// 슈퍼에이스 후보가 1개만 남으면 자동 확정 저장 (양팀 모두 해당 티어 선수 있을 때만)
+watch(aceTierCandidates, async (candidates) => {
+  if (!isSuperAce.value || aceData.aceTier || isCompleted.value) return
+  if (candidates.length === 1) {
+    const tier = candidates[0]
+    const maxRank = TIER_RANK[tier] ?? 0
+    const hasA = rosterA.value.some(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+    const hasB = rosterB.value.some(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+    if (!hasA || !hasB) return
+    aceData.aceTier = tier
+    await setAceSlotData(matchId, { aceTier: tier })
+  }
 })
 
 // 에이스 맵 후보 (리그 배정 맵 전체에서 2·3경기 확정 맵 제외)
@@ -629,6 +677,10 @@ const acePlayerA = computed(() =>
 const acePlayerB = computed(() =>
   aceData.playerBId ? eligibleOptionsB.value.find(o => o.value === aceData.playerBId) ?? null : null
 )
+
+const noEligibleA = computed(() => !!aceData.aceTier && eligiblePlayersA.value.length === 0)
+const noEligibleB = computed(() => !!aceData.aceTier && eligiblePlayersB.value.length === 0)
+const noEligiblePlayers = computed(() => noEligibleA.value || noEligibleB.value)
 
 // 현재 맵 사다리타기 모달의 후보 맵
 const currentLadderMaps = computed((): MapInfo[] => {
@@ -966,6 +1018,44 @@ async function resetAceTier() {
   }
 }
 
+// 에이스 슬롯 승자 직접 지정 (토글 없이 세팅만)
+async function setAceWinner(captainId: number) {
+  if (isCompleted.value || slotWinners.value.get(ACE_SLOT.num) != null) return
+  savingSlot.value = ACE_SLOT.num
+  try {
+    await setSlotResult(matchId, ACE_SLOT.num, captainId)
+    const map = new Map(slotWinners.value)
+    map.set(ACE_SLOT.num, captainId)
+    slotWinners.value = map
+  } catch (e: any) {
+    console.error(e)
+  } finally {
+    savingSlot.value = null
+  }
+}
+
+// 에이스 티어 확정 후 출전 가능 선수 체크:
+// - 한쪽만 없음 → 상대팀 자동 승리
+// - 양팀 다 없음 → 밴 무효, 티어 재선택
+watch(
+  [() => aceData.aceTier, rosterA, rosterB],
+  async ([tier]) => {
+    if (!tier || isCompleted.value || !schedule.value) return
+    const maxRank = TIER_RANK[tier] ?? 0
+    const hasA = rosterA.value.some(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+    const hasB = rosterB.value.some(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+    if (!hasA && !hasB) {
+      aceData.aceTier = null
+      await setAceSlotData(matchId, { aceTier: null })
+      aceBansIgnored.value = true
+    } else if (!hasA) {
+      await setAceWinner(schedule.value.team_b_captain_id)
+    } else if (!hasB) {
+      await setAceWinner(schedule.value.team_a_captain_id)
+    }
+  },
+)
+
 // ── 에이스 선수 선택 ────────────────────────────────────────────
 
 async function setAcePlayer(side: 'A' | 'B', value: number) {
@@ -1113,6 +1203,28 @@ onMounted(async () => {
       aceData.aceTier = aceRow.ace_tier ?? null
       aceData.playerAId = aceRow.ace_player_a_id ?? null
       aceData.playerBId = aceRow.ace_player_b_id ?? null
+    }
+
+    // 슈퍼에이스: 결승 1·2세트 양팀 tier_ban을 captain별로 누적
+    if (match.match_type === 'super_ace') {
+      const playoffSchedules = await getPlayoffSchedules(leagueId)
+      const set1 = playoffSchedules.find(s => s.match_type === 'final_set1')
+      const set2 = playoffSchedules.find(s => s.match_type === 'final_set2')
+      const bansMap = new Map<number, Array<{ tier: string; setLabel: string }>>()
+      const allExcluded = new Set<string>()
+      for (const [s, setLabel] of [[set1, '1세트'], [set2, '2세트']] as [typeof set1, string][]) {
+        if (!s) continue
+        const bans = await getAceTierBans(s.id)
+        for (const ban of bans) {
+          if (!ban.tier_ban) continue
+          const list = bansMap.get(ban.captain_player_id) ?? []
+          list.push({ tier: ban.tier_ban, setLabel })
+          bansMap.set(ban.captain_player_id, list)
+          allExcluded.add(ban.tier_ban)
+        }
+      }
+      superAceBansByCapt.value = bansMap
+      superAceExcludedTiers.value = [...allExcluded]
     }
 
     // 팀 로스터 계산 (에이스 선수 드롭다운)
