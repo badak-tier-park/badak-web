@@ -107,3 +107,44 @@ export async function saveSeedHolders(
   const { error } = await supabase.from('league_seed_holders').insert(rows)
   if (error) throw error
 }
+
+// ── 선수 스냅샷 ─────────────────────────────────────────────
+export interface PlayerSnapshot {
+  league_id: string
+  player_id: number
+  tier: string
+  race: string
+}
+
+export async function savePlayerSnapshots(
+  leagueId: string,
+  snapshots: { player_id: number; tier: string; race: string }[],
+): Promise<void> {
+  if (!snapshots.length) return
+  const rows = snapshots.map(s => ({ league_id: leagueId, ...s }))
+  const { error } = await supabase
+    .from('league_player_snapshots')
+    .upsert(rows, { onConflict: 'league_id,player_id' })
+  if (error) throw error
+}
+
+export async function getPlayerSnapshots(leagueId: string): Promise<PlayerSnapshot[]> {
+  const { data, error } = await supabase
+    .from('league_player_snapshots')
+    .select('league_id, player_id, tier, race')
+    .eq('league_id', leagueId)
+  if (error) throw error
+  return (data ?? []) as PlayerSnapshot[]
+}
+
+export async function getPlayerSnapshotsForLeagues(
+  leagueIds: string[],
+): Promise<PlayerSnapshot[]> {
+  if (!leagueIds.length) return []
+  const { data, error } = await supabase
+    .from('league_player_snapshots')
+    .select('league_id, player_id, tier, race')
+    .in('league_id', leagueIds)
+  if (error) throw error
+  return (data ?? []) as PlayerSnapshot[]
+}

@@ -327,7 +327,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { getLeague, setPicksCompleted, setDraftCompleted, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
-import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
+import { getCaptains, getSeedHolders, savePlayerSnapshots } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, getSwapLog, saveSwapLog } from '@/lib/draft'
 import { TIER_ORDER, RACE_ORDER } from '@/lib/constants'
 import { useToast } from '@/composables/useToast'
@@ -542,10 +542,23 @@ async function saveDraft() {
         from_player_id: e.fromPlayerId,
         to_player_id: e.toPlayerId,
       }))
+
+      // 최종 로스터에 속한 모든 선수의 현재 tier/race 스냅샷 저장
+      const allPlayerIds = new Set<number>()
+      for (const members of Object.values(teams.value)) {
+        for (const m of members) allPlayerIds.add(m.id)
+      }
+      captainIds.value.forEach(id => allPlayerIds.add(id))
+      const snapshots = [...allPlayerIds].map(id => {
+        const p = allPlayers.value.find(pl => pl.id === id)
+        return { player_id: id, tier: p?.tier ?? 'e', race: p?.race ?? '' }
+      })
+
       await Promise.all([
         saveDraftPicks(leagueId, allPicks),
         saveSwapLog(leagueId, logEntries),
         setDraftCompleted(leagueId),
+        savePlayerSnapshots(leagueId, snapshots),
       ])
       isSaved.value = true
       showToast('최종 저장 완료. 지목식이 종료되었습니다.')

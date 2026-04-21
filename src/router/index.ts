@@ -94,6 +94,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/hall-of-fame',
+      name: 'hall-of-fame',
+      component: () => import('@/views/hof/HallOfFameView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('@/views/auth/AuthCallbackView.vue'),

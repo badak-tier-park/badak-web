@@ -152,6 +152,17 @@ export async function getConsentedSet(captainPlayerId: number): Promise<Set<numb
   return new Set((data ?? []).map(r => r.schedule_id))
 }
 
+/** 여러 경기의 엔트리 일괄 조회 */
+export async function getEntriesForSchedules(scheduleIds: number[]): Promise<(EntryRecord & { schedule_id: number })[]> {
+  if (!scheduleIds.length) return []
+  const { data, error } = await supabase
+    .from('league_match_entries')
+    .select('schedule_id, captain_player_id, match_slot, player_ids, banned_map_id, picked_map_id')
+    .in('schedule_id', scheduleIds)
+  if (error) throw error
+  return (data ?? []) as (EntryRecord & { schedule_id: number })[]
+}
+
 /** 경기의 모든 팀장 엔트리 조회 (엔트리 공개용) */
 export async function getScheduleEntries(scheduleId: number): Promise<EntryRecord[]> {
   const { data, error } = await supabase

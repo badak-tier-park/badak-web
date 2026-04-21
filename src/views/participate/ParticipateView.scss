@@ -17,6 +17,22 @@
 }
 
 
+.btn-hof {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+  &:hover { background: rgba(245, 158, 11, 0.16); border-color: rgba(245, 158, 11, 0.7); }
+}
+
 // ── 리그 목록 ─────────────────────────────────────────────
 .league-list {
   display: flex;
@@ -26,7 +42,7 @@
 }
 
 .league-card {
-  padding: 18px 20px;
+  padding: 18px 20px 14px;
   border-radius: 14px;
   border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
@@ -180,8 +196,54 @@
 // ── 리그 카드 액션 버튼 영역 ──────────────────────────────
 .league-card-actions {
   display: flex;
-  gap: 8px;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--c-border-faint);
+  gap: 8px;
+}
+
+.league-card-info-btns {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.btn-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.14s;
+  white-space: nowrap;
+
+  &:hover { background: var(--c-overlay); color: var(--c-text); }
+}
+
+.btn-entry-submit {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.1);
+  color: #a78bfa;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover { background: rgba(139, 92, 246, 0.18); border-color: rgba(139, 92, 246, 0.8); }
 }
 
 // ── 경기 목록 모달 ────────────────────────────────────────
@@ -672,6 +734,29 @@
   border-radius: 10px;
   border: 1px solid var(--c-border);
   overflow: hidden;
+
+  &--champion { border-color: #f59e0b; }
+  &--runner-up { border-color: #94a3b8; }
+}
+
+.standing-award {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  flex-shrink: 0;
+
+  &--champion {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+  }
+
+  &--runner-up {
+    background: rgba(148, 163, 184, 0.12);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
 }
 
 .standing-team-header {
