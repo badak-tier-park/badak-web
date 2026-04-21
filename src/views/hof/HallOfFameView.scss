@@ -1,0 +1,401 @@
+@use '../../styles/page';
+
+.hof-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hof-content {
+  flex: 1;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+// ── 히어로 ────────────────────────────────────────────────────
+.hof-hero {
+  text-align: left;
+  margin-bottom: 44px;
+}
+
+.hof-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--c-text-bright);
+  margin: 0 0 6px;
+  letter-spacing: -0.5px;
+}
+
+.hof-subtitle {
+  font-size: 13px;
+  color: var(--c-text-muted);
+  margin: 0;
+}
+
+// ── 섹션 공통 ─────────────────────────────────────────────────
+.hof-section {
+  margin-bottom: 48px;
+}
+
+.hof-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.hof-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 14px;
+  flex-shrink: 0;
+
+  .hof-section-header & { margin: 0; }
+}
+
+.hof-search {
+  flex: 1;
+  max-width: 200px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: 12px;
+  outline: none;
+
+  &::placeholder { color: var(--c-text-faint); }
+  &:focus { border-color: var(--c-accent, #7c3aed); }
+}
+
+// ── 페이지네이션 ───────────────────────────────────────────────
+.hof-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.hof-page-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border);
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.14s;
+
+  &:hover:not(:disabled) { background: var(--c-overlay); color: var(--c-text); }
+  &:disabled { opacity: 0.3; cursor: default; }
+}
+
+.hof-page-info {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  min-width: 50px;
+  text-align: center;
+}
+
+// ── 리그 우승 기록 ─────────────────────────────────────────────
+.hof-leagues {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hof-league-card {
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--c-surface-raised);
+}
+
+.hof-league-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  padding: 10px 18px 8px;
+  border-bottom: 1px solid var(--c-border-faint);
+  letter-spacing: 0.02em;
+}
+
+.hof-league-awards {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.hof-team-block {
+  padding: 14px 18px;
+
+  & + & {
+    border-top: 1px solid var(--c-border-faint);
+  }
+
+  &--champion { background: rgba(245, 158, 11, 0.04); }
+  &--runner-up {}
+}
+
+.hof-team-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.hof-place-icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.hof-place-label {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  flex-shrink: 0;
+
+  &--champion {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+  }
+
+  &--runner-up {
+    background: rgba(148, 163, 184, 0.12);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+}
+
+.hof-team-name {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.hof-members-toggle {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border);
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.14s;
+  flex-shrink: 0;
+
+  &:hover { background: var(--c-overlay); color: var(--c-text); }
+}
+
+.hof-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0 2px 28px;
+}
+
+.hof-member-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px 3px 6px;
+  border-radius: 20px;
+  background: var(--c-overlay);
+}
+
+.hof-member-race {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 20px;
+  line-height: 1.4;
+}
+
+// ── 역대 수상 기록 ────────────────────────────────────────────
+.hof-award-records {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hof-ar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+}
+
+.hof-ar-rank {
+  width: 24px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+}
+
+.hof-ar-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hof-ar-medals {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.hof-ar-medal {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+
+  &--champion {
+    color: #f59e0b;
+  }
+
+  &--runner-up {
+    color: #94a3b8;
+  }
+}
+
+// ── 개인 전적 테이블 ──────────────────────────────────────────
+.hof-table-header {
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+}
+
+.hof-th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &--rank   { width: 32px; flex-shrink: 0; text-align: center; }
+  &--name   { flex: 1; min-width: 0; }
+  &--record { width: 100px; flex-shrink: 0; text-align: center; }
+  &--rate   { width: 54px; flex-shrink: 0; text-align: center; }
+  &--award  { width: 100px; flex-shrink: 0; }
+
+  &--sortable {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transition: color 0.14s, background 0.14s;
+
+    &:hover { background: var(--c-overlay); color: var(--c-text); }
+  }
+
+  &--active { color: var(--c-text-bright); }
+}
+
+.hof-sort-icon {
+  font-size: 10px;
+  opacity: 0.35;
+  line-height: 1;
+
+  &--active {
+    opacity: 1;
+    color: var(--c-accent, #7c3aed);
+  }
+}
+
+.hof-row {
+  display: flex;
+  align-items: center;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  margin-bottom: 4px;
+
+}
+
+.hof-td {
+  &--rank   { width: 32px; flex-shrink: 0; text-align: center; font-size: 12px; font-weight: 700; color: var(--c-text-faint); }
+  &--name   { flex: 1; min-width: 0; overflow: hidden; }
+  &--record { width: 100px; flex-shrink: 0; display: flex; justify-content: center; gap: 8px; }
+  &--rate   { width: 54px; flex-shrink: 0; text-align: center; font-size: 13px; font-weight: 700; }
+  &--award  { width: 100px; flex-shrink: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; }
+}
+
+.hof-player-name {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hof-wins   { font-size: 13px; font-weight: 700; color: var(--c-text-bright); }
+.hof-losses { font-size: 13px; font-weight: 600; color: var(--c-text-muted); }
+
+.hof-rate--high { color: #4ade80; }
+.hof-rate--mid  { color: var(--c-text); }
+.hof-rate--low  { color: var(--c-text-muted); }
+
+.hof-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 20px;
+  white-space: nowrap;
+
+  &--champion {
+    color: #f59e0b;
+  }
+
+  &--runner-up {
+    color: #94a3b8;
+  }
+}
+
+.state-msg {
+  text-align: center;
+  color: var(--c-text-muted);
+  font-size: 14px;
+  margin-top: 60px;
+}
+
+.state-msg-inline {
+  color: var(--c-text-muted);
+  font-size: 13px;
+  padding: 16px 0;
+}

@@ -1,6 +1,12 @@
 <template>
   <div class="participate-page">
-    <AppHeader />
+    <AppHeader>
+      <template #actions>
+        <button class="btn-hof" @click="$router.push({ name: 'hall-of-fame' })">
+          🏆 명예의 전당
+        </button>
+      </template>
+    </AppHeader>
 
     <div class="participate-content">
       <button class="btn-back" @click="$router.push({ name: 'home' })">
@@ -50,39 +56,41 @@
           </div>
 
           <div class="league-card-actions">
-            <button v-if="league.description" class="btn-guide" @click="openGuide(league)">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/>
-                <path d="M7 6.5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>
-              </svg>
-              리그 안내
-            </button>
-            <button class="btn-pill btn-pill--md btn-pill--green" @click="openRevealList(league)">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
-                <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
-              </svg>
-              엔트리 확인
-            </button>
-            <button class="btn-pill btn-pill--md btn-pill--orange" @click="openResultList(league)">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-                <path d="M4.5 7h5M7 5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-              </svg>
-              경기 결과
-            </button>
-            <button class="btn-pill btn-pill--md btn-pill--purple" @click="openStandingsList(league)">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <rect x="1" y="8" width="3" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
-                <rect x="5.5" y="5" width="3" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
-                <rect x="10" y="2" width="3" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/>
-              </svg>
-              리그 순위
-            </button>
+            <div class="league-card-info-btns">
+              <button v-if="league.description" class="btn-info" @click="openGuide(league)">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M7 6.5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>
+                </svg>
+                리그 안내
+              </button>
+              <button class="btn-info" @click="openRevealList(league)">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
+                </svg>
+                엔트리 확인
+              </button>
+              <button class="btn-info" @click="openResultList(league)">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M4.5 7h5M7 5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+                경기 결과
+              </button>
+              <button class="btn-info" @click="openStandingsList(league)">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <rect x="1" y="8" width="3" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                  <rect x="5.5" y="5" width="3" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                  <rect x="10" y="2" width="3" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                </svg>
+                리그 순위
+              </button>
+            </div>
             <button
               v-if="myCaptainLeagueIds.has(league.id)"
-              class="btn-pill btn-pill--md btn-pill--purple"
+              class="btn-entry-submit"
               @click="openMatchList(league)"
             >
               엔트리 제출
@@ -333,10 +341,13 @@
                 v-for="(team, idx) in standingsModal.standings"
                 :key="team.captainId"
                 class="standing-team"
+                :class="team.captainId === standingsModal.championId ? 'standing-team--champion' : team.captainId === standingsModal.runnerUpId ? 'standing-team--runner-up' : ''"
               >
                 <div class="standing-team-header">
                   <span class="standing-rank">{{ idx + 1 }}</span>
                   <span class="standing-name">{{ team.teamName }}</span>
+                  <span v-if="team.captainId === standingsModal.championId" class="standing-award standing-award--champion">우승</span>
+                  <span v-else-if="team.captainId === standingsModal.runnerUpId" class="standing-award standing-award--runner-up">준우승</span>
                   <div class="standing-stats">
                     <span class="standing-record">{{ team.wins }}승 {{ team.losses }}패</span>
                     <span class="standing-pts">{{ team.matchPoints }}<span class="standing-pts-label">pt</span></span>
@@ -711,6 +722,8 @@ const standingsModal = reactive({
   league: null as LeagueRow | null,
   standings: [] as TeamStanding[],
   loading: false,
+  championId: null as number | null,
+  runnerUpId: null as number | null,
 })
 
 async function openResultList(league: LeagueRow) {
@@ -836,6 +849,31 @@ async function openStandingsList(league: LeagueRow) {
     standingsModal.standings = [...standingsMap.values()].sort((a, b) =>
       b.matchPoints !== a.matchPoints ? b.matchPoints - a.matchPoints : b.wins - a.wins
     )
+
+    // 플레이오프 결과로 우승/준우승 판별
+    let championId: number | null = null
+    let runnerUpId: number | null = null
+
+    const superAce = schedules.find(s => s.match_type === 'super_ace' && s.is_completed)
+    if (superAce?.winner_captain_id) {
+      championId = superAce.winner_captain_id
+      runnerUpId = superAce.team_a_captain_id === championId
+        ? superAce.team_b_captain_id
+        : superAce.team_a_captain_id
+    } else {
+      const set1 = schedules.find(s => s.match_type === 'final_set1' && s.is_completed)
+      const set2 = schedules.find(s => s.match_type === 'final_set2' && s.is_completed)
+      if (set1?.winner_captain_id && set2?.winner_captain_id &&
+          set1.winner_captain_id === set2.winner_captain_id) {
+        championId = set1.winner_captain_id
+        runnerUpId = set1.team_a_captain_id === championId
+          ? set1.team_b_captain_id
+          : set1.team_a_captain_id
+      }
+    }
+
+    standingsModal.championId = championId
+    standingsModal.runnerUpId = runnerUpId
   } finally {
     standingsModal.loading = false
   }
