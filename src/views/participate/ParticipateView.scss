@@ -42,7 +42,7 @@
 }
 
 .league-card {
-  padding: 18px 20px;
+  padding: 18px 20px 14px;
   border-radius: 14px;
   border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
@@ -196,8 +196,54 @@
 // ── 리그 카드 액션 버튼 영역 ──────────────────────────────
 .league-card-actions {
   display: flex;
-  gap: 8px;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--c-border-faint);
+  gap: 8px;
+}
+
+.league-card-info-btns {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.btn-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  color: var(--c-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.14s;
+  white-space: nowrap;
+
+  &:hover { background: var(--c-overlay); color: var(--c-text); }
+}
+
+.btn-entry-submit {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.1);
+  color: #a78bfa;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.14s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover { background: rgba(139, 92, 246, 0.18); border-color: rgba(139, 92, 246, 0.8); }
 }
 
 // ── 경기 목록 모달 ────────────────────────────────────────

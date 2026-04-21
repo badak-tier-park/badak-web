@@ -56,39 +56,41 @@
           </div>
 
           <div class="league-card-actions">
-            <button v-if="league.description" class="btn-guide" @click="openGuide(league)">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/>
-                <path d="M7 6.5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>
-              </svg>
-              리그 안내
-            </button>
-            <button class="btn-pill btn-pill--md btn-pill--green" @click="openRevealList(league)">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
-                <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
-              </svg>
-              엔트리 확인
-            </button>
-            <button class="btn-pill btn-pill--md btn-pill--orange" @click="openResultList(league)">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-                <path d="M4.5 7h5M7 5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-              </svg>
-              경기 결과
-            </button>
-            <button class="btn-pill btn-pill--md btn-pill--purple" @click="openStandingsList(league)">
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <rect x="1" y="8" width="3" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
-                <rect x="5.5" y="5" width="3" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
-                <rect x="10" y="2" width="3" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/>
-              </svg>
-              리그 순위
-            </button>
+            <div class="league-card-info-btns">
+              <button v-if="league.description" class="btn-info" @click="openGuide(league)">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M7 6.5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>
+                </svg>
+                리그 안내
+              </button>
+              <button class="btn-info" @click="openRevealList(league)">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
+                </svg>
+                엔트리 확인
+              </button>
+              <button class="btn-info" @click="openResultList(league)">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M4.5 7h5M7 5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+                경기 결과
+              </button>
+              <button class="btn-info" @click="openStandingsList(league)">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <rect x="1" y="8" width="3" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                  <rect x="5.5" y="5" width="3" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                  <rect x="10" y="2" width="3" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                </svg>
+                리그 순위
+              </button>
+            </div>
             <button
               v-if="myCaptainLeagueIds.has(league.id)"
-              class="btn-pill btn-pill--md btn-pill--purple"
+              class="btn-entry-submit"
               @click="openMatchList(league)"
             >
               엔트리 제출
