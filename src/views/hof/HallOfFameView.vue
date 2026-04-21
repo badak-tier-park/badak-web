@@ -174,7 +174,7 @@ import { getAllCompletedSchedules, getSlotResultsForSchedules } from '@/lib/sche
 import { getAllTeamNames } from '@/lib/teamNames'
 import { getEntriesForSchedules } from '@/lib/entries'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
-import { getCaptains } from '@/lib/leagueDetail'
+import { getCaptains, getPlayerSnapshotsForLeagues } from '@/lib/leagueDetail'
 import { computeFinalRosters } from '@/lib/entries'
 
 interface MemberInfo { id: number; nickname: string; tier: string; race: string }
@@ -329,6 +329,11 @@ onMounted(async () => {
     }
 
     // 리그 어워드 카드 구성 (로스터 포함)
+    const leagueIdsWithChampions = [...championByLeague.keys()]
+    const allSnapshots = await getPlayerSnapshotsForLeagues(leagueIdsWithChampions)
+    // (leagueId_playerId) → snapshot
+    const snapshotMap = new Map(allSnapshots.map(s => [`${s.league_id}_${s.player_id}`, s]))
+
     const awards: LeagueAward[] = []
     for (const [leagueId, result] of championByLeague) {
       const league = leagueMap.get(leagueId)
@@ -344,17 +349,24 @@ onMounted(async () => {
 
       const makeTeamAward = (captainId: number): TeamAward => {
         const rawIds = finalRosters.get(captainId) ?? [captainId]
-        const memberIds = [...new Set(rawIds)] // 중복 제거 (captain이 draft pick에 포함된 경우)
+        const memberIds = [...new Set(rawIds)]
         const members: MemberInfo[] = memberIds
           .map(id => {
+            const snap = snapshotMap.get(`${leagueId}_${id}`)
             const p = playerMap.get(id)
-            return { id, nickname: p?.nickname ?? `선수 ${id}`, tier: p?.tier ?? 'e', race: p?.race ?? '' }
+            return {
+              id,
+              nickname: p?.nickname ?? `선수 ${id}`,
+              tier: snap?.tier ?? p?.tier ?? 'e',
+              race: snap?.race ?? p?.race ?? '',
+            }
           })
           .sort((a, b) => (TIER_RANK[b.tier.toUpperCase()] ?? 0) - (TIER_RANK[a.tier.toUpperCase()] ?? 0))
+        const capSnap = snapshotMap.get(`${leagueId}_${captainId}`)
         const captain = playerMap.get(captainId)
         return {
           captainId,
-          captainTier: captain?.tier ?? 'e',
+          captainTier: capSnap?.tier ?? captain?.tier ?? 'e',
           teamName: teamNameMap.get(`${leagueId}_${captainId}`) || captain?.nickname || `선수 ${captainId}`,
           members,
         }
