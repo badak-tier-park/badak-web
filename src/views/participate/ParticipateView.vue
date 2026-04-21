@@ -58,21 +58,21 @@
               </svg>
               리그 안내
             </button>
-            <button class="btn-check-entry" @click="openRevealList(league)">
+            <button class="btn-pill btn-pill--md btn-pill--green" @click="openRevealList(league)">
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
                 <circle cx="7" cy="7" r="1.8" fill="currentColor"/>
               </svg>
               엔트리 확인
             </button>
-            <button class="btn-check-result" @click="openResultList(league)">
+            <button class="btn-pill btn-pill--md btn-pill--orange" @click="openResultList(league)">
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
                 <path d="M4.5 7h5M7 5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
               </svg>
               경기 결과
             </button>
-            <button class="btn-check-standings" @click="openStandingsList(league)">
+            <button class="btn-pill btn-pill--md btn-pill--purple" @click="openStandingsList(league)">
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <rect x="1" y="8" width="3" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
                 <rect x="5.5" y="5" width="3" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
@@ -82,7 +82,7 @@
             </button>
             <button
               v-if="myCaptainLeagueIds.has(league.id)"
-              class="btn-entry-open"
+              class="btn-pill btn-pill--md btn-pill--purple"
               @click="openMatchList(league)"
             >
               엔트리 제출
@@ -136,7 +136,7 @@
                 class="match-item"
               >
                 <div class="match-item-info">
-                  <span class="round-tag">{{ item.schedule.round }}라운드</span>
+                  <span class="round-tag">{{ matchTypeLabel(item.schedule) }}</span>
                   <span class="match-item-vs">
                     <span class="my-team-name">{{ item.myTeamName }}</span>
                     <span class="vs-divider">VS</span>
@@ -154,26 +154,29 @@
                       </svg>
                       제출됨
                     </span>
-                    <span v-if="consentedSet.has(item.schedule.id)" class="entry-consent-badge">
-                      공개 동의됨
-                    </span>
-                    <button
-                      v-else
-                      class="btn-entry btn-entry--consent"
-                      :disabled="consentingId === item.schedule.id"
-                      @click="handleConsentReveal(item)"
-                    >{{ consentingId === item.schedule.id ? '...' : '공개 동의' }}</button>
+                    <button class="btn-pill btn-pill--md btn-pill--purple" @click="openEntryModal(item, true)">확인</button>
+                    <template v-if="!item.schedule.is_entry_revealed">
+                      <span v-if="consentedSet.has(item.schedule.id)" class="entry-consent-badge">
+                        공개 동의됨
+                      </span>
+                      <button
+                        v-else
+                        class="btn-pill btn-pill--md btn-pill--amber"
+                        :disabled="consentingId === item.schedule.id"
+                        @click="handleConsentReveal(item)"
+                      >{{ consentingId === item.schedule.id ? '...' : '공개 동의' }}</button>
+                    </template>
                   </template>
                   <template v-else-if="entryStatusMap.get(item.schedule.id) === 'saved'">
-                    <button class="btn-entry btn-entry--edit" @click="openEntryModal(item)">수정</button>
+                    <button class="btn-pill btn-pill--md btn-pill--ghost" @click="openEntryModal(item)">수정</button>
                     <button
-                      class="btn-entry btn-entry--submit"
+                      class="btn-pill btn-pill--md btn-pill--green"
                       :disabled="submittingId === item.schedule.id"
                       @click="handleSubmitEntry(item.schedule.id)"
                     >{{ submittingId === item.schedule.id ? '...' : '제출' }}</button>
                   </template>
                   <template v-else>
-                    <button class="btn-entry" @click="openEntryModal(item)">작성</button>
+                    <button class="btn-pill btn-pill--md btn-pill--purple" @click="openEntryModal(item)">작성</button>
                   </template>
                 </div>
               </div>
@@ -210,7 +213,7 @@
                 class="match-item"
               >
                 <div class="match-item-info">
-                  <span class="round-tag">{{ item.schedule.round }}라운드</span>
+                  <span class="round-tag">{{ matchTypeLabel(item.schedule) }}</span>
                   <span class="match-item-vs">
                     <span class="my-team-name">{{ item.teamAName }}</span>
                     <span class="vs-divider">VS</span>
@@ -221,7 +224,7 @@
                   </span>
                 </div>
                 <div class="match-item-actions">
-                  <button class="btn-entry" @click="openRevealEntry(item)">확인</button>
+                  <button class="btn-pill btn-pill--md btn-pill--purple" @click="openRevealEntry(item)">확인</button>
                 </div>
               </div>
             </div>
@@ -235,6 +238,7 @@
       v-if="revealModal.open && revealModal.item"
       :schedule-id="revealModal.item.schedule.id"
       :round="revealModal.item.schedule.round"
+      :match-type="revealModal.item.schedule.match_type"
       :match-date="revealModal.item.schedule.match_date"
       :league-id="revealListModal.league?.id ?? ''"
       :team-a-captain-id="revealModal.item.schedule.team_a_captain_id"
@@ -271,16 +275,14 @@
                 class="match-item"
               >
                 <div class="match-item-info">
-                  <span class="round-tag">{{ item.schedule.round }}라운드</span>
+                  <span class="round-tag">{{ matchTypeLabel(item.schedule) }}</span>
                   <span class="match-item-vs">
                     <span
                       class="result-team-name"
                       :class="item.schedule.winner_captain_id === item.schedule.team_a_captain_id ? 'result-team-name--win' : 'result-team-name--loss'"
                     >{{ item.teamAName }}</span>
                     <span class="result-score">
-                      <span :class="item.schedule.winner_captain_id === item.schedule.team_a_captain_id ? 'result-score--win' : 'result-score--loss'">{{ item.teamAWins }}</span>
-                      <span class="result-score-sep">:</span>
-                      <span :class="item.schedule.winner_captain_id === item.schedule.team_b_captain_id ? 'result-score--win' : 'result-score--loss'">{{ item.teamBWins }}</span>
+                      <span class="result-score-sep">vs</span>
                     </span>
                     <span
                       class="result-team-name"
@@ -292,7 +294,12 @@
                   </span>
                 </div>
                 <div class="match-item-actions">
-                  <button class="btn-entry" @click="openResultEntry(item)">결과 보기</button>
+                  <button
+                    v-if="item.schedule.video_url"
+                    class="btn-pill btn-pill--md btn-pill--amber"
+                    @click="openUrl(item.schedule.video_url!)"
+                  >경기 영상</button>
+                  <button class="btn-pill btn-pill--md btn-pill--purple" @click="openResultEntry(item)">결과 보기</button>
                 </div>
               </div>
             </div>
@@ -347,6 +354,7 @@
       v-if="resultModal.open && resultModal.item"
       :schedule-id="resultModal.item.schedule.id"
       :round="resultModal.item.schedule.round"
+      :match-type="resultModal.item.schedule.match_type"
       :match-date="resultModal.item.schedule.match_date"
       :league-id="resultListModal.league?.id ?? ''"
       :team-a-captain-id="resultModal.item.schedule.team_a_captain_id"
@@ -363,9 +371,9 @@
         <div class="modal modal--entry">
           <div class="modal-header">
             <div>
-              <p class="modal-title">엔트리 작성</p>
+              <p class="modal-title">{{ entryModal.readonly ? '엔트리 확인' : '엔트리 작성' }}</p>
               <p class="modal-subtitle">
-                {{ entryModal.schedule?.round }}라운드
+                {{ entryModal.schedule ? matchTypeLabel(entryModal.schedule) : '' }}
                 <span v-if="entryModal.schedule?.match_date">
                   · {{ entryModal.schedule.match_date.replaceAll('-', '/') }}
                 </span>
@@ -435,18 +443,36 @@
                           v-for="map in entryModal.slotMaps[slot.num]"
                           :key="map.id"
                           class="map-chip"
-                          :class="{ 'map-chip--banned': entryModal.banSelections[slot.num] === map.id }"
+                          :class="{
+                            'map-chip--banned': entryModal.banSelections[slot.num] === map.id,
+                            'map-chip--picked': entryModal.pickSelections[slot.num] === map.id,
+                          }"
                         >
                           <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="map-chip-img" />
                           <div v-else class="map-chip-img-empty" />
                           <span class="map-chip-name">{{ map.name }}</span>
-                          <button
-                            v-if="(BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.slotMaps[slot.num].length > 1"
-                            class="map-chip-ban"
-                            :class="{ 'map-chip-ban--active': entryModal.banSelections[slot.num] === map.id }"
-                            type="button"
-                            @click="toggleBan(slot.num, map.id)"
-                          >{{ entryModal.banSelections[slot.num] === map.id ? '밴 취소' : '밴' }}</button>
+                          <template v-if="(BAN_SLOTS as readonly number[]).includes(slot.num) && entryModal.slotMaps[slot.num].length > 1">
+                            <template v-if="!entryModal.readonly">
+                              <button
+                                class="map-chip-ban"
+                                :class="{ 'map-chip-ban--active': entryModal.banSelections[slot.num] === map.id }"
+                                :disabled="entryModal.pickSelections[slot.num] === map.id"
+                                type="button"
+                                @click="toggleBan(slot.num, map.id)"
+                              >{{ entryModal.banSelections[slot.num] === map.id ? '밴 취소' : '밴' }}</button>
+                              <button
+                                class="map-chip-pick"
+                                :class="{ 'map-chip-pick--active': entryModal.pickSelections[slot.num] === map.id }"
+                                :disabled="entryModal.banSelections[slot.num] === map.id"
+                                type="button"
+                                @click="togglePick(slot.num, map.id)"
+                              >{{ entryModal.pickSelections[slot.num] === map.id ? '픽 취소' : '픽' }}</button>
+                            </template>
+                            <template v-else>
+                              <span v-if="entryModal.banSelections[slot.num] === map.id" class="map-chip-ban map-chip-ban--active">밴</span>
+                              <span v-if="entryModal.pickSelections[slot.num] === map.id" class="map-chip-pick map-chip-pick--active">픽</span>
+                            </template>
+                          </template>
                         </div>
                       </div>
 
@@ -457,6 +483,7 @@
                           :key="idx"
                           :model-value="getSlotPlayer(slot.num, idx - 1)"
                           :options="buildOptions(slot.num, idx - 1)"
+                          :disabled="entryModal.readonly"
                           @update:model-value="setSlotPlayer(slot.num, idx - 1, $event)"
                         />
                       </div>
@@ -477,7 +504,8 @@
                       class="ace-ban-tier-btn"
                       :class="[`tier-badge--${tier.toLowerCase()}`, { 'ace-ban-tier-btn--selected': entryModal.aceTierBan === tier }]"
                       type="button"
-                      @click="entryModal.aceTierBan = entryModal.aceTierBan === tier ? null : tier"
+                      :disabled="entryModal.readonly"
+                      @click="!entryModal.readonly && (entryModal.aceTierBan = entryModal.aceTierBan === tier ? null : tier)"
                     >
                       <span class="ace-ban-tier-label">{{ tier }}</span>
                       <span class="ace-ban-tier-sub">티어</span>
@@ -490,11 +518,16 @@
           </div>
 
           <div class="modal-footer">
-            <p v-if="entryError" class="entry-error">{{ entryError }}</p>
-            <button class="btn-cancel" @click="closeEntryModal">취소</button>
-            <button class="btn-submit" :disabled="entrySaving || loadingEntry" @click="handleEntrySubmit">
-              {{ entrySaving ? '저장 중...' : '저장' }}
-            </button>
+            <template v-if="entryModal.readonly">
+              <button class="btn-submit" @click="closeEntryModal">닫기</button>
+            </template>
+            <template v-else>
+              <p v-if="entryError" class="entry-error">{{ entryError }}</p>
+              <button class="btn-cancel" @click="closeEntryModal">취소</button>
+              <button class="btn-submit" :disabled="entrySaving || loadingEntry" @click="handleEntrySubmit">
+                {{ entrySaving ? '저장 중...' : '저장' }}
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -814,6 +847,10 @@ const resultModal = reactive({
   item: null as RevealListItem | null,
 })
 
+function openUrl(url: string) {
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
 function openResultEntry(item: RevealListItem) {
   resultModal.item = item
   resultModal.open = true
@@ -832,17 +869,20 @@ interface SlotMapInfo {
 
 interface EntryModalState {
   open: boolean
+  readonly: boolean
   schedule: ScheduleRow | null
   leagueId: string
   opponentTeamName: string
   teamMembers: PlayerRow[]
   selections: Record<number, number[]>
-  slotMaps: Record<number, SlotMapInfo[]>   // match_slot → 맵 목록
-  banSelections: Record<number, string | null>  // match_slot → banned_map_id
+  slotMaps: Record<number, SlotMapInfo[]>
+  banSelections: Record<number, string | null>
+  pickSelections: Record<number, string | null>
   aceTierBan: string | null
 }
 const entryModal = reactive<EntryModalState>({
   open: false,
+  readonly: false,
   schedule: null,
   leagueId: '',
   opponentTeamName: '',
@@ -850,6 +890,7 @@ const entryModal = reactive<EntryModalState>({
   selections: {},
   slotMaps: {},
   banSelections: {},
+  pickSelections: {},
   aceTierBan: null,
 })
 
@@ -901,7 +942,7 @@ async function openMatchList(league: LeagueRow) {
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
 
     matchListModal.matches = schedules
-      .filter(s => !s.is_completed && (s.team_a_captain_id === myPlayerId.value || s.team_b_captain_id === myPlayerId.value))
+      .filter(s => !s.is_completed && !s.is_entry_revealed && s.match_type !== 'super_ace' && (s.team_a_captain_id === myPlayerId.value || s.team_b_captain_id === myPlayerId.value))
       .map(s => {
         const opponentId = s.team_a_captain_id === myPlayerId.value ? s.team_b_captain_id : s.team_a_captain_id
         return {
@@ -981,21 +1022,23 @@ const teamPoints = computed(() =>
 )
 const totalPoints = computed(() => individualPoints.value + teamPoints.value)
 
-async function openEntryModal(item: MyMatchItem) {
+async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.open = true
+  entryModal.readonly = readonly
   entryModal.schedule = item.schedule
   entryModal.leagueId = item.leagueId
   entryModal.opponentTeamName = item.opponentTeamName
   entryModal.teamMembers = []
   entryModal.slotMaps = {}
   entryModal.banSelections = {}
+  entryModal.pickSelections = {}
   entryModal.aceTierBan = null
   entryError.value = null
   initSelections()
   loadingEntry.value = true
 
   try {
-    const [captains, picks, swapLog, players, existing, matchMaps, allMaps, existingAceBan] = await Promise.all([
+    const [captains, draftPicks, swapLog, players, existing, matchMaps, allMaps, existingAceBan] = await Promise.all([
       getCaptains(item.leagueId),
       getDraftPicks(item.leagueId),
       getSwapLog(item.leagueId),
@@ -1016,12 +1059,14 @@ async function openEntryModal(item: MyMatchItem) {
     }
     entryModal.slotMaps = slotMaps
 
-    // 밴 초기값
+    // 밴/픽 초기값
     const bans: Record<number, string | null> = {}
-    for (const s of BAN_SLOTS) bans[s] = null
+    const picks: Record<number, string | null> = {}
+    for (const s of BAN_SLOTS) { bans[s] = null; picks[s] = null }
     entryModal.banSelections = bans
+    entryModal.pickSelections = picks
 
-    const rosters = computeFinalRosters(captains, picks, swapLog)
+    const rosters = computeFinalRosters(captains, draftPicks, swapLog)
     const myRoster = rosters.get(item.myTeamCaptainId) ?? []
     const playerMap = new Map(players.map(p => [p.id, p]))
     entryModal.teamMembers = myRoster.map(id => playerMap.get(id)).filter(Boolean) as PlayerRow[]
@@ -1036,6 +1081,9 @@ async function openEntryModal(item: MyMatchItem) {
         }
         if (e.banned_map_id && (BAN_SLOTS as readonly number[]).includes(e.match_slot)) {
           entryModal.banSelections[e.match_slot] = e.banned_map_id
+        }
+        if (e.picked_map_id && (BAN_SLOTS as readonly number[]).includes(e.match_slot)) {
+          entryModal.pickSelections[e.match_slot] = e.picked_map_id
         }
       }
     }
@@ -1053,6 +1101,12 @@ function closeEntryModal() {
 
 function toggleBan(slotNum: number, mapId: string) {
   entryModal.banSelections[slotNum] = entryModal.banSelections[slotNum] === mapId ? null : mapId
+  if (entryModal.pickSelections[slotNum] === mapId) entryModal.pickSelections[slotNum] = null
+}
+
+function togglePick(slotNum: number, mapId: string) {
+  if (entryModal.banSelections[slotNum] === mapId) return
+  entryModal.pickSelections[slotNum] = entryModal.pickSelections[slotNum] === mapId ? null : mapId
 }
 
 async function handleEntrySubmit() {
@@ -1068,9 +1122,15 @@ async function handleEntrySubmit() {
 
   for (const slotNum of BAN_SLOTS) {
     const maps = entryModal.slotMaps[slotNum]
-    if (maps && maps.length > 1 && !entryModal.banSelections[slotNum]) {
-      entryError.value = `경기${slotNum}에서 밴할 맵을 선택해주세요.`
-      return
+    if (maps && maps.length > 1) {
+      if (!entryModal.banSelections[slotNum]) {
+        entryError.value = `경기${slotNum}에서 밴할 맵을 선택해주세요.`
+        return
+      }
+      if (!entryModal.pickSelections[slotNum]) {
+        entryError.value = `경기${slotNum}에서 픽할 맵을 선택해주세요.`
+        return
+      }
     }
   }
 
@@ -1098,6 +1158,7 @@ async function handleEntrySubmit() {
       match_slot: slot.num,
       player_ids: entryModal.selections[slot.num].filter(Boolean),
       banned_map_id: entryModal.banSelections[slot.num] ?? null,
+      picked_map_id: (BAN_SLOTS as readonly number[]).includes(slot.num) ? (entryModal.pickSelections[slot.num] ?? null) : null,
     }))
     await Promise.all([
       saveEntries(entryModal.schedule!.id, myPlayerId.value!, slots),
@@ -1150,7 +1211,7 @@ async function handleSubmitEntry(scheduleId: number) {
       notifyEntrySubmitted({
         leagueName: matchListModal.league?.name ?? '',
         teamName: match.myTeamName,
-        matchRound: `${match.schedule.round}라운드`,
+        matchRound: matchTypeLabel(match.schedule),
         matchDate: match.schedule.match_date,
       })
     }
@@ -1159,6 +1220,11 @@ async function handleSubmitEntry(scheduleId: number) {
   } finally {
     submittingId.value = null
   }
+}
+
+function matchTypeLabel(schedule: ScheduleRow): string {
+  if (schedule.match_type === 'regular') return `${schedule.round}라운드`
+  return { semifinal: '준결승', final_set1: '결승 1세트', final_set2: '결승 2세트', super_ace: '슈퍼에이스' }[schedule.match_type] ?? schedule.match_type
 }
 
 function statusLabel(status: LeagueStatus) {

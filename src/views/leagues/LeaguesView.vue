@@ -37,7 +37,7 @@
               </div>
               
             </div>
-            <button class="btn-card-edit" @click.stop="openEdit(league)">
+            <button class="btn-pill btn-pill--silent" @click.stop="openEdit(league)">
               <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
                 <path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -71,8 +71,8 @@
             </div>
           </div>
 
-          <!-- 액션: 상세 설정 | 지목식 | 팀명·일정 (지목식 완료 후) -->
-          <div class="league-card-actions" :class="league.draft_completed ? 'league-card-actions--4col' : 'league-card-actions--2col'">
+          <!-- 액션: 상세 설정 | 지목식 | 팀명·일정·본선 (지목식 완료 후) -->
+          <div class="league-card-actions" :class="league.draft_completed ? 'league-card-actions--5col' : 'league-card-actions--2col'">
             <button class="action-btn action-btn--detail" @click="router.push({ name: 'league-detail', params: { id: league.id } })">
               <AppIcon name="gear" :size="12" />
               상세 설정
@@ -119,6 +119,15 @@
               >
                 <AppIcon name="calendar" :size="12" />
                 경기 관리
+              </button>
+              <button
+                class="action-btn action-btn--playoffs"
+                @click="router.push({ name: 'league-playoffs', params: { id: league.id } })"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1.5 2.5h4M1.5 9.5h4M5.5 2.5v7M5.5 6h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                본선
               </button>
             </template>
           </div>

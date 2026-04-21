@@ -86,6 +86,184 @@
   }
 }
 
+// ── 알약 버튼 (small/medium 액션) ────────────────────────
+// 사용: <button class="btn-pill btn-pill--{color} [btn-pill--md] [btn-pill--filled]">
+// 컬러: green / blue / amber / orange / purple / red / yellow / ghost
+// 사이즈: 기본 sm (11px), --md (12px)
+// --filled: hover 상태의 진한 배경을 기본으로 적용
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: 1px solid var(--btn-pill-border, transparent);
+  background: var(--btn-pill-bg, transparent);
+  color: var(--btn-pill-color, inherit);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: all 0.13s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--btn-pill-border-hover, var(--btn-pill-border));
+    background: var(--btn-pill-bg-hover, var(--btn-pill-bg));
+  }
+
+  &:disabled { opacity: 0.5; cursor: default; }
+
+  &--md {
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+  }
+
+  &--green {
+    --btn-pill-border:       rgba(52, 211, 153, 0.3);
+    --btn-pill-bg:           rgba(52, 211, 153, 0.07);
+    --btn-pill-color:        #34d399;
+    --btn-pill-border-hover: rgba(52, 211, 153, 0.55);
+    --btn-pill-bg-hover:     rgba(52, 211, 153, 0.14);
+  }
+
+  &--blue {
+    --btn-pill-border:       rgba(99, 179, 237, 0.3);
+    --btn-pill-bg:           rgba(99, 179, 237, 0.07);
+    --btn-pill-color:        #63b3ed;
+    --btn-pill-border-hover: rgba(99, 179, 237, 0.55);
+    --btn-pill-bg-hover:     rgba(99, 179, 237, 0.14);
+  }
+
+  &--amber {
+    --btn-pill-border:       rgba(251, 191, 36, 0.3);
+    --btn-pill-bg:           rgba(251, 191, 36, 0.07);
+    --btn-pill-color:        #fbbf24;
+    --btn-pill-border-hover: rgba(251, 191, 36, 0.55);
+    --btn-pill-bg-hover:     rgba(251, 191, 36, 0.14);
+  }
+
+  &--orange {
+    --btn-pill-border:       rgba(251, 146, 60, 0.3);
+    --btn-pill-bg:           rgba(251, 146, 60, 0.07);
+    --btn-pill-color:        #fb923c;
+    --btn-pill-border-hover: rgba(251, 146, 60, 0.55);
+    --btn-pill-bg-hover:     rgba(251, 146, 60, 0.14);
+  }
+
+  &--purple {
+    --btn-pill-border:       rgba(168, 85, 247, 0.3);
+    --btn-pill-bg:           rgba(168, 85, 247, 0.07);
+    --btn-pill-color:        #c084fc;
+    --btn-pill-border-hover: rgba(168, 85, 247, 0.55);
+    --btn-pill-bg-hover:     rgba(168, 85, 247, 0.14);
+  }
+
+  &--red {
+    --btn-pill-border:       rgba(248, 113, 113, 0.3);
+    --btn-pill-bg:           rgba(248, 113, 113, 0.06);
+    --btn-pill-color:        #f87171;
+    --btn-pill-border-hover: rgba(248, 113, 113, 0.55);
+    --btn-pill-bg-hover:     rgba(248, 113, 113, 0.14);
+  }
+
+  &--yellow {
+    --btn-pill-border:       rgba(250, 204, 21, 0.4);
+    --btn-pill-bg:           rgba(250, 204, 21, 0.08);
+    --btn-pill-color:        #facc15;
+    --btn-pill-border-hover: rgba(250, 204, 21, 0.65);
+    --btn-pill-bg-hover:     rgba(250, 204, 21, 0.16);
+  }
+
+  &--ghost {
+    --btn-pill-border:       var(--c-border-strong);
+    --btn-pill-bg:           var(--c-overlay);
+    --btn-pill-color:        var(--c-text-sub);
+    --btn-pill-border-hover: var(--c-border-dashed);
+    --btn-pill-bg-hover:     var(--c-overlay);
+  }
+
+  // 기본 투명, hover 시에만 ghost 스타일이 드러나는 변형 (카드 내부 서브 액션용)
+  &--silent {
+    --btn-pill-border:       transparent;
+    --btn-pill-bg:           transparent;
+    --btn-pill-color:        var(--c-text-faint);
+    --btn-pill-border-hover: var(--c-border-strong);
+    --btn-pill-bg-hover:     var(--c-overlay);
+
+    &:hover:not(:disabled) { color: var(--c-text-sub); }
+  }
+
+  &--filled {
+    --btn-pill-border: var(--btn-pill-border-hover);
+    --btn-pill-bg:     var(--btn-pill-bg-hover);
+  }
+}
+
+// ── btn-pill 라이트 테마 오버라이드 ──────────────────────────
+// 밝은 배경에서 색상 대비가 낮아지는 것을 보정 (배경 불투명도 상향, 텍스트 채도 유지)
+[data-theme="light"] {
+  .btn-pill {
+    &--green {
+      --btn-pill-border:       rgba(16, 185, 129, 0.35);
+      --btn-pill-bg:           rgba(16, 185, 129, 0.10);
+      --btn-pill-color:        #059669;
+      --btn-pill-border-hover: rgba(16, 185, 129, 0.60);
+      --btn-pill-bg-hover:     rgba(16, 185, 129, 0.18);
+    }
+
+    &--blue {
+      --btn-pill-border:       rgba(59, 130, 246, 0.35);
+      --btn-pill-bg:           rgba(59, 130, 246, 0.10);
+      --btn-pill-color:        #2563eb;
+      --btn-pill-border-hover: rgba(59, 130, 246, 0.60);
+      --btn-pill-bg-hover:     rgba(59, 130, 246, 0.18);
+    }
+
+    &--amber {
+      --btn-pill-border:       rgba(217, 119, 6, 0.35);
+      --btn-pill-bg:           rgba(217, 119, 6, 0.10);
+      --btn-pill-color:        #b45309;
+      --btn-pill-border-hover: rgba(217, 119, 6, 0.60);
+      --btn-pill-bg-hover:     rgba(217, 119, 6, 0.18);
+    }
+
+    &--orange {
+      --btn-pill-border:       rgba(234, 88, 12, 0.35);
+      --btn-pill-bg:           rgba(234, 88, 12, 0.10);
+      --btn-pill-color:        #c2410c;
+      --btn-pill-border-hover: rgba(234, 88, 12, 0.60);
+      --btn-pill-bg-hover:     rgba(234, 88, 12, 0.18);
+    }
+
+    &--purple {
+      --btn-pill-border:       rgba(124, 58, 237, 0.35);
+      --btn-pill-bg:           rgba(124, 58, 237, 0.10);
+      --btn-pill-color:        #7c3aed;
+      --btn-pill-border-hover: rgba(124, 58, 237, 0.60);
+      --btn-pill-bg-hover:     rgba(124, 58, 237, 0.18);
+    }
+
+    &--red {
+      --btn-pill-border:       rgba(220, 38, 38, 0.35);
+      --btn-pill-bg:           rgba(220, 38, 38, 0.10);
+      --btn-pill-color:        #dc2626;
+      --btn-pill-border-hover: rgba(220, 38, 38, 0.60);
+      --btn-pill-bg-hover:     rgba(220, 38, 38, 0.18);
+    }
+
+    &--yellow {
+      --btn-pill-border:       rgba(202, 138, 4, 0.40);
+      --btn-pill-bg:           rgba(202, 138, 4, 0.10);
+      --btn-pill-color:        #a16207;
+      --btn-pill-border-hover: rgba(202, 138, 4, 0.65);
+      --btn-pill-bg-hover:     rgba(202, 138, 4, 0.18);
+    }
+  }
+}
+
 // ── 에러 메시지 ──────────────────────────────────────────
 .save-error {
   margin: 0;

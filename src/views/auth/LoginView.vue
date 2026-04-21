@@ -40,7 +40,7 @@
       <!-- Main content -->
       <div class="card-content">
         <h1 class="title">환영합니다</h1>
-        <p class="subtitle">디스코드 계정으로 로그인하여<br>관리자 페이지에 접속하세요</p>
+        <p class="subtitle">디스코드 계정으로 로그인하여<br>바닥티어 페이지에 접속하세요</p>
 
         <button class="discord-btn" @click="auth.loginWithDiscord()" :disabled="auth.loading">
           <span class="btn-icon">

@@ -22,7 +22,9 @@
   text-align: left;
   gap: 6px;
 
-  &:hover { border-color: rgba(168, 85, 247, 0.4); }
+  &:hover:not(:disabled) { border-color: rgba(168, 85, 247, 0.4); }
+  &.ps-trigger--disabled { cursor: default; opacity: 0.75; }
+  &.ps-trigger--disabled .ps-arrow { display: none; }
   &--open { border-color: rgba(168, 85, 247, 0.55); }
   &--empty {
     border-color: rgba(168, 85, 247, 0.28);

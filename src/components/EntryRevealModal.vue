@@ -6,7 +6,7 @@
           <div>
             <p class="reveal-title">{{ showResults ? '경기 결과' : '엔트리 확인' }}</p>
             <p class="reveal-subtitle">
-              {{ round }}라운드
+              {{ roundLabel }}
               <template v-if="matchDate"> · {{ matchDate.replaceAll('-', '/') }}</template>
             </p>
           </div>
@@ -138,12 +138,12 @@
                 </div>
               </div>
 
-              <!-- 밴 정보 (엔트리 확인) / 사다리타기 안내 -->
+              <!-- 밴/픽 정보 (엔트리 확인) / 사다리타기 안내 -->
               <div v-if="slotMapRows[slot.num]?.length" class="rse-ban-area">
                 <div v-if="slotMapResults[slot.num].isUndecided" class="rse-undecided">사다리타기로 결정</div>
-                <template v-if="!showResults && slotMapResults[slot.num].bannedMapInfo.length">
+                <template v-if="!showResults && (slotMapResults[slot.num].bannedMapInfo.length || slotMapResults[slot.num].pickedMapInfo.length)">
                   <button class="btn-ban-toggle" @click="toggleBanInfo(slot.num)">
-                    맵 밴 정보
+                    맵 밴/픽 정보
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="transition: transform 0.15s" :style="{ transform: expandedBanSlots.includes(slot.num) ? 'rotate(180deg)' : 'none' }">
                       <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -163,6 +163,21 @@
                         <div class="rse-ban-chips">
                           <span v-if="ban.byTeamA" class="ban-chip ban-chip--a">{{ teamAName }} 밴</span>
                           <span v-if="ban.byTeamB" class="ban-chip ban-chip--b">{{ teamBName }} 밴</span>
+                        </div>
+                      </div>
+                      <div
+                        v-for="pick in slotMapResults[slot.num].pickedMapInfo"
+                        :key="`pick-${pick.mapId}-${pick.byTeamA}-${pick.byTeamB}`"
+                        class="rse-map-item rse-map--picked"
+                      >
+                        <div class="rse-map-thumb-wrap">
+                          <img v-if="getMapInfo(slot.num, pick.mapId)?.thumbnail_url" :src="getMapInfo(slot.num, pick.mapId)!.thumbnail_url!" class="rse-map-thumb" />
+                          <div v-else class="rse-map-thumb-empty" />
+                        </div>
+                        <span class="rse-map-name">{{ getMapInfo(slot.num, pick.mapId)?.name }}</span>
+                        <div class="rse-ban-chips">
+                          <span v-if="pick.byTeamA" class="ban-chip ban-chip--pick-a">{{ teamAName }} 픽</span>
+                          <span v-if="pick.byTeamB" class="ban-chip ban-chip--pick-b">{{ teamBName }} 픽</span>
                         </div>
                       </div>
                     </div>
@@ -301,6 +316,7 @@ import { withTimeout } from '@/lib/supabase'
 const props = withDefaults(defineProps<{
   scheduleId: number
   round: number
+  matchType?: string
   matchDate: string | null
   leagueId: string
   teamACaptainId: number
@@ -308,7 +324,17 @@ const props = withDefaults(defineProps<{
   teamAName: string
   teamBName: string
   showResults?: boolean
-}>(), { showResults: false })
+}>(), { showResults: false, matchType: 'regular' })
+
+const roundLabel = computed(() => {
+  const labels: Record<string, string> = {
+    semifinal: '준결승',
+    final_set1: '결승 1세트',
+    final_set2: '결승 2세트',
+    super_ace: '슈퍼에이스',
+  }
+  return labels[props.matchType ?? ''] ?? `${props.round}라운드`
+})
 
 defineEmits<{ close: [] }>()
 
@@ -410,6 +436,40 @@ function getBan(captainId: number, slotNum: number): string | null {
   return getEntry(captainId, slotNum)?.banned_map_id ?? null
 }
 
+function getPick(captainId: number, slotNum: number): string | null {
+  return getEntry(captainId, slotNum)?.picked_map_id ?? null
+}
+
+function resolvePickInReveal(
+  slotNum: number,
+  candidates: MapInfo[],
+  pickedMapInfo: SlotMapResult['pickedMapInfo'],
+): string | null {
+  const pickA = getPick(props.teamACaptainId, slotNum)
+  const pickB = getPick(props.teamBCaptainId, slotNum)
+  const candidateIds = new Set(candidates.map(m => m.id))
+  const validPickA = pickA && candidateIds.has(pickA) ? pickA : null
+  const validPickB = pickB && candidateIds.has(pickB) ? pickB : null
+
+  if (!validPickA && !validPickB) return null
+
+  if (validPickA && validPickA === validPickB) {
+    pickedMapInfo.push({ mapId: validPickA, byTeamA: true, byTeamB: true })
+    return validPickA
+  }
+
+  if (validPickA) pickedMapInfo.push({ mapId: validPickA, byTeamA: true, byTeamB: false })
+  if (validPickB) pickedMapInfo.push({ mapId: validPickB, byTeamA: false, byTeamB: true })
+
+  const playerIdA = getSlotPlayerIds(props.teamACaptainId, slotNum)[0]
+  const playerIdB = getSlotPlayerIds(props.teamBCaptainId, slotNum)[0]
+  const rankA = playerIdA ? (TIER_RANK[playerTier(playerIdA).toUpperCase()] ?? 0) : 0
+  const rankB = playerIdB ? (TIER_RANK[playerTier(playerIdB).toUpperCase()] ?? 0) : 0
+  if (rankA === rankB) return null  // 동티어 → 사다리 필요
+
+  return rankA < rankB ? (validPickA ?? validPickB!) : (validPickB ?? validPickA!)
+}
+
 function playerName(id: number): string {
   return playerMap.value.get(id)?.nickname ?? `선수 ${id}`
 }
@@ -473,6 +533,7 @@ const TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
 interface SlotMapResult {
   matchMapIds: Set<string>
   bannedMapInfo: { mapId: string; byTeamA: boolean; byTeamB: boolean }[]
+  pickedMapInfo: { mapId: string; byTeamA: boolean; byTeamB: boolean }[]
   isUndecided: boolean
 }
 
@@ -481,68 +542,65 @@ const slotMapResults = computed<Record<number, SlotMapResult>>(() => {
   for (const slot of SLOT_CONFIG) {
     const n = slot.num
     const maps = slotMapRows.value[n] ?? []
-
-    // showResults 모드: 사다리타기로 확정된 맵이 있으면 그것만 표시
-    const confirmedMapId = slotSelectedMaps.value.get(n)
-    if (props.showResults && confirmedMapId) {
-      results[n] = {
-        matchMapIds: new Set([confirmedMapId]),
-        bannedMapInfo: [],
-        isUndecided: false,
-      }
-      continue
-    }
-
     const banA = getBan(props.teamACaptainId, n)
     const banB = getBan(props.teamBCaptainId, n)
-    const matchMapIds = new Set<string>()
     const bannedMapInfo: SlotMapResult['bannedMapInfo'] = []
+    const pickedMapInfo: SlotMapResult['pickedMapInfo'] = []
     let isUndecided = false
 
-    if (maps.length <= 1 || (!banA && !banB)) {
-      maps.forEach(m => matchMapIds.add(m.id))
-    } else if (maps.length === 3) {
+    // 1단계: 밴 적용 → candidates 계산
+    let candidates = [...maps]
+    if (maps.length > 1 && (banA || banB)) {
       if (banA && banB) {
         if (banA === banB) {
-          // 같은 맵 밴 → 나머지 2개 사다리타기
           bannedMapInfo.push({ mapId: banA, byTeamA: true, byTeamB: true })
-          maps.filter(m => m.id !== banA).forEach(m => matchMapIds.add(m.id))
-          isUndecided = true
+          candidates = candidates.filter(m => m.id !== banA)
         } else {
-          // 서로 다른 맵 밴 → 양쪽 밴 적용, 남은 1개가 경기 맵
-          bannedMapInfo.push({ mapId: banA, byTeamA: true, byTeamB: false })
-          bannedMapInfo.push({ mapId: banB, byTeamA: false, byTeamB: true })
-          maps.filter(m => m.id !== banA && m.id !== banB).forEach(m => matchMapIds.add(m.id))
+          const afterBoth = candidates.filter(m => m.id !== banA && m.id !== banB)
+          if (afterBoth.length > 0) {
+            bannedMapInfo.push({ mapId: banA, byTeamA: true, byTeamB: false })
+            bannedMapInfo.push({ mapId: banB, byTeamA: false, byTeamB: true })
+            candidates = afterBoth
+          } else {
+            // 맵이 2개이고 서로 다른 밴 → 낮은 티어 팀의 밴 적용
+            const rankA = TIER_RANK[playerTier(props.teamACaptainId).toUpperCase()] ?? 0
+            const rankB = TIER_RANK[playerTier(props.teamBCaptainId).toUpperCase()] ?? 0
+            if (rankA !== rankB) {
+              const effectiveBan = rankA <= rankB ? banA : banB
+              bannedMapInfo.push({ mapId: effectiveBan, byTeamA: rankA <= rankB, byTeamB: rankB < rankA })
+              candidates = candidates.filter(m => m.id !== effectiveBan)
+            }
+            // 동티어이면 candidates 그대로 → 픽 로직으로 처리
+          }
         }
       } else {
         const banId = banA ?? banB!
         bannedMapInfo.push({ mapId: banId, byTeamA: !!banA, byTeamB: !!banB })
-        maps.filter(m => m.id !== banId).forEach(m => matchMapIds.add(m.id))
+        candidates = candidates.filter(m => m.id !== banId)
       }
-    } else if (maps.length === 2) {
-      if (banA && banB) {
-        if (banA === banB) {
-          // 같은 맵 밴 → 나머지 1개가 경기 맵
-          bannedMapInfo.push({ mapId: banA, byTeamA: true, byTeamB: true })
-          maps.filter(m => m.id !== banA).forEach(m => matchMapIds.add(m.id))
-        } else {
-          // 서로 다른 맵 밴 → 티어 낮은 팀의 밴 우선
-          const rankA = TIER_RANK[playerTier(props.teamACaptainId)] ?? 0
-          const rankB = TIER_RANK[playerTier(props.teamBCaptainId)] ?? 0
-          const effectiveId = rankA <= rankB ? banA : banB
-          bannedMapInfo.push({ mapId: effectiveId, byTeamA: rankA <= rankB, byTeamB: rankB < rankA })
-          maps.filter(m => m.id !== effectiveId).forEach(m => matchMapIds.add(m.id))
-        }
-      } else {
-        const banId = banA ?? banB!
-        bannedMapInfo.push({ mapId: banId, byTeamA: !!banA, byTeamB: !!banB })
-        maps.filter(m => m.id !== banId).forEach(m => matchMapIds.add(m.id))
-      }
-    } else {
-      maps.forEach(m => matchMapIds.add(m.id))
     }
 
-    results[n] = { matchMapIds, bannedMapInfo, isUndecided }
+    // 2단계: candidates → 픽 로직 또는 확정
+    const matchMapIds = new Set<string>()
+    if (candidates.length <= 1) {
+      candidates.forEach(m => matchMapIds.add(m.id))
+    } else {
+      const resolvedId = resolvePickInReveal(n, candidates, pickedMapInfo)
+      if (resolvedId) {
+        matchMapIds.add(resolvedId)
+      } else {
+        // 동티어 + 다른 픽 → 사다리 필요 (showResults면 사다리 결과 우선)
+        const confirmedMapId = slotSelectedMaps.value.get(n)
+        if (confirmedMapId) {
+          matchMapIds.add(confirmedMapId)
+        } else {
+          isUndecided = true
+          candidates.forEach(m => matchMapIds.add(m.id))
+        }
+      }
+    }
+
+    results[n] = { matchMapIds, bannedMapInfo, pickedMapInfo, isUndecided }
   }
   return results
 })
