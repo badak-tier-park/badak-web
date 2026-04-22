@@ -461,11 +461,15 @@ function tierCount(tier: string) {
 
 // ── 팀 통계 ───────────────────────────────────────────────
 function teamTierCount(captainId: number, tier: string) {
-  return (teams.value[captainId] ?? []).filter(m => m.tier === tier).length
+  const captain = allPlayers.value.find(p => p.id === captainId)
+  const captainMatch = captain?.tier === tier ? 1 : 0
+  return captainMatch + (teams.value[captainId] ?? []).filter(m => m.tier === tier).length
 }
 
 function teamRaceCount(captainId: number, race: string) {
-  return (teams.value[captainId] ?? []).filter(m => m.race === race).length
+  const captain = allPlayers.value.find(p => p.id === captainId)
+  const captainMatch = captain?.race === race ? 1 : 0
+  return captainMatch + (teams.value[captainId] ?? []).filter(m => m.race === race).length
 }
 
 // ── 스네이크 드래프트 순번 ────────────────────────────────
