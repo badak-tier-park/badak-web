@@ -55,6 +55,7 @@ export interface LeagueRow {
   is_ready: boolean
   picks_completed: boolean
   draft_completed: boolean
+  draft_started: boolean
   team_names_completed: boolean
   created_by: string | null
   created_at: string
@@ -134,6 +135,14 @@ export async function checkAndUpdateReady(id: string): Promise<void> {
   const isReady = !!(league.description && captainCount && captainCount >= league.captain_count && mapCount && mapCount > 0)
 
   await supabase.from('leagues').update({ is_ready: isReady, updated_at: new Date().toISOString() }).eq('id', id)
+}
+
+export async function setDraftStarted(id: string, started: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ draft_started: started, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
 }
 
 export async function setPicksCompleted(id: string): Promise<void> {

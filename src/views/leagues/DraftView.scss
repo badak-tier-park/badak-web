@@ -118,6 +118,73 @@
   margin-left: auto;
 }
 
+.topbar-draft-live {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4ade80;
+  letter-spacing: 0.5px;
+  animation: pulse-live 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.topbar-presence {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.topbar-presence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px 2px 6px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+
+  &.topbar-presence-chip--on {
+    background: rgba(74, 222, 128, 0.1);
+    border-color: rgba(74, 222, 128, 0.3);
+    color: #4ade80;
+  }
+
+  &.topbar-presence-chip--off {
+    background: var(--c-badge-bg);
+    border-color: var(--c-badge-border);
+    color: var(--c-text-faint);
+  }
+}
+
+.topbar-presence-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  .topbar-presence-chip--on & { background: #4ade80; }
+  .topbar-presence-chip--off & { background: var(--c-border-strong); }
+}
+
+.btn-pill--green {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: rgba(74, 222, 128, 0.4);
+  color: #4ade80;
+
+  &.btn-pill--filled {
+    background: rgba(74, 222, 128, 0.2);
+  }
+
+  &:hover:not(:disabled) {
+    background: rgba(74, 222, 128, 0.25);
+  }
+}
+
 .btn-save {
   padding: 5px 16px;
   border-radius: 7px;

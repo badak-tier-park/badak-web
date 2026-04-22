@@ -97,6 +97,33 @@
           </span>
 
           <div class="topbar-actions">
+            <!-- 지목식 시작/종료 -->
+            <template v-if="!draftDone && !isSaved">
+              <button
+                v-if="!draftStarted"
+                class="btn-pill btn-pill--md btn-pill--green btn-pill--filled"
+                :disabled="startingDraft"
+                @click="startDraft"
+              >
+                {{ startingDraft ? '시작 중...' : '지목식 시작' }}
+              </button>
+              <template v-else>
+                <!-- Presence -->
+                <div class="topbar-presence">
+                  <span
+                    v-for="cid in captainIds"
+                    :key="cid"
+                    class="topbar-presence-chip"
+                    :class="presentIds.has(String(cid)) ? 'topbar-presence-chip--on' : 'topbar-presence-chip--off'"
+                  >
+                    <span class="topbar-presence-indicator" />
+                    {{ playerById(cid)?.nickname }}
+                  </span>
+                </div>
+                <span class="topbar-draft-live">● LIVE</span>
+                <button class="btn-pill btn-pill--sm btn-pill--ghost" @click="stopDraft">종료</button>
+              </template>
+            </template>
             <template v-if="draftDone && !seedSwapMode && !seedSwapDone && seedOrderIds.length > 0">
               <button class="btn-pill btn-pill--md btn-pill--yellow" @click="openSeedOrderSetup">시드권 적용</button>
             </template>
@@ -262,7 +289,7 @@
                   <span class="card-name">{{ member.nickname }}</span>
                   <span v-if="seedHolderIds.has(member.id)" class="card-seed">SEED</span>
                   <span v-if="swappedIds.has(member.id)" class="card-locked">교체됨</span>
-                  <button v-if="!seedSwapMode && !isSaved" class="card-remove" @click.stop="removeFromTeam(captainId, member.id)">×</button>
+                  <button v-if="!seedSwapMode && !isSaved && !draftStarted" class="card-remove" @click.stop="removeFromTeam(captainId, member.id)">×</button>
                 </div>
 
                 <!-- 드롭 힌트 -->
@@ -322,13 +349,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, setPicksCompleted, setDraftCompleted, type LeagueRow } from '@/lib/leagues'
+import { supabase } from '@/lib/supabase'
+import { getLeague, setPicksCompleted, setDraftCompleted, setDraftStarted, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders, savePlayerSnapshots } from '@/lib/leagueDetail'
-import { getDraftPicks, saveDraftPicks, getSwapLog, saveSwapLog } from '@/lib/draft'
+import { getDraftPicks, saveDraftPicks, addSinglePick, deleteSinglePick, getSwapLog, saveSwapLog } from '@/lib/draft'
 import { TIER_ORDER, RACE_ORDER } from '@/lib/constants'
 import { useToast } from '@/composables/useToast'
 import { useDraftDnD } from '@/composables/useDraftDnD'
@@ -348,6 +377,12 @@ const seedHolderIds = ref(new Set<number>())
 const seedOrderIds = ref<number[]>([])
 const teams = ref<Record<number, PlayerRow[]>>({})
 
+// 실시간 지목식 상태
+const draftStarted = ref(false)
+const startingDraft = ref(false)
+const presentIds = ref(new Set<string>())
+let realtimeChannel: RealtimeChannel | null = null
+
 onMounted(async () => {
   try {
     const [leagueData, playersData, captainsData, draftPicksData, seedHoldersData, swapLogData] = await Promise.all([
@@ -364,6 +399,7 @@ onMounted(async () => {
     }
 
     league.value = leagueData
+    draftStarted.value = leagueData.draft_started
     allPlayers.value = playersData
     seedHolderIds.value = new Set(seedHoldersData.map(h => h.player_id))
     seedOrderIds.value = [...seedHoldersData]
@@ -415,10 +451,76 @@ onMounted(async () => {
     if (leagueData.draft_completed) {
       isSaved.value = true
     }
+
+    // Realtime 구독 (draft_started 여부와 무관하게 항상 연결)
+    realtimeChannel = supabase.channel(`draft-room:${leagueId}`)
+
+    // picks INSERT / DELETE 통합 구독
+    realtimeChannel.on(
+      'postgres_changes' as any,
+      { event: '*', schema: 'public', table: 'league_draft_picks' },
+      (payload: any) => {
+        if (payload.eventType === 'INSERT') {
+          const row = payload.new
+          if (row.league_id !== leagueId) return
+          const player = allPlayers.value.find(p => p.id === row.member_player_id)
+          if (!player) return
+          const updated = { ...teams.value }
+          if (!updated[row.captain_player_id]) updated[row.captain_player_id] = []
+          if (updated[row.captain_player_id].some(m => m.id === player.id)) return
+          updated[row.captain_player_id] = [...updated[row.captain_player_id], player]
+          teams.value = updated
+        } else if (payload.eventType === 'DELETE') {
+          const row = payload.old
+          if (row?.league_id !== leagueId) return
+          const memberId = row.member_player_id
+          if (!memberId) return
+          const updated = { ...teams.value }
+          for (const cid of Object.keys(updated)) {
+            updated[Number(cid)] = updated[Number(cid)].filter(p => p.id !== memberId)
+          }
+          teams.value = updated
+        }
+      },
+    )
+
+    // 카드 회수 broadcast 수신
+    realtimeChannel.on('broadcast', { event: 'pick_removed' }, (msg: any) => {
+      const memberId = msg.payload?.memberId
+      if (!memberId) return
+      const updated = { ...teams.value }
+      for (const cid of Object.keys(updated)) {
+        updated[Number(cid)] = updated[Number(cid)].filter(p => p.id !== memberId)
+      }
+      teams.value = updated
+    })
+
+    realtimeChannel.on(
+      'presence', { event: 'sync' }, () => {
+        const state = realtimeChannel!.presenceState()
+        const ids = new Set<string>()
+        for (const presences of Object.values(state)) {
+          for (const p of presences as any[]) {
+            if (p.captain_id) ids.add(String(p.captain_id))
+          }
+        }
+        presentIds.value = ids
+      },
+    )
+
+    await realtimeChannel.subscribe()
+
   } catch (e: any) {
     loadError.value = e.message ?? '데이터를 불러올 수 없습니다.'
   } finally {
     loading.value = false
+  }
+})
+
+onUnmounted(() => {
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel)
+    realtimeChannel = null
   }
 })
 
@@ -503,8 +605,35 @@ const turnPositionLabel = computed(() => {
 // ── 드래그 앤 드롭 ───────────────────────────────────────
 const {
   dragOverTeam, dragOverPool, draggingId,
-  onPointerDown, removeFromTeam,
-} = useDraftDnD(allPlayers, teams, currentCaptainId)
+  onPointerDown, removeFromTeam: _removeFromTeam,
+} = useDraftDnD(
+  allPlayers, teams, currentCaptainId,
+  (captainId, player, pickOrder) => {
+    if (draftStarted.value) {
+      addSinglePick(leagueId, captainId, player.id, pickOrder).catch(() => {
+        showToast('픽 저장 중 오류가 발생했습니다.')
+      })
+    }
+  },
+  (memberId) => {
+    if (draftStarted.value) {
+      deleteSinglePick(leagueId, memberId).catch(() => {
+        showToast('회수 저장 중 오류가 발생했습니다.')
+      })
+      realtimeChannel?.send({ type: 'broadcast', event: 'pick_removed', payload: { memberId } })
+    }
+  },
+)
+
+function removeFromTeam(captainId: number, memberId: number) {
+  _removeFromTeam(captainId, memberId)
+  if (draftStarted.value) {
+    deleteSinglePick(leagueId, memberId).catch(() => {
+      showToast('회수 저장 중 오류가 발생했습니다.')
+    })
+    realtimeChannel?.send({ type: 'broadcast', event: 'pick_removed', payload: { memberId } })
+  }
+}
 
 // ── 시드권 교체 ──────────────────────────────────────────
 const {
@@ -516,6 +645,31 @@ const {
   resetSeedSwap: _resetSeedSwap,
   onMemberClick, passSeed,
 } = useSeedSwap(teams, captainIds, seedHolderIds, seedOrderIds, playerById, showToast)
+
+// ── 지목식 시작 ───────────────────────────────────────────
+async function startDraft() {
+  if (startingDraft.value) return
+  startingDraft.value = true
+  try {
+    await setDraftStarted(leagueId, true)
+    draftStarted.value = true
+    showToast('지목식을 시작했습니다. 팀장들이 입장할 수 있습니다.')
+  } catch {
+    showToast('시작 중 오류가 발생했습니다.')
+  } finally {
+    startingDraft.value = false
+  }
+}
+
+async function stopDraft() {
+  try {
+    await setDraftStarted(leagueId, false)
+    draftStarted.value = false
+    showToast('지목식을 종료했습니다.')
+  } catch {
+    showToast('종료 중 오류가 발생했습니다.')
+  }
+}
 
 // ── 저장 ──────────────────────────────────────────────────
 const isSaved = ref(false)

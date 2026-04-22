@@ -52,6 +52,30 @@ export async function getDraftPicks(leagueId: string): Promise<DraftPickRow[]> {
   return data
 }
 
+export async function deleteSinglePick(
+  leagueId: string,
+  memberPlayerId: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('league_draft_picks')
+    .delete()
+    .eq('league_id', leagueId)
+    .eq('member_player_id', memberPlayerId)
+  if (error) throw error
+}
+
+export async function addSinglePick(
+  leagueId: string,
+  captainPlayerId: number,
+  memberPlayerId: number,
+  pickOrder: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('league_draft_picks')
+    .insert({ league_id: leagueId, captain_player_id: captainPlayerId, member_player_id: memberPlayerId, pick_order: pickOrder })
+  if (error) throw error
+}
+
 export async function saveDraftPicks(
   leagueId: string,
   picks: Array<{ captain_player_id: number; member_player_id: number; pick_order: number }>,

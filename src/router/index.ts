@@ -58,6 +58,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/leagues/:id/captain-draft',
+      name: 'captain-draft',
+      component: () => import('@/views/leagues/CaptainDraftView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/leagues/:id/team-names',
       name: 'league-team-names',
       component: () => import('@/views/leagues/TeamNamesView.vue'),

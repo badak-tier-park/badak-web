@@ -89,7 +89,14 @@
               </button>
             </div>
             <button
-              v-if="myCaptainLeagueIds.has(league.id)"
+              v-if="league.draft_started && !league.draft_completed && myCaptainLeagueIds.has(league.id)"
+              class="btn-entry-submit btn-draft-enter"
+              @click="$router.push({ name: 'captain-draft', params: { id: league.id } })"
+            >
+              지목식 입장
+            </button>
+            <button
+              v-else-if="myCaptainLeagueIds.has(league.id)"
               class="btn-entry-submit"
               @click="openMatchList(league)"
             >
@@ -978,7 +985,7 @@ const entryModal = reactive<EntryModalState>({
 // ── 데이터 로드 ──────────────────────────────────────────────
 onMounted(async () => {
   const allLeagues = await getLeagues()
-  leagues.value = allLeagues.filter(l => getLeagueStatus(l) === 'ongoing')
+  leagues.value = allLeagues.filter(l => getLeagueStatus(l) === 'ongoing' || (l.draft_started && !l.draft_completed))
   loadingLeagues.value = false
 
   const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
@@ -988,9 +995,9 @@ onMounted(async () => {
   if (!me) return
   myPlayerId.value = me.id
 
-  // 팀장인 리그 파악
-  const draftDoneLeagues = allLeagues.filter(l => l.draft_completed)
-  await Promise.all(draftDoneLeagues.map(async l => {
+  // 팀장인 리그 파악 (draft_completed 또는 draft_started 리그)
+  const captainCheckLeagues = allLeagues.filter(l => l.draft_completed || l.draft_started)
+  await Promise.all(captainCheckLeagues.map(async l => {
     const captains = await getCaptains(l.id)
     if (captains.some(c => c.player_id === me.id)) {
       myCaptainLeagueIds.value.add(l.id)
