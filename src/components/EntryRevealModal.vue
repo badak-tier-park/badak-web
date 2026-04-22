@@ -24,15 +24,16 @@
           <template v-else>
             <!-- 팀 헤더 -->
             <div class="reveal-teams-header">
-              <div class="reveal-th" :class="showResults && scoreA > scoreB ? 'reveal-th--winner' : showResults && scoreA < scoreB ? 'reveal-th--loser' : ''">
+              <div class="reveal-th" :class="showResults && (scoreA > scoreB || tieBreakWinner === teamACaptainId) ? 'reveal-th--winner' : showResults && (scoreA < scoreB || tieBreakWinner === teamBCaptainId) ? 'reveal-th--loser' : ''">
                 {{ teamAName }}
-                <span v-if="showResults && scoreA > scoreB" class="reveal-win-crown">👑</span>
+                <span v-if="showResults && (scoreA > scoreB || tieBreakWinner === teamACaptainId)" class="reveal-win-crown">👑</span>
               </div>
               <div class="reveal-th-center">
                 <span v-if="showResults" class="reveal-score">{{ scoreA }} : {{ scoreB }}</span>
+                <span v-if="showResults && tieBreakWinner" class="reveal-tiebreak-note">포인트 룰</span>
               </div>
-              <div class="reveal-th reveal-th--right" :class="showResults && scoreB > scoreA ? 'reveal-th--winner' : showResults && scoreB < scoreA ? 'reveal-th--loser' : ''">
-                <span v-if="showResults && scoreB > scoreA" class="reveal-win-crown">👑</span>
+              <div class="reveal-th reveal-th--right" :class="showResults && (scoreB > scoreA || tieBreakWinner === teamBCaptainId) ? 'reveal-th--winner' : showResults && (scoreB < scoreA || tieBreakWinner === teamACaptainId) ? 'reveal-th--loser' : ''">
+                <span v-if="showResults && (scoreB > scoreA || tieBreakWinner === teamBCaptainId)" class="reveal-win-crown">👑</span>
                 {{ teamBName }}
               </div>
             </div>
@@ -187,7 +188,7 @@
             </div>
 
             <!-- 에이스 결정전 -->
-            <div class="reveal-ace">
+            <div v-if="!showResults || acePlayed" class="reveal-ace">
               <div class="rsl-center-label">
                 <span class="rsl-num">에이스 결정전</span>
               </div>
@@ -508,6 +509,31 @@ const scoreA = computed(() =>
 const scoreB = computed(() =>
   [...slotWinners.value.values()].filter(w => w === props.teamBCaptainId).length
 )
+
+const regularScoreA = computed(() =>
+  [...slotWinners.value.entries()].filter(([slot, w]) => slot !== 7 && w === props.teamACaptainId).length
+)
+const regularScoreB = computed(() =>
+  [...slotWinners.value.entries()].filter(([slot, w]) => slot !== 7 && w === props.teamBCaptainId).length
+)
+
+const ptA = computed(() => totalPoints(props.teamACaptainId))
+const ptB = computed(() => totalPoints(props.teamBCaptainId))
+
+// 에이스 결정전이 실제로 진행됐는지 여부
+const acePlayed = computed(() => {
+  if (!props.showResults) return true
+  return !!(aceSlotResult.value?.ace_player_a_id || aceSlotResult.value?.ace_player_b_id || aceSlotResult.value?.winner_captain_id)
+})
+
+// 3:3 동률 + 포인트 차이 3pt 이상 → 낮은 포인트 팀 승리
+const tieBreakWinner = computed((): number | null => {
+  if (!props.showResults || acePlayed.value) return null
+  if (regularScoreA.value !== regularScoreB.value) return null
+  const diff = Math.abs(ptA.value - ptB.value)
+  if (diff < 3) return null
+  return ptA.value < ptB.value ? props.teamACaptainId : props.teamBCaptainId
+})
 
 const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
 

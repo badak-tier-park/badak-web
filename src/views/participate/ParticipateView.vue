@@ -561,10 +561,10 @@ import { getTeamNames } from '@/lib/teamNames'
 import {
   getEntries, saveEntries, submitEntry, getEntryStatusMap, computeFinalRosters,
   consentReveal, checkBothConsented, getConsentedSet,
-  getAceTierBan, saveAceTierBan,
+  getAceTierBan, saveAceTierBan, getEntriesForSchedules,
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
   MAX_INDIVIDUAL_POINTS, MAX_TEAM_POINTS, MAX_TOTAL_POINTS,
-  type EntrySlot, type EntryStatus,
+  type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
 import { revealEntries } from '@/lib/schedules'
 import { notifyEntrySubmitted } from '@/lib/notifications'
@@ -578,6 +578,34 @@ import { FontSize } from '@/lib/tiptapFontSize'
 
 // 슬롯별 승점
 const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
+
+// 슬롯 결과 + 엔트리 포인트로 실제 경기 승자 계산
+// 3:3 동률이고 에결 없을 경우, 전체 엔트리 포인트 낮은 팀 승리 (차이 3pt 이상)
+function resolveMatchWinner(
+  capA: number,
+  capB: number,
+  slots: { slot_num: number; winner_captain_id: number | null }[],
+  entries: EntryRecord[],
+  playerMap: Map<number, PlayerRow>,
+): { winner: number | null; tiebreak: boolean } {
+  let winsA = 0, winsB = 0
+  let aceWinner: number | null = null
+  for (const s of slots) {
+    if (s.slot_num === 7) { aceWinner = s.winner_captain_id; continue }
+    if (s.winner_captain_id === capA) winsA++
+    else if (s.winner_captain_id === capB) winsB++
+  }
+  if (winsA !== winsB) return { winner: winsA > winsB ? capA : capB, tiebreak: false }
+  if (aceWinner) return { winner: aceWinner, tiebreak: false }
+
+  // 3:3 동률 + 에결 없음 → 포인트 룰
+  const calcPt = (cid: number) =>
+    entries.filter(e => e.captain_player_id === cid)
+      .reduce((sum, e) => sum + e.player_ids.reduce((s, id) => s + (TIER_POINTS[playerMap.get(id)?.tier ?? ''] ?? 0), 0), 0)
+  const ptA = calcPt(capA), ptB = calcPt(capB)
+  if (Math.abs(ptA - ptB) >= 3) return { winner: ptA < ptB ? capA : capB, tiebreak: true }
+  return { winner: null, tiebreak: false }
+}
 
 const SLOT_CONFIG = [
   { num: 1, type: 'individual', count: 1 },
@@ -742,14 +770,20 @@ async function openResultList(league: LeagueRow) {
     const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
 
-    const slotResults = schedules.length
-      ? await getSlotResultsForSchedules(schedules.map(s => s.id))
-      : []
+    const scheduleIds = schedules.map(s => s.id)
+    const [slotResults, allEntries] = scheduleIds.length
+      ? await Promise.all([getSlotResultsForSchedules(scheduleIds), getEntriesForSchedules(scheduleIds)])
+      : [[], []]
 
     const slotsBySchedule = new Map<number, typeof slotResults>()
     for (const r of slotResults) {
       if (!slotsBySchedule.has(r.schedule_id)) slotsBySchedule.set(r.schedule_id, [])
       slotsBySchedule.get(r.schedule_id)!.push(r)
+    }
+    const entriesBySchedule = new Map<number, EntryRecord[]>()
+    for (const e of allEntries) {
+      if (!entriesBySchedule.has(e.schedule_id)) entriesBySchedule.set(e.schedule_id, [])
+      entriesBySchedule.get(e.schedule_id)!.push(e)
     }
 
     resultListModal.matches = schedules
@@ -763,6 +797,7 @@ async function openResultList(league: LeagueRow) {
         const slots = slotsBySchedule.get(s.id) ?? []
         let winsA = 0, winsB = 0
         for (const slot of slots) {
+          if (slot.slot_num === 7) continue
           if (slot.winner_captain_id === s.team_a_captain_id) winsA++
           else if (slot.winner_captain_id === s.team_b_captain_id) winsB++
         }
@@ -796,14 +831,20 @@ async function openStandingsList(league: LeagueRow) {
     const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
 
-    const slotResults = schedules.length
-      ? await getSlotResultsForSchedules(schedules.map(s => s.id))
-      : []
+    const scheduleIds = schedules.map(s => s.id)
+    const [slotResults, allEntries] = scheduleIds.length
+      ? await Promise.all([getSlotResultsForSchedules(scheduleIds), getEntriesForSchedules(scheduleIds)])
+      : [[], []]
 
     const slotsBySchedule = new Map<number, typeof slotResults>()
     for (const r of slotResults) {
       if (!slotsBySchedule.has(r.schedule_id)) slotsBySchedule.set(r.schedule_id, [])
       slotsBySchedule.get(r.schedule_id)!.push(r)
+    }
+    const entriesBySchedule = new Map<number, EntryRecord[]>()
+    for (const e of allEntries) {
+      if (!entriesBySchedule.has(e.schedule_id)) entriesBySchedule.set(e.schedule_id, [])
+      entriesBySchedule.get(e.schedule_id)!.push(e)
     }
 
     const standingsMap = new Map<number, TeamStanding>()
@@ -819,8 +860,9 @@ async function openStandingsList(league: LeagueRow) {
     }
 
     for (const s of schedules) {
-      const { team_a_captain_id: capA, team_b_captain_id: capB, winner_captain_id: winner } = s
+      const { team_a_captain_id: capA, team_b_captain_id: capB } = s
       const slots = slotsBySchedule.get(s.id) ?? []
+      const entries = entriesBySchedule.get(s.id) ?? []
 
       let ptsA = 0, ptsB = 0
       for (const slot of slots) {
@@ -829,6 +871,7 @@ async function openStandingsList(league: LeagueRow) {
         else if (slot.winner_captain_id === capB) ptsB += pts
       }
 
+      const { winner } = resolveMatchWinner(capA, capB, slots, entries, playerMap)
       const tNameA = teamName(capA)
       const tNameB = teamName(capB)
 
@@ -847,7 +890,7 @@ async function openStandingsList(league: LeagueRow) {
     }
 
     standingsModal.standings = [...standingsMap.values()].sort((a, b) =>
-      b.matchPoints !== a.matchPoints ? b.matchPoints - a.matchPoints : b.wins - a.wins
+      b.wins !== a.wins ? b.wins - a.wins : b.matchPoints - a.matchPoints
     )
 
     // 플레이오프 결과로 우승/준우승 판별
@@ -1033,6 +1076,7 @@ function buildOptions(slotNum: number, idx: number): SelectOption[] {
         return true
       }
     })
+    .sort((a, b) => (TIER_POINTS[b.tier] ?? 0) - (TIER_POINTS[a.tier] ?? 0))
     .map(m => ({
       value: m.id,
       label: m.nickname,
