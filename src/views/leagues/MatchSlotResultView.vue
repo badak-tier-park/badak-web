@@ -638,17 +638,34 @@ const aceMapCandidates = computed((): MapInfo[] => {
     .filter(Boolean) as MapInfo[]
 })
 
-// 에이스 출전 가능 선수 (확정 티어 이하)
+// 에이스 출전 가능 선수 (확정 티어 이하, 양팀 밴 티어 제외)
+const aceBannedTierSet = computed((): Set<string> => {
+  if (aceBansIgnored.value) return new Set()
+  if (isSuperAce.value) return new Set(superAceExcludedTiers.value)
+  const s = new Set<string>()
+  if (aceTierBanA.value) s.add(aceTierBanA.value)
+  if (aceTierBanB.value) s.add(aceTierBanB.value)
+  return s
+})
+
 const eligiblePlayersA = computed((): SlotPlayerInfo[] => {
   if (!aceData.aceTier) return []
   const maxRank = TIER_RANK[aceData.aceTier] ?? 0
-  return rosterA.value.filter(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+  const banned = aceBannedTierSet.value
+  return rosterA.value.filter(p => {
+    const t = p.tier.toUpperCase()
+    return (TIER_RANK[t] ?? 0) <= maxRank && !banned.has(t)
+  })
 })
 
 const eligiblePlayersB = computed((): SlotPlayerInfo[] => {
   if (!aceData.aceTier) return []
   const maxRank = TIER_RANK[aceData.aceTier] ?? 0
-  return rosterB.value.filter(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+  const banned = aceBannedTierSet.value
+  return rosterB.value.filter(p => {
+    const t = p.tier.toUpperCase()
+    return (TIER_RANK[t] ?? 0) <= maxRank && !banned.has(t)
+  })
 })
 
 const eligibleOptionsA = computed((): SelectOption[] =>
