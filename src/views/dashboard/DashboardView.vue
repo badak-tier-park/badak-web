@@ -356,7 +356,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import DonutChart from '@/components/charts/DonutChart.vue'
 import { useAuthStore } from '@/stores/auth'
