@@ -94,32 +94,21 @@
           </svg>
         </RouterLink>
 
-        <div class="nav-card nav-card--disabled">
-          <div class="nav-card-icon nav-card-icon--green">
+        <RouterLink to="/dashboard" class="nav-card">
+          <div class="nav-card-icon nav-card-icon--blue">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M3 16V8M7 16V4M11 16V10M15 16V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
               <circle cx="17.5" cy="3.5" r="1.5" fill="currentColor"/>
             </svg>
           </div>
           <div class="nav-card-body">
-            <p class="nav-card-title">경기 참여 Top 10</p>
-            <p class="nav-card-desc">경기 수 기준 선수 랭킹</p>
+            <p class="nav-card-title">대시보드</p>
+            <p class="nav-card-desc">전적 통계 · 승률 · 매치업</p>
           </div>
-          <span class="badge-soon">준비 중</span>
-        </div>
-
-        <div class="nav-card nav-card--disabled">
-          <div class="nav-card-icon nav-card-icon--yellow">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 2l2.09 4.26L17 7.27l-3.5 3.41.83 4.82L10 13.27l-4.33 2.23.83-4.82L3 7.27l4.91-.71L10 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div class="nav-card-body">
-            <p class="nav-card-title">승률 Top 10</p>
-            <p class="nav-card-desc">승률 기준 랭킹 · 종족별 필터</p>
-          </div>
-          <span class="badge-soon">준비 중</span>
-        </div>
+          <svg class="nav-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </RouterLink>
 
       </div>
     </div>
