@@ -1,0 +1,177 @@
+@use '@/styles/buttons';
+@use '@/styles/page';
+
+.seasons-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-bg);
+}
+
+.seasons-content {
+  flex: 1;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .btn-back { margin-bottom: 0; }
+  .page-title-row { margin-bottom: 0; }
+}
+
+// ── 시즌 목록 ─────────────────────────────────────────────
+.season-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.season-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 10px;
+}
+
+.season-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.season-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text-2);
+}
+
+.season-item-dates {
+  font-size: 12px;
+  color: var(--c-text-faint);
+}
+
+.season-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.season-edit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.season-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+// ── 인풋 ─────────────────────────────────────────────────
+.season-input {
+  padding: 7px 10px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 7px;
+  color: var(--c-text-1);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &::placeholder { color: var(--c-text-faint); }
+  &:focus { border-color: rgba(168, 85, 247, 0.5); }
+
+  &--date  { width: 136px; }
+  &--wide  { flex: 1; min-width: 180px; }
+}
+
+// ── VueDatePicker 커스텀 ─────────────────────────────────
+:deep(.dp__theme_dark) {
+  --dp-background-color: #13141d;
+  --dp-text-color: rgba(255, 255, 255, 0.82);
+  --dp-hover-color: rgba(170, 59, 255, 0.12);
+  --dp-hover-text-color: #c084fc;
+  --dp-hover-icon-color: #c084fc;
+  --dp-primary-color: #aa3bff;
+  --dp-primary-text-color: #fff;
+  --dp-secondary-color: rgba(255, 255, 255, 0.07);
+  --dp-border-color: rgba(255, 255, 255, 0.1);
+  --dp-menu-border-color: rgba(255, 255, 255, 0.1);
+  --dp-border-color-hover: rgba(170, 59, 255, 0.5);
+  --dp-disabled-color: rgba(255, 255, 255, 0.15);
+  --dp-icon-color: rgba(255, 255, 255, 0.35);
+  --dp-range-between-dates-background-color: rgba(170, 59, 255, 0.08);
+  --dp-range-between-border-color: transparent;
+  --dp-range-between-dates-text-color: rgba(255, 255, 255, 0.75);
+  --dp-font-family: system-ui, sans-serif;
+  --dp-font-size: 13px;
+  --dp-border-radius: 8px;
+}
+
+.dp-custom-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  min-width: 220px;
+
+  &:hover { border-color: rgba(170, 59, 255, 0.5); }
+}
+
+.dp-custom-icon { color: var(--c-text-faint); flex-shrink: 0; }
+
+.dp-placeholder { font-size: 13px; color: var(--c-text-faint); }
+.dp-date-text   { font-size: 13px; color: var(--c-text-2); }
+
+// ── 새 시즌 추가 카드 ─────────────────────────────────────
+.season-add-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.season-add-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 0;
+}
+
+.season-add-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.season-add-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.season-add-dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

@@ -46,13 +46,6 @@
           >{{ s.name }}</button>
         </div>
 
-        <button v-if="auth.isAdmin" class="btn-season-mgmt" @click="showSeasonModal = true">
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-            <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/>
-            <path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-          </svg>
-          시즌 관리
-        </button>
       </div>
 
       <!-- 플레이어 없음 -->
@@ -301,57 +294,6 @@
       </template>
     </div>
 
-    <!-- ── 시즌 관리 모달 ── -->
-    <Teleport to="body">
-      <div v-if="showSeasonModal" class="modal-backdrop" @click.self="showSeasonModal = false">
-        <div class="season-modal">
-          <div class="season-modal-header">
-            <span class="season-modal-title">시즌 관리</span>
-            <button class="season-modal-close" @click="showSeasonModal = false">×</button>
-          </div>
-
-          <!-- 시즌 목록 -->
-          <div class="season-list">
-            <div v-if="seasons.length === 0" class="season-list-empty">등록된 시즌이 없습니다.</div>
-            <div v-for="s in seasons" :key="s.id" class="season-item">
-              <template v-if="editingSeasonId === s.id">
-                <input v-model="editForm.name" class="season-input" placeholder="시즌 이름" />
-                <input v-model="editForm.start_date" class="season-input season-input--date" type="date" />
-                <input v-model="editForm.end_date" class="season-input season-input--date" type="date" />
-                <button class="btn-pill btn-pill--green btn-pill--md" @click="saveEdit(s.id)">저장</button>
-                <button class="btn-pill btn-pill--ghost btn-pill--md" @click="editingSeasonId = null">취소</button>
-              </template>
-              <template v-else>
-                <div class="season-item-info">
-                  <span class="season-item-name">{{ s.name }}</span>
-                  <span v-if="s.start_date || s.end_date" class="season-item-dates">
-                    {{ s.start_date ?? '?' }} ~ {{ s.end_date ?? '?' }}
-                  </span>
-                </div>
-                <div class="season-item-actions">
-                  <button class="btn-pill btn-pill--ghost btn-pill--md" @click="startEdit(s)">수정</button>
-                  <button class="btn-pill btn-pill--red btn-pill--md" @click="removeSeason(s.id)">삭제</button>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <!-- 새 시즌 추가 -->
-          <div class="season-add">
-            <span class="season-add-title">새 시즌 추가</span>
-            <input v-model="newSeason.name" class="season-input" placeholder="시즌 이름 (예: 2025 썸머)" />
-            <div class="season-add-dates">
-              <input v-model="newSeason.start_date" class="season-input season-input--date" type="date" placeholder="시작일" />
-              <span class="season-date-sep">~</span>
-              <input v-model="newSeason.end_date" class="season-input season-input--date" type="date" placeholder="종료일" />
-            </div>
-            <button class="btn-pill btn-pill--purple btn-pill--md btn-pill--filled" :disabled="!newSeason.name.trim()" @click="addSeason">
-              추가
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
@@ -362,7 +304,7 @@ import DonutChart from '@/components/charts/DonutChart.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getGames, type GameRow } from '@/lib/games'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
-import { getSeasons, createSeason, updateSeason, deleteSeason, type SeasonRow } from '@/lib/seasons'
+import { getSeasons, type SeasonRow } from '@/lib/seasons'
 import { getMaps, type MapRow } from '@/lib/maps'
 
 const auth = useAuthStore()
@@ -631,44 +573,6 @@ const gameXLabels = computed(() => {
   return pts.filter((_, i) => i % step === 0 || i === pts.length - 1)
 })
 
-// ── 시즌 모달 ─────────────────────────────────────────────
-const showSeasonModal = ref(false)
-const editingSeasonId = ref<number | null>(null)
-const editForm = ref({ name: '', start_date: '', end_date: '' })
-const newSeason = ref({ name: '', start_date: '', end_date: '' })
-
-function startEdit(s: SeasonRow) {
-  editingSeasonId.value = s.id
-  editForm.value = { name: s.name, start_date: s.start_date ?? '', end_date: s.end_date ?? '' }
-}
-
-async function saveEdit(id: number) {
-  await updateSeason(id, {
-    name: editForm.value.name,
-    start_date: editForm.value.start_date || null,
-    end_date: editForm.value.end_date || null,
-  })
-  editingSeasonId.value = null
-  seasons.value = await getSeasons()
-}
-
-async function addSeason() {
-  if (!newSeason.value.name.trim()) return
-  await createSeason({
-    name: newSeason.value.name.trim(),
-    start_date: newSeason.value.start_date || null,
-    end_date: newSeason.value.end_date || null,
-  })
-  newSeason.value = { name: '', start_date: '', end_date: '' }
-  seasons.value = await getSeasons()
-}
-
-async function removeSeason(id: number) {
-  if (!confirm('시즌을 삭제하시겠습니까?')) return
-  await deleteSeason(id)
-  if (selectedSeasonId.value === id) selectedSeasonId.value = null
-  seasons.value = await getSeasons()
-}
 
 // ── 차트 키 (선수/시즌 변경 시 애니메이션 재생) ───────────
 const chartKey = computed(() => `${selectedPlayer.value}-${selectedSeasonId.value}`)
