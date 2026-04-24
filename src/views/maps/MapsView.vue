@@ -57,8 +57,8 @@
         >
           <div class="map-thumb">
             <img
-              v-if="map.thumbnail_url ?? map.image_url"
-              :src="(map.thumbnail_url ?? map.image_url)!"
+              v-if="map.thumbnail_url"
+              :src="map.thumbnail_url"
               :alt="map.name"
             />
             <div v-else class="map-thumb-empty">

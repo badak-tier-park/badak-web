@@ -15,31 +15,51 @@ export interface MapRow {
 }
 
 const THUMBNAIL_MAX_SIZE = 320
+const IMAGE_MAX_SIZE = 1280
 
-async function generateThumbnail(file: File): Promise<File> {
+function resizeToCanvas(img: HTMLImageElement, maxSize: number): HTMLCanvasElement {
+  const scale = Math.min(maxSize / img.width, maxSize / img.height, 1)
+  const w = Math.round(img.width * scale)
+  const h = Math.round(img.height * scale)
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+  return canvas
+}
+
+function canvasToFile(canvas: HTMLCanvasElement, name: string, quality: number): Promise<File> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return reject(new Error('blob conversion failed'))
+        resolve(new File([blob], name, { type: 'image/jpeg' }))
+      },
+      'image/jpeg',
+      quality,
+    )
+  })
+}
+
+function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image()
-    img.onload = () => {
-      const scale = Math.min(THUMBNAIL_MAX_SIZE / img.width, THUMBNAIL_MAX_SIZE / img.height, 1)
-      const w = Math.round(img.width * scale)
-      const h = Math.round(img.height * scale)
-      const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
-      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) return reject(new Error('thumbnail blob failed'))
-          resolve(new File([blob], 'thumb.jpg', { type: 'image/jpeg' }))
-        },
-        'image/jpeg',
-        0.75,
-      )
-      URL.revokeObjectURL(img.src)
-    }
+    img.onload = () => { URL.revokeObjectURL(img.src); resolve(img) }
     img.onerror = reject
     img.src = URL.createObjectURL(file)
   })
+}
+
+async function compressImage(file: File): Promise<File> {
+  const img = await loadImage(file)
+  const canvas = resizeToCanvas(img, IMAGE_MAX_SIZE)
+  return canvasToFile(canvas, 'image.jpg', 0.85)
+}
+
+async function generateThumbnail(file: File): Promise<File> {
+  const img = await loadImage(file)
+  const canvas = resizeToCanvas(img, THUMBNAIL_MAX_SIZE)
+  return canvasToFile(canvas, 'thumb.jpg', 0.75)
 }
 
 export interface MapInsert {
@@ -90,10 +110,13 @@ export async function updateMap(
 
   if (data.imageFile) {
     const base = crypto.randomUUID()
-    const ext = data.imageFile.name.split('.').pop()
+    const [compressed, thumb] = await Promise.all([
+      compressImage(data.imageFile),
+      generateThumbnail(data.imageFile),
+    ])
     const [origUrl, thumbUrl] = await Promise.all([
-      uploadImage(data.imageFile, `${base}.${ext}`),
-      generateThumbnail(data.imageFile).then((thumb) => uploadImage(thumb, `${base}_thumb.jpg`)),
+      uploadImage(compressed, `${base}.jpg`),
+      uploadImage(thumb, `${base}_thumb.jpg`),
     ])
     image_url = origUrl
     thumbnail_url = thumbUrl
@@ -125,10 +148,13 @@ export async function createMap(data: MapInsert) {
 
   if (data.imageFile) {
     const base = crypto.randomUUID()
-    const ext = data.imageFile.name.split('.').pop()
+    const [compressed, thumb] = await Promise.all([
+      compressImage(data.imageFile),
+      generateThumbnail(data.imageFile),
+    ])
     const [origUrl, thumbUrl] = await Promise.all([
-      uploadImage(data.imageFile, `${base}.${ext}`),
-      generateThumbnail(data.imageFile).then((thumb) => uploadImage(thumb, `${base}_thumb.jpg`)),
+      uploadImage(compressed, `${base}.jpg`),
+      uploadImage(thumb, `${base}_thumb.jpg`),
     ])
     image_url = origUrl
     thumbnail_url = thumbUrl
