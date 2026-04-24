@@ -638,17 +638,34 @@ const aceMapCandidates = computed((): MapInfo[] => {
     .filter(Boolean) as MapInfo[]
 })
 
-// 에이스 출전 가능 선수 (확정 티어 이하)
+// 에이스 출전 가능 선수 (확정 티어 이하, 양팀 밴 티어 제외)
+const aceBannedTierSet = computed((): Set<string> => {
+  if (aceBansIgnored.value) return new Set()
+  if (isSuperAce.value) return new Set(superAceExcludedTiers.value)
+  const s = new Set<string>()
+  if (aceTierBanA.value) s.add(aceTierBanA.value)
+  if (aceTierBanB.value) s.add(aceTierBanB.value)
+  return s
+})
+
 const eligiblePlayersA = computed((): SlotPlayerInfo[] => {
   if (!aceData.aceTier) return []
   const maxRank = TIER_RANK[aceData.aceTier] ?? 0
-  return rosterA.value.filter(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+  const banned = aceBannedTierSet.value
+  return rosterA.value.filter(p => {
+    const t = p.tier.toUpperCase()
+    return (TIER_RANK[t] ?? 0) <= maxRank && !banned.has(t)
+  })
 })
 
 const eligiblePlayersB = computed((): SlotPlayerInfo[] => {
   if (!aceData.aceTier) return []
   const maxRank = TIER_RANK[aceData.aceTier] ?? 0
-  return rosterB.value.filter(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+  const banned = aceBannedTierSet.value
+  return rosterB.value.filter(p => {
+    const t = p.tier.toUpperCase()
+    return (TIER_RANK[t] ?? 0) <= maxRank && !banned.has(t)
+  })
 })
 
 const eligibleOptionsA = computed((): SelectOption[] =>
@@ -939,16 +956,22 @@ function randomPick() {
   const candidates = currentLadderMaps.value
   if (candidates.length === 0) { ladderPicking.value = false; return }
 
-  let count = 0
-  const totalFlashes = 10 + Math.floor(Math.random() * 8)
-  const interval = setInterval(() => {
-    ladderPickResult.value = candidates[Math.floor(Math.random() * candidates.length)].id
-    count++
-    if (count >= totalFlashes) {
-      clearInterval(interval)
-      ladderPicking.value = false
-    }
-  }, 80)
+  const startTime = Date.now()
+  const totalDuration = 9800 + Math.random() * 400
+  const minInterval = 50
+  const maxInterval = 500
+  const startIdx = Math.floor(Math.random() * candidates.length)
+  let idx = startIdx
+
+  const tick = () => {
+    const progress = Math.min((Date.now() - startTime) / totalDuration, 1)
+    const interval = minInterval + (maxInterval - minInterval) * (progress ** 2)
+    ladderPickResult.value = candidates[idx % candidates.length].id
+    idx++
+    if (progress < 1) setTimeout(tick, interval)
+    else ladderPicking.value = false
+  }
+  tick()
 }
 
 async function confirmLadder() {
@@ -982,16 +1005,22 @@ function randomTierPick() {
   const candidates = aceTierCandidates.value
   if (candidates.length === 0) { tierPicking.value = false; return }
 
-  let count = 0
-  const totalFlashes = 10 + Math.floor(Math.random() * 8)
-  const interval = setInterval(() => {
-    tierPickResult.value = candidates[Math.floor(Math.random() * candidates.length)]
-    count++
-    if (count >= totalFlashes) {
-      clearInterval(interval)
-      tierPicking.value = false
-    }
-  }, 80)
+  const startTime = Date.now()
+  const totalDuration = 9800 + Math.random() * 400
+  const minInterval = 50
+  const maxInterval = 500
+  const startIdx = Math.floor(Math.random() * candidates.length)
+  let idx = startIdx
+
+  const tick = () => {
+    const progress = Math.min((Date.now() - startTime) / totalDuration, 1)
+    const interval = minInterval + (maxInterval - minInterval) * (progress ** 2)
+    tierPickResult.value = candidates[idx % candidates.length]
+    idx++
+    if (progress < 1) setTimeout(tick, interval)
+    else tierPicking.value = false
+  }
+  tick()
 }
 
 async function confirmTierLadder() {
