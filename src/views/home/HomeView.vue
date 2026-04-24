@@ -59,6 +59,22 @@
             <span class="badge-soon">준비 중</span>
           </div>
 
+          <RouterLink to="/seasons" class="nav-card nav-card--admin">
+            <div class="nav-card-icon nav-card-icon--amber">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="nav-card-body">
+              <p class="nav-card-title">시즌 관리</p>
+              <p class="nav-card-desc">시즌 생성 · 수정 · 삭제</p>
+            </div>
+            <svg class="nav-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </RouterLink>
+
           <RouterLink to="/leagues" class="nav-card nav-card--admin">
             <div class="nav-card-icon nav-card-icon--purple">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">

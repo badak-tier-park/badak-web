@@ -112,6 +112,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/seasons',
+      name: 'seasons',
+      component: () => import('@/views/seasons/SeasonsView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('@/views/auth/AuthCallbackView.vue'),
