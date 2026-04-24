@@ -244,11 +244,19 @@
   flex-shrink: 0;
 
   &:hover { background: rgba(139, 92, 246, 0.18); border-color: rgba(139, 92, 246, 0.8); }
+
+  &.btn-draft-enter {
+    border-color: rgba(74, 222, 128, 0.5);
+    background: rgba(74, 222, 128, 0.1);
+    color: #4ade80;
+
+    &:hover { background: rgba(74, 222, 128, 0.18); border-color: rgba(74, 222, 128, 0.8); }
+  }
 }
 
 // ── 경기 목록 모달 ────────────────────────────────────────
 .modal--match-list {
-  max-width: 520px;
+  max-width: 620px;
 }
 
 .match-list-body {

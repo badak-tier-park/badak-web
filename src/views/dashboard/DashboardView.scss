@@ -1,0 +1,656 @@
+@use '@/styles/buttons';
+@use '@/styles/modal';
+
+.dashboard-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-bg);
+}
+
+.dashboard-content {
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+// ── 상단 검색 + 시즌 필터 ────────────────────────────────
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.player-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.player-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--c-text-faint);
+  pointer-events: none;
+}
+
+.player-search-input {
+  width: 180px;
+  padding: 7px 12px 7px 30px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 8px;
+  color: var(--c-text-1);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &::placeholder { color: var(--c-text-faint); }
+
+  &:focus {
+    border-color: rgba(168, 85, 247, 0.5);
+  }
+}
+
+.player-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 220px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border-dashed);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.player-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--c-text-2);
+
+  &:hover {
+    background: var(--c-overlay);
+    color: var(--c-text-1);
+  }
+
+  .pd-race {
+    font-size: 11px;
+    font-weight: 700;
+    width: 14px;
+    flex-shrink: 0;
+  }
+
+  .pd-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// ── 시즌 필터 버튼들 ─────────────────────────────────────
+.season-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.season-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.13s;
+
+  &:hover {
+    border-color: var(--c-border-dashed);
+    color: var(--c-text-2);
+  }
+
+  &--active {
+    border-color: rgba(168, 85, 247, 0.5);
+    background: rgba(168, 85, 247, 0.12);
+    color: #c084fc;
+  }
+}
+
+.btn-season-mgmt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.13s;
+
+  &:hover {
+    border-color: var(--c-border-dashed);
+    color: var(--c-text-2);
+  }
+}
+
+// ── 선수 헤더 ─────────────────────────────────────────────
+.player-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 12px;
+}
+
+.player-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-main-race {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.player-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--c-text-bright);
+  margin: 0;
+}
+
+.player-tier {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+.player-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.summary-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--c-text-bright);
+  line-height: 1;
+
+  &--win  { color: #34d399; }
+  &--loss { color: #f87171; }
+}
+
+.summary-lbl {
+  font-size: 11px;
+  color: var(--c-text-faint);
+}
+
+.summary-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--c-border-strong);
+}
+
+// ── 섹션 공통 ─────────────────────────────────────────────
+.dash-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &--chart {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.dash-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.dash-empty {
+  font-size: 13px;
+  color: var(--c-text-faint);
+  padding: 20px 0;
+  text-align: center;
+}
+
+// ── 종족별 통계 그리드 ────────────────────────────────────
+.race-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.race-stat-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &--t { border-top: 2px solid var(--race-t); }
+  &--z { border-top: 2px solid var(--race-z); }
+  &--p { border-top: 2px solid var(--race-p); }
+}
+
+.race-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.race-label {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.race-stat-nums {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.race-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rsr-label {
+  font-size: 12px;
+  color: var(--c-text-faint);
+}
+
+.rsr-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-2);
+
+  &--win  { color: #34d399; }
+  &--loss { color: #f87171; }
+}
+
+// ── 맵별 승률 ─────────────────────────────────────────────
+.map-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.map-stat-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) 2fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.map-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.map-thumb {
+  width: 36px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid var(--c-border-strong);
+
+  &--empty {
+    background: var(--c-overlay);
+  }
+}
+
+.map-name {
+  font-size: 13px;
+  color: var(--c-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: var(--c-border-strong);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.map-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  width: 0;
+  animation: bar-grow 0.6s cubic-bezier(0.4, 0, 0.2, 1) var(--bar-delay, 0ms) forwards;
+
+  &.wr--high { background: #34d399; }
+  &.wr--mid  { background: #fbbf24; }
+  &.wr--low  { background: #f87171; }
+}
+
+@keyframes bar-grow {
+  to { width: var(--bar-w, 0%); }
+}
+
+.map-rate {
+  font-size: 12px;
+  font-weight: 700;
+  width: 44px;
+  text-align: right;
+  flex-shrink: 0;
+
+  &.wr--high { color: #34d399; }
+  &.wr--mid  { color: #fbbf24; }
+  &.wr--low  { color: #f87171; }
+}
+
+.map-record {
+  font-size: 11px;
+  color: var(--c-text-faint);
+  white-space: nowrap;
+}
+
+// ── 차트 행 ───────────────────────────────────────────────
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.chart-wrap {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 12px;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.chart-grid {
+  stroke: var(--c-border-strong);
+  stroke-width: 1;
+}
+
+.chart-label {
+  font-size: 8px;
+  fill: var(--c-text-faint);
+}
+
+.chart-line {
+  &--apm  { stroke: var(--race-t); }
+  &--game { stroke: #a855f7; }
+}
+
+.chart-dot {
+  &--apm {
+    fill: var(--race-t);
+    stroke: var(--c-surface);
+    stroke-width: 1.5;
+  }
+
+  &--game {
+    fill: #a855f7;
+    stroke: var(--c-surface);
+    stroke-width: 1.5;
+  }
+}
+
+// ── 승률 색상 유틸 ────────────────────────────────────────
+.wr--high { color: #34d399; }
+.wr--mid  { color: #fbbf24; }
+.wr--low  { color: #f87171; }
+
+// ── 시즌 모달 ─────────────────────────────────────────────
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.season-modal {
+  background: var(--c-surface-raised);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 14px;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.season-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--c-border-strong);
+  flex-shrink: 0;
+}
+
+.season-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+}
+
+.season-modal-close {
+  background: none;
+  border: none;
+  color: var(--c-text-faint);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+
+  &:hover { color: var(--c-text-2); background: var(--c-overlay); }
+}
+
+.season-list {
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--c-border-strong);
+  min-height: 48px;
+}
+
+.season-list-empty {
+  font-size: 13px;
+  color: var(--c-text-faint);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.season-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--c-overlay);
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+}
+
+.season-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.season-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+}
+
+.season-item-dates {
+  font-size: 11px;
+  color: var(--c-text-faint);
+}
+
+.season-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.season-input {
+  padding: 7px 10px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 7px;
+  color: var(--c-text-1);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  flex: 1;
+
+  &::placeholder { color: var(--c-text-faint); }
+
+  &:focus { border-color: rgba(168, 85, 247, 0.5); }
+
+  &--date {
+    flex: none;
+    width: 130px;
+  }
+}
+
+.season-add {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.season-add-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.season-add-dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.season-date-sep {
+  font-size: 12px;
+  color: var(--c-text-faint);
+  flex-shrink: 0;
+}
+
+// ── 차트 드로잉 애니메이션 ───────────────────────────────
+@keyframes chart-reveal {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.chart-clip-rect {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: chart-reveal 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+// ── 반응형 ────────────────────────────────────────────────
+@media (max-width: 640px) {
+  .race-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+
+  .player-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .player-summary {
+    align-self: stretch;
+    justify-content: space-around;
+  }
+
+  .map-stat-row {
+    grid-template-columns: 1fr 1.5fr auto;
+  }
+}

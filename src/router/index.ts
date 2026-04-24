@@ -58,6 +58,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/leagues/:id/captain-draft',
+      name: 'captain-draft',
+      component: () => import('@/views/leagues/CaptainDraftView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/leagues/:id/team-names',
       name: 'league-team-names',
       component: () => import('@/views/leagues/TeamNamesView.vue'),
@@ -98,6 +104,18 @@ const router = createRouter({
       name: 'hall-of-fame',
       component: () => import('@/views/hof/HallOfFameView.vue'),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('@/views/dashboard/DashboardView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/seasons',
+      name: 'seasons',
+      component: () => import('@/views/seasons/SeasonsView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
       path: '/auth/callback',

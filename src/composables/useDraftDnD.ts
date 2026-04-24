@@ -5,6 +5,8 @@ export function useDraftDnD(
   allPlayers: Ref<PlayerRow[]>,
   teams: Ref<Record<number, PlayerRow[]>>,
   currentCaptainId: ComputedRef<number | null>,
+  onDropped?: (captainId: number, player: PlayerRow, pickOrder: number) => void,
+  onRemoved?: (memberId: number) => void,
 ) {
   const draggedPlayerId = ref<number | null>(null)
   const dragSource = ref<'pool' | number>('pool')
@@ -99,12 +101,15 @@ export function useDraftDnD(
           const player = allPlayers.value.find(p => p.id === pid)
           if (player) {
             if (!teams.value[cid]) teams.value[cid] = []
+            const pickOrder = Object.values(teams.value).reduce((s, m) => s + m.length, 0) + 1
             teams.value[cid] = [...teams.value[cid], player]
+            onDropped?.(cid, player, pickOrder)
           }
         }
       } else if (pool && dragSource.value !== 'pool') {
         const prev = dragSource.value as number
         teams.value[prev] = (teams.value[prev] ?? []).filter(p => p.id !== pid)
+        onRemoved?.(pid)
       }
     }
 
