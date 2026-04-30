@@ -46,7 +46,6 @@ export async function getEnrichedGames(): Promise<EnrichedGameRow[]> {
   const tierByName = new Map<string, string>()
   for (const p of players) {
     tierByName.set(p.nickname.toLowerCase(), p.tier)
-    for (const a of (p.aliases ?? [])) tierByName.set(a.toLowerCase(), p.tier)
     for (const sn of (p.star_nicknames ?? [])) tierByName.set(sn.toLowerCase(), p.tier)
   }
 

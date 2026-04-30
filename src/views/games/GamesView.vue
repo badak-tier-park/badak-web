@@ -15,6 +15,25 @@
         <span class="game-count" v-if="!loading">{{ games.length }}경기</span>
       </div>
 
+      <!-- ── 미등록 닉네임 패널 ──────────────────────────── -->
+      <div v-if="!loading && unmatchedNames.length" class="unmatched-panel">
+        <div class="unmatched-header">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="#f59e0b" stroke-width="1.4"/>
+            <path d="M7 4v3.5M7 9.5v.5" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <span>미등록 닉네임</span>
+          <span class="unmatched-count">{{ unmatchedNames.length }}건</span>
+        </div>
+        <div class="unmatched-list">
+          <div v-for="[name, count] in unmatchedNames" :key="name" class="unmatched-row">
+            <span class="unmatched-name">{{ name }}</span>
+            <span class="unmatched-games">{{ count }}경기</span>
+            <button class="btn-link" @click="openLink(name)">선수 연동</button>
+          </div>
+        </div>
+      </div>
+
       <div class="search-bar">
         <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
           <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4"/>
@@ -67,7 +86,7 @@
                   <div class="player-cell-name">
                     <span class="race-badge" :class="raceBadgeClass(game.winner_race)">{{ raceLabel(game.winner_race) }}</span>
                     <span v-if="game.winner_tier" class="tier-badge" :class="`tier-badge--${game.winner_tier.toLowerCase()}`">{{ game.winner_tier }}</span>
-                    <span class="player-name">{{ game.winner_name ?? '-' }}</span>
+                    <span class="player-name" :class="{ 'player-name--unmatched': !game.winner_tier }">{{ game.winner_name ?? '-' }}</span>
                   </div>
                   <div v-if="game.winner_apm != null" class="player-cell-apm">APM {{ game.winner_apm }}</div>
                 </div>
@@ -78,7 +97,7 @@
                   <div class="player-cell-name">
                     <span class="race-badge" :class="raceBadgeClass(game.loser_race)">{{ raceLabel(game.loser_race) }}</span>
                     <span v-if="game.loser_tier" class="tier-badge" :class="`tier-badge--${game.loser_tier.toLowerCase()}`">{{ game.loser_tier }}</span>
-                    <span class="player-name">{{ game.loser_name ?? '-' }}</span>
+                    <span class="player-name" :class="{ 'player-name--unmatched': !game.loser_tier }">{{ game.loser_name ?? '-' }}</span>
                   </div>
                   <div v-if="game.loser_apm != null" class="player-cell-apm">APM {{ game.loser_apm }}</div>
                 </div>
@@ -101,6 +120,61 @@
         </table>
       </template>
     </div>
+
+    <!-- ── 연동 모달 ───────────────────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="linkTarget" class="modal-backdrop" @click.self="linkTarget = null">
+        <div class="modal link-modal">
+          <div class="modal-header">
+            <span class="modal-title">
+              <span class="link-target-name">{{ linkTarget }}</span>
+              &nbsp;연동할 선수 선택
+            </span>
+            <button class="modal-close" @click="linkTarget = null">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div class="link-search-wrap">
+              <input
+                v-model="playerSearch"
+                class="field-input"
+                type="text"
+                placeholder="닉네임 검색"
+                autofocus
+              />
+            </div>
+            <div class="player-option-list">
+              <button
+                v-for="p in filteredPlayerOptions"
+                :key="p.id"
+                class="player-option"
+                @click="handleLink(p)"
+                :disabled="linking"
+              >
+                <span class="race-badge" :class="raceBadgeClass(p.race)">{{ raceLabel(p.race) }}</span>
+                <span class="tier-badge" :class="`tier-badge--${p.tier.toLowerCase()}`">{{ p.tier }}</span>
+                <span class="player-option-name">{{ p.nickname }}</span>
+                <span v-if="p.star_nicknames.length" class="player-option-sn">
+                  {{ p.star_nicknames.slice(0, 2).join(', ') }}{{ p.star_nicknames.length > 2 ? ' ...' : '' }}
+                </span>
+              </button>
+              <div v-if="!filteredPlayerOptions.length" class="player-option-empty">검색 결과 없음</div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <p v-if="linkError" class="save-error">{{ linkError }}</p>
+            <div class="modal-actions">
+              <button class="btn-cancel" @click="linkTarget = null" :disabled="linking">취소</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -108,14 +182,85 @@
 import { ref, computed, onMounted } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { getEnrichedGames, deleteGame, type EnrichedGameRow } from '@/lib/games'
+import { getPlayers, updatePlayer, type PlayerRow } from '@/lib/players'
 
 const games = ref<EnrichedGameRow[]>([])
+const players = ref<PlayerRow[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const searchQuery = ref('')
 const deleteConfirmId = ref<number | null>(null)
 const deleting = ref(false)
 
+// ── 미등록 닉네임 ────────────────────────────────────────
+const allValidNames = computed(() => {
+  const set = new Set<string>()
+  for (const p of players.value) {
+    set.add(p.nickname.toLowerCase())
+    for (const sn of p.star_nicknames) set.add(sn.toLowerCase())
+  }
+  return set
+})
+
+const unmatchedNames = computed((): [string, number][] => {
+  const map = new Map<string, number>()
+  for (const g of games.value) {
+    if (g.winner_name && !allValidNames.value.has(g.winner_name.toLowerCase()))
+      map.set(g.winner_name, (map.get(g.winner_name) ?? 0) + 1)
+    if (g.loser_name && !allValidNames.value.has(g.loser_name.toLowerCase()))
+      map.set(g.loser_name, (map.get(g.loser_name) ?? 0) + 1)
+  }
+  return [...map.entries()].sort((a, b) => b[1] - a[1])
+})
+
+// ── 연동 모달 ────────────────────────────────────────────
+const linkTarget = ref<string | null>(null)
+const playerSearch = ref('')
+const linking = ref(false)
+const linkError = ref<string | null>(null)
+
+const filteredPlayerOptions = computed(() => {
+  const q = playerSearch.value.toLowerCase()
+  if (!q) return players.value
+  return players.value.filter(p =>
+    p.nickname.toLowerCase().includes(q) ||
+    p.aliases.some(a => a.toLowerCase().includes(q))
+  )
+})
+
+function openLink(name: string) {
+  linkTarget.value = name
+  playerSearch.value = ''
+  linkError.value = null
+}
+
+async function handleLink(player: PlayerRow) {
+  if (!linkTarget.value || linking.value) return
+  linking.value = true
+  linkError.value = null
+  try {
+    const newStarNicknames = [...player.star_nicknames, linkTarget.value]
+    await updatePlayer(player.id, {
+      nickname: player.nickname,
+      aliases: player.aliases,
+      star_nicknames: newStarNicknames,
+      race: player.race,
+      tier: player.tier,
+    })
+    // 로컬 players 업데이트
+    const idx = players.value.findIndex(p => p.id === player.id)
+    if (idx !== -1) players.value[idx] = { ...players.value[idx], star_nicknames: newStarNicknames }
+    // 경기 목록 재조회 (티어 정보 갱신)
+    games.value = await getEnrichedGames()
+    linkTarget.value = null
+  } catch (e: any) {
+    linkError.value = e.message ?? '연동 중 오류가 발생했습니다.'
+  } finally {
+    linking.value = false
+  }
+}
+
+// ── 경기 목록 ────────────────────────────────────────────
 const filteredGames = computed(() => {
   const q = searchQuery.value.toLowerCase()
   if (!q) return games.value
@@ -128,9 +273,9 @@ const filteredGames = computed(() => {
 
 onMounted(async () => {
   try {
-    games.value = await getEnrichedGames()
+    ;[games.value, players.value] = await Promise.all([getEnrichedGames(), getPlayers()])
   } catch (e: any) {
-    loadError.value = e.message ?? '경기 목록을 불러올 수 없습니다.'
+    loadError.value = e.message ?? '데이터를 불러올 수 없습니다.'
   } finally {
     loading.value = false
   }

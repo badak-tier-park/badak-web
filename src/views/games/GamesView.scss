@@ -31,6 +31,140 @@
   margin-bottom: 10px;
 }
 
+// ── 미등록 닉네임 패널 ────────────────────────────────────
+.unmatched-panel {
+  margin-bottom: 20px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.04);
+  overflow: hidden;
+}
+
+.unmatched-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+  font-size: 12px;
+  font-weight: 600;
+  color: #f59e0b;
+}
+
+.unmatched-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--c-text-faint);
+}
+
+.unmatched-list { padding: 4px 0; }
+
+.unmatched-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  transition: background 0.12s;
+
+  &:hover { background: rgba(245, 158, 11, 0.04); }
+}
+
+.unmatched-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text);
+  flex: 1;
+}
+
+.unmatched-games {
+  font-size: 12px;
+  color: var(--c-text-faint);
+  white-space: nowrap;
+}
+
+.btn-link {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: rgba(245, 158, 11, 0.6);
+    background: rgba(245, 158, 11, 0.15);
+  }
+}
+
+// ── 연동 모달 ─────────────────────────────────────────────
+.link-modal { max-width: 420px; }
+
+.link-target-name {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.link-search-wrap {
+  margin-bottom: 10px;
+}
+
+.player-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.player-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--c-overlay);
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: left;
+
+  &:hover {
+    border-color: rgba(170, 59, 255, 0.3);
+    background: rgba(170, 59, 255, 0.06);
+  }
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.player-option-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text);
+  flex: 1;
+}
+
+.player-option-sn {
+  font-size: 11px;
+  color: var(--c-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.player-option-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--c-text-faint);
+}
+
 // ── 테이블 ────────────────────────────────────────────────
 .game-table {
   width: 100%;
@@ -125,6 +259,8 @@
 .player-name {
   font-weight: 500;
   color: var(--c-text);
+
+  &--unmatched { color: #f59e0b; }
 }
 
 .player-cell-apm {
