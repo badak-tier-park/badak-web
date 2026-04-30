@@ -16,6 +16,15 @@ export interface GameRow {
   season_id: number | null
 }
 
+export async function getGames(): Promise<GameRow[]> {
+  const { data, error } = await supabase
+    .from('games')
+    .select('*')
+    .order('played_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
 export interface EnrichedGameRow extends GameRow {
   winner_tier: string | null
   loser_tier: string | null
