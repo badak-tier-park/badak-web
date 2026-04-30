@@ -46,7 +46,7 @@
             </svg>
           </RouterLink>
 
-          <div class="nav-card nav-card--admin nav-card--disabled">
+          <RouterLink to="/games" class="nav-card nav-card--admin">
             <div class="nav-card-icon nav-card-icon--red">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M3 5h14M5 5V3.5A1.5 1.5 0 016.5 2h7A1.5 1.5 0 0115 3.5V5M8 9v6M12 9v6M4 5l1 12.5A1 1 0 006 18.5h8a1 1 0 001-.5L16 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -54,10 +54,12 @@
             </div>
             <div class="nav-card-body">
               <p class="nav-card-title">경기 관리</p>
-              <p class="nav-card-desc">중복 경기 정리 · 기록 삭제</p>
+              <p class="nav-card-desc">경기 기록 확인 · 삭제</p>
             </div>
-            <span class="badge-soon">준비 중</span>
-          </div>
+            <svg class="nav-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </RouterLink>
 
           <RouterLink to="/seasons" class="nav-card nav-card--admin">
             <div class="nav-card-icon nav-card-icon--amber">

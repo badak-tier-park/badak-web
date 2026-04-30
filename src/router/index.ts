@@ -40,6 +40,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/games',
+      name: 'games',
+      component: () => import('@/views/games/GamesView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/leagues',
       name: 'leagues',
       component: () => import('@/views/leagues/LeaguesView.vue'),
