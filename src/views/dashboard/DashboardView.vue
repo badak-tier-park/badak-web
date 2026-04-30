@@ -402,6 +402,14 @@ const playerInfo = computed(() =>
   allPlayers.value.find(p => p.nickname === selectedPlayer.value) ?? null,
 )
 
+// 선택된 선수의 nickname + star_nicknames 전체 집합
+const selectedPlayerNames = computed((): Set<string> => {
+  if (!selectedPlayer.value) return new Set()
+  const names = new Set<string>([selectedPlayer.value])
+  for (const sn of (playerInfo.value?.star_nicknames ?? [])) names.add(sn)
+  return names
+})
+
 function selectPlayer(name: string) {
   selectedPlayer.value = name
   searchInput.value = name
@@ -418,9 +426,9 @@ const selectedSeasonId = ref<number | null>(null)
 // ── 필터링된 게임 ─────────────────────────────────────────
 const playerGames = computed(() => {
   if (!selectedPlayer.value) return []
-  const name = selectedPlayer.value
+  const names = selectedPlayerNames.value
   return games.value.filter(g =>
-    g.winner_name?.trim() === name || g.loser_name?.trim() === name,
+    names.has(g.winner_name?.trim() ?? '') || names.has(g.loser_name?.trim() ?? ''),
   )
 })
 
@@ -431,7 +439,7 @@ const filteredGames = computed(() => {
 
 // ── 전체 통계 ─────────────────────────────────────────────
 const totalGames = computed(() => filteredGames.value.length)
-const totalWins = computed(() => filteredGames.value.filter(g => g.winner_name?.trim() === selectedPlayer.value).length)
+const totalWins = computed(() => filteredGames.value.filter(g => selectedPlayerNames.value.has(g.winner_name?.trim() ?? '')).length)
 const totalLosses = computed(() => totalGames.value - totalWins.value)
 const overallWinRate = computed(() => totalGames.value > 0 ? (totalWins.value / totalGames.value) * 100 : 0)
 
@@ -441,9 +449,9 @@ interface RaceStat { wins: number; losses: number; avgApm: number }
 const raceStats = computed((): Record<string, RaceStat> => {
   const map: Record<string, { wins: number; losses: number; apmSum: number; apmCount: number }> = {}
   const ensure = (r: string) => { if (!map[r]) map[r] = { wins: 0, losses: 0, apmSum: 0, apmCount: 0 } }
-  const name = selectedPlayer.value
+  const names = selectedPlayerNames.value
   for (const g of filteredGames.value) {
-    const isWinner = g.winner_name?.trim() === name
+    const isWinner = names.has(g.winner_name?.trim() ?? '')
     const race = (isWinner ? g.winner_race : g.loser_race)?.toUpperCase()
     if (!race) continue
     ensure(race)
@@ -469,12 +477,12 @@ const raceStats = computed((): Record<string, RaceStat> => {
 // ── 맵별 통계 ─────────────────────────────────────────────
 const mapStats = computed(() => {
   const map: Record<string, { wins: number; losses: number }> = {}
-  const name = selectedPlayer.value
+  const names = selectedPlayerNames.value
   for (const g of filteredGames.value) {
     const m = g.map_name
     if (!m) continue
     if (!map[m]) map[m] = { wins: 0, losses: 0 }
-    if (g.winner_name?.trim() === name) map[m].wins++
+    if (names.has(g.winner_name?.trim() ?? '')) map[m].wins++
     else map[m].losses++
   }
   return Object.entries(map)
@@ -532,11 +540,11 @@ function makeGridLines(max: number, h: number): { val: number; y: number }[] {
 // ── APM 차트 ──────────────────────────────────────────────
 const apmByDate = computed(() => {
   const map: Record<string, number[]> = {}
-  const name = selectedPlayer.value
+  const names = selectedPlayerNames.value
   for (const g of filteredGames.value) {
     const date = g.played_at?.slice(0, 10)
     if (!date) continue
-    const apm = g.winner_name?.trim() === name ? g.winner_apm : g.loser_apm
+    const apm = names.has(g.winner_name?.trim() ?? '') ? g.winner_apm : g.loser_apm
     if (!apm) continue
     if (!map[date]) map[date] = []
     map[date].push(apm)
