@@ -40,15 +40,50 @@
         <thead>
           <tr>
             <th>닉네임</th>
+            <th>Alias</th>
+            <th>스타 닉네임</th>
             <th>종족</th>
             <th>티어</th>
-            <th>관리자</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="player in filteredPlayers" :key="player.id">
-            <td class="td-nickname">{{ player.nickname }}</td>
+            <td class="td-nickname" :class="{ 'td-nickname--admin': player.is_admin }">{{ player.nickname }}</td>
+            <td class="td-aliases">
+              <span v-if="player.aliases.length" class="alias-list">
+                <span v-for="(a, i) in player.aliases.slice(0, 2)" :key="i" class="alias-chip">{{ a }}</span>
+                <span
+                  v-if="player.aliases.length > 2"
+                  class="alias-chip alias-chip--more"
+                  @click.stop="togglePopover(player.id, 'aliases')"
+                >+{{ player.aliases.length - 2 }}</span>
+                <div
+                  v-if="openPopover?.id === player.id && openPopover.field === 'aliases'"
+                  class="alias-popover"
+                >
+                  <span v-for="(a, i) in player.aliases" :key="i" class="alias-chip">{{ a }}</span>
+                </div>
+              </span>
+              <span v-else class="alias-list">-</span>
+            </td>
+            <td class="td-aliases">
+              <span v-if="player.star_nicknames.length" class="alias-list">
+                <span v-for="(sn, i) in player.star_nicknames.slice(0, 2)" :key="i" class="alias-chip alias-chip--star">{{ sn }}</span>
+                <span
+                  v-if="player.star_nicknames.length > 2"
+                  class="alias-chip alias-chip--more"
+                  @click.stop="togglePopover(player.id, 'star')"
+                >+{{ player.star_nicknames.length - 2 }}</span>
+                <div
+                  v-if="openPopover?.id === player.id && openPopover.field === 'star'"
+                  class="alias-popover"
+                >
+                  <span v-for="(sn, i) in player.star_nicknames" :key="i" class="alias-chip alias-chip--star">{{ sn }}</span>
+                </div>
+              </span>
+              <span v-else class="alias-list">-</span>
+            </td>
             <td>
               <span class="race-badge" :class="`race-badge--${player.race.toLowerCase()}`">
                 {{ raceLabel(player.race) }}
@@ -56,10 +91,6 @@
             </td>
             <td>
               <span class="tier-badge" :class="`tier-badge--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
-            </td>
-            <td>
-              <span v-if="player.is_admin" class="admin-badge">관리자</span>
-              <span v-else class="admin-badge admin-badge--no">-</span>
             </td>
             <td class="td-action">
               <button class="edit-btn" @click="openEdit(player)">수정</button>
@@ -120,6 +151,31 @@
               </div>
             </div>
 
+            <!-- 스타 닉네임 -->
+            <div class="field">
+              <label class="field-label">스타 닉네임</label>
+              <div class="alias-input-row">
+                <input
+                  v-model="starNicknameInput"
+                  class="field-input"
+                  type="text"
+                  placeholder="예) Flash, Bisu"
+                  @keydown.enter.prevent="addStarNickname"
+                />
+                <button type="button" class="alias-add-btn" @click="addStarNickname">추가</button>
+              </div>
+              <div v-if="form.star_nicknames.length" class="alias-tags">
+                <span v-for="(sn, i) in form.star_nicknames" :key="i" class="alias-tag">
+                  {{ sn }}
+                  <button type="button" class="alias-tag-remove" @click="removeStarNickname(i)">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </span>
+              </div>
+            </div>
+
             <!-- 종족 -->
             <div class="field">
               <label class="field-label">종족</label>
@@ -171,7 +227,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, computed } from 'vue'
+import { ref, onMounted, onUnmounted, reactive, computed } from 'vue'
+
+type PopoverField = 'aliases' | 'star'
+const openPopover = ref<{ id: number; field: PopoverField } | null>(null)
+
+function togglePopover(id: number, field: PopoverField) {
+  if (openPopover.value?.id === id && openPopover.value.field === field) {
+    openPopover.value = null
+  } else {
+    openPopover.value = { id, field }
+  }
+}
+
+function closePopover() { openPopover.value = null }
 import AppHeader from '@/components/AppHeader.vue'
 import { getPlayers, updatePlayer, type PlayerRow } from '@/lib/players'
 
@@ -213,12 +282,18 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  document.addEventListener('click', closePopover)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closePopover)
 })
 
 // ── 수정 모달 ─────────────────────────────────────────────
 const editTarget = ref<PlayerRow | null>(null)
-const form = reactive({ nickname: '', aliases: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '' })
+const form = reactive({ nickname: '', aliases: [] as string[], star_nicknames: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '' })
 const aliasInput = ref('')
+const starNicknameInput = ref('')
 const saving = ref(false)
 const saveError = ref<string | null>(null)
 
@@ -232,13 +307,25 @@ function removeAlias(i: number) {
   form.aliases.splice(i, 1)
 }
 
+function addStarNickname() {
+  const val = starNicknameInput.value.trim()
+  if (val && !form.star_nicknames.includes(val)) form.star_nicknames.push(val)
+  starNicknameInput.value = ''
+}
+
+function removeStarNickname(i: number) {
+  form.star_nicknames.splice(i, 1)
+}
+
 function openEdit(player: PlayerRow) {
   editTarget.value = player
   form.nickname = player.nickname
   form.aliases = [...player.aliases]
+  form.star_nicknames = [...player.star_nicknames]
   form.race = player.race
   form.tier = player.tier
   aliasInput.value = ''
+  starNicknameInput.value = ''
   saveError.value = null
 }
 
@@ -259,6 +346,7 @@ async function handleSave() {
     const updated = await updatePlayer(editTarget.value.id, {
       nickname: form.nickname.trim(),
       aliases: form.aliases,
+      star_nicknames: form.star_nicknames,
       race: form.race,
       tier: form.tier.trim(),
     })
