@@ -5,6 +5,7 @@ export interface PlayerRow {
   discord_id: string
   nickname: string
   aliases: string[]
+  star_nicknames: string[]
   race: 'T' | 'Z' | 'P'
   tier: string
   is_admin: boolean
