@@ -128,6 +128,11 @@ const router = createRouter({
       name: 'auth-callback',
       component: () => import('@/views/auth/AuthCallbackView.vue'),
     },
+    {
+      path: '/unauthorized',
+      name: 'unauthorized',
+      component: () => import('@/views/auth/UnauthorizedView.vue'),
+    },
   ],
 })
 
@@ -138,8 +143,14 @@ router.beforeEach(async (to) => {
     await auth.init()
   }
 
+  const publicRoutes = ['login', 'auth-callback', 'unauthorized']
+
   if (to.meta.requiresAuth && !auth.user) {
     return { name: 'login' }
+  }
+
+  if (auth.user && !auth.isRegistered && !publicRoutes.includes(to.name as string)) {
+    return { name: 'unauthorized' }
   }
 
   if (to.meta.requiresAdmin && !auth.isAdmin) {
@@ -147,7 +158,12 @@ router.beforeEach(async (to) => {
   }
 
   if (to.name === 'login' && auth.user) {
-    return { name: 'home' }
+    return auth.isRegistered ? { name: 'home' } : { name: 'unauthorized' }
+  }
+
+  if (to.name === 'unauthorized') {
+    if (!auth.user) return { name: 'login' }
+    if (auth.isRegistered) return { name: 'home' }
   }
 })
 

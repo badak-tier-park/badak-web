@@ -7,14 +7,18 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const loading = ref(true)
   const isAdmin = ref(false)
+  const isRegistered = ref(false)
+  const nickname = ref<string | null>(null)
 
   async function fetchIsAdmin(discordId: string) {
     const { data } = await supabase
       .from('users')
-      .select('is_admin')
+      .select('is_admin, nickname')
       .eq('discord_id', discordId)
       .single()
+    isRegistered.value = data !== null
     isAdmin.value = data?.is_admin === true
+    nickname.value = data?.nickname ?? null
   }
 
   let _initPromise: Promise<void> | null = null
@@ -29,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
       // setTimeout(0)으로 DB 호출을 auth lock 컨텍스트 바깥으로 꺼낸다.
       supabase.auth.onAuthStateChange((_event, session) => {
         user.value = session?.user ?? null
-        if (!user.value) isAdmin.value = false
+        if (!user.value) { isAdmin.value = false; isRegistered.value = false; nickname.value = null }
 
         const discordId = user.value?.identities?.find(i => i.provider === 'discord')?.id ?? ''
 
@@ -61,5 +65,5 @@ export const useAuthStore = defineStore('auth', () => {
     await supabase.auth.signOut()
   }
 
-  return { user, loading, isAdmin, init, loginWithDiscord, logout }
+  return { user, loading, isAdmin, isRegistered, nickname, init, loginWithDiscord, logout }
 })
