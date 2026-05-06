@@ -160,6 +160,11 @@ router.beforeEach(async (to) => {
   if (to.name === 'login' && auth.user) {
     return auth.isRegistered ? { name: 'home' } : { name: 'unauthorized' }
   }
+
+  if (to.name === 'unauthorized') {
+    if (!auth.user) return { name: 'login' }
+    if (auth.isRegistered) return { name: 'home' }
+  }
 })
 
 export default router
