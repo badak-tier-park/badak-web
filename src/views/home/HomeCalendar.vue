@@ -26,7 +26,7 @@
           {{ w }}
         </div>
       </div>
-      <div class="cal-grid">
+      <div class="cal-grid" :key="`${viewYear}-${viewMonth}`">
         <div
           v-for="cell in calendarCells"
           :key="cell.key"
@@ -36,6 +36,7 @@
             'today': cell.isToday,
             'sun': cell.dow === 0,
             'sat': cell.dow === 6,
+            'has-events': cell.events.length > 0,
           }"
         >
           <span class="cal-day">{{ cell.day }}</span>
@@ -44,7 +45,11 @@
               v-for="ev in cell.events.slice(0, 2)"
               :key="ev.id"
               class="cal-chip"
-              :style="{ background: EVENT_TYPE_META[ev.event_type].color }"
+              :style="{
+                background: EVENT_TYPE_META[ev.event_type].bg,
+                color: EVENT_TYPE_META[ev.event_type].text,
+                borderLeftColor: EVENT_TYPE_META[ev.event_type].color,
+              }"
               @click="openDetail(ev)"
             >
               <span v-if="ev.event_time" class="cal-chip-time">{{ formatTime(ev.event_time) }}</span>
@@ -101,9 +106,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getEvents, EVENT_TYPE_META, type EventRow } from '@/lib/events'
+import { getCalendarItems, EVENT_TYPE_META, type CalendarItem } from '@/lib/events'
 
-const events = ref<EventRow[]>([])
+const events = ref<CalendarItem[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 
@@ -119,11 +124,11 @@ interface Cell {
   inMonth: boolean
   isToday: boolean
   dow: number
-  events: EventRow[]
+  events: CalendarItem[]
 }
 
 const eventsByDate = computed(() => {
-  const map = new Map<string, EventRow[]>()
+  const map = new Map<string, CalendarItem[]>()
   for (const ev of events.value) {
     const arr = map.get(ev.event_date) ?? []
     arr.push(ev)
@@ -177,10 +182,10 @@ function nextMonth() {
 }
 
 const detailOpen = ref(false)
-const detailEvent = ref<EventRow | null>(null)
+const detailEvent = ref<CalendarItem | null>(null)
 const moreCell = ref<Cell | null>(null)
 
-function openDetail(ev: EventRow) {
+function openDetail(ev: CalendarItem) {
   detailEvent.value = ev
   moreCell.value = null
   detailOpen.value = true
@@ -200,7 +205,7 @@ function closeDetail() {
 
 onMounted(async () => {
   try {
-    events.value = await getEvents()
+    events.value = await getCalendarItems()
   } catch (e: any) {
     loadError.value = e.message ?? '일정을 불러올 수 없습니다.'
   } finally {

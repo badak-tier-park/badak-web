@@ -37,7 +37,7 @@
             {{ w }}
           </div>
         </div>
-        <div class="day-grid">
+        <div class="day-grid" :key="`${viewYear}-${viewMonth}`">
           <div
             v-for="cell in calendarCells"
             :key="cell.key"
@@ -47,22 +47,35 @@
               'day-cell--today': cell.isToday,
               'day-cell--sun': cell.dow === 0,
               'day-cell--sat': cell.dow === 6,
+              'day-cell--has-events': cell.events.length > 0,
             }"
             @click="onCellClick(cell)"
           >
-            <span class="day-num">{{ cell.day }}</span>
+            <div class="day-cell-head">
+              <span class="day-num">{{ cell.day }}</span>
+              <span v-if="cell.inMonth" class="day-add" aria-hidden="true">
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
             <div class="day-events">
               <div
-                v-for="ev in cell.events.slice(0, 3)"
-                :key="ev.id"
+                v-for="item in cell.events.slice(0, 4)"
+                :key="item.id"
                 class="event-chip"
-                :style="{ background: EVENT_TYPE_META[ev.event_type].color }"
-                @click.stop="openEdit(ev)"
+                :class="{ 'event-chip--schedule': item.source === 'schedule' }"
+                :style="{
+                  background: EVENT_TYPE_META[item.event_type].bg,
+                  color: EVENT_TYPE_META[item.event_type].text,
+                  borderLeftColor: EVENT_TYPE_META[item.event_type].color,
+                }"
+                @click.stop="onChipClick(item)"
               >
-                <span v-if="ev.event_time" class="event-chip-time">{{ formatTime(ev.event_time) }}</span>
-                <span class="event-chip-title">{{ ev.title }}</span>
+                <span v-if="item.event_time" class="event-chip-time">{{ formatTime(item.event_time) }}</span>
+                <span class="event-chip-title">{{ item.title }}</span>
               </div>
-              <div v-if="cell.events.length > 3" class="event-more">+{{ cell.events.length - 3 }}</div>
+              <div v-if="cell.events.length > 4" class="event-more">+{{ cell.events.length - 4 }}</div>
             </div>
           </div>
         </div>
@@ -141,13 +154,15 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import {
-  getEvents, createEvent, updateEvent, deleteEvent,
-  EVENT_TYPE_META, type EventRow, type EventType,
+  getCalendarItems, createEvent, updateEvent, deleteEvent,
+  EVENT_TYPE_META, type CalendarItem, type EventType,
 } from '@/lib/events'
 
-const events = ref<EventRow[]>([])
+const router = useRouter()
+const items = ref<CalendarItem[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 
@@ -165,15 +180,15 @@ interface Cell {
   isToday: boolean
   dow: number
   date: string
-  events: EventRow[]
+  events: CalendarItem[]
 }
 
 const eventsByDate = computed(() => {
-  const map = new Map<string, EventRow[]>()
-  for (const ev of events.value) {
-    const arr = map.get(ev.event_date) ?? []
-    arr.push(ev)
-    map.set(ev.event_date, arr)
+  const map = new Map<string, CalendarItem[]>()
+  for (const it of items.value) {
+    const arr = map.get(it.event_date) ?? []
+    arr.push(it)
+    map.set(it.event_date, arr)
   }
   return map
 })
@@ -272,13 +287,18 @@ function openCreate(date: string) {
   modalOpen.value = true
 }
 
-function openEdit(ev: EventRow) {
-  editingId.value = ev.id
-  form.title = ev.title
-  form.description = ev.description ?? ''
-  form.event_type = ev.event_type
-  form.event_date = ev.event_date
-  form.event_time = ev.event_time ? ev.event_time.slice(0, 5) : ''
+function onChipClick(item: CalendarItem) {
+  if (item.source === 'schedule') {
+    router.push({ name: 'league-schedule', params: { id: item.league_id! } })
+    return
+  }
+  const eventId = Number(item.id.replace('event-', ''))
+  editingId.value = eventId
+  form.title = item.title
+  form.description = item.description ?? ''
+  form.event_type = item.event_type
+  form.event_date = item.event_date
+  form.event_time = item.event_time ? item.event_time.slice(0, 5) : ''
   saveError.value = null
   modalOpen.value = true
 }
@@ -286,6 +306,10 @@ function openEdit(ev: EventRow) {
 function closeModal() {
   if (saving.value) return
   modalOpen.value = false
+}
+
+async function reload() {
+  items.value = await getCalendarItems()
 }
 
 async function handleSave() {
@@ -303,13 +327,11 @@ async function handleSave() {
       event_time: form.event_time || null,
     }
     if (editingId.value) {
-      const updated = await updateEvent(editingId.value, payload)
-      const idx = events.value.findIndex(e => e.id === updated.id)
-      if (idx !== -1) events.value[idx] = updated
+      await updateEvent(editingId.value, payload)
     } else {
-      const created = await createEvent(payload)
-      events.value.push(created)
+      await createEvent(payload)
     }
+    await reload()
     modalOpen.value = false
   } catch (e: any) {
     saveError.value = e.message ?? '저장 중 오류가 발생했습니다.'
@@ -325,7 +347,7 @@ async function handleDelete() {
   saveError.value = null
   try {
     await deleteEvent(editingId.value)
-    events.value = events.value.filter(e => e.id !== editingId.value)
+    await reload()
     modalOpen.value = false
   } catch (e: any) {
     saveError.value = e.message ?? '삭제 중 오류가 발생했습니다.'
@@ -336,7 +358,7 @@ async function handleDelete() {
 
 onMounted(async () => {
   try {
-    events.value = await getEvents()
+    await reload()
   } catch (e: any) {
     loadError.value = e.message ?? '일정을 불러올 수 없습니다.'
   } finally {
