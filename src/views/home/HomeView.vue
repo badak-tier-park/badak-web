@@ -93,6 +93,23 @@
               <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </RouterLink>
+
+          <RouterLink to="/events" class="nav-card nav-card--admin">
+            <div class="nav-card-icon nav-card-icon--green">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M3 8h14" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M7 2v3M13 2v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="nav-card-body">
+              <p class="nav-card-title">일정 관리</p>
+              <p class="nav-card-desc">달력에서 일정 추가 · 수정 · 삭제</p>
+            </div>
+            <svg class="nav-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </RouterLink>
         </template>
 
         <RouterLink to="/participate" class="nav-card">
@@ -129,6 +146,8 @@
         </RouterLink>
 
       </div>
+
+      <HomeCalendar />
     </div>
   </div>
 </template>
@@ -136,6 +155,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
+import HomeCalendar from './HomeCalendar.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
