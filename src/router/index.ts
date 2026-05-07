@@ -124,6 +124,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/events',
+      name: 'events',
+      component: () => import('@/views/events/EventsView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('@/views/auth/AuthCallbackView.vue'),
