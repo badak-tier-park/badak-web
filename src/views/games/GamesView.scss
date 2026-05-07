@@ -1,0 +1,375 @@
+@use '../../styles/page';
+@use '../../styles/search';
+
+.games-page {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.games-content {
+  position: relative;
+  flex: 1;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+  box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.game-count {
+  font-size: 13px;
+  color: var(--c-text-muted);
+}
+
+.result-count {
+  font-size: 12px;
+  color: var(--c-text-faint);
+  margin-bottom: 10px;
+}
+
+// ── 미등록 닉네임 패널 ────────────────────────────────────
+.unmatched-panel {
+  margin-bottom: 20px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.04);
+  overflow: hidden;
+}
+
+.unmatched-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+  font-size: 12px;
+  font-weight: 600;
+  color: #f59e0b;
+}
+
+.unmatched-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--c-text-faint);
+}
+
+.unmatched-list { padding: 4px 0; }
+
+.unmatched-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  transition: background 0.12s;
+
+  &:hover { background: rgba(245, 158, 11, 0.04); }
+}
+
+.unmatched-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text);
+  flex: 1;
+}
+
+.unmatched-games {
+  font-size: 12px;
+  color: var(--c-text-faint);
+  white-space: nowrap;
+}
+
+.btn-link {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: rgba(245, 158, 11, 0.6);
+    background: rgba(245, 158, 11, 0.15);
+  }
+}
+
+// ── 연동 모달 ─────────────────────────────────────────────
+.link-modal { max-width: 420px; }
+
+.link-target-name {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.link-search-wrap {
+  margin-bottom: 10px;
+}
+
+.player-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.player-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--c-overlay);
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: left;
+
+  &:hover {
+    border-color: rgba(170, 59, 255, 0.3);
+    background: rgba(170, 59, 255, 0.06);
+  }
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.player-option-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text);
+  flex: 1;
+}
+
+.player-option-sn {
+  font-size: 11px;
+  color: var(--c-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.player-option-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--c-text-faint);
+}
+
+// ── 테이블 ────────────────────────────────────────────────
+.game-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead tr { border-bottom: 1px solid var(--c-border); }
+
+  th {
+    padding: 10px 14px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--c-text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+
+    &.th-left { text-align: left; }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--c-border-faint);
+    transition: background 0.12s;
+
+    &:hover { background: var(--c-row-hover); }
+  }
+
+  td {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--c-text-2);
+    vertical-align: middle;
+    text-align: center;
+  }
+}
+
+// ── 날짜 ──────────────────────────────────────────────────
+.td-date {
+  text-align: left;
+  font-size: 12px;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+// ── 맵 ────────────────────────────────────────────────────
+.td-map { text-align: left; }
+
+.map-cell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.map-thumb {
+  width: 48px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid var(--c-border-faint);
+}
+
+.map-thumb-empty {
+  width: 48px;
+  height: 36px;
+  border-radius: 4px;
+  background: var(--c-overlay);
+  border: 1px solid var(--c-border-faint);
+  flex-shrink: 0;
+}
+
+.map-name {
+  font-size: 12px;
+  color: var(--c-text-sub);
+  line-height: 1.3;
+}
+
+// ── 선수 셀 ───────────────────────────────────────────────
+.player-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+.player-cell-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.player-name {
+  font-weight: 500;
+  color: var(--c-text);
+
+  &--unmatched { color: #f59e0b; }
+}
+
+.player-cell-apm {
+  font-size: 11px;
+  color: var(--c-text-faint);
+  padding-left: 1px;
+}
+
+// ── 종족 배지 ─────────────────────────────────────────────
+.race-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  flex-shrink: 0;
+
+  &--t { background: var(--race-t-bg); color: var(--race-t); }
+  &--z { background: var(--race-z-bg); color: var(--race-z); }
+  &--p { background: var(--race-p-bg); color: var(--race-p); }
+}
+
+// ── 티어 배지 ─────────────────────────────────────────────
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  flex-shrink: 0;
+
+  &--a { background: var(--tier-a-bg); color: var(--tier-a); }
+  &--b { background: var(--tier-b-bg); color: var(--tier-b); }
+  &--c { background: var(--tier-c-bg); color: var(--tier-c); }
+  &--d { background: var(--tier-d-bg); color: var(--tier-d); }
+  &--e { background: var(--tier-e-bg); color: var(--tier-e); }
+}
+
+// ── 시간 / 시즌 ───────────────────────────────────────────
+.td-duration {
+  font-size: 12px;
+  color: var(--c-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.td-season {
+  font-size: 12px;
+  color: var(--c-text-faint);
+}
+
+// ── 삭제 버튼 ─────────────────────────────────────────────
+.td-action { text-align: right; }
+
+.action-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.btn-delete {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-faint);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.08);
+    color: #f87171;
+  }
+}
+
+.btn-confirm-delete {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { background: rgba(239, 68, 68, 0.2); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-cancel-delete {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border);
+  background: transparent;
+  color: var(--c-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { border-color: var(--c-border-strong); color: var(--c-text); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}

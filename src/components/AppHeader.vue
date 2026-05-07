@@ -89,11 +89,7 @@ const navItems: { to: string; label: string }[] = [
 ]
 
 const avatarUrl = computed(() => auth.user?.user_metadata?.avatar_url as string | undefined)
-const displayName = computed(() =>
-  (auth.user?.user_metadata?.full_name
-  || auth.user?.user_metadata?.name
-  || auth.user?.email) as string | undefined
-)
+const displayName = computed(() => auth.nickname ?? auth.user?.user_metadata?.full_name ?? auth.user?.email)
 
 async function handleLogout() {
   await auth.logout()
