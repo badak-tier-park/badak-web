@@ -69,6 +69,33 @@
   }
 }
 
+// ── 확정 버튼 (brand gradient — 베팅/결제 등 강조 액션) ──
+.btn-confirm {
+  @extend %btn-base;
+  padding: 10px 22px;
+  border: none;
+  background: var(--c-brand-gradient);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(170, 59, 255, 0.3);
+
+  &:hover:not(:disabled) { filter: brightness(1.1); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+}
+
+// ── 위험 버튼 (delete / destructive) ─────────────────────
+.btn-danger {
+  @extend %btn-base;
+  padding: 9px 18px;
+  border: 1px solid var(--c-danger-border);
+  background: transparent;
+  color: var(--c-danger);
+  font-size: 13px;
+
+  &:hover:not(:disabled) { background: var(--c-danger-bg); }
+}
+
 // ── 헤더 버튼 (ghost) ────────────────────────────────────
 .header-btn {
   @extend %btn-base;

@@ -136,8 +136,8 @@
 
           <div class="modal-footer">
             <p v-if="saveError" class="save-error">{{ saveError }}</p>
-            <div class="modal-actions">
-              <button v-if="editingId" class="btn-delete" @click="handleDelete" :disabled="saving">삭제</button>
+            <div class="modal-actions" :class="{ 'modal-actions--between': editingId }">
+              <button v-if="editingId" class="btn-danger" @click="handleDelete" :disabled="saving">삭제</button>
               <div class="modal-actions-right">
                 <button class="btn-cancel" @click="closeModal" :disabled="saving">취소</button>
                 <button class="btn-save" @click="handleSave" :disabled="saving">

@@ -124,7 +124,7 @@
 
     <!-- ── 리그 안내 모달 ──────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="guideModal.open" class="modal-overlay">
+      <div v-if="guideModal.open" class="modal-backdrop">
         <div class="modal">
           <div class="modal-header">
             <p class="modal-title">{{ guideModal.name }}</p>
@@ -143,7 +143,7 @@
 
     <!-- ── 경기 목록 모달 ──────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="matchListModal.open" class="modal-overlay">
+      <div v-if="matchListModal.open" class="modal-backdrop">
         <div class="modal modal--match-list">
           <div class="modal-header">
             <p class="modal-title">엔트리 제출</p>
@@ -218,7 +218,7 @@
 
     <!-- ── 공개된 경기 목록 모달 ──────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="revealListModal.open" class="modal-overlay">
+      <div v-if="revealListModal.open" class="modal-backdrop">
         <div class="modal modal--match-list">
           <div class="modal-header">
             <div>
@@ -280,7 +280,7 @@
 
     <!-- ── 경기 결과 목록 모달 ──────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="resultListModal.open" class="modal-overlay">
+      <div v-if="resultListModal.open" class="modal-backdrop">
         <div class="modal modal--match-list">
           <div class="modal-header">
             <div>
@@ -340,7 +340,7 @@
 
     <!-- ── 리그 순위 모달 ────────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="standingsModal.open" class="modal-overlay">
+      <div v-if="standingsModal.open" class="modal-backdrop">
         <div class="modal modal--result-standings">
           <div class="modal-header">
             <div>
@@ -400,7 +400,7 @@
 
     <!-- ── 엔트리 제출 모달 ────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="entryModal.open" class="modal-overlay">
+      <div v-if="entryModal.open" class="modal-backdrop">
         <div class="modal modal--entry">
           <div class="modal-header">
             <div>

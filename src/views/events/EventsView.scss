@@ -149,18 +149,18 @@
   }
 
   &--has-events {
-    background: rgba(170, 59, 255, 0.025);
-    &:hover { background: rgba(170, 59, 255, 0.05); }
+    background: var(--c-brand-bg-soft);
+    &:hover { background: var(--c-brand-bg); }
   }
 
   &--today {
-    background: rgba(170, 59, 255, 0.06);
-    box-shadow: inset 0 0 0 1px rgba(170, 59, 255, 0.35);
+    background: var(--c-brand-bg-soft);
+    box-shadow: inset 0 0 0 1px var(--c-brand-border);
 
-    &:hover { background: rgba(170, 59, 255, 0.09); }
+    &:hover { background: var(--c-brand-bg); }
 
     .day-num {
-      background: linear-gradient(135deg, #aa3bff, #5865f2);
+      background: var(--c-brand-gradient);
       color: white;
       border-radius: 50%;
       width: 22px;
@@ -205,8 +205,8 @@
   width: 18px;
   height: 18px;
   border-radius: 5px;
-  background: rgba(170, 59, 255, 0.15);
-  color: #c084fc;
+  background: var(--c-brand-bg);
+  color: var(--c-brand-text);
   opacity: 0;
   transform: scale(0.8);
   transition: opacity 0.15s, transform 0.15s;
@@ -269,115 +269,7 @@
   &:hover { color: var(--c-text-bright); }
 }
 
-// ── 모달 ─────────────────────────────────────────────
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
-}
-
-.modal {
-  width: 480px;
-  max-width: 100%;
-  background: var(--c-surface-raised);
-  border: 1px solid var(--c-border-strong);
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
-  animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modalIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--c-border);
-}
-
-.modal-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--c-text-bright);
-}
-
-.modal-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--c-text-sub);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--c-overlay);
-    color: var(--c-text-bright);
-  }
-}
-
-.modal-body {
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.field { display: flex; flex-direction: column; gap: 6px; }
-
-.field-row {
-  display: flex;
-  gap: 12px;
-
-  .field--half { flex: 1; }
-}
-
-.field-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-text-2);
-}
-
-.field-optional {
-  font-weight: 400;
-  color: var(--c-text-faint);
-  margin-left: 2px;
-}
-
-.field-input,
-.field-textarea {
-  width: 100%;
-  padding: 9px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--c-border);
-  background: var(--c-overlay);
-  color: var(--c-text-bright);
-  font-size: 13px;
-  font-family: inherit;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: rgba(170, 59, 255, 0.6);
-  }
-}
-
-.field-textarea { resize: vertical; min-height: 60px; }
-
+// ── 종류 선택 (모달 내부) ─────────────────────────────
 .type-group {
   display: flex;
   gap: 6px;
@@ -395,71 +287,15 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  font-family: inherit;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 
   &:hover { color: var(--c-text-bright); }
-  &.active { color: white; }
-}
-
-.modal-footer {
-  padding: 14px 18px;
-  border-top: 1px solid var(--c-border);
-  background: var(--c-overlay);
-}
-
-.save-error {
-  margin: 0 0 10px;
-  font-size: 12px;
-  color: #f87171;
-}
-
-.modal-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  &.active { color: white; border-color: transparent; }
 }
 
 .modal-actions-right {
   display: flex;
   gap: 8px;
   margin-left: auto;
-}
-
-.btn-delete,
-.btn-cancel,
-.btn-save {
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid transparent;
-
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-.btn-delete {
-  background: transparent;
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #f87171;
-
-  &:hover:not(:disabled) { background: rgba(239, 68, 68, 0.1); }
-}
-
-.btn-cancel {
-  background: transparent;
-  border-color: var(--c-border);
-  color: var(--c-text-sub);
-
-  &:hover:not(:disabled) { color: var(--c-text-bright); border-color: var(--c-border-strong); }
-}
-
-.btn-save {
-  background: linear-gradient(135deg, #aa3bff, #5865f2);
-  color: white;
-  border: none;
-  box-shadow: 0 4px 14px rgba(170, 59, 255, 0.3);
-
-  &:hover:not(:disabled) { filter: brightness(1.1); }
 }
