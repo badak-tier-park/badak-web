@@ -1,0 +1,131 @@
+@use '@/styles/tokens';
+
+.rankings-tab { width: 100%; }
+
+.state-msg {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--c-text-muted);
+  font-size: 13px;
+
+  &--error { color: #f87171; }
+}
+
+.rank-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--c-surface-raised);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  overflow: hidden;
+
+  thead {
+    background: var(--c-overlay);
+    tr { border-bottom: 1px solid var(--c-border); }
+  }
+
+  th {
+    padding: 10px 14px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--c-text-muted);
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--c-border-faint);
+    color: var(--c-text);
+    font-size: 13px;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr:hover { background: var(--c-overlay); }
+}
+
+.rank-row--me {
+  background: rgba(170, 59, 255, 0.08) !important;
+  td:first-child { box-shadow: inset 3px 0 0 #aa3bff; }
+}
+
+.col-rank { width: 60px; text-align: center; }
+.col-points { width: 80px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.col-correct { width: 100px; text-align: center; color: var(--c-text-2); font-variant-numeric: tabular-nums; }
+.col-acc { width: 200px; }
+
+.rank-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 12px;
+  background: var(--c-overlay);
+  color: var(--c-text-2);
+
+  &--1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4); }
+  &--2 { background: linear-gradient(135deg, #d1d5db, #9ca3af); color: white; box-shadow: 0 2px 8px rgba(209, 213, 219, 0.3); }
+  &--3 { background: linear-gradient(135deg, #f97316, #ea580c); color: white; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3); }
+}
+
+.col-user {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.rank-race {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  background: var(--c-overlay);
+}
+
+.rank-nick {
+  font-weight: 600;
+  color: var(--c-text-bright);
+}
+
+.rank-tier {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.acc-bar {
+  display: inline-block;
+  width: calc(100% - 50px);
+  height: 6px;
+  border-radius: 3px;
+  background: var(--c-overlay);
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.acc-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #aa3bff, #5865f2);
+  transition: width 0.3s;
+}
+
+.acc-val {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
