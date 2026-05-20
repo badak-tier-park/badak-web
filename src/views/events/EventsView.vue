@@ -83,7 +83,7 @@
     </div>
 
     <Teleport to="body">
-      <div v-if="modalOpen" class="modal-backdrop" @click.self="closeModal">
+      <div v-if="modalOpen" class="modal-backdrop">
         <div class="modal">
           <div class="modal-header">
             <span class="modal-title">{{ editingId ? '일정 수정' : '일정 추가' }}</span>

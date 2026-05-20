@@ -123,7 +123,7 @@
 
     <!-- ── 연동 모달 ───────────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="linkTarget" class="modal-backdrop" @click.self="linkTarget = null">
+      <div v-if="linkTarget" class="modal-backdrop">
         <div class="modal link-modal">
           <div class="modal-header">
             <span class="modal-title">
