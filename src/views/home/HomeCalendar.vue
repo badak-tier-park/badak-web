@@ -169,58 +169,20 @@
         </div>
       </div>
 
-      <!-- 베팅 모달 -->
-      <div v-if="betModal.open" class="bet-modal-backdrop">
-        <div class="bet-modal">
-          <div class="bet-modal-header">
-            <span class="bet-modal-title">{{ betModal.teamName }}에 베팅</span>
-            <button class="bet-modal-close" @click="closeBet">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </div>
-          <div class="bet-modal-body">
-            <div class="bet-row">
-              <span class="bet-row-label">현재 배수</span>
-              <span class="bet-row-val">{{ formatMult(betModal.currentMult) }}</span>
-            </div>
-            <div class="bet-row">
-              <span class="bet-row-label">베팅 후 예상 배수</span>
-              <span class="bet-row-val">{{ formatMult(betModal.previewMult) }}</span>
-            </div>
-            <div class="bet-amount-section">
-              <span class="bet-amount-label">베팅 포인트 (100pt 단위)</span>
-              <div class="bet-amount-row">
-                <button class="bet-step" @click="adjustBet(-100)" :disabled="betModal.amount <= 100">-100</button>
-                <input v-model.number="betModal.amount" type="number" class="bet-amount-input" min="100" step="100" @blur="normalizeBet" />
-                <button class="bet-step" @click="adjustBet(100)" :disabled="betModal.amount + 100 > availableBalance">+100</button>
-              </div>
-              <div class="bet-amount-quick">
-                <button v-for="p in quickAmounts" :key="p" class="bet-quick" :class="{ active: betModal.amount === p }" @click="betModal.amount = p; recalcPreview()" :disabled="p > availableBalance">
-                  {{ p.toLocaleString() }}pt
-                </button>
-                <button class="bet-quick" :class="{ active: betModal.amount === availableBalance }" @click="betModal.amount = availableBalance; recalcPreview()" :disabled="availableBalance < 100">All</button>
-              </div>
-            </div>
-            <div class="bet-summary">
-              <div class="bet-summary-row">
-                <span>예상 획득</span>
-                <span class="bet-summary-payout">{{ Math.floor(betModal.amount * betModal.previewMult).toLocaleString() }}pt</span>
-              </div>
-              <p class="bet-disclaimer">※ 실시간 배수는 마감 시점까지 변동되며, 정산은 마감 시 적중자들이 베팅 비율대로 총 pot을 나눠가집니다.</p>
-            </div>
-            <p v-if="betModal.error" class="bet-error">{{ betModal.error }}</p>
-          </div>
-          <div class="bet-modal-footer">
-            <button class="bet-btn-cancel" @click="closeBet" :disabled="betModal.saving">취소</button>
-            <button class="bet-btn-confirm" @click="confirmBet" :disabled="betModal.saving || betModal.amount < 100 || betModal.amount > availableBalance">
-              {{ betModal.saving ? '처리 중...' : '베팅 확정' }}
-            </button>
-          </div>
-        </div>
-      </div>
     </Teleport>
+
+    <BetModal
+      :open="betModal.open"
+      :team-name="betModal.teamName"
+      :my-total="betModalMyTotal"
+      :other-total="betModalOtherTotal"
+      :available-balance="availableBalance"
+      :initial-amount="betModalInitial"
+      :saving="betModal.saving"
+      :error="betModal.error"
+      @close="closeBet"
+      @confirm="confirmBet"
+    />
   </section>
 </template>
 
@@ -232,11 +194,11 @@ import {
   placePrediction,
   cancelPrediction,
   getUserPoints,
-  previewMultiplier,
   type PredictableMatch,
 } from '@/lib/predictions'
 import { useAuthStore } from '@/stores/auth'
 import { getPlayerByDiscordId } from '@/lib/players'
+import BetModal from '@/components/BetModal.vue'
 
 const auth = useAuthStore()
 const events = ref<CalendarItem[]>([])
@@ -375,10 +337,7 @@ const betModal = reactive({
   open: false,
   captainId: 0,
   teamName: '',
-  amount: 100,
   side: 'a' as 'a' | 'b',
-  currentMult: 0,
-  previewMult: 0,
   saving: false,
   error: null as string | null,
 })
@@ -389,34 +348,37 @@ const availableBalance = computed(() => {
   return owned + refundable
 })
 
-const quickAmounts = computed(() => [100, 300, 500, 1000].filter(p => p <= availableBalance.value))
-
-function recalcPreview() {
-  if (!predMatch.value) return
+const betModalMyTotal = computed(() => {
+  if (!predMatch.value) return 0
   const m = predMatch.value
   let myA = m.total_bet_a, myB = m.total_bet_b
   if (m.user_prediction_captain_id === m.team_a_captain_id) myA -= (m.user_bet_amount ?? 0)
   if (m.user_prediction_captain_id === m.team_b_captain_id) myB -= (m.user_bet_amount ?? 0)
-  if (betModal.side === 'a') {
-    betModal.currentMult = myA > 0 ? Math.round(((myA + myB) / myA) * 1000) / 1000 : 0
-    betModal.previewMult = previewMultiplier(myA, myB, betModal.amount)
-  } else {
-    betModal.currentMult = myB > 0 ? Math.round(((myA + myB) / myB) * 1000) / 1000 : 0
-    betModal.previewMult = previewMultiplier(myB, myA, betModal.amount)
-  }
-}
+  return betModal.side === 'a' ? myA : myB
+})
+
+const betModalOtherTotal = computed(() => {
+  if (!predMatch.value) return 0
+  const m = predMatch.value
+  let myA = m.total_bet_a, myB = m.total_bet_b
+  if (m.user_prediction_captain_id === m.team_a_captain_id) myA -= (m.user_bet_amount ?? 0)
+  if (m.user_prediction_captain_id === m.team_b_captain_id) myB -= (m.user_bet_amount ?? 0)
+  return betModal.side === 'a' ? myB : myA
+})
+
+const betModalInitial = computed(() => {
+  const m = predMatch.value
+  if (!m) return 100
+  return m.user_bet_amount && m.user_prediction_captain_id === betModal.captainId ? m.user_bet_amount : 100
+})
 
 function openBet(captainId: number) {
   if (!predMatch.value || !predMatch.value.is_open || predMatch.value.is_completed || !predMatch.value.in_window) return
   betModal.captainId = captainId
   betModal.side = captainId === predMatch.value.team_a_captain_id ? 'a' : 'b'
   betModal.teamName = captainId === predMatch.value.team_a_captain_id ? predMatch.value.team_a_name : predMatch.value.team_b_name
-  betModal.amount = predMatch.value.user_bet_amount && predMatch.value.user_prediction_captain_id === captainId
-    ? predMatch.value.user_bet_amount
-    : 100
   betModal.error = null
   betModal.open = true
-  recalcPreview()
 }
 
 function closeBet() {
@@ -424,27 +386,12 @@ function closeBet() {
   betModal.open = false
 }
 
-function adjustBet(delta: number) {
-  const next = betModal.amount + delta
-  if (next < 100) return
-  if (next > availableBalance.value) return
-  betModal.amount = next
-  recalcPreview()
-}
-
-function normalizeBet() {
-  let v = Math.max(100, Math.floor(betModal.amount / 100) * 100)
-  if (v > availableBalance.value) v = Math.max(100, Math.floor(availableBalance.value / 100) * 100)
-  betModal.amount = v
-  recalcPreview()
-}
-
-async function confirmBet() {
+async function confirmBet(amount: number) {
   if (!predMatch.value || !myUserId.value) return
   betModal.saving = true
   betModal.error = null
   try {
-    const res = await placePrediction(predMatch.value.schedule_id, myUserId.value, betModal.captainId, betModal.amount)
+    const res = await placePrediction(predMatch.value.schedule_id, myUserId.value, betModal.captainId, amount)
     userPoints.value = res.remaining_points
     predMatch.value = await getMatchForPrediction(predMatch.value.schedule_id, myUserId.value)
     betModal.open = false
