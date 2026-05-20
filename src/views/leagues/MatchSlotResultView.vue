@@ -326,7 +326,7 @@
 
     <!-- 맵 사다리타기 모달 -->
     <Teleport to="body">
-      <div v-if="ladderSlot != null" class="ladder-overlay" @click.self="ladderSlot = null">
+      <div v-if="ladderSlot != null" class="ladder-overlay">
         <div class="ladder-modal">
           <div class="ladder-header">
             <span class="ladder-title">{{ ladderSlot === 7 ? '에이스 맵 선택' : `경기${ladderSlot} 맵 선택` }}</span>
@@ -370,7 +370,7 @@
 
     <!-- 티어 사다리타기 모달 -->
     <Teleport to="body">
-      <div v-if="tierLadderOpen" class="ladder-overlay" @click.self="tierLadderOpen = false">
+      <div v-if="tierLadderOpen" class="ladder-overlay">
         <div class="ladder-modal">
           <div class="ladder-header">
             <span class="ladder-title">에이스 티어 선택</span>
@@ -409,7 +409,7 @@
     </Teleport>
     <!-- 선수 교체 모달 -->
     <Teleport to="body">
-      <div v-if="subModal" class="ladder-overlay" @click.self="subModal = null">
+      <div v-if="subModal" class="ladder-overlay">
         <div class="ladder-modal sub-modal">
           <div class="ladder-header">
             <span class="ladder-title">대체 선수 선택</span>

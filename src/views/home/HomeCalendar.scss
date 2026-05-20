@@ -118,15 +118,15 @@
   }
 
   &.has-events {
-    background: rgba(170, 59, 255, 0.025);
+    background: var(--c-brand-bg-soft);
   }
 
   &.today {
-    background: rgba(170, 59, 255, 0.06);
-    box-shadow: inset 0 0 0 1px rgba(170, 59, 255, 0.35);
+    background: var(--c-brand-bg-soft);
+    box-shadow: inset 0 0 0 1px var(--c-brand-border);
 
     .cal-day {
-      background: linear-gradient(135deg, #aa3bff, #5865f2);
+      background: var(--c-brand-gradient);
       color: white;
       border-radius: 50%;
       width: 20px;
@@ -138,8 +138,8 @@
     }
   }
 
-  &.sun .cal-day { color: #f87171; }
-  &.sat .cal-day { color: #60a5fa; }
+  &.sun .cal-day { color: var(--c-danger); }
+  &.sat .cal-day { color: var(--c-info); }
   &.today.sun .cal-day,
   &.today.sat .cal-day { color: white; }
   &.out.sun .cal-day,
@@ -344,4 +344,233 @@
   color: var(--c-text-2);
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+// ── 예측 섹션 ─────────────────────────────────────────
+.pred-loading {
+  padding: 16px;
+  text-align: center;
+  color: var(--c-text-muted);
+  font-size: 12px;
+}
+
+.pred-section {
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--c-overlay);
+  border: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pred-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+  letter-spacing: 0.02em;
+}
+
+.pred-points {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-brand-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.pred-prob-bar {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 18px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--c-overlay);
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+}
+
+.pred-prob-a {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 0;
+}
+
+.pred-prob-b {
+  background: linear-gradient(90deg, #84cc16, #4ade80);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 6px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 0;
+}
+
+.pred-prob-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.pred-strength {
+  position: absolute;
+  top: -7px;
+  right: 8px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+
+  &--fav {
+    background: linear-gradient(135deg, #f59e0b, var(--c-warning));
+    color: white;
+    box-shadow: 0 2px 4px rgba(251, 191, 36, 0.4);
+  }
+  &--und {
+    background: rgba(156, 163, 175, 0.25);
+    color: var(--c-text-muted);
+    border: 1px solid var(--c-border-strong);
+  }
+}
+
+.pred-mult {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--c-brand-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.pred-team { position: relative; }
+
+.pred-my-bet { color: var(--c-text-sub); font-weight: 600; }
+
+.pred-status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+
+  &--open   { background: var(--c-success-bg); color: var(--c-success); }
+  &--closed { background: rgba(156, 163, 175, 0.15); color: #d1d5db; }
+  &--done   { background: var(--c-info-bg); color: var(--c-info); }
+}
+
+.pred-teams {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pred-team {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--c-border);
+  background: var(--c-surface-raised);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+
+  &:not(:disabled):hover {
+    border-color: var(--c-brand-border);
+    background: var(--c-brand-bg-soft);
+    transform: translateY(-1px);
+  }
+
+  &:disabled { cursor: not-allowed; }
+
+  &--picked {
+    border-color: var(--c-brand);
+    background: var(--c-brand-bg);
+    box-shadow: 0 0 0 2px var(--c-brand-bg-soft);
+  }
+
+  &--winner {
+    border-color: rgba(34, 197, 94, 0.6);
+    background: var(--c-success-bg);
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+  }
+
+  &--loser { opacity: 0.55; }
+}
+
+.pred-race {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  background: var(--c-overlay);
+}
+
+.pred-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pred-pct {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pred-vs {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--c-text-muted);
+  letter-spacing: 0.05em;
+}
+
+.pred-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--c-text-muted);
+  min-height: 16px;
+}
+
+.pred-deadline { color: var(--c-text-sub); }
+.pred-result-win  { color: var(--c-success); font-weight: 700; }
+.pred-result-lose { color: var(--c-danger);  font-weight: 700; }
+
+.pred-cancel {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: transparent;
+  color: var(--c-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { color: var(--c-danger); border-color: var(--c-danger-border); }
 }

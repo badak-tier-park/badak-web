@@ -20,6 +20,20 @@
         <h1 class="page-title">리그 참여</h1>
       </div>
 
+      <div class="participate-tabs">
+        <button class="participate-tab" :class="{ active: activeTab === 'leagues' }" @click="activeTab = 'leagues'">리그 목록</button>
+        <button class="participate-tab" :class="{ active: activeTab === 'predictions' }" @click="activeTab = 'predictions'">승부 예측</button>
+        <button class="participate-tab" :class="{ active: activeTab === 'rankings' }" @click="activeTab = 'rankings'">랭킹</button>
+      </div>
+
+      <template v-if="activeTab === 'predictions'">
+        <PredictionsTab />
+      </template>
+      <template v-else-if="activeTab === 'rankings'">
+        <RankingsTab />
+      </template>
+
+      <template v-else>
       <div v-if="loadingLeagues" class="state-msg">불러오는 중...</div>
       <div v-else-if="!leagues.length" class="state-msg">현재 참여 가능한 리그가 없습니다.</div>
 
@@ -105,11 +119,12 @@
           </div>
         </div>
       </div>
+      </template>
     </div>
 
     <!-- ── 리그 안내 모달 ──────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="guideModal.open" class="modal-overlay">
+      <div v-if="guideModal.open" class="modal-backdrop">
         <div class="modal">
           <div class="modal-header">
             <p class="modal-title">{{ guideModal.name }}</p>
@@ -128,7 +143,7 @@
 
     <!-- ── 경기 목록 모달 ──────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="matchListModal.open" class="modal-overlay">
+      <div v-if="matchListModal.open" class="modal-backdrop">
         <div class="modal modal--match-list">
           <div class="modal-header">
             <p class="modal-title">엔트리 제출</p>
@@ -203,7 +218,7 @@
 
     <!-- ── 공개된 경기 목록 모달 ──────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="revealListModal.open" class="modal-overlay">
+      <div v-if="revealListModal.open" class="modal-backdrop">
         <div class="modal modal--match-list">
           <div class="modal-header">
             <div>
@@ -265,7 +280,7 @@
 
     <!-- ── 경기 결과 목록 모달 ──────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="resultListModal.open" class="modal-overlay">
+      <div v-if="resultListModal.open" class="modal-backdrop">
         <div class="modal modal--match-list">
           <div class="modal-header">
             <div>
@@ -325,7 +340,7 @@
 
     <!-- ── 리그 순위 모달 ────────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="standingsModal.open" class="modal-overlay">
+      <div v-if="standingsModal.open" class="modal-backdrop">
         <div class="modal modal--result-standings">
           <div class="modal-header">
             <div>
@@ -385,7 +400,7 @@
 
     <!-- ── 엔트리 제출 모달 ────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="entryModal.open" class="modal-overlay">
+      <div v-if="entryModal.open" class="modal-backdrop">
         <div class="modal modal--entry">
           <div class="modal-header">
             <div>
@@ -558,6 +573,10 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import PlayerSelect, { type SelectOption } from '@/components/PlayerSelect.vue'
 import EntryRevealModal from '@/components/EntryRevealModal.vue'
+import PredictionsTab from './PredictionsTab.vue'
+import RankingsTab from './RankingsTab.vue'
+
+const activeTab = ref<'leagues' | 'predictions' | 'rankings'>('leagues')
 import { getLeagues, getLeagueStatus, type LeagueRow, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
 import { getCaptains, getMatchMaps } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
