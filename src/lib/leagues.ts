@@ -179,3 +179,10 @@ export async function createLeague(payload: LeagueInsert): Promise<LeagueRow> {
   if (error) throw error
   return data
 }
+
+// 리그 생성자의 player_id (users.id) — 팀장/시드권자/지목식에서 제외 대상
+export async function getLeagueCreatorPlayerId(leagueId: string): Promise<number | null> {
+  const { data, error } = await supabase.rpc('get_league_creator_player_id', { p_league_id: leagueId })
+  if (error) throw error
+  return data ?? null
+}

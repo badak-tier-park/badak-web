@@ -440,7 +440,7 @@ import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, updateLeagueDescription, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
+import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
 import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders } from '@/lib/leagueDetail'
@@ -487,6 +487,7 @@ const pageError = ref<string | null>(null)
 const league = ref<LeagueRow | null>(null)
 const players = ref<PlayerRow[]>([])
 const maps = ref<MapRow[]>([])
+const creatorPlayerId = ref<number | null>(null)
 
 const captains = ref<number[]>([])
 const seedHolders = ref<number[]>([])
@@ -497,18 +498,20 @@ const draftLocked = computed(() => league.value?.draft_completed === true)
 
 onMounted(async () => {
   try {
-    const [leagueData, playersData, mapsData, captainsData, matchMapsData, seedHoldersData] = await Promise.all([
+    const [leagueData, playersData, mapsData, captainsData, matchMapsData, seedHoldersData, creatorId] = await Promise.all([
       getLeague(leagueId),
       getPlayers(),
       getMaps(),
       getCaptains(leagueId),
       getMatchMaps(leagueId),
       getSeedHolders(leagueId),
+      getLeagueCreatorPlayerId(leagueId),
     ])
 
     league.value = leagueData
     players.value = playersData
     maps.value = mapsData
+    creatorPlayerId.value = creatorId
 
     captains.value = captainsData
       .sort((a, b) => a.order_num - b.order_num)
@@ -687,7 +690,10 @@ function sortPlayers(list: PlayerRow[]) {
 
 const filteredPlayers = computed(() => {
   const q = playerSearch.value.trim().toLowerCase()
-  const list = players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  const list = players.value.filter((p) =>
+    p.id !== creatorPlayerId.value &&
+    (!q || p.nickname.toLowerCase().includes(q)),
+  )
   return sortPlayers(list)
 })
 
@@ -778,7 +784,10 @@ const seedError = ref<string | null>(null)
 
 const filteredSeedPlayers = computed(() => {
   const q = seedSearch.value.trim().toLowerCase()
-  const list = players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  const list = players.value.filter((p) =>
+    p.id !== creatorPlayerId.value &&
+    (!q || p.nickname.toLowerCase().includes(q)),
+  )
   return sortPlayers(list)
 })
 
