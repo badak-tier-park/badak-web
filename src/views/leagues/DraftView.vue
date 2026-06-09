@@ -585,7 +585,7 @@ const totalPicks = computed(() =>
   Object.values(teams.value).reduce((sum, m) => sum + m.length, 0),
 )
 
-const draftDone = computed(() => availablePlayers.value.length === 0)
+const draftDone = computed(() => isSaved.value || availablePlayers.value.length === 0)
 
 const currentCaptainId = computed((): number | null => {
   const n = captainIds.value.length
