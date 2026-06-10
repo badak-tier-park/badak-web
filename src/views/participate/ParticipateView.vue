@@ -407,33 +407,33 @@
 
           <!-- 포인트 바 (항상 노출) -->
           <div v-if="!loadingEntry" class="entry-points-bar">
-            <div class="epi" :class="{ 'epi--over': individualPoints > MAX_INDIVIDUAL_POINTS }">
+            <div class="epi" :class="{ 'epi--over': individualPoints > entryModal.soloMax }">
               <div class="epi-top">
                 <span class="epi-label">개인전</span>
-                <span class="epi-val">{{ individualPoints }}<span class="epi-max">/{{ MAX_INDIVIDUAL_POINTS }}</span></span>
+                <span class="epi-val">{{ individualPoints }}<span class="epi-max">/{{ entryModal.soloMax }}</span></span>
               </div>
               <div class="epi-track">
-                <div class="epi-fill" :style="{ width: `${Math.min(100, individualPoints / MAX_INDIVIDUAL_POINTS * 100)}%` }" />
+                <div class="epi-fill" :style="{ width: `${Math.min(100, individualPoints / entryModal.soloMax * 100)}%` }" />
               </div>
             </div>
             <div class="epi-divider" />
-            <div class="epi" :class="{ 'epi--over': teamPoints > MAX_TEAM_POINTS }">
+            <div class="epi" :class="{ 'epi--over': teamPoints > entryModal.teamMax }">
               <div class="epi-top">
                 <span class="epi-label">팀전</span>
-                <span class="epi-val">{{ teamPoints }}<span class="epi-max">/{{ MAX_TEAM_POINTS }}</span></span>
+                <span class="epi-val">{{ teamPoints }}<span class="epi-max">/{{ entryModal.teamMax }}</span></span>
               </div>
               <div class="epi-track">
-                <div class="epi-fill" :style="{ width: `${Math.min(100, teamPoints / MAX_TEAM_POINTS * 100)}%` }" />
+                <div class="epi-fill" :style="{ width: `${Math.min(100, teamPoints / entryModal.teamMax * 100)}%` }" />
               </div>
             </div>
             <div class="epi-divider" />
-            <div class="epi epi--total" :class="{ 'epi--over': totalPoints > MAX_TOTAL_POINTS }">
+            <div class="epi epi--total" :class="{ 'epi--over': totalPoints > entryModal.totalMax }">
               <div class="epi-top">
                 <span class="epi-label">합계</span>
-                <span class="epi-val">{{ totalPoints }}<span class="epi-max">/{{ MAX_TOTAL_POINTS }}</span></span>
+                <span class="epi-val">{{ totalPoints }}<span class="epi-max">/{{ entryModal.totalMax }}</span></span>
               </div>
               <div class="epi-track">
-                <div class="epi-fill" :style="{ width: `${Math.min(100, totalPoints / MAX_TOTAL_POINTS * 100)}%` }" />
+                <div class="epi-fill" :style="{ width: `${Math.min(100, totalPoints / entryModal.totalMax * 100)}%` }" />
               </div>
             </div>
           </div>
@@ -570,7 +570,6 @@ import {
   consentReveal, checkBothConsented, getConsentedSet,
   getAceTierBan, saveAceTierBan, getEntriesForSchedules,
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
-  MAX_INDIVIDUAL_POINTS, MAX_TEAM_POINTS, MAX_TOTAL_POINTS,
   type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
 import { revealEntries } from '@/lib/schedules'
@@ -661,6 +660,9 @@ interface MyMatchItem {
   myTeamName: string
   opponentTeamName: string
   myTeamCaptainId: number
+  soloMax: number
+  teamMax: number
+  totalMax: number
 }
 const matchListModal = reactive({
   open: false,
@@ -967,6 +969,9 @@ interface EntryModalState {
   banSelections: Record<number, string | null>
   pickSelections: Record<number, string | null>
   aceTierBan: string | null
+  soloMax: number
+  teamMax: number
+  totalMax: number
 }
 const entryModal = reactive<EntryModalState>({
   open: false,
@@ -980,6 +985,9 @@ const entryModal = reactive<EntryModalState>({
   banSelections: {},
   pickSelections: {},
   aceTierBan: null,
+  soloMax: 16,
+  teamMax: 7,
+  totalMax: 23,
 })
 
 // ── 데이터 로드 ──────────────────────────────────────────────
@@ -1039,6 +1047,9 @@ async function openMatchList(league: LeagueRow) {
           myTeamName: teamName(myPlayerId.value!),
           opponentTeamName: teamName(opponentId),
           myTeamCaptainId: myPlayerId.value!,
+          soloMax: league.entry_solo_max,
+          teamMax: league.entry_team_max,
+          totalMax: league.entry_total_max,
         }
       })
       .sort((a, b) => {
@@ -1122,6 +1133,9 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.banSelections = {}
   entryModal.pickSelections = {}
   entryModal.aceTierBan = null
+  entryModal.soloMax = item.soloMax
+  entryModal.teamMax = item.teamMax
+  entryModal.totalMax = item.totalMax
   entryError.value = null
   initSelections()
   loadingEntry.value = true
@@ -1223,16 +1237,16 @@ async function handleEntrySubmit() {
     }
   }
 
-  if (individualPoints.value > MAX_INDIVIDUAL_POINTS) {
-    entryError.value = `개인전 포인트(${individualPoints.value})가 한도(${MAX_INDIVIDUAL_POINTS})를 초과했습니다.`
+  if (individualPoints.value > entryModal.soloMax) {
+    entryError.value = `개인전 포인트(${individualPoints.value})가 한도(${entryModal.soloMax})를 초과했습니다.`
     return
   }
-  if (teamPoints.value > MAX_TEAM_POINTS) {
-    entryError.value = `팀전 포인트(${teamPoints.value})가 한도(${MAX_TEAM_POINTS})를 초과했습니다.`
+  if (teamPoints.value > entryModal.teamMax) {
+    entryError.value = `팀전 포인트(${teamPoints.value})가 한도(${entryModal.teamMax})를 초과했습니다.`
     return
   }
-  if (totalPoints.value > MAX_TOTAL_POINTS) {
-    entryError.value = `전체 포인트(${totalPoints.value})가 한도(${MAX_TOTAL_POINTS})를 초과했습니다.`
+  if (totalPoints.value > entryModal.totalMax) {
+    entryError.value = `전체 포인트(${totalPoints.value})가 한도(${entryModal.totalMax})를 초과했습니다.`
     return
   }
 

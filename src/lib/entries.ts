@@ -6,9 +6,8 @@ import type { DraftPickRow, SwapLogRow } from './draft'
 export const TIER_POINTS: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
 export const INDIVIDUAL_SLOTS = [1, 2, 3, 5, 6] as const
 export const TEAM_SLOT = 4
-export const MAX_INDIVIDUAL_POINTS = 16
-export const MAX_TEAM_POINTS = 7
-export const MAX_TOTAL_POINTS = 23
+// NOTE: 엔트리 포인트 한도(개인전 / 팀전 / 전체)는 리그별로 leagues 테이블의
+// entry_solo_max / entry_team_max / entry_total_max 컬럼에서 설정한다.
 
 // ── 타입 ────────────────────────────────────────────────────
 export interface EntrySlot {
