@@ -52,6 +52,9 @@ export interface LeagueRow {
   draft_date: string | null
   description: string | null
   captain_count: number
+  entry_solo_max: number
+  entry_team_max: number
+  entry_total_max: number
   is_ready: boolean
   picks_completed: boolean
   draft_completed: boolean
@@ -178,4 +181,22 @@ export async function createLeague(payload: LeagueInsert): Promise<LeagueRow> {
 
   if (error) throw error
   return data
+}
+
+// 리그 생성자의 player_id (users.id) — 팀장/시드권자/지목식에서 제외 대상
+export async function getLeagueCreatorPlayerId(leagueId: string): Promise<number | null> {
+  const { data, error } = await supabase.rpc('get_league_creator_player_id', { p_league_id: leagueId })
+  if (error) throw error
+  return data ?? null
+}
+
+export async function updateLeagueEntryLimits(
+  id: string,
+  fields: { entry_solo_max: number; entry_team_max: number; entry_total_max: number },
+): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
 }

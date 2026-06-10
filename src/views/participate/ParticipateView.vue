@@ -202,7 +202,7 @@
                     <button
                       class="btn-pill btn-pill--md btn-pill--green"
                       :disabled="submittingId === item.schedule.id"
-                      @click="handleSubmitEntry(item.schedule.id)"
+                      @click="handleSubmitEntry(item)"
                     >{{ submittingId === item.schedule.id ? '...' : '제출' }}</button>
                   </template>
                   <template v-else>
@@ -422,33 +422,33 @@
 
           <!-- 포인트 바 (항상 노출) -->
           <div v-if="!loadingEntry" class="entry-points-bar">
-            <div class="epi" :class="{ 'epi--over': individualPoints > MAX_INDIVIDUAL_POINTS }">
+            <div class="epi" :class="{ 'epi--over': individualPoints > entryModal.soloMax }">
               <div class="epi-top">
                 <span class="epi-label">개인전</span>
-                <span class="epi-val">{{ individualPoints }}<span class="epi-max">/{{ MAX_INDIVIDUAL_POINTS }}</span></span>
+                <span class="epi-val">{{ individualPoints }}<span class="epi-max">/{{ entryModal.soloMax }}</span></span>
               </div>
               <div class="epi-track">
-                <div class="epi-fill" :style="{ width: `${Math.min(100, individualPoints / MAX_INDIVIDUAL_POINTS * 100)}%` }" />
+                <div class="epi-fill" :style="{ width: `${Math.min(100, individualPoints / entryModal.soloMax * 100)}%` }" />
               </div>
             </div>
             <div class="epi-divider" />
-            <div class="epi" :class="{ 'epi--over': teamPoints > MAX_TEAM_POINTS }">
+            <div class="epi" :class="{ 'epi--over': teamPoints > entryModal.teamMax }">
               <div class="epi-top">
                 <span class="epi-label">팀전</span>
-                <span class="epi-val">{{ teamPoints }}<span class="epi-max">/{{ MAX_TEAM_POINTS }}</span></span>
+                <span class="epi-val">{{ teamPoints }}<span class="epi-max">/{{ entryModal.teamMax }}</span></span>
               </div>
               <div class="epi-track">
-                <div class="epi-fill" :style="{ width: `${Math.min(100, teamPoints / MAX_TEAM_POINTS * 100)}%` }" />
+                <div class="epi-fill" :style="{ width: `${Math.min(100, teamPoints / entryModal.teamMax * 100)}%` }" />
               </div>
             </div>
             <div class="epi-divider" />
-            <div class="epi epi--total" :class="{ 'epi--over': totalPoints > MAX_TOTAL_POINTS }">
+            <div class="epi epi--total" :class="{ 'epi--over': totalPoints > entryModal.totalMax }">
               <div class="epi-top">
                 <span class="epi-label">합계</span>
-                <span class="epi-val">{{ totalPoints }}<span class="epi-max">/{{ MAX_TOTAL_POINTS }}</span></span>
+                <span class="epi-val">{{ totalPoints }}<span class="epi-max">/{{ entryModal.totalMax }}</span></span>
               </div>
               <div class="epi-track">
-                <div class="epi-fill" :style="{ width: `${Math.min(100, totalPoints / MAX_TOTAL_POINTS * 100)}%` }" />
+                <div class="epi-fill" :style="{ width: `${Math.min(100, totalPoints / entryModal.totalMax * 100)}%` }" />
               </div>
             </div>
           </div>
@@ -589,7 +589,6 @@ import {
   consentReveal, checkBothConsented, getConsentedSet,
   getAceTierBan, saveAceTierBan, getEntriesForSchedules,
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
-  MAX_INDIVIDUAL_POINTS, MAX_TEAM_POINTS, MAX_TOTAL_POINTS,
   type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
 import { revealEntries } from '@/lib/schedules'
@@ -650,6 +649,8 @@ const loadingLeagues = ref(true)
 const leagues = ref<LeagueRow[]>([])
 const myPlayerId = ref<number | null>(null)
 const myCaptainLeagueIds = ref(new Set<string>())
+// 부팀장 권한: leagueId → 본인이 부팀장으로 등록된 (실제 팀장 player_id)
+const myViceCaptainOfByLeague = ref(new Map<string, number>())
 const entryStatusMap = ref(new Map<number, EntryStatus>())
 const submittingId = ref<number | null>(null)
 const consentedSet = ref(new Set<number>())
@@ -680,6 +681,9 @@ interface MyMatchItem {
   myTeamName: string
   opponentTeamName: string
   myTeamCaptainId: number
+  soloMax: number
+  teamMax: number
+  totalMax: number
 }
 const matchListModal = reactive({
   open: false,
@@ -986,6 +990,9 @@ interface EntryModalState {
   banSelections: Record<number, string | null>
   pickSelections: Record<number, string | null>
   aceTierBan: string | null
+  soloMax: number
+  teamMax: number
+  totalMax: number
 }
 const entryModal = reactive<EntryModalState>({
   open: false,
@@ -999,6 +1006,9 @@ const entryModal = reactive<EntryModalState>({
   banSelections: {},
   pickSelections: {},
   aceTierBan: null,
+  soloMax: 16,
+  teamMax: 7,
+  totalMax: 23,
 })
 
 // ── 데이터 로드 ──────────────────────────────────────────────
@@ -1014,20 +1024,41 @@ onMounted(async () => {
   if (!me) return
   myPlayerId.value = me.id
 
-  // 팀장인 리그 파악 (draft_completed 또는 draft_started 리그)
+  // 팀장 / 부팀장 권한 파악 (draft_completed 또는 draft_started 리그)
   const captainCheckLeagues = allLeagues.filter(l => l.draft_completed || l.draft_started)
   await Promise.all(captainCheckLeagues.map(async l => {
-    const captains = await getCaptains(l.id)
+    const [captains, teamNames] = await Promise.all([
+      getCaptains(l.id),
+      getTeamNames(l.id),
+    ])
     if (captains.some(c => c.player_id === me.id)) {
       myCaptainLeagueIds.value.add(l.id)
     }
+    const vice = teamNames.find(t => t.vice_captain_player_id === me.id)
+    if (vice) {
+      myCaptainLeagueIds.value.add(l.id)
+      myViceCaptainOfByLeague.value.set(l.id, vice.captain_player_id)
+    }
   }))
 
-  // 엔트리 제출 현황
-  entryStatusMap.value = await getEntryStatusMap(me.id)
+  // 엔트리 제출 현황 — 본인이 팀장인 경우 + 본인이 부팀장으로 있는 팀(팀장 ID)
+  const viceTargetIds = Array.from(new Set(myViceCaptainOfByLeague.value.values()))
+  const statusMaps = await Promise.all([
+    getEntryStatusMap(me.id),
+    ...viceTargetIds.map(id => getEntryStatusMap(id)),
+  ])
+  const mergedStatus = new Map<number, EntryStatus>()
+  for (const m of statusMaps) for (const [k, v] of m) mergedStatus.set(k, v)
+  entryStatusMap.value = mergedStatus
 
   // 공개 동의 현황
-  consentedSet.value = await getConsentedSet(me.id)
+  const consentSets = await Promise.all([
+    getConsentedSet(me.id),
+    ...viceTargetIds.map(id => getConsentedSet(id)),
+  ])
+  const mergedConsent = new Set<number>()
+  for (const s of consentSets) for (const v of s) mergedConsent.add(v)
+  consentedSet.value = mergedConsent
 })
 
 // ── 경기 목록 모달 ────────────────────────────────────────────
@@ -1048,16 +1079,34 @@ async function openMatchList(league: LeagueRow) {
     const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
 
+    // 부팀장으로 참여 중인 팀의 (실제 팀장) player_id
+    const viceOfCaptainId = myViceCaptainOfByLeague.value.get(league.id) ?? null
+
+    // 내가 권한을 가지는 팀 (팀장 player_id 기준)
+    const myTeamCaptainOf = (s: ScheduleRow): number | null => {
+      if (s.team_a_captain_id === myPlayerId.value) return s.team_a_captain_id
+      if (s.team_b_captain_id === myPlayerId.value) return s.team_b_captain_id
+      if (viceOfCaptainId !== null) {
+        if (s.team_a_captain_id === viceOfCaptainId) return s.team_a_captain_id
+        if (s.team_b_captain_id === viceOfCaptainId) return s.team_b_captain_id
+      }
+      return null
+    }
+
     matchListModal.matches = schedules
-      .filter(s => !s.is_completed && !s.is_entry_revealed && s.match_type !== 'super_ace' && (s.team_a_captain_id === myPlayerId.value || s.team_b_captain_id === myPlayerId.value))
+      .filter(s => !s.is_completed && !s.is_entry_revealed && s.match_type !== 'super_ace' && myTeamCaptainOf(s) !== null)
       .map(s => {
-        const opponentId = s.team_a_captain_id === myPlayerId.value ? s.team_b_captain_id : s.team_a_captain_id
+        const myCapId = myTeamCaptainOf(s)!
+        const opponentId = s.team_a_captain_id === myCapId ? s.team_b_captain_id : s.team_a_captain_id
         return {
           schedule: s,
           leagueId: league.id,
-          myTeamName: teamName(myPlayerId.value!),
+          myTeamName: teamName(myCapId),
           opponentTeamName: teamName(opponentId),
-          myTeamCaptainId: myPlayerId.value!,
+          myTeamCaptainId: myCapId,
+          soloMax: league.entry_solo_max,
+          teamMax: league.entry_team_max,
+          totalMax: league.entry_total_max,
         }
       })
       .sort((a, b) => {
@@ -1141,6 +1190,9 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.banSelections = {}
   entryModal.pickSelections = {}
   entryModal.aceTierBan = null
+  entryModal.soloMax = item.soloMax
+  entryModal.teamMax = item.teamMax
+  entryModal.totalMax = item.totalMax
   entryError.value = null
   initSelections()
   loadingEntry.value = true
@@ -1242,16 +1294,16 @@ async function handleEntrySubmit() {
     }
   }
 
-  if (individualPoints.value > MAX_INDIVIDUAL_POINTS) {
-    entryError.value = `개인전 포인트(${individualPoints.value})가 한도(${MAX_INDIVIDUAL_POINTS})를 초과했습니다.`
+  if (individualPoints.value > entryModal.soloMax) {
+    entryError.value = `개인전 포인트(${individualPoints.value})가 한도(${entryModal.soloMax})를 초과했습니다.`
     return
   }
-  if (teamPoints.value > MAX_TEAM_POINTS) {
-    entryError.value = `팀전 포인트(${teamPoints.value})가 한도(${MAX_TEAM_POINTS})를 초과했습니다.`
+  if (teamPoints.value > entryModal.teamMax) {
+    entryError.value = `팀전 포인트(${teamPoints.value})가 한도(${entryModal.teamMax})를 초과했습니다.`
     return
   }
-  if (totalPoints.value > MAX_TOTAL_POINTS) {
-    entryError.value = `전체 포인트(${totalPoints.value})가 한도(${MAX_TOTAL_POINTS})를 초과했습니다.`
+  if (totalPoints.value > entryModal.totalMax) {
+    entryError.value = `전체 포인트(${totalPoints.value})가 한도(${entryModal.totalMax})를 초과했습니다.`
     return
   }
 
@@ -1289,7 +1341,7 @@ async function handleConsentReveal(item: MyMatchItem) {
   const scheduleId = item.schedule.id
   consentingId.value = scheduleId
   try {
-    await consentReveal(scheduleId, myPlayerId.value)
+    await consentReveal(scheduleId, item.myTeamCaptainId)
     consentedSet.value = new Set([...consentedSet.value, scheduleId])
 
     const bothConsented = await checkBothConsented(
@@ -1307,11 +1359,12 @@ async function handleConsentReveal(item: MyMatchItem) {
   }
 }
 
-async function handleSubmitEntry(scheduleId: number) {
+async function handleSubmitEntry(item: MyMatchItem) {
   if (!myPlayerId.value) return
+  const scheduleId = item.schedule.id
   submittingId.value = scheduleId
   try {
-    await submitEntry(scheduleId, myPlayerId.value)
+    await submitEntry(scheduleId, item.myTeamCaptainId)
     entryStatusMap.value = new Map(entryStatusMap.value).set(scheduleId, 'submitted')
 
     const match = matchListModal.matches.find(m => m.schedule.id === scheduleId)

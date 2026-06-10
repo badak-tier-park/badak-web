@@ -219,7 +219,7 @@ import { useRoute } from 'vue-router'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import AppHeader from '@/components/AppHeader.vue'
 import { supabase } from '@/lib/supabase'
-import { getLeague, type LeagueRow } from '@/lib/leagues'
+import { getLeague, getLeagueCreatorPlayerId, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
 import { getDraftPicks, addSinglePick, deleteSinglePick } from '@/lib/draft'
@@ -236,6 +236,7 @@ const loading = ref(true)
 const loadError = ref<string | null>(null)
 const league = ref<LeagueRow | null>(null)
 const allPlayers = ref<PlayerRow[]>([])
+const creatorPlayerId = ref<number | null>(null)
 const captainIds = ref<number[]>([])
 const seedHolderIds = ref(new Set<number>())
 const teams = ref<Record<number, PlayerRow[]>>({})
@@ -257,7 +258,10 @@ const assignedIds = computed(() => {
 const availablePlayers = computed(() => {
   const eligible = new Set(league.value?.eligible_tiers ?? [])
   return allPlayers.value.filter(
-    p => eligible.has(p.tier) && !captainIds.value.includes(p.id) && !assignedIds.value.has(p.id),
+    p => eligible.has(p.tier)
+      && p.id !== creatorPlayerId.value
+      && !captainIds.value.includes(p.id)
+      && !assignedIds.value.has(p.id),
   )
 })
 
@@ -355,14 +359,16 @@ function applyNewPick(captainPlayerId: number, memberPlayerId: number) {
 onMounted(async () => {
   try {
     const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
-    const [leagueData, playersData, captainsData, picksData, seedHoldersData, me] = await Promise.all([
+    const [leagueData, playersData, captainsData, picksData, seedHoldersData, me, creatorId] = await Promise.all([
       getLeague(leagueId),
       getPlayers(),
       getCaptains(leagueId),
       getDraftPicks(leagueId),
       getSeedHolders(leagueId),
       discordId ? getPlayerByDiscordId(discordId) : Promise.resolve(null),
+      getLeagueCreatorPlayerId(leagueId),
     ])
+    creatorPlayerId.value = creatorId
 
     league.value = leagueData
     draftStarted.value = leagueData.draft_started
