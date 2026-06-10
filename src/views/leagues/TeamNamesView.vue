@@ -15,9 +15,13 @@
 
       <template v-else>
         <div class="page-title-row">
-          <h1 class="page-title page-title--sm">팀명 지정</h1>
+          <h1 class="page-title page-title--sm">팀명 / 부팀장 지정</h1>
           <span class="page-subtitle">{{ league?.name }}</span>
         </div>
+
+        <p class="page-desc">
+          팀명 또는 부팀장 둘 중 하나만 지정해도 저장됩니다. 빈 칸은 그대로 두면 팀장 닉네임이 팀명이 되고 부팀장은 미지정 상태가 됩니다.
+        </p>
 
         <div class="team-list">
           <div v-for="row in rows" :key="row.captainId" class="team-row">
@@ -25,13 +29,33 @@
               <span class="team-label">Team</span>
               <span class="captain-chip" :class="`tier--${row.tier.toLowerCase()}`">{{ row.nickname }}</span>
             </div>
-            <input
-              v-model="row.teamName"
-              class="team-name-input"
-              type="text"
-              maxlength="30"
-              placeholder="팀명 입력"
-            />
+
+            <div class="team-fields">
+              <div class="team-field">
+                <span class="team-field-label">팀명</span>
+                <input
+                  v-model="row.teamName"
+                  class="team-name-input"
+                  type="text"
+                  maxlength="30"
+                  placeholder="팀명 입력"
+                />
+              </div>
+
+              <div class="team-field">
+                <span class="team-field-label">부팀장</span>
+                <div class="vice-select-wrap">
+                  <select v-model="row.viceCaptainId" class="vice-select">
+                    <option :value="null">미지정</option>
+                    <option
+                      v-for="m in row.members"
+                      :key="m.id"
+                      :value="m.id"
+                    >{{ m.nickname }} ({{ m.race }}·{{ m.tier }})</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -54,6 +78,8 @@ import { getLeague, setTeamNamesCompleted, type LeagueRow } from '@/lib/leagues'
 import { getCaptains } from '@/lib/leagueDetail'
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getTeamNames, saveTeamNames } from '@/lib/teamNames'
+import { getDraftPicks, getSwapLog } from '@/lib/draft'
+import { computeFinalRosters } from '@/lib/entries'
 import { withTimeout } from '@/lib/supabase'
 
 const route = useRoute()
@@ -73,31 +99,52 @@ interface TeamRow {
   tier: string
   race: string
   teamName: string
+  viceCaptainId: number | null
+  members: PlayerRow[]
 }
 
 const rows = ref<TeamRow[]>([])
 
 onMounted(async () => {
   try {
-    const [leagueData, captains, players, teamNames] = await withTimeout(Promise.all([
+    const [leagueData, captains, players, teamNames, draftPicks, swapLog] = await withTimeout(Promise.all([
       getLeague(leagueId),
       getCaptains(leagueId),
       getPlayers(),
       getTeamNames(leagueId),
+      getDraftPicks(leagueId),
+      getSwapLog(leagueId),
     ]))
+
+    if (!leagueData.draft_completed) {
+      pageError.value = '지목식이 완료된 이후에 팀명·부팀장을 지정할 수 있습니다.'
+      loading.value = false
+      return
+    }
+
     league.value = leagueData
 
     const playerMap = new Map<number, PlayerRow>(players.map(p => [p.id, p]))
-    const nameMap = new Map<number, string>(teamNames.map(t => [t.captain_player_id, t.team_name]))
+    const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t]))
+    const rosters = computeFinalRosters(captains, draftPicks, swapLog)
 
     rows.value = captains.map(c => {
       const p = playerMap.get(c.player_id)
+      const roster = rosters.get(c.player_id) ?? []
+      // roster includes the captain at index 0; exclude captain from vice candidates
+      const members = roster
+        .filter(id => id !== c.player_id)
+        .map(id => playerMap.get(id))
+        .filter((x): x is PlayerRow => Boolean(x))
+      const existing = nameMap.get(c.player_id)
       return {
         captainId: c.player_id,
         nickname: p?.nickname ?? `선수 ${c.player_id}`,
         tier: p?.tier ?? '',
         race: p?.race ?? '',
-        teamName: nameMap.get(c.player_id) ?? '',
+        teamName: existing?.team_name ?? '',
+        viceCaptainId: existing?.vice_captain_player_id ?? null,
+        members,
       }
     })
   } catch (e: any) {
@@ -111,14 +158,15 @@ async function handleSave() {
   saving.value = true
   saveError.value = null
   try {
-    const allFilled = rows.value.every(r => r.teamName.trim().length > 0)
+    const allTeamNamesFilled = rows.value.every(r => r.teamName.trim().length > 0)
     const tasks: Promise<unknown>[] = [
       saveTeamNames(leagueId, rows.value.map(r => ({
         captain_player_id: r.captainId,
         team_name: r.teamName.trim(),
+        vice_captain_player_id: r.viceCaptainId,
       }))),
     ]
-    if (allFilled) tasks.push(setTeamNamesCompleted(leagueId))
+    if (allTeamNamesFilled) tasks.push(setTeamNamesCompleted(leagueId))
     await Promise.all(tasks)
     router.push({ name: 'leagues' })
   } catch (e: any) {
