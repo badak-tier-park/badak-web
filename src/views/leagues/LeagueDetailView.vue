@@ -294,6 +294,42 @@
           </button>
         </div>
       </section>
+
+      <!-- ── 탭 5: 엔트리 포인트 ───────────────────────────── -->
+      <section v-if="activeTab === 'entry_points'" class="detail-section">
+        <div class="section-header">
+          <p class="section-desc">
+            팀장이 엔트리를 제출할 때 사용 가능한 포인트 한도입니다. 티어별 포인트(A=5 / B=4 / C=3 / D=2 / E=1)를 합산하여 아래 한도를 넘지 않아야 합니다.
+          </p>
+        </div>
+
+        <div class="entry-points-grid">
+          <label class="entry-points-field">
+            <span class="entry-points-label">개인전 경기 최대 포인트</span>
+            <span class="entry-points-desc">1·2·3·5·6경기에서 출전한 1명의 포인트 합계 한도</span>
+            <input v-model.number="entryPointsForm.solo" type="number" min="1" class="entry-points-input" :disabled="draftLocked" />
+          </label>
+
+          <label class="entry-points-field">
+            <span class="entry-points-label">팀전 경기 최대 포인트</span>
+            <span class="entry-points-desc">4경기에서 출전한 2명의 포인트 합계 한도</span>
+            <input v-model.number="entryPointsForm.team" type="number" min="1" class="entry-points-input" :disabled="draftLocked" />
+          </label>
+
+          <label class="entry-points-field">
+            <span class="entry-points-label">전체 최대 포인트</span>
+            <span class="entry-points-desc">개인전 + 팀전 합산 포인트 한도</span>
+            <input v-model.number="entryPointsForm.total" type="number" min="1" class="entry-points-input" :disabled="draftLocked" />
+          </label>
+        </div>
+
+        <div v-if="!draftLocked" class="section-footer">
+          <p v-if="entryPointsError" class="save-error">{{ entryPointsError }}</p>
+          <button class="btn-save" :disabled="entryPointsSaving" @click="saveEntryPointsData">
+            {{ entryPointsSaving ? '저장 중...' : '저장' }}
+          </button>
+        </div>
+      </section>
     </div>
 
     <!-- ── 선수 선택 오버레이 ──────────────────────────── -->
@@ -432,7 +468,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onBeforeUnmount, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
@@ -440,7 +476,7 @@ import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, updateLeagueDescription, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
+import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
 import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders } from '@/lib/leagueDetail'
@@ -451,13 +487,14 @@ import { useToast } from '@/composables/useToast'
 const { toast, showToast, clearToast } = useToast()
 
 // ── 탭 ───────────────────────────────────────────────────
-type TabKey = 'description' | 'captains' | 'seed_holders' | 'maps'
+type TabKey = 'description' | 'captains' | 'seed_holders' | 'maps' | 'entry_points'
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: 'description',  label: '리그 설명' },
   { key: 'captains',     label: '팀장 선출' },
   { key: 'seed_holders', label: '시드권자' },
   { key: 'maps',         label: '경기별 맵 선택' },
+  { key: 'entry_points', label: '엔트리 포인트' },
 ]
 
 const activeTab = ref<TabKey>('description')
@@ -468,6 +505,7 @@ function isTabDone(key: TabKey): boolean {
   if (key === 'captains') return captains.value.length === captainCount.value
   if (key === 'seed_holders') return seedHolders.value.length > 0
   if (key === 'maps') return matchConfigs.every((m) => (matchMaps.value[m.number]?.length ?? 0) > 0)
+  if (key === 'entry_points') return !!league.value && league.value.entry_solo_max > 0 && league.value.entry_team_max > 0 && league.value.entry_total_max > 0
   return false
 }
 
@@ -487,6 +525,7 @@ const pageError = ref<string | null>(null)
 const league = ref<LeagueRow | null>(null)
 const players = ref<PlayerRow[]>([])
 const maps = ref<MapRow[]>([])
+const creatorPlayerId = ref<number | null>(null)
 
 const captains = ref<number[]>([])
 const seedHolders = ref<number[]>([])
@@ -497,18 +536,20 @@ const draftLocked = computed(() => league.value?.draft_completed === true)
 
 onMounted(async () => {
   try {
-    const [leagueData, playersData, mapsData, captainsData, matchMapsData, seedHoldersData] = await Promise.all([
+    const [leagueData, playersData, mapsData, captainsData, matchMapsData, seedHoldersData, creatorId] = await Promise.all([
       getLeague(leagueId),
       getPlayers(),
       getMaps(),
       getCaptains(leagueId),
       getMatchMaps(leagueId),
       getSeedHolders(leagueId),
+      getLeagueCreatorPlayerId(leagueId),
     ])
 
     league.value = leagueData
     players.value = playersData
     maps.value = mapsData
+    creatorPlayerId.value = creatorId
 
     captains.value = captainsData
       .sort((a, b) => a.order_num - b.order_num)
@@ -687,7 +728,10 @@ function sortPlayers(list: PlayerRow[]) {
 
 const filteredPlayers = computed(() => {
   const q = playerSearch.value.trim().toLowerCase()
-  const list = players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  const list = players.value.filter((p) =>
+    p.id !== creatorPlayerId.value &&
+    (!q || p.nickname.toLowerCase().includes(q)),
+  )
   return sortPlayers(list)
 })
 
@@ -778,7 +822,10 @@ const seedError = ref<string | null>(null)
 
 const filteredSeedPlayers = computed(() => {
   const q = seedSearch.value.trim().toLowerCase()
-  const list = players.value.filter((p) => !q || p.nickname.toLowerCase().includes(q))
+  const list = players.value.filter((p) =>
+    p.id !== creatorPlayerId.value &&
+    (!q || p.nickname.toLowerCase().includes(q)),
+  )
   return sortPlayers(list)
 })
 
@@ -856,6 +903,48 @@ async function saveMapsData() {
     mapError.value = e.message ?? '저장 중 오류가 발생했습니다.'
   } finally {
     mapSaving.value = false
+  }
+}
+
+// ── 엔트리 포인트 ─────────────────────────────────────────
+const entryPointsForm = reactive({ solo: 16, team: 7, total: 23 })
+const entryPointsSaving = ref(false)
+const entryPointsError = ref<string | null>(null)
+
+watch(league, (lg) => {
+  if (lg) {
+    entryPointsForm.solo  = lg.entry_solo_max
+    entryPointsForm.team  = lg.entry_team_max
+    entryPointsForm.total = lg.entry_total_max
+  }
+}, { immediate: true })
+
+async function saveEntryPointsData() {
+  entryPointsError.value = null
+  const { solo, team, total } = entryPointsForm
+  if (!Number.isInteger(solo) || solo <= 0 ||
+      !Number.isInteger(team) || team <= 0 ||
+      !Number.isInteger(total) || total <= 0) {
+    entryPointsError.value = '포인트 한도는 1 이상의 정수여야 합니다.'
+    return
+  }
+  entryPointsSaving.value = true
+  try {
+    await updateLeagueEntryLimits(leagueId, {
+      entry_solo_max: solo,
+      entry_team_max: team,
+      entry_total_max: total,
+    })
+    if (league.value) {
+      league.value.entry_solo_max  = solo
+      league.value.entry_team_max  = team
+      league.value.entry_total_max = total
+    }
+    showToast('엔트리 포인트가 저장되었습니다.')
+  } catch (e: any) {
+    entryPointsError.value = e.message ?? '저장 중 오류가 발생했습니다.'
+  } finally {
+    entryPointsSaving.value = false
   }
 }
 </script>

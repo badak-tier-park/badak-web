@@ -354,7 +354,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import AppHeader from '@/components/AppHeader.vue'
 import { supabase } from '@/lib/supabase'
-import { getLeague, setPicksCompleted, setDraftCompleted, setDraftStarted, type LeagueRow } from '@/lib/leagues'
+import { getLeague, getLeagueCreatorPlayerId, setPicksCompleted, setDraftCompleted, setDraftStarted, type LeagueRow } from '@/lib/leagues'
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders, savePlayerSnapshots } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, addSinglePick, deleteSinglePick, getSwapLog, saveSwapLog } from '@/lib/draft'
@@ -372,6 +372,7 @@ const loading = ref(true)
 const loadError = ref<string | null>(null)
 const league = ref<LeagueRow | null>(null)
 const allPlayers = ref<PlayerRow[]>([])
+const creatorPlayerId = ref<number | null>(null)
 const captainIds = ref<number[]>([])
 const seedHolderIds = ref(new Set<number>())
 const seedOrderIds = ref<number[]>([])
@@ -385,14 +386,16 @@ let realtimeChannel: RealtimeChannel | null = null
 
 onMounted(async () => {
   try {
-    const [leagueData, playersData, captainsData, draftPicksData, seedHoldersData, swapLogData] = await Promise.all([
+    const [leagueData, playersData, captainsData, draftPicksData, seedHoldersData, swapLogData, creatorId] = await Promise.all([
       getLeague(leagueId),
       getPlayers(),
       getCaptains(leagueId),
       getDraftPicks(leagueId),
       getSeedHolders(leagueId),
       getSwapLog(leagueId),
+      getLeagueCreatorPlayerId(leagueId),
     ])
+    creatorPlayerId.value = creatorId
     if (!leagueData.is_ready || captainsData.length === 0) {
       router.replace({ name: 'league-detail', params: { id: leagueId } })
       return
@@ -543,7 +546,10 @@ const assignedIds = computed(() => {
 const availablePlayers = computed(() => {
   const eligible = new Set(league.value?.eligible_tiers ?? [])
   return allPlayers.value.filter(
-    p => eligible.has(p.tier) && !captainIds.value.includes(p.id) && !assignedIds.value.has(p.id),
+    p => eligible.has(p.tier)
+      && p.id !== creatorPlayerId.value
+      && !captainIds.value.includes(p.id)
+      && !assignedIds.value.has(p.id),
   )
 })
 
@@ -579,7 +585,7 @@ const totalPicks = computed(() =>
   Object.values(teams.value).reduce((sum, m) => sum + m.length, 0),
 )
 
-const draftDone = computed(() => availablePlayers.value.length === 0)
+const draftDone = computed(() => isSaved.value || availablePlayers.value.length === 0)
 
 const currentCaptainId = computed((): number | null => {
   const n = captainIds.value.length

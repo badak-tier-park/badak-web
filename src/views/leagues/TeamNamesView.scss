@@ -8,7 +8,7 @@
 
 .team-names-content {
   flex: 1;
-  max-width: 640px;
+  max-width: 800px;
   width: 100%;
   margin: 0 auto;
   padding: 40px 28px 80px;
@@ -25,7 +25,7 @@
 
 .team-row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 14px;
   padding: 14px 18px;
   border-radius: 12px;
@@ -37,8 +37,73 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  min-width: 220px;
+  min-width: 200px;
   flex-shrink: 0;
+}
+
+.team-fields {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.team-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.team-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.vice-select-wrap {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid var(--c-text-muted);
+    border-bottom: 1.5px solid var(--c-text-muted);
+    transform: translateY(-65%) rotate(45deg);
+    pointer-events: none;
+  }
+}
+
+.vice-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 32px 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.14s;
+
+  &:focus { border-color: rgba(170, 59, 255, 0.5); }
+}
+
+.page-desc {
+  font-size: 12px;
+  color: var(--c-text-sub);
+  margin: -8px 0 18px;
+  line-height: 1.6;
 }
 
 .team-label {
@@ -67,7 +132,7 @@
 }
 
 .team-name-input {
-  flex: 1;
+  width: 100%;
   height: 36px;
   padding: 0 12px;
   border-radius: 8px;
@@ -75,7 +140,9 @@
   background: var(--c-surface);
   color: var(--c-text);
   font-size: 14px;
+  font-family: inherit;
   outline: none;
+  box-sizing: border-box;
   transition: border-color 0.14s;
 
   &::placeholder { color: var(--c-text-faint); }
