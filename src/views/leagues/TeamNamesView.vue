@@ -108,20 +108,18 @@ onMounted(async () => {
 })
 
 async function handleSave() {
-  if (rows.value.some(r => !r.teamName.trim())) {
-    saveError.value = '모든 팀명을 입력해주세요.'
-    return
-  }
   saving.value = true
   saveError.value = null
   try {
-    await Promise.all([
+    const allFilled = rows.value.every(r => r.teamName.trim().length > 0)
+    const tasks: Promise<unknown>[] = [
       saveTeamNames(leagueId, rows.value.map(r => ({
         captain_player_id: r.captainId,
         team_name: r.teamName.trim(),
       }))),
-      setTeamNamesCompleted(leagueId),
-    ])
+    ]
+    if (allFilled) tasks.push(setTeamNamesCompleted(leagueId))
+    await Promise.all(tasks)
     router.push({ name: 'leagues' })
   } catch (e: any) {
     saveError.value = e.message ?? '저장 중 오류가 발생했습니다.'

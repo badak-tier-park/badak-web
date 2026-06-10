@@ -39,18 +39,38 @@ export async function upsertTeamName(
   if (error) throw error
 }
 
+/**
+ * 팀명을 저장한다. team_name 이 빈 문자열인 항목은 DB에서 삭제하여
+ * 해당 팀은 자동으로 팀장 닉네임을 팀명으로 사용하게 된다.
+ */
 export async function saveTeamNames(
   leagueId: string,
   entries: Array<{ captain_player_id: number; team_name: string }>,
 ): Promise<void> {
-  const rows = entries.map(e => ({
-    league_id: leagueId,
-    captain_player_id: e.captain_player_id,
-    team_name: e.team_name,
-    updated_at: new Date().toISOString(),
-  }))
-  const { error } = await supabase
-    .from('league_team_names')
-    .upsert(rows, { onConflict: 'league_id,captain_player_id' })
-  if (error) throw error
+  const filled = entries
+    .map(e => ({ ...e, team_name: e.team_name.trim() }))
+    .filter(e => e.team_name.length > 0)
+  const empties = entries.filter(e => !e.team_name.trim()).map(e => e.captain_player_id)
+
+  if (filled.length > 0) {
+    const rows = filled.map(e => ({
+      league_id: leagueId,
+      captain_player_id: e.captain_player_id,
+      team_name: e.team_name,
+      updated_at: new Date().toISOString(),
+    }))
+    const { error } = await supabase
+      .from('league_team_names')
+      .upsert(rows, { onConflict: 'league_id,captain_player_id' })
+    if (error) throw error
+  }
+
+  if (empties.length > 0) {
+    const { error } = await supabase
+      .from('league_team_names')
+      .delete()
+      .eq('league_id', leagueId)
+      .in('captain_player_id', empties)
+    if (error) throw error
+  }
 }
