@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div v-if="open" class="modal-backdrop">
-      <div class="modal modal--sm bet-modal">
+      <div class="modal modal--md bet-modal">
         <div class="modal-header">
           <p class="modal-title">{{ teamName }}에 베팅</p>
           <button class="modal-close" @click="$emit('close')">
@@ -190,19 +190,19 @@ function formatMult(v: number) {
 
 .bet-amount-quick {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .bet-quick {
-  flex: 1;
-  min-width: 60px;
-  padding: 6px 8px;
+  min-width: 72px;
+  padding: 7px 12px;
   border-radius: 6px;
   border: 1px solid var(--c-border);
   background: transparent;
   color: var(--c-text-sub);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   font-variant-numeric: tabular-nums;
