@@ -222,13 +222,16 @@
 }
 
 .cal-modal {
-  width: 420px;
+  width: 560px;
   max-width: 100%;
+  max-height: calc(100vh - 32px);
   background: var(--c-surface-raised);
   border: 1px solid var(--c-border-strong);
   border-radius: 14px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -274,6 +277,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .cal-detail-item {
@@ -294,7 +300,7 @@
 
 .cal-detail-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 }
 
@@ -306,6 +312,8 @@
   font-size: 11px;
   font-weight: 600;
   color: white;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .cal-detail-time {
@@ -329,6 +337,24 @@
   font-size: 16px;
   font-weight: 700;
   color: var(--c-text-bright);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.cal-detail-heading-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cal-detail-league {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-sub);
+  letter-spacing: 0.02em;
 }
 
 .cal-detail-meta {
@@ -478,6 +504,7 @@
 
 .pred-team {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -530,9 +557,10 @@
   font-weight: 700;
   color: var(--c-text-bright);
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .pred-pct {

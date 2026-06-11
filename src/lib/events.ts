@@ -82,7 +82,7 @@ export interface CalendarItem {
   round?: number
 }
 
-function matchTypeLabel(type: string, round: number): string {
+export function matchTypeLabel(type: string, round: number): string {
   if (type === 'regular') return `${round}R`
   if (type === 'semifinal') return '4강'
   if (type === 'final_set1') return '결승 1세트'
