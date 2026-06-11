@@ -980,3 +980,112 @@
   letter-spacing: 0.3px;
 }
 
+
+// ── 팀 구성 모달 ──────────────────────────────────────────
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.roster-team {
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  background: var(--c-surface-raised);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.roster-team-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--c-overlay);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.roster-team-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-team-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+}
+
+.roster-member {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--c-border-faint);
+  font-size: 12px;
+
+  &:last-child { border-bottom: none; }
+
+  &--captain {
+    background: rgba(170, 59, 255, 0.05);
+    .roster-role { background: var(--c-brand-bg); color: var(--c-brand-text); border-color: var(--c-brand-border); }
+  }
+
+  &--vice {
+    background: rgba(99, 102, 241, 0.05);
+    .roster-role { background: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.4); }
+  }
+}
+
+.roster-role {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  min-width: 38px;
+  justify-content: center;
+
+  &--member {
+    background: transparent;
+    border-color: var(--c-border);
+    color: var(--c-text-faint);
+  }
+}
+
+.roster-tier,
+.roster-race {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  min-width: 22px;
+  flex-shrink: 0;
+}
+
+.roster-nick {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
