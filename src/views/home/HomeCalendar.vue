@@ -89,7 +89,15 @@
                 <span class="cal-detail-tag" :style="{ background: EVENT_TYPE_META[detailEvent.event_type].color }">
                   {{ EVENT_TYPE_META[detailEvent.event_type].label }}
                 </span>
-                <h4 class="cal-detail-heading">{{ detailEvent.title }}</h4>
+                <div class="cal-detail-heading-wrap">
+                  <template v-if="detailEvent.source === 'schedule' && detailEvent.league_name">
+                    <span class="cal-detail-league">{{ detailEvent.league_name }}</span>
+                    <h4 class="cal-detail-heading">
+                      {{ matchTypeLabel(detailEvent.match_type ?? '', detailEvent.round ?? 0) }}: {{ detailEvent.team_a_name }} vs {{ detailEvent.team_b_name }}
+                    </h4>
+                  </template>
+                  <h4 v-else class="cal-detail-heading">{{ detailEvent.title }}</h4>
+                </div>
               </div>
               <div class="cal-detail-meta">
                 <span>{{ detailEvent.event_date }}</span>
@@ -188,7 +196,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { getCalendarItems, EVENT_TYPE_META, type CalendarItem } from '@/lib/events'
+import { getCalendarItems, EVENT_TYPE_META, matchTypeLabel, type CalendarItem } from '@/lib/events'
 import {
   getMatchForPrediction,
   placePrediction,
