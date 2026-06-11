@@ -79,6 +79,15 @@
                 </svg>
                 리그 안내
               </button>
+              <button class="btn-info" @click="openRosterList(league)">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <circle cx="5" cy="5.5" r="2" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="10" cy="6" r="1.6" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M1.5 12c0-1.8 1.6-3 3.5-3s3.5 1.2 3.5 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M9 11c0-1.3 1-2.2 2.5-2.2S14 9.7 14 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+                팀 구성
+              </button>
               <button class="btn-info" @click="openRevealList(league)">
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                   <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
@@ -136,6 +145,57 @@
           </div>
           <div class="modal-body">
             <EditorContent :editor="viewEditor" />
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── 팀 구성 모달 ──────────────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="rosterModal.open" class="modal-backdrop">
+        <div class="modal modal--lg">
+          <div class="modal-header">
+            <p class="modal-title">팀 구성</p>
+            <p class="modal-subtitle">{{ rosterModal.league?.name }}</p>
+            <button class="modal-close" @click="rosterModal.open = false">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div v-if="rosterModal.loading" class="state-msg">불러오는 중...</div>
+            <div v-else-if="!rosterModal.teams.length" class="state-msg">아직 팀 구성이 완료되지 않았습니다.</div>
+            <div v-else class="roster-grid">
+              <div v-for="team in rosterModal.teams" :key="team.captainId" class="roster-team">
+                <div class="roster-team-head">
+                  <span class="roster-team-name">{{ team.teamName || team.captainNickname }}</span>
+                  <span class="roster-team-count">{{ team.members.length + 1 }}명</span>
+                </div>
+                <div class="roster-member roster-member--captain">
+                  <span class="roster-role">팀장</span>
+                  <span class="roster-tier" :class="`tier-badge--${team.captainTier.toLowerCase()}`">{{ team.captainTier }}</span>
+                  <span class="roster-race" :class="`race-badge--${team.captainRace.toLowerCase()}`">{{ team.captainRace }}</span>
+                  <span class="roster-nick">{{ team.captainNickname }}</span>
+                </div>
+                <div v-if="team.viceCaptain" class="roster-member roster-member--vice">
+                  <span class="roster-role">부팀장</span>
+                  <span class="roster-tier" :class="`tier-badge--${team.viceCaptain.tier.toLowerCase()}`">{{ team.viceCaptain.tier }}</span>
+                  <span class="roster-race" :class="`race-badge--${team.viceCaptain.race.toLowerCase()}`">{{ team.viceCaptain.race }}</span>
+                  <span class="roster-nick">{{ team.viceCaptain.nickname }}</span>
+                </div>
+                <div
+                  v-for="m in team.members.filter(x => x.id !== team.viceCaptain?.id)"
+                  :key="m.id"
+                  class="roster-member"
+                >
+                  <span class="roster-role roster-role--member">팀원</span>
+                  <span class="roster-tier" :class="`tier-badge--${m.tier.toLowerCase()}`">{{ m.tier }}</span>
+                  <span class="roster-race" :class="`race-badge--${m.race.toLowerCase()}`">{{ m.race }}</span>
+                  <span class="roster-nick">{{ m.nickname }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -673,6 +733,70 @@ function openGuide(league: LeagueRow) {
   guideModal.open = true
 }
 watch(() => guideModal.open, open => { if (!open) viewEditor.value?.commands.setContent('') })
+
+// ── 팀 구성 모달 ──────────────────────────────────────────
+interface RosterTeam {
+  captainId: number
+  captainNickname: string
+  captainTier: string
+  captainRace: string
+  teamName: string
+  viceCaptain: { id: number; nickname: string; tier: string; race: string } | null
+  members: PlayerRow[]
+}
+const rosterModal = reactive({
+  open: false,
+  loading: false,
+  league: null as LeagueRow | null,
+  teams: [] as RosterTeam[],
+})
+
+async function openRosterList(league: LeagueRow) {
+  rosterModal.open = true
+  rosterModal.league = league
+  rosterModal.teams = []
+  rosterModal.loading = true
+  try {
+    const [captains, players, teamNames, draftPicks, swapLog] = await Promise.all([
+      getCaptains(league.id),
+      getPlayers(),
+      getTeamNames(league.id),
+      getDraftPicks(league.id),
+      getSwapLog(league.id),
+    ])
+    const playerMap = new Map(players.map(p => [p.id, p]))
+    const tnMap = new Map(teamNames.map(t => [t.captain_player_id, t]))
+    const rosters = computeFinalRosters(captains, draftPicks, swapLog)
+
+    rosterModal.teams = captains
+      .slice()
+      .sort((a, b) => a.order_num - b.order_num)
+      .map(c => {
+        const captain = playerMap.get(c.player_id)
+        const roster = rosters.get(c.player_id) ?? []
+        const memberIds = roster.filter(id => id !== c.player_id)
+        const members = memberIds
+          .map(id => playerMap.get(id))
+          .filter((x): x is PlayerRow => Boolean(x))
+        const tn = tnMap.get(c.player_id)
+        const viceId = tn?.vice_captain_player_id ?? null
+        const viceP = viceId ? playerMap.get(viceId) : null
+        return {
+          captainId: c.player_id,
+          captainNickname: captain?.nickname ?? `선수 ${c.player_id}`,
+          captainTier: captain?.tier ?? '',
+          captainRace: captain?.race ?? '',
+          teamName: tn?.team_name ?? '',
+          viceCaptain: viceP
+            ? { id: viceP.id, nickname: viceP.nickname, tier: viceP.tier, race: viceP.race }
+            : null,
+          members,
+        }
+      })
+  } finally {
+    rosterModal.loading = false
+  }
+}
 
 // 경기 목록 모달
 interface MyMatchItem {
