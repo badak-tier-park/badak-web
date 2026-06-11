@@ -185,7 +185,7 @@
                   <span class="roster-nick">{{ team.viceCaptain.nickname }}</span>
                 </div>
                 <div
-                  v-for="m in team.members.filter(x => x.id !== team.viceCaptain?.id)"
+                  v-for="m in team.members"
                   :key="m.id"
                   class="roster-member"
                 >
@@ -751,6 +751,9 @@ const rosterModal = reactive({
   teams: [] as RosterTeam[],
 })
 
+const ROSTER_TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
+const ROSTER_RACE_RANK: Record<string, number> = { T: 3, Z: 2, P: 1 }
+
 async function openRosterList(league: LeagueRow) {
   rosterModal.open = true
   rosterModal.league = league
@@ -774,12 +777,18 @@ async function openRosterList(league: LeagueRow) {
       .map(c => {
         const captain = playerMap.get(c.player_id)
         const roster = rosters.get(c.player_id) ?? []
-        const memberIds = roster.filter(id => id !== c.player_id)
+        const tn = tnMap.get(c.player_id)
+        const viceId = tn?.vice_captain_player_id ?? null
+        // 팀원: 팀장 본인 + 부팀장 제외, 티어 내림차순(A→E) → 종족(T→Z→P) → 닉네임 정렬
+        const memberIds = roster.filter(id => id !== c.player_id && id !== viceId)
         const members = memberIds
           .map(id => playerMap.get(id))
           .filter((x): x is PlayerRow => Boolean(x))
-        const tn = tnMap.get(c.player_id)
-        const viceId = tn?.vice_captain_player_id ?? null
+          .sort((a, b) =>
+            (ROSTER_TIER_RANK[b.tier] ?? 0) - (ROSTER_TIER_RANK[a.tier] ?? 0)
+            || (ROSTER_RACE_RANK[b.race] ?? 0) - (ROSTER_RACE_RANK[a.race] ?? 0)
+            || a.nickname.localeCompare(b.nickname),
+          )
         const viceP = viceId ? playerMap.get(viceId) : null
         return {
           captainId: c.player_id,
