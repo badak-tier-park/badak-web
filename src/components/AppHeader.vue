@@ -48,6 +48,37 @@
         <span class="user-name">{{ displayName }}</span>
       </div>
 
+      <!-- 알림 -->
+      <div v-if="auth.user && myUserId !== null" class="notif-wrap" ref="notifRef">
+        <button class="notif-btn" :class="{ 'notif-btn--active': notifOpen }" @click="toggleNotif" title="알림">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 2v1.2M4.5 14.5h9l-1.2-1.5V8.5a3.3 3.3 0 10-6.6 0V13l-1.2 1.5zM7 16a2 2 0 004 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span v-if="unreadCount > 0" class="notif-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        </button>
+        <div v-if="notifOpen" class="notif-pop">
+          <div class="notif-head">
+            <span class="notif-title">알림</span>
+            <button v-if="unreadCount > 0" class="notif-mark-all" @click="handleMarkAll">모두 읽음</button>
+          </div>
+          <div v-if="notifLoading" class="notif-state">불러오는 중...</div>
+          <div v-else-if="!notifs.length" class="notif-state">알림이 없습니다.</div>
+          <div v-else class="notif-list">
+            <button
+              v-for="n in notifs"
+              :key="n.id"
+              class="notif-item"
+              :class="{ 'notif-item--unread': !n.is_read, [`notif-item--${n.type}`]: true }"
+              @click="handleNotifClick(n)"
+            >
+              <span class="notif-item-title">{{ n.title }}</span>
+              <span v-if="n.body" class="notif-item-body">{{ n.body }}</span>
+              <span class="notif-item-time">{{ formatRelTime(n.created_at) }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- 액션 버튼 슬롯 (페이지별로 다른 버튼 주입 가능) -->
       <slot name="actions" />
 
@@ -71,16 +102,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTheme } from '@/composables/useTheme'
+import { getPlayerByDiscordId } from '@/lib/players'
+import {
+  getNotifications,
+  getUnreadCount,
+  markNotificationRead,
+  markAllRead,
+  type NotificationRow,
+} from '@/lib/notifications'
 
 const auth = useAuthStore()
 const router = useRouter()
 const { theme, toggle, init } = useTheme()
-
-onMounted(init)
 
 // 추후 네비게이션 항목 여기에 추가
 const navItems: { to: string; label: string }[] = [
@@ -95,6 +132,103 @@ async function handleLogout() {
   await auth.logout()
   router.push({ name: 'login' })
 }
+
+// ── 알림 ───────────────────────────────────────────────
+const myUserId = ref<number | null>(null)
+const notifOpen = ref(false)
+const notifLoading = ref(false)
+const notifs = ref<NotificationRow[]>([])
+const unreadCount = ref(0)
+const notifRef = ref<HTMLElement | null>(null)
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
+async function resolveMyUserId() {
+  const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
+  if (!discordId) return
+  try {
+    const me = await getPlayerByDiscordId(discordId)
+    if (me) myUserId.value = me.id
+  } catch {}
+}
+
+async function refreshUnread() {
+  if (myUserId.value === null) return
+  try {
+    unreadCount.value = await getUnreadCount(myUserId.value)
+  } catch {}
+}
+
+async function loadNotifs() {
+  if (myUserId.value === null) return
+  notifLoading.value = true
+  try {
+    notifs.value = await getNotifications(myUserId.value, 20)
+  } finally {
+    notifLoading.value = false
+  }
+}
+
+async function toggleNotif() {
+  if (notifOpen.value) {
+    notifOpen.value = false
+    return
+  }
+  notifOpen.value = true
+  await loadNotifs()
+}
+
+async function handleNotifClick(n: NotificationRow) {
+  if (!n.is_read) {
+    try {
+      await markNotificationRead(n.id)
+      n.is_read = true
+      unreadCount.value = Math.max(0, unreadCount.value - 1)
+    } catch {}
+  }
+}
+
+async function handleMarkAll() {
+  if (myUserId.value === null) return
+  await markAllRead(myUserId.value)
+  notifs.value.forEach(n => { n.is_read = true })
+  unreadCount.value = 0
+}
+
+function onDocClick(e: MouseEvent) {
+  if (!notifOpen.value) return
+  if (notifRef.value && !notifRef.value.contains(e.target as Node)) {
+    notifOpen.value = false
+  }
+}
+
+function formatRelTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return '방금 전'
+  if (m < 60) return `${m}분 전`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}시간 전`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}일 전`
+  const date = new Date(iso)
+  return `${date.getMonth() + 1}/${date.getDate()}`
+}
+
+onMounted(() => {
+  init()
+  resolveMyUserId().then(() => {
+    refreshUnread()
+    pollTimer = setInterval(refreshUnread, 30000)
+  })
+  document.addEventListener('click', onDocClick)
+})
+
+watch(() => auth.user?.id, () => { resolveMyUserId().then(refreshUnread) })
+
+onBeforeUnmount(() => {
+  if (pollTimer) clearInterval(pollTimer)
+  document.removeEventListener('click', onDocClick)
+})
 </script>
 
 <style lang="scss" scoped>
