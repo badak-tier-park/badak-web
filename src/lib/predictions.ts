@@ -358,5 +358,5 @@ export async function getRankings(): Promise<RankingRow[]> {
       accuracy: a.resolved > 0 ? (a.correct / a.resolved) * 100 : 0,
     })
   }
-  return rows.sort((a, b) => b.current_points - a.current_points || b.accuracy - a.accuracy || a.nickname.localeCompare(b.nickname))
+  return rows.sort((a, b) => b.total_points - a.total_points || b.accuracy - a.accuracy || a.nickname.localeCompare(b.nickname))
 }
