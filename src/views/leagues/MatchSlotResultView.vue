@@ -77,7 +77,8 @@
                 <div class="slot-players">
                   <template v-if="slotPlayerMap.get(slot.num)?.teamA?.length">
                     <div v-for="(p, idx) in getActivePlayers(slot.num, true)" :key="p.id" class="slot-player-row">
-                      <span v-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
+                      <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
+                      <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
                       <span class="slot-player-name" :class="`tier-badge--${p.tier.toLowerCase()}`">{{ p.nickname }}</span>
                       <span v-if="isSubstituted(slot.num, true, idx)" class="sub-badge">대체</span>
                     </div>
@@ -123,7 +124,8 @@
                     <div v-for="(p, idx) in getActivePlayers(slot.num, false)" :key="p.id" class="slot-player-row slot-player-row--right">
                       <span v-if="isSubstituted(slot.num, false, idx)" class="sub-badge">대체</span>
                       <span class="slot-player-name" :class="`tier-badge--${p.tier.toLowerCase()}`">{{ p.nickname }}</span>
-                      <span v-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
+                      <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
+                      <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
                     </div>
                   </template>
                   <span v-else class="slot-team-name" :class="`tier-badge--${teamB?.tier.toLowerCase()}`">
@@ -482,7 +484,7 @@ interface TeamInfo {
   tier: string
 }
 
-interface SlotPlayerInfo { id: number; nickname: string; tier: string; race: string }
+interface SlotPlayerInfo { id: number; nickname: string; tier: string; race: string; isRandom?: boolean }
 interface SlotPlayers { teamA: SlotPlayerInfo[]; teamB: SlotPlayerInfo[] }
 interface MapInfo { id: string; name: string; thumbnail_url: string | null }
 interface SlotMapState {
@@ -837,21 +839,26 @@ function isSubstituted(slotNum: number, isTeamA: boolean, playerIndex: number): 
   return subIds[playerIndex] !== originalList?.[playerIndex]?.id
 }
 
-function getAlreadyAssignedIds(captainId: number, excludeSlotNum: number, excludePlayerIndex: number): Set<number> {
+/**
+ * 같은 슬롯에서 이미 출전 중인 선수 id 집합을 반환.
+ * 개인전에 나오는 선수도 팀전에 동시 출전 가능하므로, 다른 슬롯의 선수는 제외 대상이 아니다.
+ * 대신 같은 슬롯의 다른 인덱스에 출전 중인 선수와 본인(원본)은 자기 자신을 교체할 수 없으므로
+ * 모두 후보 목록에서 빠진다.
+ */
+function getAlreadyAssignedIds(captainId: number, slotNum: number): Set<number> {
   const assigned = new Set<number>()
-  for (const [slotNum, slotPlayers] of slotPlayerMap.value) {
-    const isTeamA = captainId === schedule.value?.team_a_captain_id
-    const list = isTeamA ? slotPlayers.teamA : slotPlayers.teamB
-    const sub = substitutionMap.value.get(slotNum)
-    const subIds = isTeamA ? sub?.teamA : sub?.teamB
+  const slotPlayers = slotPlayerMap.value.get(slotNum)
+  if (!slotPlayers) return assigned
 
-    list.forEach((p, idx) => {
-      // 교체 대상인 슬롯+인덱스는 제외
-      if (slotNum === excludeSlotNum && idx === excludePlayerIndex) return
-      const activeId = subIds?.[idx] ?? p.id
-      assigned.add(activeId)
-    })
-  }
+  const isTeamA = captainId === schedule.value?.team_a_captain_id
+  const list = isTeamA ? slotPlayers.teamA : slotPlayers.teamB
+  const sub = substitutionMap.value.get(slotNum)
+  const subIds = isTeamA ? sub?.teamA : sub?.teamB
+
+  list.forEach((p, idx) => {
+    const activeId = subIds?.[idx] ?? p.id
+    assigned.add(activeId)
+  })
   return assigned
 }
 
@@ -864,7 +871,7 @@ function openSubModal(slotNum: number, isTeamA: boolean, playerIndex: number) {
   if (!originalPlayer) return
 
   const originalRank = TIER_RANK[originalPlayer.tier.toUpperCase()] ?? 0
-  const assigned = getAlreadyAssignedIds(captainId, slotNum, playerIndex)
+  const assigned = getAlreadyAssignedIds(captainId, slotNum)
 
   const options: SelectOption[] = roster
     .filter(p => {
@@ -1147,9 +1154,15 @@ onMounted(async () => {
     slotWinners.value = winnerMap
 
     // 슬롯별 선수 맵
-    const toInfo = (id: number): SlotPlayerInfo => {
+    const toInfo = (id: number, randoms: number[] | undefined): SlotPlayerInfo => {
       const p = playerMap.get(id)
-      return { id, nickname: p?.nickname ?? `선수${id}`, tier: p?.tier ?? 'e', race: p?.race ?? '' }
+      return {
+        id,
+        nickname: p?.nickname ?? `선수${id}`,
+        tier: p?.tier ?? 'e',
+        race: p?.race ?? '',
+        isRandom: randoms?.includes(id) ?? false,
+      }
     }
     const aEntries = entries.filter(e => e.captain_player_id === match.team_a_captain_id)
     const bEntries = entries.filter(e => e.captain_player_id === match.team_b_captain_id)
@@ -1159,8 +1172,8 @@ onMounted(async () => {
       const aSlot = aEntries.find(e => e.match_slot === slotNum)
       const bSlot = bEntries.find(e => e.match_slot === slotNum)
       spMap.set(slotNum, {
-        teamA: (aSlot?.player_ids ?? []).map(toInfo),
-        teamB: (bSlot?.player_ids ?? []).map(toInfo),
+        teamA: (aSlot?.player_ids ?? []).map(id => toInfo(id, aSlot?.random_player_ids)),
+        teamB: (bSlot?.player_ids ?? []).map(id => toInfo(id, bSlot?.random_player_ids)),
       })
     }
     slotPlayerMap.value = spMap
@@ -1260,7 +1273,7 @@ onMounted(async () => {
     const finalRosters = computeFinalRosters(captains, draftPicks, swapLog)
     const makeRoster = (captainId: number): SlotPlayerInfo[] => {
       const memberIds = finalRosters.get(captainId) ?? []
-      return memberIds.map(toInfo)
+      return memberIds.map(id => toInfo(id, undefined))
     }
     rosterA.value = makeRoster(match.team_a_captain_id)
     rosterB.value = makeRoster(match.team_b_captain_id)

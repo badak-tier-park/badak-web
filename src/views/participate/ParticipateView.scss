@@ -1089,3 +1089,72 @@
   flex: 1;
   min-width: 0;
 }
+
+// ── 팀전 랜덤 종족 토글 ───────────────────────────────────
+.slot-select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+
+  > :first-child { flex: 1; min-width: 0; }
+}
+
+.random-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px 4px 7px;
+  border-radius: 7px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &:hover {
+    color: var(--c-text-bright);
+    border-color: var(--c-brand-border);
+  }
+
+  &--on {
+    background: var(--c-brand-bg);
+    border-color: var(--c-brand);
+    color: var(--c-brand-text);
+    box-shadow: 0 0 0 2px var(--c-brand-bg-soft);
+
+    .random-toggle-letter { background: var(--c-brand); color: white; }
+  }
+}
+
+.random-toggle-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--c-border-strong);
+  color: var(--c-text-2);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.random-toggle-label { letter-spacing: 0.02em; }
+
+.random-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--c-brand-bg);
+  border: 1px solid var(--c-brand-border);
+  color: var(--c-brand-text);
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
