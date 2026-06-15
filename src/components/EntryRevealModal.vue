@@ -55,14 +55,15 @@
                     <div class="rse-team-group">
                       <div class="rse-players">
                         <div
-                          v-for="pid in getSlotPlayerIds(teamACaptainId, slot.num)"
-                          :key="pid"
+                          v-for="(pid, pidIdx) in getSlotPlayerIds(teamACaptainId, slot.num)"
+                          :key="pidIdx"
                           class="rse-player"
                         >
                           <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                           <span v-if="isRandomPlayer(teamACaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
                           <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                           <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                          <span v-if="isSubstituted(teamACaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
                         </div>
                       </div>
                       <span v-if="showResults && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
@@ -110,10 +111,11 @@
                       <span v-if="showResults && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
                       <div class="rse-players">
                         <div
-                          v-for="pid in getSlotPlayerIds(teamBCaptainId, slot.num)"
-                          :key="pid"
+                          v-for="(pid, pidIdx) in getSlotPlayerIds(teamBCaptainId, slot.num)"
+                          :key="pidIdx"
                           class="rse-player"
                         >
+                          <span v-if="isSubstituted(teamBCaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
                           <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
                           <span v-if="isRandomPlayer(teamBCaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
                           <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
@@ -363,6 +365,8 @@ const slotMapRows = ref<Record<number, MapInfo[]>>({})
 const slotWinners = ref(new Map<number, number>())
 // showResults 모드에서 사다리타기로 확정된 맵 (slot_num → map_id)
 const slotSelectedMaps = ref(new Map<number, string>())
+// 슬롯별 선수 대체 정보 (slot_num → { teamA, teamB } — 각 배열은 원본 인덱스 순서)
+const slotSubs = ref(new Map<number, { teamA: number[] | null; teamB: number[] | null }>())
 
 // 에이스 결정전
 const aceSlotResult = ref<SlotResult | null>(null)
@@ -412,13 +416,18 @@ onMounted(async () => {
     if (slotResultsData.length) {
       const wm = new Map<number, number>()
       const sm = new Map<number, string>()
+      const subs = new Map<number, { teamA: number[] | null; teamB: number[] | null }>()
       for (const r of slotResultsData) {
         if (r.winner_captain_id != null) wm.set(r.slot_num, r.winner_captain_id)
         if (r.selected_map_id) sm.set(r.slot_num, r.selected_map_id)
         if (r.slot_num === 7) aceSlotResult.value = r
+        if (r.sub_player_a_ids || r.sub_player_b_ids) {
+          subs.set(r.slot_num, { teamA: r.sub_player_a_ids, teamB: r.sub_player_b_ids })
+        }
       }
       slotWinners.value = wm
       slotSelectedMaps.value = sm
+      slotSubs.value = subs
     }
   } catch (e: any) {
     loadError.value = e.message ?? '데이터를 불러올 수 없습니다.'
@@ -432,7 +441,22 @@ function getEntry(captainId: number, slotNum: number): EntryRecord | undefined {
 }
 
 function getSlotPlayerIds(captainId: number, slotNum: number): number[] {
-  return getEntry(captainId, slotNum)?.player_ids ?? []
+  const original = getEntry(captainId, slotNum)?.player_ids ?? []
+  const sub = slotSubs.value.get(slotNum)
+  if (!sub) return original
+  const isTeamA = captainId === props.teamACaptainId
+  const subIds = isTeamA ? sub.teamA : sub.teamB
+  return subIds && subIds.length ? subIds : original
+}
+
+function isSubstituted(captainId: number, slotNum: number, idx: number): boolean {
+  const sub = slotSubs.value.get(slotNum)
+  if (!sub) return false
+  const original = getEntry(captainId, slotNum)?.player_ids ?? []
+  const isTeamA = captainId === props.teamACaptainId
+  const subIds = isTeamA ? sub.teamA : sub.teamB
+  if (!subIds) return false
+  return subIds[idx] != null && subIds[idx] !== original[idx]
 }
 
 function isRandomPlayer(captainId: number, slotNum: number, pid: number): boolean {
