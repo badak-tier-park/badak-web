@@ -60,7 +60,8 @@
                           class="rse-player"
                         >
                           <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                          <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                          <span v-if="isRandomPlayer(teamACaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
+                          <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                           <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
                         </div>
                       </div>
@@ -114,7 +115,8 @@
                           class="rse-player"
                         >
                           <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
-                          <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                          <span v-if="isRandomPlayer(teamBCaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
+                          <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                           <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                         </div>
                       </div>
@@ -431,6 +433,11 @@ function getEntry(captainId: number, slotNum: number): EntryRecord | undefined {
 
 function getSlotPlayerIds(captainId: number, slotNum: number): number[] {
   return getEntry(captainId, slotNum)?.player_ids ?? []
+}
+
+function isRandomPlayer(captainId: number, slotNum: number, pid: number): boolean {
+  const e = getEntry(captainId, slotNum)
+  return !!e?.random_player_ids?.includes(pid)
 }
 
 function getBan(captainId: number, slotNum: number): string | null {
