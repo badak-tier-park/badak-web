@@ -871,6 +871,7 @@ const revealModal = reactive({
 })
 
 function openRevealEntry(item: RevealListItem) {
+  revealListModal.open = false
   revealModal.item = item
   revealModal.open = true
 }
@@ -1096,6 +1097,7 @@ function openUrl(url: string) {
 }
 
 function openResultEntry(item: RevealListItem) {
+  resultListModal.open = false
   resultModal.item = item
   resultModal.open = true
 }
