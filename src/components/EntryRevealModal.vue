@@ -60,7 +60,8 @@
                           class="rse-player"
                         >
                           <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                          <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                          <span v-if="isRandomPlayer(teamACaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
+                          <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                           <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
                           <span v-if="isSubstituted(teamACaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
                         </div>
@@ -116,7 +117,8 @@
                         >
                           <span v-if="isSubstituted(teamBCaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
                           <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
-                          <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                          <span v-if="isRandomPlayer(teamBCaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
+                          <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                           <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                         </div>
                       </div>
@@ -455,6 +457,11 @@ function isSubstituted(captainId: number, slotNum: number, idx: number): boolean
   const subIds = isTeamA ? sub.teamA : sub.teamB
   if (!subIds) return false
   return subIds[idx] != null && subIds[idx] !== original[idx]
+}
+
+function isRandomPlayer(captainId: number, slotNum: number, pid: number): boolean {
+  const e = getEntry(captainId, slotNum)
+  return !!e?.random_player_ids?.includes(pid)
 }
 
 function getBan(captainId: number, slotNum: number): string | null {

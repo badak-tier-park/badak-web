@@ -672,6 +672,14 @@
   color: var(--c-text-faint);
 }
 
+// 팀전 랜덤 종족 배지
+.rse-race--random {
+  background: var(--c-brand-bg);
+  border: 1px solid var(--c-brand-border);
+  color: var(--c-brand-text);
+  font-weight: 800;
+}
+
 // 대체 출전 배지
 .rse-sub-badge {
   display: inline-flex;

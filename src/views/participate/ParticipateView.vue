@@ -571,14 +571,37 @@
 
                       <!-- 선수 선택 -->
                       <div class="slot-selects">
-                        <PlayerSelect
+                        <div
                           v-for="idx in slot.count"
                           :key="idx"
-                          :model-value="getSlotPlayer(slot.num, idx - 1)"
-                          :options="buildOptions(slot.num, idx - 1)"
-                          :disabled="entryModal.readonly"
-                          @update:model-value="setSlotPlayer(slot.num, idx - 1, $event)"
-                        />
+                          class="slot-select-row"
+                          :class="{ 'slot-select-row--team': slot.type === 'team' }"
+                        >
+                          <PlayerSelect
+                            :model-value="getSlotPlayer(slot.num, idx - 1)"
+                            :options="buildOptions(slot.num, idx - 1)"
+                            :disabled="entryModal.readonly"
+                            @update:model-value="setSlotPlayer(slot.num, idx - 1, $event)"
+                          />
+                          <!-- 팀전 한정: 랜덤 출전 토글 -->
+                          <template v-if="slot.type === 'team' && getSlotPlayer(slot.num, idx - 1)">
+                            <button
+                              v-if="!entryModal.readonly"
+                              type="button"
+                              class="random-toggle"
+                              :class="{ 'random-toggle--on': entryModal.randomIds.has(getSlotPlayer(slot.num, idx - 1)) }"
+                              :title="entryModal.randomIds.has(getSlotPlayer(slot.num, idx - 1)) ? '랜덤 출전 해제' : '랜덤 종족으로 출전'"
+                              @click="toggleRandomRace(getSlotPlayer(slot.num, idx - 1))"
+                            >
+                              <span class="random-toggle-letter">R</span>
+                              <span class="random-toggle-label">랜덤</span>
+                            </button>
+                            <span
+                              v-else-if="entryModal.randomIds.has(getSlotPlayer(slot.num, idx - 1))"
+                              class="random-badge"
+                            >랜덤</span>
+                          </template>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -871,6 +894,7 @@ const revealModal = reactive({
 })
 
 function openRevealEntry(item: RevealListItem) {
+  revealListModal.open = false
   revealModal.item = item
   revealModal.open = true
 }
@@ -1096,6 +1120,7 @@ function openUrl(url: string) {
 }
 
 function openResultEntry(item: RevealListItem) {
+  resultListModal.open = false
   resultModal.item = item
   resultModal.open = true
 }
@@ -1123,6 +1148,8 @@ interface EntryModalState {
   banSelections: Record<number, string | null>
   pickSelections: Record<number, string | null>
   aceTierBan: string | null
+  /** 팀전(4경기) 한정: 랜덤 종족으로 출전하는 player id 집합 */
+  randomIds: Set<number>
   soloMax: number
   teamMax: number
   totalMax: number
@@ -1139,6 +1166,7 @@ const entryModal = reactive<EntryModalState>({
   banSelections: {},
   pickSelections: {},
   aceTierBan: null,
+  randomIds: new Set<number>(),
   soloMax: 16,
   teamMax: 7,
   totalMax: 23,
@@ -1323,6 +1351,7 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.banSelections = {}
   entryModal.pickSelections = {}
   entryModal.aceTierBan = null
+  entryModal.randomIds = new Set<number>()
   entryModal.soloMax = item.soloMax
   entryModal.teamMax = item.teamMax
   entryModal.totalMax = item.totalMax
@@ -1378,6 +1407,9 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
         if (e.picked_map_id && (BAN_SLOTS as readonly number[]).includes(e.match_slot)) {
           entryModal.pickSelections[e.match_slot] = e.picked_map_id
         }
+        if (e.match_slot === TEAM_SLOT && e.random_player_ids) {
+          for (const id of e.random_player_ids) entryModal.randomIds.add(id)
+        }
       }
     }
     entryModal.aceTierBan = existingAceBan
@@ -1400,6 +1432,12 @@ function toggleBan(slotNum: number, mapId: string) {
 function togglePick(slotNum: number, mapId: string) {
   if (entryModal.banSelections[slotNum] === mapId) return
   entryModal.pickSelections[slotNum] = entryModal.pickSelections[slotNum] === mapId ? null : mapId
+}
+
+function toggleRandomRace(playerId: number) {
+  if (!playerId) return
+  if (entryModal.randomIds.has(playerId)) entryModal.randomIds.delete(playerId)
+  else entryModal.randomIds.add(playerId)
 }
 
 async function handleEntrySubmit() {
@@ -1447,12 +1485,17 @@ async function handleEntrySubmit() {
 
   entrySaving.value = true
   try {
-    const slots: EntrySlot[] = SLOT_CONFIG.map(slot => ({
-      match_slot: slot.num,
-      player_ids: entryModal.selections[slot.num].filter(Boolean),
-      banned_map_id: entryModal.banSelections[slot.num] ?? null,
-      picked_map_id: (BAN_SLOTS as readonly number[]).includes(slot.num) ? (entryModal.pickSelections[slot.num] ?? null) : null,
-    }))
+    const slots: EntrySlot[] = SLOT_CONFIG.map(slot => {
+      const player_ids = entryModal.selections[slot.num].filter(Boolean)
+      const isTeam = slot.num === TEAM_SLOT
+      return {
+        match_slot: slot.num,
+        player_ids,
+        banned_map_id: entryModal.banSelections[slot.num] ?? null,
+        picked_map_id: (BAN_SLOTS as readonly number[]).includes(slot.num) ? (entryModal.pickSelections[slot.num] ?? null) : null,
+        random_player_ids: isTeam ? player_ids.filter(id => entryModal.randomIds.has(id)) : [],
+      }
+    })
     await Promise.all([
       saveEntries(entryModal.schedule!.id, myPlayerId.value!, slots),
       saveAceTierBan(entryModal.schedule!.id, myPlayerId.value!, entryModal.aceTierBan),
