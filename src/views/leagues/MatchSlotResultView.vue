@@ -839,21 +839,26 @@ function isSubstituted(slotNum: number, isTeamA: boolean, playerIndex: number): 
   return subIds[playerIndex] !== originalList?.[playerIndex]?.id
 }
 
-function getAlreadyAssignedIds(captainId: number, excludeSlotNum: number, excludePlayerIndex: number): Set<number> {
+/**
+ * 같은 슬롯에서 이미 출전 중인 선수 id 집합을 반환.
+ * 개인전에 나오는 선수도 팀전에 동시 출전 가능하므로, 다른 슬롯의 선수는 제외 대상이 아니다.
+ * 대신 같은 슬롯의 다른 인덱스에 출전 중인 선수와 본인(원본)은 자기 자신을 교체할 수 없으므로
+ * 모두 후보 목록에서 빠진다.
+ */
+function getAlreadyAssignedIds(captainId: number, slotNum: number): Set<number> {
   const assigned = new Set<number>()
-  for (const [slotNum, slotPlayers] of slotPlayerMap.value) {
-    const isTeamA = captainId === schedule.value?.team_a_captain_id
-    const list = isTeamA ? slotPlayers.teamA : slotPlayers.teamB
-    const sub = substitutionMap.value.get(slotNum)
-    const subIds = isTeamA ? sub?.teamA : sub?.teamB
+  const slotPlayers = slotPlayerMap.value.get(slotNum)
+  if (!slotPlayers) return assigned
 
-    list.forEach((p, idx) => {
-      // 교체 대상인 슬롯+인덱스는 제외
-      if (slotNum === excludeSlotNum && idx === excludePlayerIndex) return
-      const activeId = subIds?.[idx] ?? p.id
-      assigned.add(activeId)
-    })
-  }
+  const isTeamA = captainId === schedule.value?.team_a_captain_id
+  const list = isTeamA ? slotPlayers.teamA : slotPlayers.teamB
+  const sub = substitutionMap.value.get(slotNum)
+  const subIds = isTeamA ? sub?.teamA : sub?.teamB
+
+  list.forEach((p, idx) => {
+    const activeId = subIds?.[idx] ?? p.id
+    assigned.add(activeId)
+  })
   return assigned
 }
 
@@ -866,7 +871,7 @@ function openSubModal(slotNum: number, isTeamA: boolean, playerIndex: number) {
   if (!originalPlayer) return
 
   const originalRank = TIER_RANK[originalPlayer.tier.toUpperCase()] ?? 0
-  const assigned = getAlreadyAssignedIds(captainId, slotNum, playerIndex)
+  const assigned = getAlreadyAssignedIds(captainId, slotNum)
 
   const options: SelectOption[] = roster
     .filter(p => {
