@@ -1268,7 +1268,7 @@ onMounted(async () => {
     const finalRosters = computeFinalRosters(captains, draftPicks, swapLog)
     const makeRoster = (captainId: number): SlotPlayerInfo[] => {
       const memberIds = finalRosters.get(captainId) ?? []
-      return memberIds.map(toInfo)
+      return memberIds.map(id => toInfo(id, undefined))
     }
     rosterA.value = makeRoster(match.team_a_captain_id)
     rosterB.value = makeRoster(match.team_b_captain_id)
