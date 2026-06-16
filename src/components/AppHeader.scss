@@ -157,6 +157,89 @@
   }
 }
 
+// ── 출석 ───────────────────────────────────────────────
+.attendance-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.attendance-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    border-color: #f97316;
+    background: rgba(249, 115, 22, 0.08);
+    color: #f97316;
+  }
+
+  &--done {
+    border-color: rgba(249, 115, 22, 0.35);
+    background: rgba(249, 115, 22, 0.08);
+    color: #f97316;
+    cursor: default;
+    opacity: 0.75;
+  }
+
+  &:disabled { cursor: default; }
+}
+
+.attendance-fire {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.attendance-streak {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+
+.attendance-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: inherit;
+}
+
+// 출석 토스트
+.attendance-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--c-surface, #1a1b23);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-bright);
+  font-family: system-ui, sans-serif;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+  white-space: nowrap;
+  animation: toastIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 // ── 알림 ───────────────────────────────────────────────
 .notif-wrap {
   position: relative;

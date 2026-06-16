@@ -48,6 +48,21 @@
         <span class="user-name">{{ displayName }}</span>
       </div>
 
+      <!-- 출석 -->
+      <div v-if="auth.user && myUserId !== null" class="attendance-wrap">
+        <button
+          class="attendance-btn"
+          :class="{ 'attendance-btn--done': attendanceStatus.attendedToday }"
+          :disabled="attendanceStatus.attendedToday || checkingIn"
+          :title="attendanceStatus.attendedToday ? `출석 완료 (${attendanceStatus.streak}일 연속)` : '오늘 출석하기'"
+          @click="handleCheckIn"
+        >
+          <span class="attendance-fire">🔥</span>
+          <span class="attendance-streak">{{ attendanceStatus.streak }}</span>
+          <span class="attendance-label">{{ attendanceStatus.attendedToday ? '완료' : '출석' }}</span>
+        </button>
+      </div>
+
       <!-- 알림 -->
       <div v-if="auth.user && myUserId !== null" class="notif-wrap" ref="notifRef">
         <button class="notif-btn" :class="{ 'notif-btn--active': notifOpen }" @click="toggleNotif" title="알림">
@@ -99,6 +114,10 @@
       <button class="header-btn" @click="handleLogout">로그아웃</button>
     </div>
   </header>
+
+  <Teleport to="body">
+    <div v-if="toast" class="attendance-toast">{{ toast }}</div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -114,10 +133,13 @@ import {
   markAllRead,
   type NotificationRow,
 } from '@/lib/notifications'
+import { getAttendanceStatus, checkIn, type AttendanceStatus } from '@/lib/attendance'
+import { useToast } from '@/composables/useToast'
 
 const auth = useAuthStore()
 const router = useRouter()
 const { theme, toggle, init } = useTheme()
+const { toast, showToast } = useToast()
 
 // 추후 네비게이션 항목 여기에 추가
 const navItems: { to: string; label: string }[] = [
@@ -131,6 +153,34 @@ const displayName = computed(() => auth.nickname ?? auth.user?.user_metadata?.fu
 async function handleLogout() {
   await auth.logout()
   router.push({ name: 'login' })
+}
+
+// ── 출석 ───────────────────────────────────────────────
+const attendanceStatus = ref<AttendanceStatus>({ attendedToday: false, streak: 0 })
+const checkingIn = ref(false)
+
+async function loadAttendance(userId: number) {
+  try {
+    attendanceStatus.value = await getAttendanceStatus(userId)
+  } catch {}
+}
+
+async function handleCheckIn() {
+  if (myUserId.value === null || checkingIn.value) return
+  checkingIn.value = true
+  try {
+    const result = await checkIn(myUserId.value)
+    attendanceStatus.value = { attendedToday: true, streak: result.streak }
+    if (result.isMilestone) {
+      showToast(`🔥 ${result.streak}일 연속 출석! +${result.pointsEarned.toLocaleString()}pt (마일스톤 보너스 +${result.milestoneBonus.toLocaleString()}pt 포함)`)
+    } else {
+      showToast(`출석 완료! +${result.pointsEarned.toLocaleString()}pt (${result.streak}일 연속)`)
+    }
+  } catch (e: any) {
+    showToast(e.message ?? '출석 처리 중 오류가 발생했습니다.')
+  } finally {
+    checkingIn.value = false
+  }
 }
 
 // ── 알림 ───────────────────────────────────────────────
@@ -147,7 +197,10 @@ async function resolveMyUserId() {
   if (!discordId) return
   try {
     const me = await getPlayerByDiscordId(discordId)
-    if (me) myUserId.value = me.id
+    if (me) {
+      myUserId.value = me.id
+      loadAttendance(me.id)
+    }
   } catch {}
 }
 
