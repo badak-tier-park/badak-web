@@ -344,7 +344,7 @@ export async function getRankings(): Promise<RankingRow[]> {
   const rows: RankingRow[] = []
   for (const u of users ?? []) {
     const a = agg.get(u.id)
-    if (!a) continue
+    if (!a || a.resolved === 0) continue
     rows.push({
       user_id: u.id,
       nickname: u.nickname,
