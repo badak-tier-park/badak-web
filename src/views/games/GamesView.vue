@@ -246,6 +246,7 @@ async function handleLink(player: PlayerRow) {
       star_nicknames: newStarNicknames,
       race: player.race,
       tier: player.tier,
+      is_military: player.is_military,
     })
     // 로컬 players 업데이트
     const idx = players.value.findIndex(p => p.id === player.id)
