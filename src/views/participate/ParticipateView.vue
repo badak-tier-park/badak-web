@@ -1313,13 +1313,17 @@ function buildOptions(slotNum: number, idx: number): SelectOption[] {
       }
     })
     .sort((a, b) => (TIER_POINTS[b.tier] ?? 0) - (TIER_POINTS[a.tier] ?? 0))
-    .map(m => ({
-      value: m.id,
-      label: m.nickname,
-      tier: m.tier,
-      race: m.race,
-      points: TIER_POINTS[m.tier] ?? 0,
-    }))
+    .map(m => {
+      const base = TIER_POINTS[m.tier] ?? 0
+      return {
+        value: m.id,
+        label: m.nickname,
+        tier: m.tier,
+        race: m.race,
+        points: m.is_military ? Math.max(0, base - 1) : base,
+        is_military: m.is_military,
+      }
+    })
 }
 
 const playerTierMap = computed(() => {
@@ -1328,15 +1332,26 @@ const playerTierMap = computed(() => {
   return m
 })
 
+const playerMilitaryMap = computed(() => {
+  const m = new Map<number, boolean>()
+  for (const p of entryModal.teamMembers) m.set(p.id, p.is_military ?? false)
+  return m
+})
+
+function effectivePoints(playerId: number): number {
+  const base = TIER_POINTS[playerTierMap.value.get(playerId) ?? ''] ?? 0
+  return playerMilitaryMap.value.get(playerId) ? Math.max(0, base - 1) : base
+}
+
 const individualPoints = computed(() =>
   (INDIVIDUAL_SLOTS as readonly number[]).reduce((sum, slotNum) => {
     const id = entryModal.selections[slotNum]?.[0] ?? 0
-    return sum + (id ? TIER_POINTS[playerTierMap.value.get(id) ?? ''] ?? 0 : 0)
+    return sum + (id ? effectivePoints(id) : 0)
   }, 0)
 )
 const teamPoints = computed(() =>
   (entryModal.selections[TEAM_SLOT] ?? []).reduce((sum, id) =>
-    sum + (id ? TIER_POINTS[playerTierMap.value.get(id) ?? ''] ?? 0 : 0), 0)
+    sum + (id ? effectivePoints(id) : 0), 0)
 )
 const totalPoints = computed(() => individualPoints.value + teamPoints.value)
 
