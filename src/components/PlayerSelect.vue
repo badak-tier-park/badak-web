@@ -13,7 +13,8 @@
       <template v-if="selectedOpt?.tier">
         <span class="ps-sel-race" v-if="selectedOpt.race" :class="`race-badge--${selectedOpt.race.toLowerCase()}`">{{ selectedOpt.race }}</span>
         <span class="ps-label">{{ selectedOpt.label }}</span>
-        <span class="ps-sel-pts" v-if="selectedOpt.points">{{ selectedOpt.points }}pt</span>
+        <span v-if="selectedOpt.is_military" class="ps-opt-military">군</span>
+        <span class="ps-sel-pts" v-if="selectedOpt.points !== undefined">{{ selectedOpt.points }}pt</span>
       </template>
       <span v-else class="ps-label">{{ selectedLabel }}</span>
       <svg class="ps-arrow" width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -45,6 +46,7 @@
           <template v-if="opt.tier">
             <span class="ps-opt-race" v-if="opt.race" :class="`race-badge--${opt.race.toLowerCase()}`">{{ opt.race }}</span>
             <span class="ps-opt-name" :class="`tier-color--${opt.tier.toLowerCase()}`">{{ opt.label }}</span>
+            <span v-if="opt.is_military" class="ps-opt-military">군</span>
             <span class="ps-opt-pts" :class="`tier-color--${opt.tier.toLowerCase()}`">{{ opt.points }}pt</span>
           </template>
           <template v-else>{{ opt.label }}</template>
@@ -64,6 +66,7 @@ export interface SelectOption {
   race?: string
   points?: number
   disabled?: boolean
+  is_military?: boolean
 }
 
 const props = defineProps<{

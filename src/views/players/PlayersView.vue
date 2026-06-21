@@ -44,6 +44,7 @@
             <th>스타 닉네임</th>
             <th>종족</th>
             <th>티어</th>
+            <th>군인</th>
             <th></th>
           </tr>
         </thead>
@@ -91,6 +92,10 @@
             </td>
             <td>
               <span class="tier-badge" :class="`tier-badge--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
+            </td>
+            <td class="td-military">
+              <span v-if="player.is_military" class="military-badge">군인</span>
+              <span v-else class="military-badge military-badge--none">-</span>
             </td>
             <td class="td-action">
               <button class="edit-btn" @click="openEdit(player)">수정</button>
@@ -209,6 +214,19 @@
                 </button>
               </div>
             </div>
+
+            <!-- 군인 신분 -->
+            <div class="field">
+              <label class="field-label">군인 신분</label>
+              <button
+                type="button"
+                class="military-toggle"
+                :class="{ 'military-toggle--on': form.is_military }"
+                @click="form.is_military = !form.is_military"
+              >
+                {{ form.is_military ? '군인 (엔트리 -1pt)' : '일반' }}
+              </button>
+            </div>
           </div>
 
           <div class="modal-footer">
@@ -291,7 +309,7 @@ onUnmounted(() => {
 
 // ── 수정 모달 ─────────────────────────────────────────────
 const editTarget = ref<PlayerRow | null>(null)
-const form = reactive({ nickname: '', aliases: [] as string[], star_nicknames: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '' })
+const form = reactive({ nickname: '', aliases: [] as string[], star_nicknames: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '', is_military: false })
 const aliasInput = ref('')
 const starNicknameInput = ref('')
 const saving = ref(false)
@@ -324,6 +342,7 @@ function openEdit(player: PlayerRow) {
   form.star_nicknames = [...player.star_nicknames]
   form.race = player.race
   form.tier = player.tier
+  form.is_military = player.is_military
   aliasInput.value = ''
   starNicknameInput.value = ''
   saveError.value = null
@@ -349,6 +368,7 @@ async function handleSave() {
       star_nicknames: form.star_nicknames,
       race: form.race,
       tier: form.tier.trim(),
+      is_military: form.is_military,
     })
     const idx = players.value.findIndex(p => p.id === updated.id)
     if (idx !== -1) players.value[idx] = updated

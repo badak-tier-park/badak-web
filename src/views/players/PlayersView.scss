@@ -212,4 +212,43 @@
   &--p.active { border-color: var(--race-p-border); background: var(--race-p-bg); color: var(--race-p); }
 }
 
+// ── 군인 신분 ─────────────────────────────────────────────
+.td-military { text-align: center; }
+
+.military-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+
+  &--none {
+    background: transparent;
+    color: var(--c-text-muted);
+    border-color: transparent;
+  }
+}
+
+.military-toggle {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &--on {
+    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+  }
+}
+
 // ── 모달 푸터 / 버튼 (공통: _buttons.scss, _modal.scss via _page.scss)

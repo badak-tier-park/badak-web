@@ -9,6 +9,7 @@ export interface PlayerRow {
   race: 'T' | 'Z' | 'P'
   tier: string
   is_admin: boolean
+  is_military: boolean
   created_at: string
   updated_at: string
 }
@@ -34,7 +35,7 @@ export async function getPlayerByDiscordId(discordId: string): Promise<PlayerRow
 
 export async function updatePlayer(
   id: number,
-  fields: { nickname: string; aliases: string[]; star_nicknames: string[]; race: 'T' | 'Z' | 'P'; tier: string },
+  fields: { nickname: string; aliases: string[]; star_nicknames: string[]; race: 'T' | 'Z' | 'P'; tier: string; is_military: boolean },
 ): Promise<PlayerRow> {
   const { data, error } = await supabase
     .from('users')
