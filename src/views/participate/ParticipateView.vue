@@ -1141,6 +1141,8 @@ interface EntryModalState {
   readonly: boolean
   schedule: ScheduleRow | null
   leagueId: string
+  /** 엔트리를 저장/제출할 대상 팀의 팀장 player_id (부팀장이 대신 제출해도 이 값으로 기록) */
+  captainPlayerId: number
   opponentTeamName: string
   teamMembers: PlayerRow[]
   selections: Record<number, number[]>
@@ -1159,6 +1161,7 @@ const entryModal = reactive<EntryModalState>({
   readonly: false,
   schedule: null,
   leagueId: '',
+  captainPlayerId: 0,
   opponentTeamName: '',
   teamMembers: [],
   selections: {},
@@ -1360,6 +1363,7 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.readonly = readonly
   entryModal.schedule = item.schedule
   entryModal.leagueId = item.leagueId
+  entryModal.captainPlayerId = item.myTeamCaptainId
   entryModal.opponentTeamName = item.opponentTeamName
   entryModal.teamMembers = []
   entryModal.slotMaps = {}
@@ -1512,8 +1516,8 @@ async function handleEntrySubmit() {
       }
     })
     await Promise.all([
-      saveEntries(entryModal.schedule!.id, myPlayerId.value!, slots),
-      saveAceTierBan(entryModal.schedule!.id, myPlayerId.value!, entryModal.aceTierBan),
+      saveEntries(entryModal.schedule!.id, entryModal.captainPlayerId, slots),
+      saveAceTierBan(entryModal.schedule!.id, entryModal.captainPlayerId, entryModal.aceTierBan),
     ])
     entryStatusMap.value.set(entryModal.schedule!.id, 'saved')
     // 경기 목록 모달의 상태도 갱신
