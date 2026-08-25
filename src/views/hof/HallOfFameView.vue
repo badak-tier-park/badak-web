@@ -176,6 +176,7 @@ import { getEntriesForSchedules } from '@/lib/entries'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
 import { getCaptains, getPlayerSnapshotsForLeagues } from '@/lib/leagueDetail'
 import { computeFinalRosters } from '@/lib/entries'
+import { tierPoint } from '@/lib/constants'
 
 interface MemberInfo { id: number; nickname: string; tier: string; race: string }
 
@@ -205,8 +206,6 @@ interface AwardRecordSummary {
   championCount: number
   runnerUpCount: number
 }
-
-const TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
 
 interface PlayerEntry {
   playerId: number
@@ -361,7 +360,7 @@ onMounted(async () => {
               race: snap?.race ?? p?.race ?? '',
             }
           })
-          .sort((a, b) => (TIER_RANK[b.tier.toUpperCase()] ?? 0) - (TIER_RANK[a.tier.toUpperCase()] ?? 0))
+          .sort((a, b) => tierPoint(b.tier) - tierPoint(a.tier))
         const capSnap = snapshotMap.get(`${leagueId}_${captainId}`)
         const captain = playerMap.get(captainId)
         return {

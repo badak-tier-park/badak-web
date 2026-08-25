@@ -312,6 +312,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { getScheduleEntries, TIER_POINTS, getAceTierBans, type EntryRecord } from '@/lib/entries'
+import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getMatchMaps } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getPlayers, type PlayerRow } from '@/lib/players'
@@ -343,7 +344,7 @@ const roundLabel = computed(() => {
 
 defineEmits<{ close: [] }>()
 
-const ALL_TIERS = ['A', 'B', 'C', 'D', 'E'] as const
+const ALL_TIERS = TIER_ORDER
 
 const SLOT_CONFIG = [
   { num: 1, type: 'individual' },
@@ -495,8 +496,8 @@ function resolvePickInReveal(
 
   const playerIdA = getSlotPlayerIds(props.teamACaptainId, slotNum)[0]
   const playerIdB = getSlotPlayerIds(props.teamBCaptainId, slotNum)[0]
-  const rankA = playerIdA ? (TIER_RANK[playerTier(playerIdA).toUpperCase()] ?? 0) : 0
-  const rankB = playerIdB ? (TIER_RANK[playerTier(playerIdB).toUpperCase()] ?? 0) : 0
+  const rankA = playerIdA ? tierPoint(playerTier(playerIdA)) : 0
+  const rankB = playerIdB ? tierPoint(playerTier(playerIdB)) : 0
   if (rankA === rankB) return null  // 동티어 → 사다리 필요
 
   return rankA < rankB ? (validPickA ?? validPickB!) : (validPickB ?? validPickA!)
@@ -585,7 +586,6 @@ const matchPointsB = computed(() => {
 
 // ── 밴 로직 ───────────────────────────────────────────────────
 
-const TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
 
 interface SlotMapResult {
   matchMapIds: Set<string>
@@ -620,8 +620,8 @@ const slotMapResults = computed<Record<number, SlotMapResult>>(() => {
             candidates = afterBoth
           } else {
             // 맵이 2개이고 서로 다른 밴 → 낮은 티어 팀의 밴 적용
-            const rankA = TIER_RANK[playerTier(props.teamACaptainId).toUpperCase()] ?? 0
-            const rankB = TIER_RANK[playerTier(props.teamBCaptainId).toUpperCase()] ?? 0
+            const rankA = tierPoint(playerTier(props.teamACaptainId))
+            const rankB = tierPoint(playerTier(props.teamBCaptainId))
             if (rankA !== rankB) {
               const effectiveBan = rankA <= rankB ? banA : banB
               bannedMapInfo.push({ mapId: effectiveBan, byTeamA: rankA <= rankB, byTeamB: rankB < rankA })

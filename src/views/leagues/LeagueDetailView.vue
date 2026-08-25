@@ -481,6 +481,7 @@ import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
 import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders } from '@/lib/leagueDetail'
 import { FontSize } from '@/lib/tiptapFontSize'
+import { tierPoint } from '@/lib/constants'
 import { useToast } from '@/composables/useToast'
 
 // ── 토스트 ────────────────────────────────────────────────
@@ -691,13 +692,11 @@ onBeforeUnmount(() => {
 
 // ── 팀장 선출 ─────────────────────────────────────────────
 // 티어 순위: 낮은 티어(E)가 앞 순번
-const TIER_RANK: Record<string, number> = { E: 1, D: 2, C: 3, B: 4, A: 5 }
-
 function autoSortCaptains() {
   captains.value = [...captains.value].sort((a, b) => {
     const ta = playerById(a)?.tier ?? 'A'
     const tb = playerById(b)?.tier ?? 'A'
-    return (TIER_RANK[ta] ?? 0) - (TIER_RANK[tb] ?? 0)
+    return tierPoint(ta) - tierPoint(tb)
   })
 }
 
@@ -718,7 +717,7 @@ const playerSearch = ref('')
 
 function sortPlayers(list: PlayerRow[]) {
   return [...list].sort((a, b) => {
-    const tierDiff = (TIER_RANK[a.tier] ?? 0) - (TIER_RANK[b.tier] ?? 0)
+    const tierDiff = tierPoint(a.tier) - tierPoint(b.tier)
     if (tierDiff !== 0) return tierDiff
     const raceDiff = a.race.localeCompare(b.race)
     if (raceDiff !== 0) return raceDiff

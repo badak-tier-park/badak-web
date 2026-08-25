@@ -328,6 +328,7 @@ import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import { getLeagues, createLeague, updateLeague, getLeagueStatus, type LeagueRow, type LeagueType, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
+import { TIER_ORDER } from '@/lib/constants'
 
 const router = useRouter()
 
@@ -352,7 +353,7 @@ const leagueTypes = [
   { value: 'regular_winter' as LeagueType, label: '정규리그', sub: 'Winter' },
 ]
 
-const tiers = ['A', 'B', 'C', 'D', 'E'].map(v => ({ value: v }))
+const tiers = TIER_ORDER.map(v => ({ value: v }))
 
 const leagueTypeLabel = (type: LeagueType) => {
   const found = leagueTypes.find(t => t.value === type)
@@ -380,7 +381,7 @@ const form = reactive({
   name: '',
   start_date: '',
   end_date: '',
-  eligible_tiers: ['A', 'B', 'C', 'D', 'E'] as string[],
+  eligible_tiers: [...TIER_ORDER] as string[],
   eligibility_type: 'open' as EligibilityType,
   has_draft: true,
   draft_date: '' as string,
@@ -525,7 +526,7 @@ function resetForm() {
   form.has_draft = true
   form.draft_date = ''
   form.captain_count = 4
-  form.eligible_tiers = ['A', 'B', 'C', 'D', 'E']
+  form.eligible_tiers = [...TIER_ORDER]
   pickerDates.value = null
   dateDisplayText.value = ''
   draftPickerDate.value = null

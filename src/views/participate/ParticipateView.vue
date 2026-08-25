@@ -674,6 +674,7 @@ import {
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
   type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
+import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { revealEntries } from '@/lib/schedules'
 import { notifyEntrySubmitted } from '@/lib/notifications'
 import { useAuthStore } from '@/stores/auth'
@@ -724,7 +725,7 @@ const SLOT_CONFIG = [
   { num: 6, type: 'individual', count: 1 },
 ] as const
 
-const ACE_TIERS = ['A', 'B', 'C', 'D', 'E'] as const
+const ACE_TIERS = TIER_ORDER
 
 // ── 상태 ─────────────────────────────────────────────────────
 const auth = useAuthStore()
@@ -774,7 +775,6 @@ const rosterModal = reactive({
   teams: [] as RosterTeam[],
 })
 
-const ROSTER_TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
 const ROSTER_RACE_RANK: Record<string, number> = { T: 3, Z: 2, P: 1 }
 
 async function openRosterList(league: LeagueRow) {
@@ -808,7 +808,7 @@ async function openRosterList(league: LeagueRow) {
           .map(id => playerMap.get(id))
           .filter((x): x is PlayerRow => Boolean(x))
           .sort((a, b) =>
-            (ROSTER_TIER_RANK[b.tier] ?? 0) - (ROSTER_TIER_RANK[a.tier] ?? 0)
+            tierPoint(b.tier) - tierPoint(a.tier)
             || (ROSTER_RACE_RANK[b.race] ?? 0) - (ROSTER_RACE_RANK[a.race] ?? 0)
             || a.nickname.localeCompare(b.nickname),
           )

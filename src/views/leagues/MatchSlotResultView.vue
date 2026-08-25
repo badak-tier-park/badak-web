@@ -454,6 +454,7 @@ import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
 import { getSchedules, getPlayoffSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
 import { getScheduleEntries, computeFinalRosters, getAceTierBans } from '@/lib/entries'
+import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
 import { withTimeout } from '@/lib/supabase'
@@ -473,9 +474,7 @@ const REGULAR_SLOTS = [
 
 const ACE_SLOT = { num: 7, type: 'ace' } as const
 const BAN_SLOTS = new Set([2, 3])
-const TIER_POINTS: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
-const TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
-const ALL_TIERS = ['A', 'B', 'C', 'D', 'E'] as const
+const ALL_TIERS = TIER_ORDER
 
 interface TeamInfo {
   captainId: number
@@ -612,9 +611,9 @@ watch(aceTierCandidates, async (candidates) => {
   if (!isSuperAce.value || aceData.aceTier || isCompleted.value) return
   if (candidates.length === 1) {
     const tier = candidates[0]
-    const maxRank = TIER_RANK[tier] ?? 0
-    const hasA = rosterA.value.some(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
-    const hasB = rosterB.value.some(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+    const maxRank = tierPoint(tier)
+    const hasA = rosterA.value.some(p => (tierPoint(p.tier)) <= maxRank)
+    const hasB = rosterB.value.some(p => (tierPoint(p.tier)) <= maxRank)
     if (!hasA || !hasB) return
     aceData.aceTier = tier
     await setAceSlotData(matchId, { aceTier: tier })
@@ -652,21 +651,21 @@ const aceBannedTierSet = computed((): Set<string> => {
 
 const eligiblePlayersA = computed((): SlotPlayerInfo[] => {
   if (!aceData.aceTier) return []
-  const maxRank = TIER_RANK[aceData.aceTier] ?? 0
+  const maxRank = tierPoint(aceData.aceTier)
   const banned = aceBannedTierSet.value
   return rosterA.value.filter(p => {
     const t = p.tier.toUpperCase()
-    return (TIER_RANK[t] ?? 0) <= maxRank && !banned.has(t)
+    return (tierPoint(t)) <= maxRank && !banned.has(t)
   })
 })
 
 const eligiblePlayersB = computed((): SlotPlayerInfo[] => {
   if (!aceData.aceTier) return []
-  const maxRank = TIER_RANK[aceData.aceTier] ?? 0
+  const maxRank = tierPoint(aceData.aceTier)
   const banned = aceBannedTierSet.value
   return rosterB.value.filter(p => {
     const t = p.tier.toUpperCase()
-    return (TIER_RANK[t] ?? 0) <= maxRank && !banned.has(t)
+    return (tierPoint(t)) <= maxRank && !banned.has(t)
   })
 })
 
@@ -676,7 +675,7 @@ const eligibleOptionsA = computed((): SelectOption[] =>
     label: p.nickname,
     tier: p.tier,
     race: p.race || undefined,
-    points: TIER_POINTS[p.tier.toUpperCase()] ?? 1,
+    points: tierPoint(p.tier),
   }))
 )
 
@@ -686,7 +685,7 @@ const eligibleOptionsB = computed((): SelectOption[] =>
     label: p.nickname,
     tier: p.tier,
     race: p.race || undefined,
-    points: TIER_POINTS[p.tier.toUpperCase()] ?? 1,
+    points: tierPoint(p.tier),
   }))
 )
 
@@ -734,8 +733,8 @@ function resolveSlotMap(slotNum: number): SlotMapState {
     } else {
       const afterBoth = candidates.filter(m => m.id !== banA && m.id !== banB)
       if (afterBoth.length === 0) {
-        const rankA = TIER_RANK[(teamA.value?.tier ?? 'e').toUpperCase()] ?? 1
-        const rankB = TIER_RANK[(teamB.value?.tier ?? 'e').toUpperCase()] ?? 1
+        const rankA = tierPoint(teamA.value?.tier ?? 'E')
+        const rankB = tierPoint(teamB.value?.tier ?? 'E')
         if (rankA === rankB) {
           candidates = maps
         } else {
@@ -769,7 +768,7 @@ function getSlotPlayerRank(slotNum: number, isTeamA: boolean): number {
   const players = slotPlayerMap.value.get(slotNum)
   const list = isTeamA ? players?.teamA : players?.teamB
   if (!list?.length) return 0
-  return TIER_RANK[list[0].tier.toUpperCase()] ?? 0
+  return tierPoint(list[0].tier)
 }
 
 function resolveByPick(slotNum: number, candidates: MapInfo[]): MapInfo | null {
@@ -870,13 +869,13 @@ function openSubModal(slotNum: number, isTeamA: boolean, playerIndex: number) {
   const originalPlayer = originalList?.[playerIndex]
   if (!originalPlayer) return
 
-  const originalRank = TIER_RANK[originalPlayer.tier.toUpperCase()] ?? 0
+  const originalRank = tierPoint(originalPlayer.tier)
   const assigned = getAlreadyAssignedIds(captainId, slotNum)
 
   const options: SelectOption[] = roster
     .filter(p => {
       if (assigned.has(p.id)) return false
-      const rank = TIER_RANK[p.tier.toUpperCase()] ?? 0
+      const rank = tierPoint(p.tier)
       return rank <= originalRank
     })
     .map(p => ({
@@ -884,7 +883,7 @@ function openSubModal(slotNum: number, isTeamA: boolean, playerIndex: number) {
       label: p.nickname,
       tier: p.tier,
       race: p.race || undefined,
-      points: TIER_POINTS[p.tier.toUpperCase()] ?? 1,
+      points: tierPoint(p.tier),
     }))
 
   subModal.value = { slotNum, isTeamA, playerIndex, originalPlayerId: originalPlayer.id, options }
@@ -1077,9 +1076,9 @@ watch(
   [() => aceData.aceTier, rosterA, rosterB],
   async ([tier]) => {
     if (!tier || isCompleted.value || !schedule.value) return
-    const maxRank = TIER_RANK[tier] ?? 0
-    const hasA = rosterA.value.some(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
-    const hasB = rosterB.value.some(p => (TIER_RANK[p.tier.toUpperCase()] ?? 0) <= maxRank)
+    const maxRank = tierPoint(tier)
+    const hasA = rosterA.value.some(p => (tierPoint(p.tier)) <= maxRank)
+    const hasB = rosterB.value.some(p => (tierPoint(p.tier)) <= maxRank)
     if (!hasA && !hasB) {
       aceData.aceTier = null
       await setAceSlotData(matchId, { aceTier: null })
@@ -1183,7 +1182,7 @@ onMounted(async () => {
       entries
         .filter(e => e.captain_player_id === captainId)
         .flatMap(e => e.player_ids)
-        .reduce((sum, pid) => sum + (TIER_POINTS[(playerMap.get(pid)?.tier ?? 'e').toUpperCase()] ?? 1), 0)
+        .reduce((sum, pid) => sum + (tierPoint(playerMap.get(pid)?.tier ?? 'E')), 0)
     entryPointsA.value = calcPoints(match.team_a_captain_id)
     entryPointsB.value = calcPoints(match.team_b_captain_id)
 
