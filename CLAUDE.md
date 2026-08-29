@@ -19,7 +19,8 @@ DB 변경은 **Supabase MCP를 통해 직접 적용**한다. schema.sql 같은 �
 | dev  | `wtzfekruohdxchjpefdj` |
 | prod | `vydawdpzfpmwqmvymwsi` |
 
-- env 파일: `.env.development` / `.env.production`
+- env 파일: `.env.development`(dev) / `.env.production`(prod). Vite가 mode에 따라 자동 선택하며 둘 다 gitignore 대상
+- Vercel 배포: `main`→Production(prod DB), 그 외 브랜치→Preview(dev DB). 환경변수는 Vercel 대시보드에서 관리
 - DDL 변경은 `apply_migration`, 데이터 조회/수정은 `execute_sql` 사용
 - dev → prod 순서로 양쪽 모두 적용
 
@@ -56,7 +57,7 @@ DB 변경은 **Supabase MCP를 통해 직접 적용**한다. schema.sql 같은 �
 | 테이블 | 설명 |
 |--------|------|
 | `leagues` | 리그 기본 정보. `draft_completed` 컬럼으로 지목식 완료 여부 관리 |
-| `players` | 선수 목록 (닉네임, 종족, 티어) |
+| `users` | 선수 목록 (닉네임, 종족, 티어, 군인 여부). 코드상 `src/lib/players.ts`가 다루지만 테이블명은 `users` |
 | `league_captains` | 리그별 팀장 및 순번 |
 | `league_seed_holders` | 리그별 시드권자 및 순번 |
 | `league_match_maps` | 경기별 맵 배정 |
@@ -107,13 +108,15 @@ DB 변경은 **Supabase MCP를 통해 직접 적용**한다. schema.sql 같은 �
 상위티어만 출전하는 것을 방지하기 위해 티어마다 포인트를 부여한다.
 
 ### 티어별 포인트
-| 티어 | 포인트 |
-|------|--------|
-| A    | 5      |
-| B    | 4      |
-| C    | 3      |
-| D    | 2      |
-| E    | 1      |
+9단계 세분화 체계. 정의는 `src/lib/constants.ts`의 `TIER_POINTS` 한 곳뿐이며,
+비교·정렬은 반드시 `tierPoint()`, CSS 클래스는 `tierClass()`(전역 `$tierClass`)를 쓴다.
+
+| 티어 | A+ | A- | B+ | B- | C+ | C- | D+ | D- | E |
+|------|----|----|----|----|----|----|----|----|---|
+| 포인트 | 5 | 4.5 | 4 | 3.5 | 3 | 2.5 | 2 | 1.5 | 1 |
+
+구 5단계 값(A/B/C/D)은 동일 점수의 레거시 별칭으로 남아 있어, DB 마이그레이션
+전에도 정상 동작한다. 마이그레이션 완료 후 제거 가능.
 
 ### 경기 구성 및 포인트 한도
 | 경기 | 유형 | 출전 인원 | 비고 |
