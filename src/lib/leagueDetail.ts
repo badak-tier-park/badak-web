@@ -114,11 +114,13 @@ export interface PlayerSnapshot {
   player_id: number
   tier: string
   race: string
+  /** 스냅샷 도입 이전 행은 null일 수 있다 */
+  is_military: boolean | null
 }
 
 export async function savePlayerSnapshots(
   leagueId: string,
-  snapshots: { player_id: number; tier: string; race: string }[],
+  snapshots: { player_id: number; tier: string; race: string; is_military: boolean }[],
 ): Promise<void> {
   if (!snapshots.length) return
   const rows = snapshots.map(s => ({ league_id: leagueId, ...s }))
@@ -131,7 +133,7 @@ export async function savePlayerSnapshots(
 export async function getPlayerSnapshots(leagueId: string): Promise<PlayerSnapshot[]> {
   const { data, error } = await supabase
     .from('league_player_snapshots')
-    .select('league_id, player_id, tier, race')
+    .select('league_id, player_id, tier, race, is_military')
     .eq('league_id', leagueId)
   if (error) throw error
   return (data ?? []) as PlayerSnapshot[]
@@ -143,7 +145,7 @@ export async function getPlayerSnapshotsForLeagues(
   if (!leagueIds.length) return []
   const { data, error } = await supabase
     .from('league_player_snapshots')
-    .select('league_id, player_id, tier, race')
+    .select('league_id, player_id, tier, race, is_military')
     .in('league_id', leagueIds)
   if (error) throw error
   return (data ?? []) as PlayerSnapshot[]

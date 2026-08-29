@@ -717,7 +717,8 @@ async function saveDraft() {
         to_player_id: e.toPlayerId,
       }))
 
-      // 최종 로스터에 속한 모든 선수의 현재 tier/race 스냅샷 저장
+      // 최종 로스터에 속한 모든 선수의 현재 tier/race/군인여부 스냅샷 저장
+      // — 이후 티어가 재산정되어도 이 리그의 엔트리 포인트·판정이 흔들리지 않게 한다
       const allPlayerIds = new Set<number>()
       for (const members of Object.values(teams.value)) {
         for (const m of members) allPlayerIds.add(m.id)
@@ -725,7 +726,7 @@ async function saveDraft() {
       captainIds.value.forEach(id => allPlayerIds.add(id))
       const snapshots = [...allPlayerIds].map(id => {
         const p = allPlayers.value.find(pl => pl.id === id)
-        return { player_id: id, tier: p?.tier ?? 'e', race: p?.race ?? '' }
+        return { player_id: id, tier: p?.tier ?? 'E', race: p?.race ?? '', is_military: p?.is_military ?? false }
       })
 
       await Promise.all([
