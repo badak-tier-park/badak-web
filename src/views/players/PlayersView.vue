@@ -91,7 +91,7 @@
               </span>
             </td>
             <td>
-              <span class="tier-badge" :class="`tier-badge--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
+              <span class="tier-badge" :class="`tier-badge--${$tierClass(player.tier)}`">{{ player.tier }}</span>
             </td>
             <td class="td-military">
               <span v-if="player.is_military" class="military-badge">군인</span>
@@ -261,6 +261,7 @@ function togglePopover(id: number, field: PopoverField) {
 function closePopover() { openPopover.value = null }
 import AppHeader from '@/components/AppHeader.vue'
 import { getPlayers, updatePlayer, type PlayerRow } from '@/lib/players'
+import { TIER_ORDER } from '@/lib/constants'
 
 const players = ref<PlayerRow[]>([])
 const loading = ref(true)
@@ -282,13 +283,7 @@ const races = [
   { value: 'P' as const, label: '프로토스' },
 ]
 
-const tiers = [
-  { value: 'A' },
-  { value: 'B' },
-  { value: 'C' },
-  { value: 'D' },
-  { value: 'E' },
-]
+const tiers = TIER_ORDER.map(value => ({ value }))
 
 const raceLabel = (r: string) => races.find(x => x.value === r)?.label ?? r
 
