@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { getPlayers, type PlayerRow } from './players'
 
 export interface CaptainRow {
   league_id: string
@@ -149,4 +150,34 @@ export async function getPlayerSnapshotsForLeagues(
     .in('league_id', leagueIds)
   if (error) throw error
   return (data ?? []) as PlayerSnapshot[]
+}
+
+/**
+ * 리그 시점의 선수 목록을 반환한다.
+ *
+ * 지목식이 완료된 리그는 당시 tier/race/is_military가 스냅샷으로 고정되어 있으므로
+ * 그 값으로 덮어쓴다. 스냅샷이 없으면(지목식 진행 중이거나 스냅샷 도입 이전 리그)
+ * 현재 값을 그대로 쓴다.
+ *
+ * 닉네임 등 나머지 필드는 항상 현재 값을 유지한다 — 닉네임 변경은 과거 기록에도
+ * 반영되는 편이 자연스럽다.
+ */
+export async function getLeaguePlayers(leagueId: string): Promise<PlayerRow[]> {
+  const [players, snapshots] = await Promise.all([
+    getPlayers(),
+    getPlayerSnapshots(leagueId),
+  ])
+  if (!snapshots.length) return players
+
+  const snapById = new Map(snapshots.map(s => [s.player_id, s]))
+  return players.map(p => {
+    const snap = snapById.get(p.id)
+    if (!snap) return p
+    return {
+      ...p,
+      tier: snap.tier,
+      race: (snap.race || p.race) as PlayerRow['race'],
+      is_military: snap.is_military ?? p.is_military,
+    }
+  })
 }
