@@ -29,7 +29,7 @@
           <div class="seed-order-list">
             <div v-for="(pid, i) in seedOrderDraft" :key="pid" class="seed-order-item">
               <span class="seed-order-num">{{ i + 1 }}</span>
-              <span class="seed-order-tier" :class="`tier--${playerById(pid)?.tier.toLowerCase()}`">
+              <span class="seed-order-tier" :class="`tier--${$tierClass(playerById(pid)?.tier)}`">
                 {{ playerById(pid)?.tier }}
               </span>
               <span class="seed-order-race" :class="`race--${playerById(pid)?.race.toLowerCase()}`">
@@ -81,7 +81,7 @@
           <span class="topbar-sep" />
           <span v-if="!draftDone" class="topbar-turn">
             현재 순번
-            <span class="topbar-turn-name" :class="`tier--${playerById(currentCaptainId!)?.tier.toLowerCase()}`">
+            <span class="topbar-turn-name" :class="`tier--${$tierClass(playerById(currentCaptainId!)?.tier)}`">
               {{ playerById(currentCaptainId!)?.nickname }}
             </span>
             <span class="topbar-round">{{ turnRound }}R {{ turnPositionLabel }}</span>
@@ -159,7 +159,7 @@
           <div class="pool-body">
             <template v-for="tier in poolTiers" :key="tier">
               <div v-if="playersByTierRace[tier]" class="tier-section">
-                <div class="tier-section-label" :class="`tier--${tier.toLowerCase()}`">
+                <div class="tier-section-label" :class="`tier--${$tierClass(tier)}`">
                   <span class="tier-letter">{{ tier }}</span>
                   <span class="tier-count">{{ tierCount(tier) }}명</span>
                 </div>
@@ -168,7 +168,7 @@
                     v-for="player in (playersByTierRace[tier]?.[race] ?? [])"
                     :key="player.id"
                     class="player-card"
-                    :class="[`tier-bg--${player.tier.toLowerCase()}`, { 'is-dragging': draggingId === player.id }]"
+                    :class="[`tier-bg--${$tierClass(player.tier)}`, { 'is-dragging': draggingId === player.id }]"
                     @pointerdown="onPointerDown($event, player.id, 'pool')"
                   >
                     <span class="card-name">{{ player.nickname }}
@@ -236,7 +236,7 @@
                   <span class="member-count">{{ (teams[captainId] ?? []).length }}명</span>
                 </div>
                 <div class="captain-info">
-                  <span class="captain-tier" :class="`tier--${playerById(captainId)?.tier.toLowerCase()}`">
+                  <span class="captain-tier" :class="`tier--${$tierClass(playerById(captainId)?.tier)}`">
                     {{ playerById(captainId)?.tier }}
                   </span>
                   <span class="captain-race" :class="`race--${playerById(captainId)?.race.toLowerCase()}`">
@@ -252,7 +252,7 @@
                       <span
                         v-if="teamTierCount(captainId, tier) > 0"
                         class="stat-chip"
-                        :class="`tier--${tier.toLowerCase()}`"
+                        :class="`tier--${$tierClass(tier)}`"
                       >{{ tier }}{{ teamTierCount(captainId, tier) }}</span>
                     </template>
                   </div>
@@ -275,7 +275,7 @@
                   :key="member.id"
                   class="player-card player-card--member"
                   :class="{
-                    [`tier-bg--${member.tier.toLowerCase()}`]: true,
+                    [`tier-bg--${$tierClass(member.tier)}`]: true,
                     'is-dragging': !seedSwapMode && !isSaved && draggingId === member.id,
                     'swap-selected': seedSwapMode && swapSel?.member.id === member.id,
                     'swap-locked': seedSwapMode && lockedIds.has(member.id),

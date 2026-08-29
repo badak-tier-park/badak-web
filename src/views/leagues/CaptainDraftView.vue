@@ -32,7 +32,7 @@
               ✦ 내 차례
             </span>
             <span v-else class="topbar-turn">
-              <span class="topbar-turn-name" :class="`tier--${playerById(currentCaptainId!)?.tier.toLowerCase()}`">
+              <span class="topbar-turn-name" :class="`tier--${$tierClass(playerById(currentCaptainId!)?.tier)}`">
                 {{ playerById(currentCaptainId!)?.nickname }}
               </span>
               님이 선택 중...
@@ -82,7 +82,7 @@
                 v-for="tier in availableTiers"
                 :key="tier"
                 class="tier-filter-btn"
-                :class="[`tier-filter-btn--${tier.toLowerCase()}`, { active: selectedTier === tier }]"
+                :class="[`tier-filter-btn--${$tierClass(tier)}`, { active: selectedTier === tier }]"
                 @click="selectedTier = selectedTier === tier ? null : tier"
               >{{ tier }}</button>
             </div>
@@ -90,7 +90,7 @@
           <div class="pool-body">
             <template v-for="tier in availableTiers" :key="tier">
               <div v-if="playersByTierRace[tier] && (selectedTier === null || selectedTier === tier)" class="tier-section">
-                <div class="tier-section-label" :class="`tier--${tier.toLowerCase()}`">
+                <div class="tier-section-label" :class="`tier--${$tierClass(tier)}`">
                   <span class="tier-letter">{{ tier }}</span>
                   <span class="tier-count">{{ tierCount(tier) }}명</span>
                 </div>
@@ -100,7 +100,7 @@
                     :key="player.id"
                     class="player-card"
                     :class="[
-                      `tier-bg--${player.tier.toLowerCase()}`,
+                      `tier-bg--${$tierClass(player.tier)}`,
                       { 'player-card--pickable': isMyTurn },
                       { 'is-dragging': draggingId === player.id },
                     ]"
@@ -148,7 +148,7 @@
                     </div>
                   </div>
                   <div class="captain-info">
-                    <span class="captain-tier" :class="`tier--${playerById(cid)?.tier.toLowerCase()}`">
+                    <span class="captain-tier" :class="`tier--${$tierClass(playerById(cid)?.tier)}`">
                       {{ playerById(cid)?.tier }}
                     </span>
                     <span class="captain-race" :class="`race--${playerById(cid)?.race.toLowerCase()}`">
@@ -164,7 +164,7 @@
                         <span
                           v-if="teamTierCount(cid, tier) > 0"
                           class="stat-chip"
-                          :class="`tier--${tier.toLowerCase()}`"
+                          :class="`tier--${$tierClass(tier)}`"
                         >{{ tier }}{{ teamTierCount(cid, tier) }}</span>
                       </template>
                     </div>
@@ -187,7 +187,7 @@
                     :key="member.id"
                     class="player-card player-card--member"
                     :class="[
-                      `tier-bg--${member.tier.toLowerCase()}`,
+                      `tier-bg--${$tierClass(member.tier)}`,
                       { 'is-dragging': draggingId === member.id },
                     ]"
                     @pointerdown="cid === myCaptainId && onPointerDown($event, member.id, cid)"

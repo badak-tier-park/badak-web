@@ -64,7 +64,7 @@
                 v-for="tier in league.eligible_tiers"
                 :key="tier"
                 class="tier-chip"
-                :class="`tier-chip--${tier.toLowerCase()}`"
+                :class="`tier-chip--${$tierClass(tier)}`"
               >{{ tier }}</span>
             </span>
           </div>
@@ -174,13 +174,13 @@
                 </div>
                 <div class="roster-member roster-member--captain">
                   <span class="roster-role">팀장</span>
-                  <span class="roster-tier" :class="`tier-badge--${team.captainTier.toLowerCase()}`">{{ team.captainTier }}</span>
+                  <span class="roster-tier" :class="`tier-badge--${$tierClass(team.captainTier)}`">{{ team.captainTier }}</span>
                   <span class="roster-race" :class="`race-badge--${team.captainRace.toLowerCase()}`">{{ team.captainRace }}</span>
                   <span class="roster-nick">{{ team.captainNickname }}</span>
                 </div>
                 <div v-if="team.viceCaptain" class="roster-member roster-member--vice">
                   <span class="roster-role">부팀장</span>
-                  <span class="roster-tier" :class="`tier-badge--${team.viceCaptain.tier.toLowerCase()}`">{{ team.viceCaptain.tier }}</span>
+                  <span class="roster-tier" :class="`tier-badge--${$tierClass(team.viceCaptain.tier)}`">{{ team.viceCaptain.tier }}</span>
                   <span class="roster-race" :class="`race-badge--${team.viceCaptain.race.toLowerCase()}`">{{ team.viceCaptain.race }}</span>
                   <span class="roster-nick">{{ team.viceCaptain.nickname }}</span>
                 </div>
@@ -190,7 +190,7 @@
                   class="roster-member"
                 >
                   <span class="roster-role roster-role--member">팀원</span>
-                  <span class="roster-tier" :class="`tier-badge--${m.tier.toLowerCase()}`">{{ m.tier }}</span>
+                  <span class="roster-tier" :class="`tier-badge--${$tierClass(m.tier)}`">{{ m.tier }}</span>
                   <span class="roster-race" :class="`race-badge--${m.race.toLowerCase()}`">{{ m.race }}</span>
                   <span class="roster-nick">{{ m.nickname }}</span>
                 </div>
@@ -618,7 +618,7 @@
                       v-for="tier in ACE_TIERS"
                       :key="tier"
                       class="ace-ban-tier-btn"
-                      :class="[`tier-badge--${tier.toLowerCase()}`, { 'ace-ban-tier-btn--selected': entryModal.aceTierBan === tier }]"
+                      :class="[`tier-badge--${$tierClass(tier)}`, { 'ace-ban-tier-btn--selected': entryModal.aceTierBan === tier }]"
                       type="button"
                       :disabled="entryModal.readonly"
                       @click="!entryModal.readonly && (entryModal.aceTierBan = entryModal.aceTierBan === tier ? null : tier)"

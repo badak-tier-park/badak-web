@@ -48,7 +48,7 @@
                     }"
                     @click="setWinner(match, match.team_a_captain_id)"
                   >
-                    <span class="team-chip" :class="`tier--${teamMap.get(match.team_a_captain_id)?.tier.toLowerCase()}`">
+                    <span class="team-chip" :class="`tier--${$tierClass(teamMap.get(match.team_a_captain_id)?.tier)}`">
                       {{ teamName(match.team_a_captain_id) }}
                     </span>
                     <span v-if="match.winner_captain_id === match.team_a_captain_id" class="win-badge">WIN</span>
@@ -64,7 +64,7 @@
                     }"
                     @click="setWinner(match, match.team_b_captain_id)"
                   >
-                    <span class="team-chip" :class="`tier--${teamMap.get(match.team_b_captain_id)?.tier.toLowerCase()}`">
+                    <span class="team-chip" :class="`tier--${$tierClass(teamMap.get(match.team_b_captain_id)?.tier)}`">
                       {{ teamName(match.team_b_captain_id) }}
                     </span>
                     <span v-if="match.winner_captain_id === match.team_b_captain_id" class="win-badge">WIN</span>

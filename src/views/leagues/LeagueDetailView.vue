@@ -152,7 +152,7 @@
         <div class="captain-list">
           <div v-for="(playerId, i) in captains" :key="playerId" class="captain-row">
             <span class="captain-order-badge">{{ i + 1 }}</span>
-            <span class="captain-tier" :class="`tier--${playerById(playerId)?.tier.toLowerCase()}`">
+            <span class="captain-tier" :class="`tier--${$tierClass(playerById(playerId)?.tier)}`">
               {{ playerById(playerId)?.tier }}
             </span>
             <span class="captain-race" :class="`race--${playerById(playerId)?.race.toLowerCase()}`">
@@ -204,7 +204,7 @@
         <div class="captain-list">
           <div v-for="(playerId, i) in seedHolders" :key="playerId" class="captain-row">
             <span class="captain-order-badge">{{ i + 1 }}</span>
-            <span class="captain-tier" :class="`tier--${playerById(playerId)?.tier.toLowerCase()}`">
+            <span class="captain-tier" :class="`tier--${$tierClass(playerById(playerId)?.tier)}`">
               {{ playerById(playerId)?.tier }}
             </span>
             <span class="captain-race" :class="`race--${playerById(playerId)?.race.toLowerCase()}`">
@@ -357,7 +357,7 @@
               :disabled="captains.includes(player.id)"
               @click="assignCaptain(player.id)"
             >
-              <span class="picker-tier" :class="`tier--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
+              <span class="picker-tier" :class="`tier--${$tierClass(player.tier)}`">{{ player.tier }}</span>
               <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
               <span class="picker-name">{{ player.nickname }}</span>
               <svg v-if="captains.includes(player.id)" class="picker-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -394,7 +394,7 @@
               :class="{ selected: seedHolders.includes(player.id) }"
               @click="assignSeedHolder(player.id)"
             >
-              <span class="picker-tier" :class="`tier--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
+              <span class="picker-tier" :class="`tier--${$tierClass(player.tier)}`">{{ player.tier }}</span>
               <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
               <span class="picker-name">{{ player.nickname }}</span>
               <svg v-if="seedHolders.includes(player.id)" class="picker-check" width="14" height="14" viewBox="0 0 14 14" fill="none">

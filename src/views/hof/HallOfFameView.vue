@@ -30,7 +30,7 @@
                   <div class="hof-team-header">
                     <span class="hof-place-icon">🏆</span>
                     <span class="hof-place-label hof-place-label--champion">우승</span>
-                    <span class="hof-team-name" :class="`tier-badge--${award.champion.captainTier.toLowerCase()}`">
+                    <span class="hof-team-name" :class="`tier-badge--${$tierClass(award.champion.captainTier)}`">
                       {{ award.champion.teamName }}
                     </span>
                     <button class="hof-members-toggle" @click="toggleMembers(award.leagueId, 'champion')">
@@ -42,7 +42,7 @@
                       v-for="m in award.champion.members"
                       :key="m.id"
                       class="hof-member-chip"
-                      :class="`tier-badge--${m.tier.toLowerCase()}`"
+                      :class="`tier-badge--${$tierClass(m.tier)}`"
                     >
                       <span v-if="m.race" class="hof-member-race" :class="`race-badge--${m.race.toLowerCase()}`">{{ m.race.toUpperCase() }}</span>
                       {{ m.nickname }}
@@ -53,7 +53,7 @@
                   <div class="hof-team-header">
                     <span class="hof-place-icon">🥈</span>
                     <span class="hof-place-label hof-place-label--runner-up">준우승</span>
-                    <span class="hof-team-name" :class="`tier-badge--${award.runnerUp.captainTier.toLowerCase()}`">
+                    <span class="hof-team-name" :class="`tier-badge--${$tierClass(award.runnerUp.captainTier)}`">
                       {{ award.runnerUp.teamName }}
                     </span>
                     <button class="hof-members-toggle" @click="toggleMembers(award.leagueId, 'runner-up')">
@@ -65,7 +65,7 @@
                       v-for="m in award.runnerUp.members"
                       :key="m.id"
                       class="hof-member-chip"
-                      :class="`tier-badge--${m.tier.toLowerCase()}`"
+                      :class="`tier-badge--${$tierClass(m.tier)}`"
                     >
                       <span v-if="m.race" class="hof-member-race" :class="`race-badge--${m.race.toLowerCase()}`">{{ m.race.toUpperCase() }}</span>
                       {{ m.nickname }}

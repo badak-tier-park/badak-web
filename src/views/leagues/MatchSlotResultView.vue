@@ -17,7 +17,7 @@
           <div class="match-info-title">경기 결과 입력</div>
           <div class="match-info-teams">
             <div class="match-team-col">
-              <span class="match-team-badge" :class="`tier-badge--${teamA?.tier.toLowerCase()}`">
+              <span class="match-team-badge" :class="`tier-badge--${$tierClass(teamA?.tier)}`">
                 {{ teamA?.teamName || teamA?.nickname }}
               </span>
               <span v-if="entryPointsA > 0" class="match-team-pts">{{ entryPointsA }}pt</span>
@@ -29,7 +29,7 @@
               </div>
             </div>
             <div class="match-team-col match-team-col--right">
-              <span class="match-team-badge" :class="`tier-badge--${teamB?.tier.toLowerCase()}`">
+              <span class="match-team-badge" :class="`tier-badge--${$tierClass(teamB?.tier)}`">
                 {{ teamB?.teamName || teamB?.nickname }}
               </span>
               <span v-if="entryPointsB > 0" class="match-team-pts">{{ entryPointsB }}pt</span>
@@ -79,11 +79,11 @@
                     <div v-for="(p, idx) in getActivePlayers(slot.num, true)" :key="p.id" class="slot-player-row">
                       <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
                       <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
-                      <span class="slot-player-name" :class="`tier-badge--${p.tier.toLowerCase()}`">{{ p.nickname }}</span>
+                      <span class="slot-player-name" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.nickname }}</span>
                       <span v-if="isSubstituted(slot.num, true, idx)" class="sub-badge">대체</span>
                     </div>
                   </template>
-                  <span v-else class="slot-team-name" :class="`tier-badge--${teamA?.tier.toLowerCase()}`">
+                  <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamA?.tier)}`">
                     {{ teamA?.teamName || teamA?.nickname }}
                   </span>
                 </div>
@@ -123,12 +123,12 @@
                   <template v-if="slotPlayerMap.get(slot.num)?.teamB?.length">
                     <div v-for="(p, idx) in getActivePlayers(slot.num, false)" :key="p.id" class="slot-player-row slot-player-row--right">
                       <span v-if="isSubstituted(slot.num, false, idx)" class="sub-badge">대체</span>
-                      <span class="slot-player-name" :class="`tier-badge--${p.tier.toLowerCase()}`">{{ p.nickname }}</span>
+                      <span class="slot-player-name" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.nickname }}</span>
                       <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
                       <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
                     </div>
                   </template>
-                  <span v-else class="slot-team-name" :class="`tier-badge--${teamB?.tier.toLowerCase()}`">
+                  <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamB?.tier)}`">
                     {{ teamB?.teamName || teamB?.nickname }}
                   </span>
                 </div>
@@ -175,7 +175,7 @@
                 <!-- 중앙: 사다리 버튼 또는 확정 티어 -->
                 <div class="ace-tier-center">
                   <template v-if="aceData.aceTier">
-                    <span class="ace-confirmed-tier" :class="`tier-badge--${aceData.aceTier.toLowerCase()}`">
+                    <span class="ace-confirmed-tier" :class="`tier-badge--${$tierClass(aceData.aceTier)}`">
                       {{ aceData.aceTier }} 티어
                     </span>
                     <button v-if="!isCompleted && (!(isSuperAce && aceTierCandidates.length === 1) || noEligiblePlayers)" class="ace-reset-btn" @click="resetAceTier">초기화</button>
@@ -259,9 +259,9 @@
                       <div class="slot-players">
                         <div v-if="acePlayerA" class="slot-player-row">
                           <span v-if="acePlayerA.race" class="slot-race" :class="`race-badge--${acePlayerA.race.toLowerCase()}`">{{ acePlayerA.race }}</span>
-                          <span class="slot-player-name" :class="`tier-badge--${acePlayerA.tier!.toLowerCase()}`">{{ acePlayerA.label }}</span>
+                          <span class="slot-player-name" :class="`tier-badge--${$tierClass(acePlayerA.tier!)}`">{{ acePlayerA.label }}</span>
                         </div>
-                        <span v-else class="slot-team-name" :class="`tier-badge--${teamA?.tier.toLowerCase()}`">
+                        <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamA?.tier)}`">
                           {{ teamA?.teamName || teamA?.nickname }}
                         </span>
                       </div>
@@ -290,10 +290,10 @@
                       <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_b_captain_id" class="win-badge">WIN</span>
                       <div class="slot-players">
                         <div v-if="acePlayerB" class="slot-player-row slot-player-row--right">
-                          <span class="slot-player-name" :class="`tier-badge--${acePlayerB.tier!.toLowerCase()}`">{{ acePlayerB.label }}</span>
+                          <span class="slot-player-name" :class="`tier-badge--${$tierClass(acePlayerB.tier!)}`">{{ acePlayerB.label }}</span>
                           <span v-if="acePlayerB.race" class="slot-race" :class="`race-badge--${acePlayerB.race.toLowerCase()}`">{{ acePlayerB.race }}</span>
                         </div>
-                        <span v-else class="slot-team-name" :class="`tier-badge--${teamB?.tier.toLowerCase()}`">
+                        <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamB?.tier)}`">
                           {{ teamB?.teamName || teamB?.nickname }}
                         </span>
                       </div>
@@ -387,7 +387,7 @@
               v-for="tier in aceTierCandidates"
               :key="tier"
               class="ladder-tier-btn"
-              :class="[`tier-badge--${tier.toLowerCase()}`, { 'ladder-tier-btn--selected': tierPickResult === tier }]"
+              :class="[`tier-badge--${$tierClass(tier)}`, { 'ladder-tier-btn--selected': tierPickResult === tier }]"
               @click="tierPickResult = tier"
             >
               {{ tier }} 티어
@@ -430,7 +430,7 @@
               :disabled="savingSub"
               @click="confirmSub(opt.value)"
             >
-              <span class="slot-player-name" :class="`tier-badge--${opt.tier!.toLowerCase()}`">{{ opt.label }}</span>
+              <span class="slot-player-name" :class="`tier-badge--${$tierClass(opt.tier!)}`">{{ opt.label }}</span>
               <span v-if="opt.race" class="slot-race" :class="`race-badge--${opt.race.toLowerCase()}`">{{ opt.race.toUpperCase() }}</span>
               <span class="sub-player-pts">{{ opt.points }}pt</span>
             </button>

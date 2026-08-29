@@ -65,7 +65,7 @@
                   v-for="tier in league.eligible_tiers"
                   :key="tier"
                   class="tier-chip"
-                  :class="`tier-chip--${tier.toLowerCase()}`"
+                  :class="`tier-chip--${$tierClass(tier)}`"
                 >{{ tier }}</span>
               </div>
             </div>

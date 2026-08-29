@@ -27,7 +27,7 @@
           <div v-for="row in rows" :key="row.captainId" class="team-row">
             <div class="team-captain-info">
               <span class="team-label">Team</span>
-              <span class="captain-chip" :class="`tier--${row.tier.toLowerCase()}`">{{ row.nickname }}</span>
+              <span class="captain-chip" :class="`tier--${$tierClass(row.tier)}`">{{ row.nickname }}</span>
             </div>
 
             <div class="team-fields">
