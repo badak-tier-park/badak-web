@@ -88,7 +88,7 @@
             </div>
           </div>
           <div class="pool-body">
-            <template v-for="tier in TIER_ORDER" :key="tier">
+            <template v-for="tier in availableTiers" :key="tier">
               <div v-if="playersByTierRace[tier] && (selectedTier === null || selectedTier === tier)" class="tier-section">
                 <div class="tier-section-label" :class="`tier--${tier.toLowerCase()}`">
                   <span class="tier-letter">{{ tier }}</span>
@@ -160,7 +160,7 @@
                   <!-- 팀 통계 -->
                   <div class="team-stats">
                     <div class="team-stats-row">
-                      <template v-for="tier in TIER_ORDER" :key="tier">
+                      <template v-for="tier in presentTiers" :key="tier">
                         <span
                           v-if="teamTierCount(cid, tier) > 0"
                           class="stat-chip"
@@ -224,7 +224,7 @@ import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
 import { getDraftPicks, addSinglePick, deleteSinglePick } from '@/lib/draft'
 import { setPicksCompleted } from '@/lib/leagues'
-import { TIER_ORDER, RACE_ORDER } from '@/lib/constants'
+import { RACE_ORDER, tierPoint } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth'
 import { useDraftDnD } from '@/composables/useDraftDnD'
 
@@ -277,8 +277,14 @@ const playersByTierRace = computed(() => {
 
 const selectedTier = ref<string | null>(null)
 
+/** 선수 풀에 실제 존재하는 티어 (상위 → 하위) */
 const availableTiers = computed(() =>
-  TIER_ORDER.filter(tier => playersByTierRace.value[tier]),
+  Object.keys(playersByTierRace.value).sort((a, b) => tierPoint(b) - tierPoint(a)),
+)
+
+/** 리그 선수단에 실제 존재하는 티어 (상위 → 하위) — 팀 통계용 */
+const presentTiers = computed(() =>
+  [...new Set(allPlayers.value.map(p => p.tier))].sort((a, b) => tierPoint(b) - tierPoint(a)),
 )
 
 function tierCount(tier: string) {

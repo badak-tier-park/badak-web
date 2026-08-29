@@ -157,7 +157,7 @@
           </div>
 
           <div class="pool-body">
-            <template v-for="tier in TIER_ORDER" :key="tier">
+            <template v-for="tier in poolTiers" :key="tier">
               <div v-if="playersByTierRace[tier]" class="tier-section">
                 <div class="tier-section-label" :class="`tier--${tier.toLowerCase()}`">
                   <span class="tier-letter">{{ tier }}</span>
@@ -248,7 +248,7 @@
                 <!-- 팀 통계 -->
                 <div class="team-stats">
                   <div class="team-stats-row">
-                    <template v-for="tier in TIER_ORDER" :key="tier">
+                    <template v-for="tier in presentTiers" :key="tier">
                       <span
                         v-if="teamTierCount(captainId, tier) > 0"
                         class="stat-chip"
@@ -358,7 +358,7 @@ import { getLeague, getLeagueCreatorPlayerId, setPicksCompleted, setDraftComplet
 import { getPlayers, type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders, savePlayerSnapshots } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, addSinglePick, deleteSinglePick, getSwapLog, saveSwapLog } from '@/lib/draft'
-import { TIER_ORDER, RACE_ORDER } from '@/lib/constants'
+import { RACE_ORDER, tierPoint } from '@/lib/constants'
 import { useToast } from '@/composables/useToast'
 import { useDraftDnD } from '@/composables/useDraftDnD'
 import { useSeedSwap } from '@/composables/useSeedSwap'
@@ -562,6 +562,16 @@ const playersByTierRace = computed(() => {
   }
   return result
 })
+
+/** 선수 풀에 실제 존재하는 티어 (상위 → 하위) */
+const poolTiers = computed(() =>
+  Object.keys(playersByTierRace.value).sort((a, b) => tierPoint(b) - tierPoint(a)),
+)
+
+/** 리그 선수단에 실제 존재하는 티어 (상위 → 하위) — 팀 통계용 */
+const presentTiers = computed(() =>
+  [...new Set(allPlayers.value.map(p => p.tier))].sort((a, b) => tierPoint(b) - tierPoint(a)),
+)
 
 function tierCount(tier: string) {
   return RACE_ORDER.reduce((sum, r) => sum + (playersByTierRace.value[tier]?.[r]?.length ?? 0), 0)
