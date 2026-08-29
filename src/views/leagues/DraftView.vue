@@ -355,8 +355,8 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import AppHeader from '@/components/AppHeader.vue'
 import { supabase } from '@/lib/supabase'
 import { getLeague, getLeagueCreatorPlayerId, setPicksCompleted, setDraftCompleted, setDraftStarted, type LeagueRow } from '@/lib/leagues'
-import { getPlayers, type PlayerRow } from '@/lib/players'
-import { getCaptains, getSeedHolders, savePlayerSnapshots } from '@/lib/leagueDetail'
+import { type PlayerRow } from '@/lib/players'
+import { getCaptains, getSeedHolders, savePlayerSnapshots, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, addSinglePick, deleteSinglePick, getSwapLog, saveSwapLog } from '@/lib/draft'
 import { RACE_ORDER, tierPoint } from '@/lib/constants'
 import { useToast } from '@/composables/useToast'
@@ -388,7 +388,7 @@ onMounted(async () => {
   try {
     const [leagueData, playersData, captainsData, draftPicksData, seedHoldersData, swapLogData, creatorId] = await Promise.all([
       getLeague(leagueId),
-      getPlayers(),
+      getLeaguePlayers(leagueId),
       getCaptains(leagueId),
       getDraftPicks(leagueId),
       getSeedHolders(leagueId),

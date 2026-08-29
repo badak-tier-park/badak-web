@@ -477,9 +477,9 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import AppHeader from '@/components/AppHeader.vue'
 import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
-import { getPlayers, type PlayerRow } from '@/lib/players'
+import { type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
-import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders } from '@/lib/leagueDetail'
+import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders, getLeaguePlayers } from '@/lib/leagueDetail'
 import { FontSize } from '@/lib/tiptapFontSize'
 import { tierPoint } from '@/lib/constants'
 import { useToast } from '@/composables/useToast'
@@ -539,7 +539,7 @@ onMounted(async () => {
   try {
     const [leagueData, playersData, mapsData, captainsData, matchMapsData, seedHoldersData, creatorId] = await Promise.all([
       getLeague(leagueId),
-      getPlayers(),
+      getLeaguePlayers(leagueId),
       getMaps(),
       getCaptains(leagueId),
       getMatchMaps(leagueId),

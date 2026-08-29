@@ -75,8 +75,8 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { getLeague, setTeamNamesCompleted, type LeagueRow } from '@/lib/leagues'
-import { getCaptains } from '@/lib/leagueDetail'
-import { getPlayers, type PlayerRow } from '@/lib/players'
+import { getCaptains, getLeaguePlayers } from '@/lib/leagueDetail'
+import { type PlayerRow } from '@/lib/players'
 import { getTeamNames, saveTeamNames } from '@/lib/teamNames'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
 import { computeFinalRosters } from '@/lib/entries'
@@ -110,7 +110,7 @@ onMounted(async () => {
     const [leagueData, captains, players, teamNames, draftPicks, swapLog] = await withTimeout(Promise.all([
       getLeague(leagueId),
       getCaptains(leagueId),
-      getPlayers(),
+      getLeaguePlayers(leagueId),
       getTeamNames(leagueId),
       getDraftPicks(leagueId),
       getSwapLog(leagueId),
