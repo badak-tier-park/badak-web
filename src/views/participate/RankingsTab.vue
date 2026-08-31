@@ -26,7 +26,7 @@
           <td class="col-user">
             <span class="rank-race" :class="`race--${r.race.toLowerCase()}`">{{ r.race }}</span>
             <span class="rank-nick">{{ r.nickname }}</span>
-            <span class="rank-tier" :class="`tier-badge--${r.tier.toLowerCase()}`">{{ r.tier }}</span>
+            <span class="rank-tier" :class="`tier-badge--${$tierClass(r.tier)}`">{{ r.tier }}</span>
           </td>
           <td class="col-points">{{ r.total_points }}</td>
           <td class="col-correct">{{ r.correct_count }} / {{ r.resolved_count }}</td>

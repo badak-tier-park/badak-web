@@ -3,7 +3,7 @@ import type { CaptainRow } from './leagueDetail'
 import type { DraftPickRow, SwapLogRow } from './draft'
 
 // ── 상수 ────────────────────────────────────────────────────
-export const TIER_POINTS: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
+export { TIER_POINTS } from './constants'
 export const INDIVIDUAL_SLOTS = [1, 2, 3, 5, 6] as const
 export const TEAM_SLOT = 4
 // NOTE: 엔트리 포인트 한도(개인전 / 팀전 / 전체)는 리그별로 leagues 테이블의

@@ -62,7 +62,7 @@
                           <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                           <span v-if="isRandomPlayer(teamACaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
                           <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
-                          <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                          <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
                           <span v-if="isSubstituted(teamACaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
                         </div>
                       </div>
@@ -81,7 +81,7 @@
                     >
                       <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                       <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
-                      <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                      <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
                       <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
                     </div>
                   </template>
@@ -116,7 +116,7 @@
                           class="rse-player"
                         >
                           <span v-if="isSubstituted(teamBCaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
-                          <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                          <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
                           <span v-if="isRandomPlayer(teamBCaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
                           <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                           <span class="rse-pt">{{ playerPt(pid) }}pt</span>
@@ -135,7 +135,7 @@
                       class="rse-player"
                     >
                       <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
-                      <span class="rse-name-badge" :class="`tier-badge--${playerTier(pid).toLowerCase()}`">{{ playerName(pid) }}</span>
+                      <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
                       <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                       <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                     </div>
@@ -208,7 +208,7 @@
                         v-for="tier in ALL_TIERS"
                         :key="tier"
                         class="ace-tier-ban-btn"
-                        :class="[`tier-badge--${tier.toLowerCase()}`, { 'ace-tier-ban-btn--banned': aceTierBanA === tier || aceTierBanB === tier }]"
+                        :class="[`tier-badge--${$tierClass(tier)}`, { 'ace-tier-ban-btn--banned': aceTierBanA === tier || aceTierBanB === tier }]"
                       >
                         <span class="ace-tier-ban-letter">{{ tier }}</span>
                         <span class="ace-tier-ban-sub">티어</span>
@@ -222,7 +222,7 @@
                   <!-- 경기 결과: 확정 티어 or 사다리타기 -->
                   <template v-else>
                     <div v-if="aceSlotResult?.ace_tier" class="ace-confirmed-tier">
-                      <span :class="`tier-badge--${aceSlotResult.ace_tier.toLowerCase()}`" class="ace-tier-chip">{{ aceSlotResult.ace_tier }}</span>
+                      <span :class="`tier-badge--${$tierClass(aceSlotResult.ace_tier)}`" class="ace-tier-chip">{{ aceSlotResult.ace_tier }}</span>
                       <span class="ace-tier-sub">에이스 티어</span>
                     </div>
                     <div v-else class="rse-undecided">티어 사다리타기</div>
@@ -244,7 +244,7 @@
                   <div v-if="aceSlotResult?.ace_player_a_id" class="rse-player">
                     <span class="rse-pt">{{ playerPt(aceSlotResult.ace_player_a_id) }}pt</span>
                     <span class="rse-race" :class="`race-badge--${playerRace(aceSlotResult.ace_player_a_id).toLowerCase()}`">{{ playerRace(aceSlotResult.ace_player_a_id) }}</span>
-                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(aceSlotResult.ace_player_a_id).toLowerCase()}`">{{ playerName(aceSlotResult.ace_player_a_id) }}</span>
+                    <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(aceSlotResult.ace_player_a_id))}`">{{ playerName(aceSlotResult.ace_player_a_id) }}</span>
                     <span v-if="showResults && slotWinner(7) === teamACaptainId" class="rse-win-badge">WIN</span>
                   </div>
                 </div>
@@ -273,7 +273,7 @@
                 >
                   <div v-if="aceSlotResult?.ace_player_b_id" class="rse-player">
                     <span v-if="showResults && slotWinner(7) === teamBCaptainId" class="rse-win-badge">WIN</span>
-                    <span class="rse-name-badge" :class="`tier-badge--${playerTier(aceSlotResult.ace_player_b_id).toLowerCase()}`">{{ playerName(aceSlotResult.ace_player_b_id) }}</span>
+                    <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(aceSlotResult.ace_player_b_id))}`">{{ playerName(aceSlotResult.ace_player_b_id) }}</span>
                     <span class="rse-race" :class="`race-badge--${playerRace(aceSlotResult.ace_player_b_id).toLowerCase()}`">{{ playerRace(aceSlotResult.ace_player_b_id) }}</span>
                     <span class="rse-pt">{{ playerPt(aceSlotResult.ace_player_b_id) }}pt</span>
                   </div>
@@ -312,6 +312,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { getScheduleEntries, TIER_POINTS, getAceTierBans, type EntryRecord } from '@/lib/entries'
+import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getMatchMaps } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getPlayers, type PlayerRow } from '@/lib/players'
@@ -343,7 +344,7 @@ const roundLabel = computed(() => {
 
 defineEmits<{ close: [] }>()
 
-const ALL_TIERS = ['A', 'B', 'C', 'D', 'E'] as const
+const ALL_TIERS = TIER_ORDER
 
 const SLOT_CONFIG = [
   { num: 1, type: 'individual' },
@@ -495,8 +496,8 @@ function resolvePickInReveal(
 
   const playerIdA = getSlotPlayerIds(props.teamACaptainId, slotNum)[0]
   const playerIdB = getSlotPlayerIds(props.teamBCaptainId, slotNum)[0]
-  const rankA = playerIdA ? (TIER_RANK[playerTier(playerIdA).toUpperCase()] ?? 0) : 0
-  const rankB = playerIdB ? (TIER_RANK[playerTier(playerIdB).toUpperCase()] ?? 0) : 0
+  const rankA = playerIdA ? tierPoint(playerTier(playerIdA)) : 0
+  const rankB = playerIdB ? tierPoint(playerTier(playerIdB)) : 0
   if (rankA === rankB) return null  // 동티어 → 사다리 필요
 
   return rankA < rankB ? (validPickA ?? validPickB!) : (validPickB ?? validPickA!)
@@ -585,7 +586,6 @@ const matchPointsB = computed(() => {
 
 // ── 밴 로직 ───────────────────────────────────────────────────
 
-const TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
 
 interface SlotMapResult {
   matchMapIds: Set<string>
@@ -620,8 +620,8 @@ const slotMapResults = computed<Record<number, SlotMapResult>>(() => {
             candidates = afterBoth
           } else {
             // 맵이 2개이고 서로 다른 밴 → 낮은 티어 팀의 밴 적용
-            const rankA = TIER_RANK[playerTier(props.teamACaptainId).toUpperCase()] ?? 0
-            const rankB = TIER_RANK[playerTier(props.teamBCaptainId).toUpperCase()] ?? 0
+            const rankA = tierPoint(playerTier(props.teamACaptainId))
+            const rankB = tierPoint(playerTier(props.teamBCaptainId))
             if (rankA !== rankB) {
               const effectiveBan = rankA <= rankB ? banA : banB
               bannedMapInfo.push({ mapId: effectiveBan, byTeamA: rankA <= rankB, byTeamB: rankB < rankA })

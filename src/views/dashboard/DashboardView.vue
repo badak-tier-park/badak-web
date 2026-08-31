@@ -61,7 +61,7 @@
               {{ playerInfo?.race }}
             </span>
             <h2 class="player-name">{{ selectedPlayer }}</h2>
-            <span v-if="playerInfo?.tier" class="player-tier" :class="`tier-badge--${playerInfo.tier.toLowerCase()}`">
+            <span v-if="playerInfo?.tier" class="player-tier" :class="`tier-badge--${$tierClass(playerInfo.tier)}`">
               {{ playerInfo.tier }}
             </span>
           </div>

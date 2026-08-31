@@ -64,7 +64,7 @@
                 v-for="tier in league.eligible_tiers"
                 :key="tier"
                 class="tier-chip"
-                :class="`tier-chip--${tier.toLowerCase()}`"
+                :class="`tier-chip--${$tierClass(tier)}`"
               >{{ tier }}</span>
             </span>
           </div>
@@ -174,13 +174,13 @@
                 </div>
                 <div class="roster-member roster-member--captain">
                   <span class="roster-role">팀장</span>
-                  <span class="roster-tier" :class="`tier-badge--${team.captainTier.toLowerCase()}`">{{ team.captainTier }}</span>
+                  <span class="roster-tier" :class="`tier-badge--${$tierClass(team.captainTier)}`">{{ team.captainTier }}</span>
                   <span class="roster-race" :class="`race-badge--${team.captainRace.toLowerCase()}`">{{ team.captainRace }}</span>
                   <span class="roster-nick">{{ team.captainNickname }}</span>
                 </div>
                 <div v-if="team.viceCaptain" class="roster-member roster-member--vice">
                   <span class="roster-role">부팀장</span>
-                  <span class="roster-tier" :class="`tier-badge--${team.viceCaptain.tier.toLowerCase()}`">{{ team.viceCaptain.tier }}</span>
+                  <span class="roster-tier" :class="`tier-badge--${$tierClass(team.viceCaptain.tier)}`">{{ team.viceCaptain.tier }}</span>
                   <span class="roster-race" :class="`race-badge--${team.viceCaptain.race.toLowerCase()}`">{{ team.viceCaptain.race }}</span>
                   <span class="roster-nick">{{ team.viceCaptain.nickname }}</span>
                 </div>
@@ -190,7 +190,7 @@
                   class="roster-member"
                 >
                   <span class="roster-role roster-role--member">팀원</span>
-                  <span class="roster-tier" :class="`tier-badge--${m.tier.toLowerCase()}`">{{ m.tier }}</span>
+                  <span class="roster-tier" :class="`tier-badge--${$tierClass(m.tier)}`">{{ m.tier }}</span>
                   <span class="roster-race" :class="`race-badge--${m.race.toLowerCase()}`">{{ m.race }}</span>
                   <span class="roster-nick">{{ m.nickname }}</span>
                 </div>
@@ -618,7 +618,7 @@
                       v-for="tier in ACE_TIERS"
                       :key="tier"
                       class="ace-ban-tier-btn"
-                      :class="[`tier-badge--${tier.toLowerCase()}`, { 'ace-ban-tier-btn--selected': entryModal.aceTierBan === tier }]"
+                      :class="[`tier-badge--${$tierClass(tier)}`, { 'ace-ban-tier-btn--selected': entryModal.aceTierBan === tier }]"
                       type="button"
                       :disabled="entryModal.readonly"
                       @click="!entryModal.readonly && (entryModal.aceTierBan = entryModal.aceTierBan === tier ? null : tier)"
@@ -674,6 +674,7 @@ import {
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
   type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
+import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { revealEntries } from '@/lib/schedules'
 import { notifyEntrySubmitted } from '@/lib/notifications'
 import { useAuthStore } from '@/stores/auth'
@@ -724,7 +725,7 @@ const SLOT_CONFIG = [
   { num: 6, type: 'individual', count: 1 },
 ] as const
 
-const ACE_TIERS = ['A', 'B', 'C', 'D', 'E'] as const
+const ACE_TIERS = TIER_ORDER
 
 // ── 상태 ─────────────────────────────────────────────────────
 const auth = useAuthStore()
@@ -774,7 +775,6 @@ const rosterModal = reactive({
   teams: [] as RosterTeam[],
 })
 
-const ROSTER_TIER_RANK: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1 }
 const ROSTER_RACE_RANK: Record<string, number> = { T: 3, Z: 2, P: 1 }
 
 async function openRosterList(league: LeagueRow) {
@@ -808,7 +808,7 @@ async function openRosterList(league: LeagueRow) {
           .map(id => playerMap.get(id))
           .filter((x): x is PlayerRow => Boolean(x))
           .sort((a, b) =>
-            (ROSTER_TIER_RANK[b.tier] ?? 0) - (ROSTER_TIER_RANK[a.tier] ?? 0)
+            tierPoint(b.tier) - tierPoint(a.tier)
             || (ROSTER_RACE_RANK[b.race] ?? 0) - (ROSTER_RACE_RANK[a.race] ?? 0)
             || a.nickname.localeCompare(b.nickname),
           )
