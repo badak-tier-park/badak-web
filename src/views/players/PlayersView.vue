@@ -15,22 +15,27 @@
         <span class="player-count" v-if="!loading">{{ players.length }}명</span>
       </div>
 
-      <div class="search-bar">
-        <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4"/>
-          <path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-        </svg>
-        <input
-          v-model="searchQuery"
-          class="search-input"
-          type="text"
-          placeholder="닉네임 검색"
-        />
-        <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      <div class="players-toolbar">
+        <div class="search-bar">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
           </svg>
-        </button>
+          <input
+            v-model="searchQuery"
+            class="search-input"
+            type="text"
+            placeholder="닉네임 검색"
+          />
+          <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="csv-actions">
+          <button class="btn-pill btn-pill--md btn-pill--ghost" @click="handleExportCsv">CSV 다운로드</button>
+        </div>
       </div>
 
       <div v-if="loading" class="state-msg">불러오는 중...</div>
@@ -285,6 +290,7 @@ function closePopover() { openPopover.value = null }
 import AppHeader from '@/components/AppHeader.vue'
 import { getPlayers, updatePlayer, type PlayerRow } from '@/lib/players'
 import { TIER_ORDER, RACE_ORDER, tierPoint } from '@/lib/constants'
+import { toCsv, downloadCsv } from '@/lib/csv'
 
 const players = ref<PlayerRow[]>([])
 const loading = ref(true)
@@ -334,6 +340,30 @@ const races = [
 const tiers = TIER_ORDER.map(value => ({ value }))
 
 const raceLabel = (r: string) => races.find(x => x.value === r)?.label ?? r
+
+// ── CSV 내보내기 ────────────────────────────────────────────
+const CSV_HEADERS = ['id', '닉네임', '종족', '티어', '군인', '상태']
+
+function playerToCsvRow(p: PlayerRow): string[] {
+  return [
+    String(p.id),
+    p.nickname,
+    p.race,
+    p.tier,
+    p.is_military ? 'O' : 'X',
+    p.is_active ? '활성' : '정지',
+  ]
+}
+
+function todayStamp(): string {
+  const d = new Date()
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+}
+
+function handleExportCsv() {
+  const rows = [CSV_HEADERS, ...displayedPlayers.value.map(playerToCsvRow)]
+  downloadCsv(`players_${todayStamp()}.csv`, toCsv(rows))
+}
 
 onMounted(async () => {
   try {

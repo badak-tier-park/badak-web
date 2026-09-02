@@ -22,6 +22,26 @@
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+// ── 툴바 (검색 + CSV) ─────────────────────────────────────
+.players-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .search-bar {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.csv-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 // ── 테이블 ────────────────────────────────────────────────
 .player-table {
   width: 100%;
