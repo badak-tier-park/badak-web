@@ -278,17 +278,17 @@
 // ── 선수 카드 ─────────────────────────────────────────────
 // ── 티어 배경색 카드 유틸 ─────────────────────────────────
 .tier-bg--a { background: var(--tier-a-bg) !important; border-color: var(--tier-a-border) !important; }
-.tier-bg--a-plus { background: var(--tier-a-bg) !important; border-color: var(--tier-a-border) !important; border-style: solid !important; }
-.tier-bg--a-minus { background: var(--tier-a-bg) !important; border-color: var(--tier-a-border) !important; border-style: dashed !important; }
+.tier-bg--a-plus { background: var(--tier-a-bg) !important; border-color: var(--tier-a-plus-border) !important; border-style: solid !important; }
+.tier-bg--a-minus { background: var(--tier-a-bg) !important; border-color: var(--tier-a-minus-border) !important; border-style: dashed !important; }
 .tier-bg--b { background: var(--tier-b-bg) !important; border-color: var(--tier-b-border) !important; }
-.tier-bg--b-plus { background: var(--tier-b-bg) !important; border-color: var(--tier-b-border) !important; border-style: solid !important; }
-.tier-bg--b-minus { background: var(--tier-b-bg) !important; border-color: var(--tier-b-border) !important; border-style: dashed !important; }
+.tier-bg--b-plus { background: var(--tier-b-bg) !important; border-color: var(--tier-b-plus-border) !important; border-style: solid !important; }
+.tier-bg--b-minus { background: var(--tier-b-bg) !important; border-color: var(--tier-b-minus-border) !important; border-style: dashed !important; }
 .tier-bg--c { background: var(--tier-c-bg) !important; border-color: var(--tier-c-border) !important; }
-.tier-bg--c-plus { background: var(--tier-c-bg) !important; border-color: var(--tier-c-border) !important; border-style: solid !important; }
-.tier-bg--c-minus { background: var(--tier-c-bg) !important; border-color: var(--tier-c-border) !important; border-style: dashed !important; }
+.tier-bg--c-plus { background: var(--tier-c-bg) !important; border-color: var(--tier-c-plus-border) !important; border-style: solid !important; }
+.tier-bg--c-minus { background: var(--tier-c-bg) !important; border-color: var(--tier-c-minus-border) !important; border-style: dashed !important; }
 .tier-bg--d { background: var(--tier-d-bg) !important; border-color: var(--tier-d-border) !important; }
-.tier-bg--d-plus { background: var(--tier-d-bg) !important; border-color: var(--tier-d-border) !important; border-style: solid !important; }
-.tier-bg--d-minus { background: var(--tier-d-bg) !important; border-color: var(--tier-d-border) !important; border-style: dashed !important; }
+.tier-bg--d-plus { background: var(--tier-d-bg) !important; border-color: var(--tier-d-plus-border) !important; border-style: solid !important; }
+.tier-bg--d-minus { background: var(--tier-d-bg) !important; border-color: var(--tier-d-minus-border) !important; border-style: dashed !important; }
 .tier-bg--e { background: var(--tier-e-bg) !important; border-color: var(--tier-e-border) !important; }
 
 .player-card {
