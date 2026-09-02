@@ -44,7 +44,7 @@
             <th>스타 닉네임</th>
             <th>종족</th>
             <th>티어</th>
-            <th>군인</th>
+            <th>상태</th>
             <th></th>
           </tr>
         </thead>
@@ -93,9 +93,10 @@
             <td>
               <span class="tier-badge" :class="`tier-badge--${$tierClass(player.tier)}`">{{ player.tier }}</span>
             </td>
-            <td class="td-military">
-              <span v-if="player.is_military" class="military-badge">군인</span>
-              <span v-else class="military-badge military-badge--none">-</span>
+            <td class="td-status">
+              <span v-if="player.is_military" class="status-badge status-badge--military">군인</span>
+              <span v-if="!player.is_active" class="status-badge status-badge--suspended">정지</span>
+              <span v-if="!player.is_military && player.is_active" class="status-badge status-badge--none">-</span>
             </td>
             <td class="td-action">
               <button class="edit-btn" @click="openEdit(player)">수정</button>
