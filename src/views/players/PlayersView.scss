@@ -42,6 +42,14 @@
   flex-shrink: 0;
 }
 
+.csv-file-input { display: none; }
+
+.csv-hint {
+  margin: -8px 0 12px;
+  font-size: 12px;
+  color: var(--c-text-faint);
+}
+
 // ── 테이블 ────────────────────────────────────────────────
 .player-table {
   width: 100%;
@@ -234,7 +242,10 @@
 }
 
 // ── 모달 (공통: _modal.scss via _page.scss) ─────────────
-.modal { max-width: 420px; }
+// .edit-modal로 범위를 좁혀 CSV 미리보기 모달(.modal--lg)과 크기가
+// 섞이지 않게 한다 — 둘 다 scoped라 specificity가 같아, 이 규칙이
+// 나중에 선언되면 소스 순서상 --lg를 덮어써버리기 때문.
+.modal.edit-modal { max-width: 420px; }
 
 .field-input--short { max-width: 120px; }
 
@@ -323,3 +334,87 @@
 }
 
 // ── 모달 푸터 / 버튼 (공통: _buttons.scss, _modal.scss via _page.scss)
+
+// ── CSV 업로드 미리보기 모달 ─────────────────────────────
+.import-summary {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--c-text-sub);
+}
+
+.import-errors {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+
+  ul { margin: 6px 0 0; padding-left: 18px; }
+}
+
+.import-errors-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #f87171;
+}
+
+.import-error-row {
+  font-size: 12px;
+  color: var(--c-text-sub);
+  line-height: 1.6;
+}
+
+.import-diff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.import-diff-row {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--c-overlay);
+  border: 1px solid var(--c-border-faint);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.import-diff-player {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.import-diff-id {
+  font-weight: 400;
+  color: var(--c-text-faint);
+}
+
+.import-diff-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.import-diff-field {
+  font-size: 12px;
+  color: var(--c-text-sub);
+}
+
+.diff-old {
+  color: var(--c-text-faint);
+  text-decoration: line-through;
+}
+
+.diff-new {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.import-progress {
+  font-size: 12px;
+  color: var(--c-text-muted);
+  margin: 0 0 8px;
+}
