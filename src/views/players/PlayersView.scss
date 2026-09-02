@@ -39,6 +39,23 @@
     text-transform: uppercase;
   }
 
+  .th-sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.12s;
+
+    &:hover { color: var(--c-text-sub); }
+  }
+
+  .sort-arrow {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 9px;
+    transition: transform 0.15s;
+
+    &--desc { transform: rotate(180deg); }
+  }
+
   tbody tr {
     border-bottom: 1px solid var(--c-border-faint);
     transition: background 0.12s;

@@ -39,17 +39,26 @@
       <table v-else class="player-table">
         <thead>
           <tr>
-            <th>닉네임</th>
+            <th class="th-sortable" @click="toggleSort('nickname')">
+              닉네임
+              <span v-if="sortKey === 'nickname'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
+            </th>
             <th>Alias</th>
             <th>스타 닉네임</th>
-            <th>종족</th>
-            <th>티어</th>
+            <th class="th-sortable" @click="toggleSort('race')">
+              종족
+              <span v-if="sortKey === 'race'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
+            </th>
+            <th class="th-sortable" @click="toggleSort('tier')">
+              티어
+              <span v-if="sortKey === 'tier'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
+            </th>
             <th>상태</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="player in filteredPlayers" :key="player.id">
+          <tr v-for="player in displayedPlayers" :key="player.id">
             <td class="td-nickname" :class="{ 'td-nickname--admin': player.is_admin }">{{ player.nickname }}</td>
             <td class="td-aliases">
               <span v-if="player.aliases.length" class="alias-list">
@@ -275,20 +284,45 @@ function togglePopover(id: number, field: PopoverField) {
 function closePopover() { openPopover.value = null }
 import AppHeader from '@/components/AppHeader.vue'
 import { getPlayers, updatePlayer, type PlayerRow } from '@/lib/players'
-import { TIER_ORDER } from '@/lib/constants'
+import { TIER_ORDER, RACE_ORDER, tierPoint } from '@/lib/constants'
 
 const players = ref<PlayerRow[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const searchQuery = ref('')
 
-const filteredPlayers = computed(() => {
+const searchedPlayers = computed(() => {
   const q = searchQuery.value.toLowerCase()
   if (!q) return players.value
   return players.value.filter(p =>
     p.nickname.toLowerCase().includes(q) ||
     p.aliases.some(a => a.toLowerCase().includes(q))
   )
+})
+
+// ── 정렬 ──────────────────────────────────────────────────
+type SortKey = 'nickname' | 'race' | 'tier'
+const sortKey = ref<SortKey | null>(null)
+const sortDir = ref<'asc' | 'desc'>('asc')
+
+function toggleSort(key: SortKey) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortDir.value = 'asc'
+  }
+}
+
+const displayedPlayers = computed(() => {
+  const list = searchedPlayers.value
+  if (!sortKey.value) return list
+  const dir = sortDir.value === 'asc' ? 1 : -1
+  return [...list].sort((a, b) => {
+    if (sortKey.value === 'nickname') return a.nickname.localeCompare(b.nickname, 'ko') * dir
+    if (sortKey.value === 'race') return (RACE_ORDER.indexOf(a.race) - RACE_ORDER.indexOf(b.race)) * dir
+    return (tierPoint(a.tier) - tierPoint(b.tier)) * dir
+  })
 })
 
 const races = [
