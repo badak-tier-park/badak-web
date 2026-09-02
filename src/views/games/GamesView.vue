@@ -221,8 +221,9 @@ const linkError = ref<string | null>(null)
 
 const filteredPlayerOptions = computed(() => {
   const q = playerSearch.value.toLowerCase()
-  if (!q) return players.value
-  return players.value.filter(p =>
+  const base = players.value.filter(p => p.is_active)
+  if (!q) return base
+  return base.filter(p =>
     p.nickname.toLowerCase().includes(q) ||
     p.aliases.some(a => a.toLowerCase().includes(q))
   )
