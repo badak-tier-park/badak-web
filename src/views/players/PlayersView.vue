@@ -382,10 +382,11 @@ function toggleSort(key: SortKey) {
 }
 
 const displayedPlayers = computed(() => {
-  const list = searchedPlayers.value
-  if (!sortKey.value) return list
   const dir = sortDir.value === 'asc' ? 1 : -1
-  return [...list].sort((a, b) => {
+  return [...searchedPlayers.value].sort((a, b) => {
+    // 정지된 선수는 정렬 기준과 무관하게 항상 최하단
+    if (a.is_active !== b.is_active) return a.is_active ? -1 : 1
+    if (!sortKey.value) return 0
     if (sortKey.value === 'nickname') return a.nickname.localeCompare(b.nickname, 'ko') * dir
     if (sortKey.value === 'race') return (RACE_ORDER.indexOf(a.race) - RACE_ORDER.indexOf(b.race)) * dir
     return (tierPoint(a.tier) - tierPoint(b.tier)) * dir
