@@ -251,4 +251,24 @@
   }
 }
 
+// ── 회원 상태 ─────────────────────────────────────────────
+.active-toggle {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &--off {
+    border-color: rgba(248, 113, 113, 0.5);
+    background: rgba(248, 113, 113, 0.1);
+    color: #f87171;
+  }
+}
+
 // ── 모달 푸터 / 버튼 (공통: _buttons.scss, _modal.scss via _page.scss)

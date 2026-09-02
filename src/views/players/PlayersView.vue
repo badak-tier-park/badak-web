@@ -206,7 +206,7 @@
                   v-for="t in tiers"
                   :key="t.value"
                   class="tier-btn"
-                  :class="[`tier-btn--${t.value.toLowerCase()}`, { active: form.tier === t.value }]"
+                  :class="[`tier-btn--${$tierClass(t.value)}`, { active: form.tier === t.value }]"
                   @click="form.tier = t.value"
                   type="button"
                 >
@@ -225,6 +225,19 @@
                 @click="form.is_military = !form.is_military"
               >
                 {{ form.is_military ? '군인 (엔트리 -1pt)' : '일반' }}
+              </button>
+            </div>
+
+            <!-- 회원 상태 -->
+            <div class="field">
+              <label class="field-label">회원 상태</label>
+              <button
+                type="button"
+                class="active-toggle"
+                :class="{ 'active-toggle--off': !form.is_active }"
+                @click="form.is_active = !form.is_active"
+              >
+                {{ form.is_active ? '활성' : '정지' }}
               </button>
             </div>
           </div>
@@ -304,7 +317,7 @@ onUnmounted(() => {
 
 // ── 수정 모달 ─────────────────────────────────────────────
 const editTarget = ref<PlayerRow | null>(null)
-const form = reactive({ nickname: '', aliases: [] as string[], star_nicknames: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '', is_military: false })
+const form = reactive({ nickname: '', aliases: [] as string[], star_nicknames: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '', is_military: false, is_active: true })
 const aliasInput = ref('')
 const starNicknameInput = ref('')
 const saving = ref(false)
@@ -338,6 +351,7 @@ function openEdit(player: PlayerRow) {
   form.race = player.race
   form.tier = player.tier
   form.is_military = player.is_military
+  form.is_active = player.is_active
   aliasInput.value = ''
   starNicknameInput.value = ''
   saveError.value = null
@@ -364,6 +378,7 @@ async function handleSave() {
       race: form.race,
       tier: form.tier.trim(),
       is_military: form.is_military,
+      is_active: form.is_active,
     })
     const idx = players.value.findIndex(p => p.id === updated.id)
     if (idx !== -1) players.value[idx] = updated
