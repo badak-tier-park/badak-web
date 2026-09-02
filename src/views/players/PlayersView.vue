@@ -34,18 +34,18 @@
           </button>
         </div>
         <div class="csv-actions">
-          <button class="btn-pill btn-pill--md btn-pill--ghost" @click="handleExportCsv">CSV 다운로드</button>
-          <button class="btn-pill btn-pill--md btn-pill--ghost" @click="triggerImportFile">CSV 업로드</button>
+          <button class="btn-pill btn-pill--md btn-pill--ghost" @click="handleExportXlsx">엑셀 다운로드</button>
+          <button class="btn-pill btn-pill--md btn-pill--ghost" @click="triggerImportFile">엑셀 업로드</button>
           <input
             ref="importFileInput"
             type="file"
-            accept=".csv,text/csv"
+            accept=".xlsx"
             class="csv-file-input"
             @change="handleImportFileChange"
           />
         </div>
       </div>
-      <p class="csv-hint">id/닉네임은 참고용이며 변경되지 않습니다.</p>
+      <p class="csv-hint">id/닉네임은 참고용이며 변경되지 않습니다. 종족·티어·군인·상태 칸은 엑셀에서 드롭다운으로만 선택할 수 있습니다.</p>
 
       <div v-if="loading" class="state-msg">불러오는 중...</div>
       <div v-else-if="loadError" class="state-msg state-msg--error">{{ loadError }}</div>
@@ -279,12 +279,12 @@
       </div>
     </Teleport>
 
-    <!-- CSV 업로드 미리보기 모달 -->
+    <!-- 엑셀 업로드 미리보기 모달 -->
     <Teleport to="body">
       <div v-if="importPreview !== null" class="modal-backdrop">
         <div class="modal modal--lg">
           <div class="modal-header">
-            <span class="modal-title">CSV 업로드 미리보기</span>
+            <span class="modal-title">엑셀 업로드 미리보기</span>
             <button class="modal-close" @click="closeImportPreview">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -351,7 +351,7 @@ function closePopover() { openPopover.value = null }
 import AppHeader from '@/components/AppHeader.vue'
 import { getPlayers, updatePlayer, type PlayerRow } from '@/lib/players'
 import { TIER_ORDER, RACE_ORDER, tierPoint, normalizeTier } from '@/lib/constants'
-import { toCsv, parseCsv, downloadCsv } from '@/lib/csv'
+import type { ColumnValidation } from '@/lib/xlsx'
 
 const players = ref<PlayerRow[]>([])
 const loading = ref(true)
@@ -403,10 +403,18 @@ const tiers = TIER_ORDER.map(value => ({ value }))
 
 const raceLabel = (r: string) => races.find(x => x.value === r)?.label ?? r
 
-// ── CSV 내보내기 ────────────────────────────────────────────
-const CSV_HEADERS = ['id', '닉네임', '종족', '티어', '군인', '상태']
+// ── 엑셀 내보내기 ────────────────────────────────────────────
+const XLSX_HEADERS = ['id', '닉네임', '종족', '티어', '군인', '상태']
 
-function playerToCsvRow(p: PlayerRow): string[] {
+// 드롭다운 검증을 걸 컬럼 (0-based, XLSX_HEADERS 기준)
+const XLSX_VALIDATIONS: ColumnValidation[] = [
+  { col: 2, values: RACE_ORDER },
+  { col: 3, values: TIER_ORDER },
+  { col: 4, values: ['O', 'X'] },
+  { col: 5, values: ['활성', '정지'] },
+]
+
+function playerToXlsxRow(p: PlayerRow): string[] {
   return [
     String(p.id),
     p.nickname,
@@ -422,12 +430,13 @@ function todayStamp(): string {
   return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
 }
 
-function handleExportCsv() {
-  const rows = [CSV_HEADERS, ...displayedPlayers.value.map(playerToCsvRow)]
-  downloadCsv(`players_${todayStamp()}.csv`, toCsv(rows))
+async function handleExportXlsx() {
+  const { downloadXlsx } = await import('@/lib/xlsx')
+  const rows = [XLSX_HEADERS, ...displayedPlayers.value.map(playerToXlsxRow)]
+  await downloadXlsx(`players_${todayStamp()}.xlsx`, rows, XLSX_VALIDATIONS)
 }
 
-// ── CSV 업로드 ────────────────────────────────────────────
+// ── 엑셀 업로드 ────────────────────────────────────────────
 interface ImportFieldChange { label: string; oldValue: string; newValue: string }
 interface ImportPatch {
   race?: 'T' | 'Z' | 'P'
@@ -460,8 +469,8 @@ async function handleImportFileChange(e: Event) {
   if (importFileInput.value) importFileInput.value.value = ''
   if (!file) return
 
-  const text = await file.text()
-  const rows = parseCsv(text)
+  const { readXlsx } = await import('@/lib/xlsx')
+  const rows = await readXlsx(file)
   const [, ...dataRows] = rows // 헤더 행은 위치만 보고 건너뜀 (내용 검증 안 함)
 
   const results: ImportRowResult[] = []
@@ -480,7 +489,7 @@ async function handleImportFileChange(e: Event) {
       return
     }
     if (seenIds.has(id)) {
-      errors.push({ rowNumber, id: idStr, reason: `id ${id}가 CSV에 중복되어 있습니다.` })
+      errors.push({ rowNumber, id: idStr, reason: `id ${id}가 파일 내에 중복되어 있습니다.` })
       return
     }
     const existing = players.value.find(p => p.id === id)
