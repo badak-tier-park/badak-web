@@ -149,9 +149,17 @@
   border-radius: 5px;
 
   &--a { background: var(--tier-a-bg); color: var(--tier-a); }
+  &--a-plus { background: var(--tier-a-bg); color: var(--tier-a); outline: 1.5px solid var(--tier-a); outline-offset: -2px; }
+  &--a-minus { background: var(--tier-a-bg); color: var(--tier-a); outline: 1.5px dashed var(--tier-a); outline-offset: -2px; }
   &--b { background: var(--tier-b-bg); color: var(--tier-b); }
+  &--b-plus { background: var(--tier-b-bg); color: var(--tier-b); outline: 1.5px solid var(--tier-b); outline-offset: -2px; }
+  &--b-minus { background: var(--tier-b-bg); color: var(--tier-b); outline: 1.5px dashed var(--tier-b); outline-offset: -2px; }
   &--c { background: var(--tier-c-bg); color: var(--tier-c); }
+  &--c-plus { background: var(--tier-c-bg); color: var(--tier-c); outline: 1.5px solid var(--tier-c); outline-offset: -2px; }
+  &--c-minus { background: var(--tier-c-bg); color: var(--tier-c); outline: 1.5px dashed var(--tier-c); outline-offset: -2px; }
   &--d { background: var(--tier-d-bg); color: var(--tier-d); }
+  &--d-plus { background: var(--tier-d-bg); color: var(--tier-d); outline: 1.5px solid var(--tier-d); outline-offset: -2px; }
+  &--d-minus { background: var(--tier-d-bg); color: var(--tier-d); outline: 1.5px dashed var(--tier-d); outline-offset: -2px; }
   &--e { background: var(--tier-e-bg); color: var(--tier-e); }
 }
 
@@ -190,9 +198,17 @@
   font-weight: 700;
 
   &--a.active { border-color: var(--tier-a-border); background: var(--tier-a-bg); color: var(--tier-a); }
+  &--a-plus.active { border-color: var(--tier-a-border); border-style: solid; background: var(--tier-a-bg); color: var(--tier-a); }
+  &--a-minus.active { border-color: var(--tier-a-border); border-style: dashed; background: var(--tier-a-bg); color: var(--tier-a); }
   &--b.active { border-color: var(--tier-b-border); background: var(--tier-b-bg); color: var(--tier-b); }
+  &--b-plus.active { border-color: var(--tier-b-border); border-style: solid; background: var(--tier-b-bg); color: var(--tier-b); }
+  &--b-minus.active { border-color: var(--tier-b-border); border-style: dashed; background: var(--tier-b-bg); color: var(--tier-b); }
   &--c.active { border-color: var(--tier-c-border); background: var(--tier-c-bg); color: var(--tier-c); }
+  &--c-plus.active { border-color: var(--tier-c-border); border-style: solid; background: var(--tier-c-bg); color: var(--tier-c); }
+  &--c-minus.active { border-color: var(--tier-c-border); border-style: dashed; background: var(--tier-c-bg); color: var(--tier-c); }
   &--d.active { border-color: var(--tier-d-border); background: var(--tier-d-bg); color: var(--tier-d); }
+  &--d-plus.active { border-color: var(--tier-d-border); border-style: solid; background: var(--tier-d-bg); color: var(--tier-d); }
+  &--d-minus.active { border-color: var(--tier-d-border); border-style: dashed; background: var(--tier-d-bg); color: var(--tier-d); }
   &--e.active { border-color: var(--tier-e-border); background: var(--tier-e-bg); color: var(--tier-e); }
 }
 

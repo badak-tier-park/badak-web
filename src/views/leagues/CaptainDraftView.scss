@@ -252,9 +252,17 @@
   }
 
   &--a { color: var(--tier-a-text, #f87171); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-border); } }
+  &--a-plus { color: var(--tier-a-text, #f87171); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-border); border-style: solid; } }
+  &--a-minus { color: var(--tier-a-text, #f87171); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-border); border-style: dashed; } }
   &--b { color: var(--tier-b-text, #fb923c); &.active { background: var(--tier-b-bg); border-color: var(--tier-b-border); } }
+  &--b-plus { color: var(--tier-b-text, #fb923c); &.active { background: var(--tier-b-bg); border-color: var(--tier-b-border); border-style: solid; } }
+  &--b-minus { color: var(--tier-b-text, #fb923c); &.active { background: var(--tier-b-bg); border-color: var(--tier-b-border); border-style: dashed; } }
   &--c { color: var(--tier-c-text, #facc15); &.active { background: var(--tier-c-bg); border-color: var(--tier-c-border); } }
+  &--c-plus { color: var(--tier-c-text, #facc15); &.active { background: var(--tier-c-bg); border-color: var(--tier-c-border); border-style: solid; } }
+  &--c-minus { color: var(--tier-c-text, #facc15); &.active { background: var(--tier-c-bg); border-color: var(--tier-c-border); border-style: dashed; } }
   &--d { color: var(--tier-d-text, #4ade80); &.active { background: var(--tier-d-bg); border-color: var(--tier-d-border); } }
+  &--d-plus { color: var(--tier-d-text, #4ade80); &.active { background: var(--tier-d-bg); border-color: var(--tier-d-border); border-style: solid; } }
+  &--d-minus { color: var(--tier-d-text, #4ade80); &.active { background: var(--tier-d-bg); border-color: var(--tier-d-border); border-style: dashed; } }
   &--e { color: var(--tier-e-text, #94a3b8); &.active { background: var(--tier-e-bg); border-color: var(--tier-e-border); } }
 }
 
@@ -281,9 +289,17 @@
 
 // ── 티어 배경색 유틸 ──────────────────────────────────────
 .tier-bg--a { background: var(--tier-a-bg) !important; border-color: var(--tier-a-border) !important; }
+.tier-bg--a-plus { background: var(--tier-a-bg) !important; border-color: var(--tier-a-border) !important; border-style: solid !important; }
+.tier-bg--a-minus { background: var(--tier-a-bg) !important; border-color: var(--tier-a-border) !important; border-style: dashed !important; }
 .tier-bg--b { background: var(--tier-b-bg) !important; border-color: var(--tier-b-border) !important; }
+.tier-bg--b-plus { background: var(--tier-b-bg) !important; border-color: var(--tier-b-border) !important; border-style: solid !important; }
+.tier-bg--b-minus { background: var(--tier-b-bg) !important; border-color: var(--tier-b-border) !important; border-style: dashed !important; }
 .tier-bg--c { background: var(--tier-c-bg) !important; border-color: var(--tier-c-border) !important; }
+.tier-bg--c-plus { background: var(--tier-c-bg) !important; border-color: var(--tier-c-border) !important; border-style: solid !important; }
+.tier-bg--c-minus { background: var(--tier-c-bg) !important; border-color: var(--tier-c-border) !important; border-style: dashed !important; }
 .tier-bg--d { background: var(--tier-d-bg) !important; border-color: var(--tier-d-border) !important; }
+.tier-bg--d-plus { background: var(--tier-d-bg) !important; border-color: var(--tier-d-border) !important; border-style: solid !important; }
+.tier-bg--d-minus { background: var(--tier-d-bg) !important; border-color: var(--tier-d-border) !important; border-style: dashed !important; }
 .tier-bg--e { background: var(--tier-e-bg) !important; border-color: var(--tier-e-border) !important; }
 
 // ── 선수 카드 ─────────────────────────────────────────────

@@ -38,7 +38,14 @@ export function tierStep(t?: string | null): number {
   return p === 0 ? 0 : p * 2 - 1
 }
 
-/** CSS 클래스용 letter ('A+' → 'a'). */
+/**
+ * CSS 클래스용 접미사. 'A+' -> 'a-plus', 'A-' -> 'a-minus', 'E' -> 'e'.
+ * 구 5단계 값(예: 'A')은 부호가 없어 letter만 반환 — 테두리 없는 레거시 스타일로 폴백된다.
+ */
 export function tierClass(t?: string | null): string {
-  return normalizeTier(t).charAt(0).toLowerCase()
+  const n = normalizeTier(t)
+  const letter = n.charAt(0).toLowerCase()
+  if (n.endsWith('+')) return `${letter}-plus`
+  if (n.endsWith('-')) return `${letter}-minus`
+  return letter
 }
