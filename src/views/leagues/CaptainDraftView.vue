@@ -259,6 +259,7 @@ const availablePlayers = computed(() => {
   const eligible = new Set(league.value?.eligible_tiers ?? [])
   return allPlayers.value.filter(
     p => eligible.has(p.tier)
+      && p.is_active
       && p.id !== creatorPlayerId.value
       && !captainIds.value.includes(p.id)
       && !assignedIds.value.has(p.id),

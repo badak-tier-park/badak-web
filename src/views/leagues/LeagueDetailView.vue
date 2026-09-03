@@ -729,6 +729,7 @@ const filteredPlayers = computed(() => {
   const q = playerSearch.value.trim().toLowerCase()
   const list = players.value.filter((p) =>
     p.id !== creatorPlayerId.value &&
+    p.is_active &&
     (!q || p.nickname.toLowerCase().includes(q)),
   )
   return sortPlayers(list)
@@ -823,6 +824,7 @@ const filteredSeedPlayers = computed(() => {
   const q = seedSearch.value.trim().toLowerCase()
   const list = players.value.filter((p) =>
     p.id !== creatorPlayerId.value &&
+    p.is_active &&
     (!q || p.nickname.toLowerCase().includes(q)),
   )
   return sortPlayers(list)

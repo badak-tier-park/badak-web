@@ -221,8 +221,9 @@ const linkError = ref<string | null>(null)
 
 const filteredPlayerOptions = computed(() => {
   const q = playerSearch.value.toLowerCase()
-  if (!q) return players.value
-  return players.value.filter(p =>
+  const base = players.value.filter(p => p.is_active)
+  if (!q) return base
+  return base.filter(p =>
     p.nickname.toLowerCase().includes(q) ||
     p.aliases.some(a => a.toLowerCase().includes(q))
   )
@@ -247,6 +248,7 @@ async function handleLink(player: PlayerRow) {
       race: player.race,
       tier: player.tier,
       is_military: player.is_military,
+      is_active: player.is_active,
     })
     // 로컬 players 업데이트
     const idx = players.value.findIndex(p => p.id === player.id)
