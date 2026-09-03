@@ -206,7 +206,7 @@
                   v-for="t in tiers"
                   :key="t.value"
                   class="tier-btn"
-                  :class="[`tier-btn--${t.value.toLowerCase()}`, { active: form.tier === t.value }]"
+                  :class="[`tier-btn--${$tierClass(t.value)}`, { active: form.tier === t.value }]"
                   @click="form.tier = t.value"
                   type="button"
                 >

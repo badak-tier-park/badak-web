@@ -449,8 +449,8 @@ import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import PlayerSelect, { type SelectOption } from '@/components/PlayerSelect.vue'
 import { getLeague } from '@/lib/leagues'
-import { getCaptains, getMatchMaps } from '@/lib/leagueDetail'
-import { getPlayers } from '@/lib/players'
+import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
+
 import { getTeamNames } from '@/lib/teamNames'
 import { getSchedules, getPlayoffSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
 import { getScheduleEntries, computeFinalRosters, getAceTierBans } from '@/lib/entries'
@@ -1111,7 +1111,7 @@ onMounted(async () => {
     const [leagueData, captains, players, teamNames, schedules, slotResults, entries, matchMapsData, allMapsData, draftPicks, swapLog] = await withTimeout(Promise.all([
       getLeague(leagueId),
       getCaptains(leagueId),
-      getPlayers(),
+      getLeaguePlayers(leagueId),
       getTeamNames(leagueId),
       getSchedules(leagueId),
       getSlotResults(matchId),

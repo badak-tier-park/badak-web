@@ -288,7 +288,7 @@
                   v-for="t in tiers"
                   :key="t.value"
                   class="tier-btn active"
-                  :class="`tier-btn--${t.value.toLowerCase()}`"
+                  :class="`tier-btn--${$tierClass(t.value)}`"
                   type="button"
                   disabled
                 >

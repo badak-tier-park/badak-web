@@ -313,9 +313,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { getScheduleEntries, TIER_POINTS, getAceTierBans, type EntryRecord } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
-import { getMatchMaps } from '@/lib/leagueDetail'
+import { getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
-import { getPlayers, type PlayerRow } from '@/lib/players'
+import { type PlayerRow } from '@/lib/players'
 import { getSlotResults, type SlotResult } from '@/lib/schedules'
 import { withTimeout } from '@/lib/supabase'
 
@@ -379,7 +379,7 @@ onMounted(async () => {
   try {
     const [entries, players, matchMaps, allMaps, slotResultsData, aceTierBans] = await withTimeout(Promise.all([
       getScheduleEntries(props.scheduleId),
-      getPlayers(),
+      getLeaguePlayers(props.leagueId),
       getMatchMaps(props.leagueId),
       getMaps(),
       props.showResults ? getSlotResults(props.scheduleId) : Promise.resolve([] as SlotResult[]),
@@ -585,7 +585,6 @@ const matchPointsB = computed(() => {
 })
 
 // ── 밴 로직 ───────────────────────────────────────────────────
-
 
 interface SlotMapResult {
   matchMapIds: Set<string>

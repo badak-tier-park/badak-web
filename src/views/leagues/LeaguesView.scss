@@ -436,9 +436,17 @@
   font-weight: 700;
 
   &--a.active { border-color: var(--tier-a-border); background: var(--tier-a-bg); color: var(--tier-a); }
+  &--a-plus.active { border-color: var(--tier-a-plus-border); border-style: solid; background: var(--tier-a-bg); color: var(--tier-a-plus); }
+  &--a-minus.active { border-color: var(--tier-a-minus-border); border-style: dashed; background: var(--tier-a-bg); color: var(--tier-a-minus); }
   &--b.active { border-color: var(--tier-b-border); background: var(--tier-b-bg); color: var(--tier-b); }
+  &--b-plus.active { border-color: var(--tier-b-plus-border); border-style: solid; background: var(--tier-b-bg); color: var(--tier-b-plus); }
+  &--b-minus.active { border-color: var(--tier-b-minus-border); border-style: dashed; background: var(--tier-b-bg); color: var(--tier-b-minus); }
   &--c.active { border-color: var(--tier-c-border); background: var(--tier-c-bg); color: var(--tier-c); }
+  &--c-plus.active { border-color: var(--tier-c-plus-border); border-style: solid; background: var(--tier-c-bg); color: var(--tier-c-plus); }
+  &--c-minus.active { border-color: var(--tier-c-minus-border); border-style: dashed; background: var(--tier-c-bg); color: var(--tier-c-minus); }
   &--d.active { border-color: var(--tier-d-border); background: var(--tier-d-bg); color: var(--tier-d); }
+  &--d-plus.active { border-color: var(--tier-d-plus-border); border-style: solid; background: var(--tier-d-bg); color: var(--tier-d-plus); }
+  &--d-minus.active { border-color: var(--tier-d-minus-border); border-style: dashed; background: var(--tier-d-bg); color: var(--tier-d-minus); }
   &--e.active { border-color: var(--tier-e-border); background: var(--tier-e-bg); color: var(--tier-e); }
 
   &:disabled { pointer-events: none; }

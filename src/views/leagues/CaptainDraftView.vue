@@ -220,8 +220,8 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import AppHeader from '@/components/AppHeader.vue'
 import { supabase } from '@/lib/supabase'
 import { getLeague, getLeagueCreatorPlayerId, type LeagueRow } from '@/lib/leagues'
-import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
-import { getCaptains, getSeedHolders } from '@/lib/leagueDetail'
+import { getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
+import { getCaptains, getSeedHolders, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getDraftPicks, addSinglePick, deleteSinglePick } from '@/lib/draft'
 import { setPicksCompleted } from '@/lib/leagues'
 import { RACE_ORDER, tierPoint } from '@/lib/constants'
@@ -367,7 +367,7 @@ onMounted(async () => {
     const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
     const [leagueData, playersData, captainsData, picksData, seedHoldersData, me, creatorId] = await Promise.all([
       getLeague(leagueId),
-      getPlayers(),
+      getLeaguePlayers(leagueId),
       getCaptains(leagueId),
       getDraftPicks(leagueId),
       getSeedHolders(leagueId),

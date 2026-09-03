@@ -661,11 +661,11 @@ import RankingsTab from './RankingsTab.vue'
 
 const activeTab = ref<'leagues' | 'predictions' | 'rankings'>('leagues')
 import { getLeagues, getLeagueStatus, type LeagueRow, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
-import { getCaptains, getMatchMaps } from '@/lib/leagueDetail'
+import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
 import { getSchedules, getRevealedSchedules, getCompletedSchedules, getSlotResultsForSchedules, type ScheduleRow } from '@/lib/schedules'
-import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
+import { getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
 import {
   getEntries, saveEntries, submitEntry, getEntryStatusMap, computeFinalRosters,
@@ -785,7 +785,7 @@ async function openRosterList(league: LeagueRow) {
   try {
     const [captains, players, teamNames, draftPicks, swapLog] = await Promise.all([
       getCaptains(league.id),
-      getPlayers(),
+      getLeaguePlayers(league.id),
       getTeamNames(league.id),
       getDraftPicks(league.id),
       getSwapLog(league.id),
@@ -869,7 +869,7 @@ async function openRevealList(league: LeagueRow) {
   try {
     const [schedules, players, teamNames] = await Promise.all([
       getRevealedSchedules(league.id),
-      getPlayers(),
+      getLeaguePlayers(league.id),
       getTeamNames(league.id),
     ])
     const playerMap = new Map(players.map(p => [p.id, p]))
@@ -949,7 +949,7 @@ async function openResultList(league: LeagueRow) {
   try {
     const [schedules, players, teamNames] = await Promise.all([
       getCompletedSchedules(league.id),
-      getPlayers(),
+      getLeaguePlayers(league.id),
       getTeamNames(league.id),
     ])
 
@@ -1010,7 +1010,7 @@ async function openStandingsList(league: LeagueRow) {
     const [schedules, captains, players, teamNames] = await Promise.all([
       getCompletedSchedules(league.id),
       getCaptains(league.id),
-      getPlayers(),
+      getLeaguePlayers(league.id),
       getTeamNames(league.id),
     ])
 
@@ -1235,7 +1235,7 @@ async function openMatchList(league: LeagueRow) {
   try {
     const [schedules, players, teamNames] = await Promise.all([
       getSchedules(league.id),
-      getPlayers(),
+      getLeaguePlayers(league.id),
       getTeamNames(league.id),
     ])
 
@@ -1383,7 +1383,7 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
       getCaptains(item.leagueId),
       getDraftPicks(item.leagueId),
       getSwapLog(item.leagueId),
-      getPlayers(),
+      getLeaguePlayers(item.leagueId),
       getEntries(item.schedule.id, item.myTeamCaptainId),
       getMatchMaps(item.leagueId),
       getMaps(),
