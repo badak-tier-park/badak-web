@@ -69,7 +69,7 @@
 
             <div class="field date-field">
               <label class="field-label">시작 일시</label>
-              <button type="button" class="dp-custom-input" @click="openPicker">
+              <button ref="triggerRef" type="button" class="dp-custom-input" @click="openPicker">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dp-custom-icon">
                   <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
                   <path d="M4 1v2M10 1v2M1 5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
@@ -79,53 +79,55 @@
                 </span>
               </button>
               <p class="field-hint">이 시간이 되면 모집이 자동으로 마감됩니다.</p>
-
-              <div v-if="showPicker" class="datetime-panel">
-                <div class="calendar-header">
-                  <button type="button" class="calendar-nav-btn" @click="shiftMonth(-1)">‹</button>
-                  <span class="calendar-month-label">{{ monthLabel }}</span>
-                  <button type="button" class="calendar-nav-btn" @click="shiftMonth(1)">›</button>
-                </div>
-                <div class="calendar-weekday-row">
-                  <span v-for="w in weekdayLabels" :key="w" class="calendar-weekday">{{ w }}</span>
-                </div>
-                <div class="calendar-grid">
-                  <button
-                    v-for="(day, i) in calendarDays"
-                    :key="i"
-                    type="button"
-                    class="calendar-day-btn"
-                    :class="{
-                      'calendar-day-btn--outside': !day.inMonth,
-                      'calendar-day-btn--selected': draftDate && isSameDay(day.date, draftDate),
-                      'calendar-day-btn--today': isSameDay(day.date, today),
-                    }"
-                    :disabled="day.disabled"
-                    @click="pickDay(day)"
-                  >{{ day.date.getDate() }}</button>
-                </div>
-
-                <div class="time-spinner-row">
-                  <div class="time-spinner">
-                    <button type="button" class="spinner-arrow" @click="stepHour(1)">▲</button>
-                    <span class="spinner-value">{{ pad(draftHour) }}</span>
-                    <button type="button" class="spinner-arrow" @click="stepHour(-1)">▼</button>
-                  </div>
-                  <span class="spinner-colon">:</span>
-                  <div class="time-spinner">
-                    <button type="button" class="spinner-arrow" @click="stepMinute(1)">▲</button>
-                    <span class="spinner-value">{{ pad(draftMinute) }}</span>
-                    <button type="button" class="spinner-arrow" @click="stepMinute(-1)">▼</button>
-                  </div>
-                </div>
-
-                <div class="datetime-panel-actions">
-                  <button type="button" class="btn-cancel" @click="showPicker = false">취소</button>
-                  <button type="button" class="btn-save" :disabled="!draftDate" @click="confirmPicker">확인</button>
-                </div>
-              </div>
             </div>
           </div>
+
+          <Teleport to="body">
+            <div v-if="showPicker" class="datetime-panel" :style="panelStyle">
+              <div class="calendar-header">
+                <button type="button" class="calendar-nav-btn" @click="shiftMonth(-1)">‹</button>
+                <span class="calendar-month-label">{{ monthLabel }}</span>
+                <button type="button" class="calendar-nav-btn" @click="shiftMonth(1)">›</button>
+              </div>
+              <div class="calendar-weekday-row">
+                <span v-for="w in weekdayLabels" :key="w" class="calendar-weekday">{{ w }}</span>
+              </div>
+              <div class="calendar-grid">
+                <button
+                  v-for="(day, i) in calendarDays"
+                  :key="i"
+                  type="button"
+                  class="calendar-day-btn"
+                  :class="{
+                    'calendar-day-btn--outside': !day.inMonth,
+                    'calendar-day-btn--selected': draftDate && isSameDay(day.date, draftDate),
+                    'calendar-day-btn--today': isSameDay(day.date, today),
+                  }"
+                  :disabled="day.disabled"
+                  @click="pickDay(day)"
+                >{{ day.date.getDate() }}</button>
+              </div>
+
+              <div class="time-spinner-row">
+                <div class="time-spinner">
+                  <button type="button" class="spinner-arrow" @click="stepHour(1)">▲</button>
+                  <span class="spinner-value">{{ pad(draftHour) }}</span>
+                  <button type="button" class="spinner-arrow" @click="stepHour(-1)">▼</button>
+                </div>
+                <span class="spinner-colon">:</span>
+                <div class="time-spinner">
+                  <button type="button" class="spinner-arrow" @click="stepMinute(1)">▲</button>
+                  <span class="spinner-value">{{ pad(draftMinute) }}</span>
+                  <button type="button" class="spinner-arrow" @click="stepMinute(-1)">▼</button>
+                </div>
+              </div>
+
+              <div class="datetime-panel-actions">
+                <button type="button" class="btn-cancel" @click="showPicker = false">취소</button>
+                <button type="button" class="btn-save" :disabled="!draftDate" @click="confirmPicker">확인</button>
+              </div>
+            </div>
+          </Teleport>
 
           <div class="modal-footer">
             <p v-if="saveError" class="save-error">{{ saveError }}</p>
@@ -187,6 +189,8 @@ interface CalendarDay { date: Date; inMonth: boolean; disabled: boolean }
 const showPicker = ref(false)
 const calendarMonth = ref(new Date())
 const weekdayLabels = ['월', '화', '수', '목', '금', '토', '일']
+const triggerRef = ref<HTMLButtonElement | null>(null)
+const panelStyle = ref<{ top: string; left: string; width: string }>({ top: '0px', left: '0px', width: '0px' })
 
 // 패널이 열려있는 동안의 임시 선택값. "확인"을 눌러야 form.startAt에 반영된다.
 const draftDate = ref<Date | null>(null)
@@ -239,6 +243,10 @@ function openPicker() {
     draftHour.value = 20
     draftMinute.value = 0
     calendarMonth.value = new Date()
+  }
+  if (triggerRef.value) {
+    const rect = triggerRef.value.getBoundingClientRect()
+    panelStyle.value = { top: `${rect.bottom + 6}px`, left: `${rect.left}px`, width: `${rect.width}px` }
   }
   showPicker.value = true
 }

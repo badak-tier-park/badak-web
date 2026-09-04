@@ -100,14 +100,12 @@
 }
 
 // ── 커스텀 날짜+시간 패널 ─────────────────────────────────
-.date-field { position: relative; }
-
+// body에 teleport되므로 position: fixed + 트리거 기준 좌표(JS 계산)로 배치.
+// 모달 안에 남겨두면(absolute) overflow:auto인 modal-body의 스크롤 영역이
+// 패널 높이만큼 늘어나 모달 자체가 길어져 보이는 문제가 있어 이렇게 뺐다.
 .datetime-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 20;
-  width: 100%;
+  position: fixed;
+  z-index: 1100;
   padding: 12px;
   background: #13141d;
   border: 1px solid rgba(255, 255, 255, 0.1);
