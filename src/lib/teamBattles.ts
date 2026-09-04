@@ -423,10 +423,62 @@ export async function setAcePlayer(battleId: string, orderIndex: number, teamNo:
 }
 
 export async function finishTeamBattle(battleId: string, winnerTeam: 1 | 2): Promise<void> {
+  await recordTeamBattleGames(battleId)
+
   const { error } = await supabase
     .from('team_battles')
     .update({ status: 'FINISHED', winner_team: winnerTeam, updated_at: new Date().toISOString() })
     .eq('id', battleId)
+  if (error) throw error
+}
+
+/**
+ * 종료 시점에 결과가 확정된 매치(정규 + 에이스)를 games에 반영한다.
+ * 두 선수 중 한 명이라도 부종족 참가(is_offrace)면 그 경기는 전적에 반영하지 않는다.
+ */
+async function recordTeamBattleGames(battleId: string): Promise<void> {
+  const [matches, players, usersRes, mapsRes] = await Promise.all([
+    getTeamBattleMatches(battleId),
+    getTeamBattlePlayers(battleId),
+    supabase.from('users').select('id, nickname'),
+    supabase.from('maps').select('id, name'),
+  ])
+  if (usersRes.error) throw usersRes.error
+  if (mapsRes.error) throw mapsRes.error
+
+  const nicknameOf = new Map<number, string>(
+    (usersRes.data ?? []).map((u: { id: number; nickname: string }) => [u.id, u.nickname]),
+  )
+  const mapNameOf = new Map<string, string>(
+    (mapsRes.data ?? []).map((m: { id: string; name: string }) => [m.id, m.name]),
+  )
+  const playerOf = new Map<number, TeamBattlePlayerRow>(players.map(p => [p.user_id, p]))
+
+  const rows = matches
+    .filter(m => m.winner_team !== null && m.team1_user_id !== null && m.team2_user_id !== null)
+    .filter(m => {
+      const p1 = playerOf.get(m.team1_user_id!)
+      const p2 = playerOf.get(m.team2_user_id!)
+      return !!p1 && !!p2 && !p1.is_offrace && !p2.is_offrace
+    })
+    .map(m => {
+      const p1 = playerOf.get(m.team1_user_id!)!
+      const p2 = playerOf.get(m.team2_user_id!)!
+      const winner = m.winner_team === 1 ? p1 : p2
+      const loser = m.winner_team === 1 ? p2 : p1
+      return {
+        map_name: mapNameOf.get(m.map_id) ?? null,
+        winner_name: nicknameOf.get(winner.user_id) ?? null,
+        winner_race: winner.race,
+        loser_name: nicknameOf.get(loser.user_id) ?? null,
+        loser_race: loser.race,
+        played_at: new Date().toISOString(),
+        source: 'team_battle',
+      }
+    })
+
+  if (rows.length === 0) return
+  const { error } = await supabase.from('games').insert(rows)
   if (error) throw error
 }
 
