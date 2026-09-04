@@ -68,13 +68,13 @@
             </div>
 
             <div class="field">
-              <label class="field-label">시작 시간</label>
+              <label class="field-label">시작 날짜</label>
               <VueDatePicker
-                v-model="form.startAt"
-                :enable-time-picker="true"
-                :time-picker-inline="true"
+                v-model="form.startDate"
+                :enable-time-picker="false"
                 :locale="ko"
                 :dark="true"
+                auto-apply
                 :teleport="true"
                 :min-date="new Date()"
               >
@@ -84,8 +84,32 @@
                       <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
                       <path d="M4 1v2M10 1v2M1 5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
                     </svg>
-                    <span :class="form.startAt ? 'dp-date-text' : 'dp-placeholder'">
-                      {{ form.startAt ? formatDateTime(form.startAt.toISOString()) : '시작 시간 선택' }}
+                    <span :class="form.startDate ? 'dp-date-text' : 'dp-placeholder'">
+                      {{ form.startDate ? formatDateOnly(form.startDate) : '날짜 선택' }}
+                    </span>
+                  </div>
+                </template>
+              </VueDatePicker>
+            </div>
+
+            <div class="field">
+              <label class="field-label">시작 시간</label>
+              <VueDatePicker
+                v-model="form.startTime"
+                :time-picker="true"
+                :locale="ko"
+                :dark="true"
+                auto-apply
+                :teleport="true"
+              >
+                <template #trigger>
+                  <div class="dp-custom-input">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dp-custom-icon">
+                      <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/>
+                      <path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span :class="form.startTime ? 'dp-date-text' : 'dp-placeholder'">
+                      {{ form.startTime ? formatTimeOnly(form.startTime) : '시간 선택' }}
                     </span>
                   </div>
                 </template>
@@ -113,6 +137,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
+import type { TimeModel } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
@@ -138,6 +163,16 @@ function formatDateTime(iso: string): string {
   return `${date} ${time}`
 }
 
+function formatDateOnly(d: Date): string {
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+}
+
+function formatTimeOnly(t: TimeModel): string {
+  const h = String(Number(t.hours)).padStart(2, '0')
+  const m = String(Number(t.minutes)).padStart(2, '0')
+  return `${h}:${m}`
+}
+
 onMounted(async () => {
   try {
     const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
@@ -160,13 +195,15 @@ const saving = ref(false)
 const saveError = ref<string | null>(null)
 const form = reactive({
   name: '',
-  startAt: null as Date | null,
+  startDate: null as Date | null,
+  startTime: null as TimeModel | null,
   aceMode: 'RANDOM' as AceMode,
 })
 
 function openCreate() {
   form.name = ''
-  form.startAt = null
+  form.startDate = null
+  form.startTime = null
   form.aceMode = 'RANDOM'
   saveError.value = null
   showForm.value = true
@@ -180,13 +217,17 @@ function closeCreate() {
 async function handleCreate() {
   if (!myPlayer.value) { saveError.value = '선수 정보를 불러오지 못했습니다.'; return }
   if (!form.name.trim()) { saveError.value = '이름을 입력해주세요.'; return }
-  if (!form.startAt) { saveError.value = '시작 시간을 선택해주세요.'; return }
+  if (!form.startDate) { saveError.value = '날짜를 선택해주세요.'; return }
+  if (!form.startTime) { saveError.value = '시간을 선택해주세요.'; return }
+
+  const startAt = new Date(form.startDate)
+  startAt.setHours(Number(form.startTime.hours), Number(form.startTime.minutes), 0, 0)
 
   saving.value = true
   saveError.value = null
   try {
     const created = await createTeamBattle(
-      { name: form.name.trim(), start_at: form.startAt.toISOString(), ace_mode: form.aceMode },
+      { name: form.name.trim(), start_at: startAt.toISOString(), ace_mode: form.aceMode },
       myPlayer.value,
     )
     showForm.value = false
