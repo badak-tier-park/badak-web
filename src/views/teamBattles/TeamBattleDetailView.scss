@@ -1,5 +1,6 @@
 @use '../../styles/page';
 @use '../../styles/toggle-group';
+@use '../../styles/picker';
 
 .battle-detail-page {
   position: relative;
@@ -102,4 +103,86 @@
   font-size: 10px;
   font-weight: 700;
   color: #facc15;
+}
+
+// ── 맵 ───────────────────────────────────────────────────
+.maps-section { margin-bottom: 24px; }
+
+.section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+
+  .section-label { margin: 0; }
+}
+
+.map-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.map-order-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+}
+
+.map-order-num {
+  flex-shrink: 0;
+  width: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+  text-align: center;
+}
+
+.map-order-thumb {
+  flex-shrink: 0;
+  width: 40px;
+  height: 30px;
+  border-radius: 5px;
+  object-fit: cover;
+  background: var(--c-overlay);
+}
+
+.map-order-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+}
+
+.map-order-remove {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--c-icon-sub);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { background: rgba(248, 113, 113, 0.12); color: #f87171; }
+}
+
+.maps-save-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
 }

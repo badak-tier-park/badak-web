@@ -87,9 +87,76 @@
           </div>
         </section>
 
-        <p v-if="battle.status !== 'RECRUITING'" class="state-msg">다음 단계에서 이어서 만듭니다.</p>
+        <!-- ── 맵 ─────────────────────────────────────────── -->
+        <section class="maps-section">
+          <div class="section-label-row">
+            <p class="section-label">경기 맵 ({{ battleMaps.length }}개)</p>
+            <button v-if="canEditMaps" class="btn-pill btn-pill--md btn-pill--ghost" @click="openMapPicker">
+              맵 추가
+            </button>
+          </div>
+
+          <div v-if="battleMaps.length === 0" class="state-msg">아직 맵이 선택되지 않았습니다.</div>
+          <ol v-else class="map-order-list">
+            <li v-for="(m, i) in battleMaps" :key="`${m.order_index}-${i}`" class="map-order-item">
+              <span class="map-order-num">{{ i + 1 }}</span>
+              <img v-if="mapInfo(m.map_id)?.thumbnail_url" :src="mapInfo(m.map_id)!.thumbnail_url!" class="map-order-thumb" alt="" />
+              <span class="map-order-name">{{ mapInfo(m.map_id)?.name ?? '알 수 없는 맵' }}</span>
+              <button v-if="canEditMaps" class="map-order-remove" @click="removeMapAt(i)">×</button>
+            </li>
+          </ol>
+
+          <div v-if="canEditMaps && mapsDirty" class="maps-save-row">
+            <p v-if="mapsError" class="save-error">{{ mapsError }}</p>
+            <button class="btn-save" :disabled="savingMaps" @click="handleSaveMaps">
+              {{ savingMaps ? '저장 중...' : '맵 구성 저장' }}
+            </button>
+          </div>
+        </section>
+
+        <p v-if="battle.status !== 'RECRUITING' && battle.status !== 'ASSIGNED'" class="state-msg">다음 단계에서 이어서 만듭니다.</p>
       </template>
     </div>
+
+    <!-- ── 맵 선택 오버레이 ───────────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="showMapPicker" class="overlay-backdrop">
+        <div class="picker-panel">
+          <div class="picker-header">
+            <span class="picker-title">
+              맵 추가
+              <span class="picker-subtitle">최대 10개, 중복 선택 가능</span>
+            </span>
+            <button class="picker-close" @click="showMapPicker = false">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <input v-model="mapSearch" class="picker-search" placeholder="맵 이름 또는 별칭 검색..." type="text" />
+          <div class="picker-list">
+            <button
+              v-for="map in filteredMaps"
+              :key="map.id"
+              class="picker-item map-picker-item"
+              :disabled="battleMaps.length >= 10"
+              @click="appendMap(map.id)"
+            >
+              <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="picker-map-thumb" alt="" />
+              <div class="picker-map-info">
+                <span class="picker-name">{{ map.name }}</span>
+                <span class="picker-map-meta">{{ map.player_count }}인 · {{ map.tileset }}</span>
+              </div>
+            </button>
+            <div v-if="filteredMaps.length === 0" class="picker-empty">검색 결과 없음</div>
+          </div>
+          <div class="picker-footer">
+            <span class="picker-footer-hint">{{ battleMaps.length }} / 10개 선택됨</span>
+            <button class="picker-confirm" @click="showMapPicker = false">닫기</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -99,8 +166,10 @@ import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
+import { getMaps, type MapRow } from '@/lib/maps'
 import {
   getTeamBattle, getTeamBattlePlayers, joinTeamBattle, leaveTeamBattle,
+  getTeamBattleMaps, setTeamBattleMaps,
   TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow,
 } from '@/lib/teamBattles'
 
@@ -111,6 +180,7 @@ const battle = ref<TeamBattleRow | null>(null)
 const players = ref<TeamBattlePlayerRow[]>([])
 const allPlayers = ref<PlayerRow[]>([])
 const myPlayer = ref<PlayerRow | null>(null)
+const allMaps = ref<MapRow[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const actionError = ref<string | null>(null)
@@ -137,16 +207,22 @@ const recruitmentClosed = computed(() => !!battle.value && new Date() >= new Dat
 async function load() {
   const id = route.params.id as string
   const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
-  const [b, p, all, me] = await Promise.all([
+  const [b, p, all, me, maps, tbMaps] = await Promise.all([
     getTeamBattle(id),
     getTeamBattlePlayers(id),
     getPlayers(),
     discordId ? getPlayerByDiscordId(discordId) : Promise.resolve(null),
+    getMaps(),
+    getTeamBattleMaps(id),
   ])
   battle.value = b
   players.value = p
   allPlayers.value = all
   myPlayer.value = me
+  allMaps.value = maps
+  const nonAce = tbMaps.filter(m => !m.is_ace).map(m => ({ order_index: m.order_index, map_id: m.map_id }))
+  battleMaps.value = nonAce
+  savedMapIds.value = nonAce.map(m => m.map_id)
 }
 
 onMounted(async () => {
@@ -197,6 +273,63 @@ async function handleLeave() {
 
 // myPlayer 로딩 완료 시 종족 선택 기본값을 주종족으로
 watch(myPlayer, resetSelectedRace)
+
+// ── 맵 선택 ───────────────────────────────────────────────
+const battleMaps = ref<{ order_index: number; map_id: string }[]>([])
+const savedMapIds = ref<string[]>([])
+const showMapPicker = ref(false)
+const mapSearch = ref('')
+const savingMaps = ref(false)
+const mapsError = ref<string | null>(null)
+
+const isHost = computed(() => !!myPlayer.value && !!battle.value && myPlayer.value.id === battle.value.host_user_id)
+const canEditMaps = computed(() =>
+  isHost.value && !!battle.value && (battle.value.status === 'RECRUITING' || battle.value.status === 'ASSIGNED'),
+)
+const mapsDirty = computed(() =>
+  JSON.stringify(battleMaps.value.map(m => m.map_id)) !== JSON.stringify(savedMapIds.value),
+)
+
+function mapInfo(mapId: string): MapRow | undefined {
+  return allMaps.value.find(m => m.id === mapId)
+}
+
+const filteredMaps = computed(() => {
+  const q = mapSearch.value.trim().toLowerCase()
+  if (!q) return allMaps.value
+  return allMaps.value.filter(m => m.name.toLowerCase().includes(q) || m.aliases.some(a => a.toLowerCase().includes(q)))
+})
+
+function openMapPicker() {
+  mapSearch.value = ''
+  mapsError.value = null
+  showMapPicker.value = true
+}
+
+function appendMap(mapId: string) {
+  if (battleMaps.value.length >= 10) return
+  battleMaps.value.push({ order_index: battleMaps.value.length, map_id: mapId })
+}
+
+function removeMapAt(index: number) {
+  battleMaps.value.splice(index, 1)
+  battleMaps.value = battleMaps.value.map((m, i) => ({ ...m, order_index: i }))
+}
+
+async function handleSaveMaps() {
+  if (!battle.value) return
+  savingMaps.value = true
+  mapsError.value = null
+  try {
+    const mapIds = battleMaps.value.map(m => m.map_id)
+    await setTeamBattleMaps(battle.value.id, mapIds)
+    savedMapIds.value = mapIds
+  } catch (e: any) {
+    mapsError.value = e.message ?? '맵 저장 중 오류가 발생했습니다.'
+  } finally {
+    savingMaps.value = false
+  }
+}
 </script>
 
 <style lang="scss" scoped>
