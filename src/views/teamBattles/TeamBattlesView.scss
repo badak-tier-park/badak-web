@@ -66,51 +66,13 @@
   color: var(--c-text-faint);
 }
 
-// ── 커스텀 날짜/시간 선택 트리거 (공용) ───────────────────
-.dp-custom-input {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 13px;
+// ── 날짜+시간 인라인 패널 ─────────────────────────────────
+// 팝오버가 아니라 폼의 일부. 위치 계산/teleport/z-index가 전혀 없다.
+.datetime-inline {
+  padding: 10px 12px 12px;
   background: var(--c-input);
   border: 1px solid var(--c-border-strong);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-  box-sizing: border-box;
-  font: inherit;
-  text-align: left;
-  margin: 0;
-  appearance: none;
-
-  &:hover { border-color: rgba(170, 59, 255, 0.45); }
-}
-
-.dp-custom-icon { color: var(--c-icon); flex-shrink: 0; }
-
-.dp-date-text {
-  font-size: 13px;
-  color: var(--c-text);
-}
-
-.dp-placeholder {
-  font-size: 13px;
-  color: var(--c-text-faint);
-}
-
-// ── 커스텀 날짜+시간 패널 ─────────────────────────────────
-// body에 teleport되므로 position: fixed + 트리거 기준 좌표(JS 계산)로 배치.
-// 모달 안에 남겨두면(absolute) overflow:auto인 modal-body의 스크롤 영역이
-// 패널 높이만큼 늘어나 모달 자체가 길어져 보이는 문제가 있어 이렇게 뺐다.
-.datetime-panel {
-  position: fixed;
-  z-index: 1100;
-  padding: 12px;
-  background: #13141d;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
   box-sizing: border-box;
 }
 
@@ -157,7 +119,7 @@
 }
 
 .calendar-day-btn {
-  aspect-ratio: 1;
+  height: 28px;
   border: none;
   border-radius: 6px;
   background: none;
@@ -188,8 +150,8 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-top: 10px;
-  padding-top: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -202,7 +164,7 @@
 
 .spinner-arrow {
   width: 28px;
-  height: 22px;
+  height: 18px;
   border: none;
   border-radius: 6px;
   background: none;
@@ -232,9 +194,17 @@
   color: var(--c-text-faint);
 }
 
-.datetime-panel-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 10px;
+.datetime-summary {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c084fc;
+
+  &--empty {
+    font-weight: 500;
+    color: var(--c-text-faint);
+  }
 }
