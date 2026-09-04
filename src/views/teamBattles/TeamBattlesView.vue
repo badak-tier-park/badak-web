@@ -75,7 +75,7 @@
                 :locale="ko"
                 :dark="true"
                 auto-apply
-                :teleport="false"
+                :teleport="true"
                 :min-date="new Date()"
               >
                 <template #trigger>
