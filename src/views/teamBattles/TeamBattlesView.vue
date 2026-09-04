@@ -72,6 +72,7 @@
               <VueDatePicker
                 v-model="form.startDate"
                 :enable-time-picker="false"
+                :action-row="{ showNow: false }"
                 :locale="ko"
                 :dark="true"
                 auto-apply
@@ -94,11 +95,16 @@
 
             <div class="field">
               <label class="field-label">시작 시간</label>
-              <input
-                v-model="form.startTime"
-                class="field-input"
-                type="time"
-              />
+              <div class="time-select-row">
+                <select v-model="form.startHour" class="field-input time-select">
+                  <option value="" disabled>시</option>
+                  <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
+                </select>
+                <select v-model="form.startMinute" class="field-input time-select">
+                  <option value="" disabled>분</option>
+                  <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
+                </select>
+              </div>
               <p class="field-hint">이 시간이 되면 모집이 자동으로 마감됩니다.</p>
             </div>
           </div>
@@ -171,17 +177,22 @@ onMounted(async () => {
 const showForm = ref(false)
 const saving = ref(false)
 const saveError = ref<string | null>(null)
+const hourOptions = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+const minuteOptions = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']
+
 const form = reactive({
   name: '',
   startDate: null as Date | null,
-  startTime: '',
+  startHour: '',
+  startMinute: '',
   aceMode: 'RANDOM' as AceMode,
 })
 
 function openCreate() {
   form.name = ''
   form.startDate = null
-  form.startTime = ''
+  form.startHour = ''
+  form.startMinute = ''
   form.aceMode = 'RANDOM'
   saveError.value = null
   showForm.value = true
@@ -196,11 +207,10 @@ async function handleCreate() {
   if (!myPlayer.value) { saveError.value = '선수 정보를 불러오지 못했습니다.'; return }
   if (!form.name.trim()) { saveError.value = '이름을 입력해주세요.'; return }
   if (!form.startDate) { saveError.value = '날짜를 선택해주세요.'; return }
-  if (!form.startTime) { saveError.value = '시간을 선택해주세요.'; return }
+  if (!form.startHour || !form.startMinute) { saveError.value = '시간을 선택해주세요.'; return }
 
-  const [hours, minutes] = form.startTime.split(':').map(Number)
   const startAt = new Date(form.startDate)
-  startAt.setHours(hours, minutes, 0, 0)
+  startAt.setHours(Number(form.startHour), Number(form.startMinute), 0, 0)
 
   saving.value = true
   saveError.value = null

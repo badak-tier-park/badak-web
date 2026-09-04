@@ -66,7 +66,12 @@
   color: var(--c-text-faint);
 }
 
-input[type='time'].field-input { color-scheme: dark; }
+.time-select-row { display: flex; gap: 8px; }
+
+.time-select {
+  flex: 1;
+  cursor: pointer;
+}
 
 // ── VueDatePicker 커스텀 트리거 ──────────────────────────
 .dp-custom-input {
