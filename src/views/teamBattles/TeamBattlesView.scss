@@ -99,10 +99,10 @@
   color: var(--c-text-faint);
 }
 
-// ── 커스텀 달력 ───────────────────────────────────────────
+// ── 커스텀 날짜+시간 패널 ─────────────────────────────────
 .date-field { position: relative; }
 
-.calendar-panel {
+.datetime-panel {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
@@ -184,51 +184,59 @@
   &:disabled { color: var(--c-text-faint); opacity: 0.3; cursor: not-allowed; }
 }
 
-// ── 시간 선택 (시/분 버튼 그리드) ───────────────────────
-.hour-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-  margin-bottom: 8px;
+// ── 시간 스피너 (시/분 위아래 버튼) ─────────────────────
+.time-spinner-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.hour-btn {
-  padding: 7px 0;
-  border: 1px solid var(--c-border-strong);
+.time-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.spinner-arrow {
+  width: 28px;
+  height: 22px;
+  border: none;
   border-radius: 6px;
-  background: var(--c-input);
-  color: var(--c-text-2);
-  font-size: 12px;
+  background: none;
+  color: var(--c-text-faint);
+  font-size: 10px;
   cursor: pointer;
   transition: all 0.15s;
 
-  &:hover { border-color: rgba(170, 59, 255, 0.45); }
-
-  &.active {
-    border-color: rgba(170, 59, 255, 0.5);
-    background: rgba(170, 59, 255, 0.14);
-    color: #c084fc;
-  }
+  &:hover { background: rgba(170, 59, 255, 0.12); color: #c084fc; }
 }
 
-.minute-row { display: flex; gap: 6px; }
-
-.minute-btn {
-  flex: 1;
-  padding: 7px 0;
+.spinner-value {
+  min-width: 40px;
+  padding: 6px 0;
   border: 1px solid var(--c-border-strong);
   border-radius: 6px;
   background: var(--c-input);
-  color: var(--c-text-2);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
+  color: var(--c-text);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
 
-  &:hover { border-color: rgba(170, 59, 255, 0.45); }
+.spinner-colon {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+}
 
-  &.active {
-    border-color: rgba(170, 59, 255, 0.5);
-    background: rgba(170, 59, 255, 0.14);
-    color: #c084fc;
-  }
+.datetime-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
 }

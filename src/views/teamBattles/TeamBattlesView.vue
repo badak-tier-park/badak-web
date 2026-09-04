@@ -68,18 +68,19 @@
             </div>
 
             <div class="field date-field">
-              <label class="field-label">시작 날짜</label>
-              <button type="button" class="dp-custom-input" @click="showDatePicker = !showDatePicker">
+              <label class="field-label">시작 일시</label>
+              <button type="button" class="dp-custom-input" @click="openPicker">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dp-custom-icon">
                   <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
                   <path d="M4 1v2M10 1v2M1 5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
                 </svg>
-                <span :class="form.startDate ? 'dp-date-text' : 'dp-placeholder'">
-                  {{ form.startDate ? formatDateOnly(form.startDate) : '날짜 선택' }}
+                <span :class="form.startAt ? 'dp-date-text' : 'dp-placeholder'">
+                  {{ form.startAt ? formatDateTime(form.startAt.toISOString()) : '날짜와 시간 선택' }}
                 </span>
               </button>
+              <p class="field-hint">이 시간이 되면 모집이 자동으로 마감됩니다.</p>
 
-              <div v-if="showDatePicker" class="calendar-panel">
+              <div v-if="showPicker" class="datetime-panel">
                 <div class="calendar-header">
                   <button type="button" class="calendar-nav-btn" @click="shiftMonth(-1)">‹</button>
                   <span class="calendar-month-label">{{ monthLabel }}</span>
@@ -96,39 +97,33 @@
                     class="calendar-day-btn"
                     :class="{
                       'calendar-day-btn--outside': !day.inMonth,
-                      'calendar-day-btn--selected': form.startDate && isSameDay(day.date, form.startDate),
+                      'calendar-day-btn--selected': draftDate && isSameDay(day.date, draftDate),
                       'calendar-day-btn--today': isSameDay(day.date, today),
                     }"
                     :disabled="day.disabled"
-                    @click="selectDay(day)"
+                    @click="pickDay(day)"
                   >{{ day.date.getDate() }}</button>
                 </div>
-              </div>
-            </div>
 
-            <div class="field">
-              <label class="field-label">시작 시간</label>
-              <div class="hour-grid">
-                <button
-                  v-for="h in hourOptions"
-                  :key="h"
-                  type="button"
-                  class="hour-btn"
-                  :class="{ active: form.startHour === h }"
-                  @click="form.startHour = h"
-                >{{ h }}</button>
+                <div class="time-spinner-row">
+                  <div class="time-spinner">
+                    <button type="button" class="spinner-arrow" @click="stepHour(1)">▲</button>
+                    <span class="spinner-value">{{ pad(draftHour) }}</span>
+                    <button type="button" class="spinner-arrow" @click="stepHour(-1)">▼</button>
+                  </div>
+                  <span class="spinner-colon">:</span>
+                  <div class="time-spinner">
+                    <button type="button" class="spinner-arrow" @click="stepMinute(1)">▲</button>
+                    <span class="spinner-value">{{ pad(draftMinute) }}</span>
+                    <button type="button" class="spinner-arrow" @click="stepMinute(-1)">▼</button>
+                  </div>
+                </div>
+
+                <div class="datetime-panel-actions">
+                  <button type="button" class="btn-cancel" @click="showPicker = false">취소</button>
+                  <button type="button" class="btn-save" :disabled="!draftDate" @click="confirmPicker">확인</button>
+                </div>
               </div>
-              <div class="minute-row">
-                <button
-                  v-for="m in minuteOptions"
-                  :key="m"
-                  type="button"
-                  class="minute-btn"
-                  :class="{ active: form.startMinute === m }"
-                  @click="form.startMinute = m"
-                >{{ m }}분</button>
-              </div>
-              <p class="field-hint">이 시간이 되면 모집이 자동으로 마감됩니다.</p>
             </div>
           </div>
 
@@ -173,10 +168,6 @@ function formatDateTime(iso: string): string {
   return `${date} ${time}`
 }
 
-function formatDateOnly(d: Date): string {
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-}
-
 function startOfDay(d: Date): Date {
   const x = new Date(d)
   x.setHours(0, 0, 0, 0)
@@ -189,13 +180,18 @@ function isSameDay(a: Date, b: Date): boolean {
 
 const today = startOfDay(new Date())
 
-// ── 커스텀 달력 (VueDatePicker 대신 자체 구현 — 네이티브/라이브러리
-// 팝업이 다크 테마를 따라오지 않는 문제를 피하기 위함) ──────────────
+// ── 커스텀 날짜+시간 선택 패널 (VueDatePicker/네이티브 컨트롤 대신
+// 자체 구현 — 팝업이 다크 테마를 따라오지 않는 문제를 피하기 위함) ────
 interface CalendarDay { date: Date; inMonth: boolean; disabled: boolean }
 
-const showDatePicker = ref(false)
+const showPicker = ref(false)
 const calendarMonth = ref(new Date())
 const weekdayLabels = ['월', '화', '수', '목', '금', '토', '일']
+
+// 패널이 열려있는 동안의 임시 선택값. "확인"을 눌러야 form.startAt에 반영된다.
+const draftDate = ref<Date | null>(null)
+const draftHour = ref(20)
+const draftMinute = ref(0)
 
 const monthLabel = computed(() => `${calendarMonth.value.getFullYear()}년 ${calendarMonth.value.getMonth() + 1}월`)
 
@@ -215,10 +211,44 @@ function shiftMonth(delta: number) {
   calendarMonth.value = new Date(calendarMonth.value.getFullYear(), calendarMonth.value.getMonth() + delta, 1)
 }
 
-function selectDay(day: CalendarDay) {
+function pickDay(day: CalendarDay) {
   if (day.disabled) return
-  form.startDate = day.date
-  showDatePicker.value = false
+  draftDate.value = day.date
+}
+
+function pad(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function stepHour(delta: number) {
+  draftHour.value = (draftHour.value + delta + 24) % 24
+}
+
+function stepMinute(delta: number) {
+  draftMinute.value = (draftMinute.value + delta + 60) % 60
+}
+
+function openPicker() {
+  if (form.startAt) {
+    draftDate.value = startOfDay(form.startAt)
+    draftHour.value = form.startAt.getHours()
+    draftMinute.value = form.startAt.getMinutes()
+    calendarMonth.value = new Date(form.startAt.getFullYear(), form.startAt.getMonth(), 1)
+  } else {
+    draftDate.value = null
+    draftHour.value = 20
+    draftMinute.value = 0
+    calendarMonth.value = new Date()
+  }
+  showPicker.value = true
+}
+
+function confirmPicker() {
+  if (!draftDate.value) return
+  const combined = new Date(draftDate.value)
+  combined.setHours(draftHour.value, draftMinute.value, 0, 0)
+  form.startAt = combined
+  showPicker.value = false
 }
 
 onMounted(async () => {
@@ -241,26 +271,18 @@ onMounted(async () => {
 const showForm = ref(false)
 const saving = ref(false)
 const saveError = ref<string | null>(null)
-const hourOptions = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
-const minuteOptions = ['00', '15', '30', '45']
-
 const form = reactive({
   name: '',
-  startDate: null as Date | null,
-  startHour: '',
-  startMinute: '',
+  startAt: null as Date | null,
   aceMode: 'RANDOM' as AceMode,
 })
 
 function openCreate() {
   form.name = ''
-  form.startDate = null
-  form.startHour = ''
-  form.startMinute = ''
+  form.startAt = null
   form.aceMode = 'RANDOM'
   saveError.value = null
-  showDatePicker.value = false
-  calendarMonth.value = new Date()
+  showPicker.value = false
   showForm.value = true
 }
 
@@ -272,17 +294,13 @@ function closeCreate() {
 async function handleCreate() {
   if (!myPlayer.value) { saveError.value = '선수 정보를 불러오지 못했습니다.'; return }
   if (!form.name.trim()) { saveError.value = '이름을 입력해주세요.'; return }
-  if (!form.startDate) { saveError.value = '날짜를 선택해주세요.'; return }
-  if (!form.startHour || !form.startMinute) { saveError.value = '시간을 선택해주세요.'; return }
-
-  const startAt = new Date(form.startDate)
-  startAt.setHours(Number(form.startHour), Number(form.startMinute), 0, 0)
+  if (!form.startAt) { saveError.value = '날짜와 시간을 선택해주세요.'; return }
 
   saving.value = true
   saveError.value = null
   try {
     const created = await createTeamBattle(
-      { name: form.name.trim(), start_at: startAt.toISOString(), ace_mode: form.aceMode },
+      { name: form.name.trim(), start_at: form.startAt.toISOString(), ace_mode: form.aceMode },
       myPlayer.value,
     )
     showForm.value = false
