@@ -91,3 +91,21 @@
   &--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); outline: 1.5px dashed var(--tier-d-minus); outline-offset: -1.5px; }
   &--e { background: var(--tier-e-bg); color: var(--tier-e); }
 }
+
+// ── 팀배틀 상태 배지 (목록/상세 공용) ──────────────────────
+.battle-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+
+  &.status--recruiting { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
+  &.status--assigned,
+  &.status--entry      { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
+  &.status--playing,
+  &.status--ace_waiting,
+  &.status--ace_entry  { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
+  &.status--finished   { background: var(--c-surface-raised); color: var(--c-text-faint); }
+  &.status--cancelled  { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+}

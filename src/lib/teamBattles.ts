@@ -13,6 +13,17 @@ export type TeamBattleStatus =
 
 export type AceMode = 'RANDOM' | 'CAPTAIN'
 
+export const TEAM_BATTLE_STATUS_LABEL: Record<TeamBattleStatus, string> = {
+  RECRUITING: '모집 중',
+  ASSIGNED: '팀 배정 완료',
+  ENTRY: '엔트리 제출 중',
+  PLAYING: '경기 진행 중',
+  ACE_WAITING: '에이스 결정전 대기',
+  ACE_ENTRY: '에이스 선수 확정 중',
+  FINISHED: '종료',
+  CANCELLED: '취소됨',
+}
+
 export interface TeamBattleRow {
   id: string
   name: string

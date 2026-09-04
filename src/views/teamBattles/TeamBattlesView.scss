@@ -1,0 +1,80 @@
+@use '../../styles/page';
+@use '../../styles/toggle-group';
+
+.team-battles-page {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.team-battles-content {
+  position: relative;
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+  box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+// ── 목록 ────────────────────────────────────────────────
+.battle-list { display: flex; flex-direction: column; gap: 10px; }
+
+.battle-card {
+  display: block;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    border-color: var(--c-border-strong);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.battle-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.battle-start {
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.battle-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+// ── 생성 모달 ───────────────────────────────────────────
+.modal.edit-modal { max-width: 420px; }
+
+.field-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--c-text-faint);
+}
+
+.ace-mode-group { display: flex; gap: 8px; }
+
+.ace-mode-btn {
+  @extend %toggle-btn;
+
+  &.active {
+    border-color: rgba(170, 59, 255, 0.5);
+    background: rgba(170, 59, 255, 0.1);
+    color: #c084fc;
+  }
+}
