@@ -183,8 +183,12 @@ export interface AssignResult {
 
 /**
  * 그리디 밸런싱: 티어 점수(tierPoint) 내림차순 정렬(동점은 랜덤) 후,
- * 매번 점수 합이 더 낮은 팀에 배정. 인원이 홀수면 한 팀이 1명 많아진다.
- * 주최자가 몇 번이든 재실행 가능 — 매번 team_no/is_leader를 덮어쓴다.
+ * 매번 점수 합이 더 낮은 팀에 배정하되, 인원수 차이가 1명을 넘지 않도록
+ * 강제한다(한쪽이 목표 인원에 먼저 도달하면 남은 인원은 전부 반대 팀으로).
+ * 순수 점수 기준으로만 배정하면 "고티어 1명 + 동티어 다수" 같은 조합에서
+ * 2명 vs 4명처럼 인원수가 심하게 갈릴 수 있어 이를 방지한다.
+ * 인원이 홀수면 한 팀이 1명 많아진다. 주최자가 몇 번이든 재실행 가능 —
+ * 매번 team_no/is_leader를 덮어쓴다.
  */
 export async function assignTeams(battleId: string): Promise<AssignResult> {
   const players = await getTeamBattlePlayers(battleId)
@@ -195,13 +199,18 @@ export async function assignTeams(battleId: string): Promise<AssignResult> {
     .sort((a, b) => b.point - a.point || a.rand - b.rand)
     .map(x => x.p)
 
+  const targetSize1 = Math.ceil(sorted.length / 2)
+  const targetSize2 = sorted.length - targetSize1
+
   const team1: TeamBattlePlayerRow[] = []
   const team2: TeamBattlePlayerRow[] = []
   let score1 = 0
   let score2 = 0
   for (const p of sorted) {
     const point = tierPoint(p.tier)
-    if (score1 <= score2) { team1.push(p); score1 += point }
+    if (team1.length >= targetSize1) { team2.push(p); score2 += point }
+    else if (team2.length >= targetSize2) { team1.push(p); score1 += point }
+    else if (score1 <= score2) { team1.push(p); score1 += point }
     else { team2.push(p); score2 += point }
   }
 
