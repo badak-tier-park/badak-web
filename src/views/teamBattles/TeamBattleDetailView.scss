@@ -105,6 +105,96 @@
   color: #facc15;
 }
 
+// ── 팀 로스터 ───────────────────────────────────────────
+.teams-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.team-panel {
+  border-radius: 14px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  padding: 14px 16px;
+}
+
+.team-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.team-panel-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--c-text);
+  letter-spacing: 0.3px;
+}
+
+.team-panel-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: #c084fc;
+}
+
+.team-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.team-player-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+
+  &--leader {
+    background: rgba(250, 204, 21, 0.08);
+    outline: 1px solid rgba(250, 204, 21, 0.25);
+    outline-offset: -1px;
+  }
+}
+
+.team-player-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--c-text-2);
+}
+
+.leader-mark {
+  font-size: 10px;
+  font-weight: 700;
+  color: #facc15;
+}
+
+.team-player-captain-btn {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-faint);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) { border-color: rgba(250, 204, 21, 0.5); color: #facc15; }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
+// ── 팀 배정 ─────────────────────────────────────────────
+.assign-section { margin-bottom: 24px; }
+
 // ── 맵 ───────────────────────────────────────────────────
 .maps-section { margin-bottom: 24px; }
 

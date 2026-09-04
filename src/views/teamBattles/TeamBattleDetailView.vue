@@ -67,8 +67,8 @@
           </section>
         </template>
 
-        <!-- 참가자 목록 -->
-        <section class="players-section">
+        <!-- 참가자 목록 (팀 배정 전) -->
+        <section v-if="battle.status === 'RECRUITING'" class="players-section">
           <p class="section-label">참가자 ({{ players.length }}명)</p>
           <div v-if="players.length === 0" class="state-msg">아직 참가자가 없습니다.</div>
           <div v-else class="player-chip-list">
@@ -85,6 +85,54 @@
               <span v-if="p.user_id === battle.host_user_id" class="host-mark">주최</span>
             </span>
           </div>
+        </section>
+
+        <!-- 팀 로스터 (팀 배정 후) -->
+        <section v-else class="teams-section">
+          <div v-for="teamNo in [1, 2] as const" :key="teamNo" class="team-panel">
+            <div class="team-panel-header">
+              <span class="team-panel-title">TEAM {{ teamNo }}</span>
+              <span class="team-panel-score">{{ teamScore(teamNo) }}점</span>
+            </div>
+            <div class="team-player-list">
+              <div
+                v-for="p in teamPlayers(teamNo)"
+                :key="p.user_id"
+                class="team-player-row"
+                :class="{ 'team-player-row--leader': p.is_leader }"
+              >
+                <span class="tier-badge" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
+                <span class="race-badge" :class="`race-badge--${p.race.toLowerCase()}`">{{ raceLabel(p.race) }}</span>
+                <span class="team-player-name">{{ nicknameOf(p.user_id) }}</span>
+                <span v-if="p.is_offrace" class="offrace-mark">부종</span>
+                <span v-if="p.is_leader" class="leader-mark">팀장</span>
+                <button
+                  v-if="isHost && !p.is_leader && battle.status === 'ASSIGNED'"
+                  class="team-player-captain-btn"
+                  :disabled="reassigning"
+                  @click="handleReassignLeader(teamNo, p.user_id)"
+                >팀장 지정</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── 팀 배정 ────────────────────────────────────── -->
+        <section v-if="canAssign" class="assign-section">
+          <div class="section-label-row">
+            <p class="section-label">팀 배정</p>
+            <button
+              class="btn-pill btn-pill--md btn-pill--purple"
+              :disabled="assigning || players.length < 4"
+              @click="handleAssignTeams"
+            >
+              {{ assigning ? '배정 중...' : (battle.status === 'ASSIGNED' ? '다시 배정' : '팀 배정 (모집 마감)') }}
+            </button>
+          </div>
+          <p v-if="players.length < 4" class="field-hint">
+            최소 4명이 모여야 팀을 배정할 수 있습니다. (현재 {{ players.length }}명)
+          </p>
+          <p v-if="assignError" class="save-error">{{ assignError }}</p>
         </section>
 
         <!-- ── 맵 ─────────────────────────────────────────── -->
@@ -167,9 +215,10 @@ import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
+import { tierPoint } from '@/lib/constants'
 import {
   getTeamBattle, getTeamBattlePlayers, joinTeamBattle, leaveTeamBattle,
-  getTeamBattleMaps, setTeamBattleMaps,
+  getTeamBattleMaps, setTeamBattleMaps, assignTeams, reassignLeader,
   TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow,
 } from '@/lib/teamBattles'
 
@@ -273,6 +322,54 @@ async function handleLeave() {
 
 // myPlayer 로딩 완료 시 종족 선택 기본값을 주종족으로
 watch(myPlayer, resetSelectedRace)
+
+// ── 팀 배정 ───────────────────────────────────────────────
+const assigning = ref(false)
+const assignError = ref<string | null>(null)
+const reassigning = ref(false)
+
+const canAssign = computed(() =>
+  isHost.value && !!battle.value && (battle.value.status === 'RECRUITING' || battle.value.status === 'ASSIGNED'),
+)
+
+function teamPlayers(teamNo: 1 | 2): TeamBattlePlayerRow[] {
+  return players.value
+    .filter(p => p.team_no === teamNo)
+    .sort((a, b) => Number(b.is_leader) - Number(a.is_leader) || tierPoint(b.tier) - tierPoint(a.tier))
+}
+
+function teamScore(teamNo: 1 | 2): number {
+  return teamPlayers(teamNo).reduce((sum, p) => sum + tierPoint(p.tier), 0)
+}
+
+async function handleAssignTeams() {
+  if (!battle.value) return
+  assigning.value = true
+  assignError.value = null
+  try {
+    await assignTeams(battle.value.id)
+    const [b, p] = await Promise.all([getTeamBattle(battle.value.id), getTeamBattlePlayers(battle.value.id)])
+    battle.value = b
+    players.value = p
+  } catch (e: any) {
+    assignError.value = e.message ?? '팀 배정 중 오류가 발생했습니다.'
+  } finally {
+    assigning.value = false
+  }
+}
+
+async function handleReassignLeader(teamNo: 1 | 2, userId: number) {
+  if (!battle.value) return
+  reassigning.value = true
+  try {
+    await reassignLeader(battle.value.id, teamNo, userId)
+    players.value = await getTeamBattlePlayers(battle.value.id)
+  } catch (e: any) {
+    assignError.value = e.message ?? '팀장 재지정 중 오류가 발생했습니다.'
+  } finally {
+    reassigning.value = false
+  }
+}
 
 // ── 맵 선택 ───────────────────────────────────────────────
 const battleMaps = ref<{ order_index: number; map_id: string }[]>([])
