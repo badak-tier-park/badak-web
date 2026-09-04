@@ -121,18 +121,88 @@
         <section v-if="canAssign" class="assign-section">
           <div class="section-label-row">
             <p class="section-label">팀 배정</p>
-            <button
-              class="btn-pill btn-pill--md btn-pill--purple"
-              :disabled="assigning || players.length < 4"
-              @click="handleAssignTeams"
-            >
-              {{ assigning ? '배정 중...' : (battle.status === 'ASSIGNED' ? '다시 배정' : '팀 배정 (모집 마감)') }}
-            </button>
+            <div class="assign-actions">
+              <button
+                class="btn-pill btn-pill--md btn-pill--purple"
+                :disabled="assigning || players.length < 4"
+                @click="handleAssignTeams"
+              >
+                {{ assigning ? '배정 중...' : (battle.status === 'ASSIGNED' ? '다시 배정' : '팀 배정 (모집 마감)') }}
+              </button>
+              <button
+                v-if="battle.status === 'ASSIGNED' && isHost"
+                class="btn-pill btn-pill--md btn-pill--blue"
+                :disabled="battleMaps.length === 0 || startingEntry"
+                @click="handleStartEntry"
+              >
+                {{ startingEntry ? '전환 중...' : '엔트리 제출 시작' }}
+              </button>
+            </div>
           </div>
           <p v-if="players.length < 4" class="field-hint">
             최소 4명이 모여야 팀을 배정할 수 있습니다. (현재 {{ players.length }}명)
           </p>
+          <p v-if="battle.status === 'ASSIGNED' && battleMaps.length === 0" class="field-hint">
+            엔트리 제출을 시작하려면 맵을 먼저 등록하세요.
+          </p>
           <p v-if="assignError" class="save-error">{{ assignError }}</p>
+        </section>
+
+        <!-- ── 엔트리 ─────────────────────────────────────── -->
+        <section v-if="battle.status === 'ENTRY'" class="entry-section">
+          <p class="section-label">엔트리 제출</p>
+          <p v-if="entryError" class="save-error">{{ entryError }}</p>
+
+          <div class="entry-teams">
+            <div v-for="teamNo in [1, 2] as const" :key="teamNo" class="entry-team-panel">
+              <div class="entry-team-header">
+                <span class="entry-team-title">TEAM {{ teamNo }}</span>
+                <span class="entry-team-status" :class="{ 'entry-team-status--done': teamSubmitted(teamNo) }">
+                  {{ teamSubmitted(teamNo) ? '제출 완료' : '제출 대기' }}
+                </span>
+              </div>
+              <div class="entry-slot-list">
+                <div v-for="(mapRow, i) in battleMaps" :key="mapRow.order_index" class="entry-slot-row">
+                  <span class="entry-slot-num">{{ i + 1 }}경기</span>
+                  <span class="entry-slot-map">{{ mapInfo(mapRow.map_id)?.name ?? '알 수 없는 맵' }}</span>
+                  <select
+                    class="entry-slot-select"
+                    :disabled="!isMyCaptainTeam(teamNo)"
+                    @change="setEntrySlot(teamNo, i, ($event.target as HTMLSelectElement).value)"
+                  >
+                    <option value="" :selected="(teamNo === 1 ? entryDraft1 : entryDraft2)[i] === null">선수 선택</option>
+                    <option
+                      v-for="p in teamPlayers(teamNo)"
+                      :key="p.user_id"
+                      :value="p.user_id"
+                      :selected="(teamNo === 1 ? entryDraft1 : entryDraft2)[i] === p.user_id"
+                    >{{ nicknameOf(p.user_id) }} ({{ p.tier }})</option>
+                  </select>
+                </div>
+              </div>
+              <button
+                v-if="isMyCaptainTeam(teamNo)"
+                class="btn-save"
+                :disabled="submittingEntry === teamNo"
+                @click="handleSubmitEntry(teamNo)"
+              >
+                {{ submittingEntry === teamNo ? '제출 중...' : '엔트리 제출' }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="isHost" class="entry-publish-row">
+            <button
+              class="btn-pill btn-pill--md btn-pill--purple"
+              :disabled="!canPublish || publishing"
+              @click="handlePublishEntries"
+            >
+              {{ publishing ? '공개 중...' : '엔트리 공개 (경기 시작)' }}
+            </button>
+            <p v-if="!(teamSubmitted(1) && teamSubmitted(2))" class="field-hint">
+              양 팀 모두 엔트리를 제출해야 공개할 수 있습니다.
+            </p>
+          </div>
         </section>
 
         <!-- ── 맵 ─────────────────────────────────────────── -->
@@ -162,7 +232,10 @@
           </div>
         </section>
 
-        <p v-if="battle.status !== 'RECRUITING' && battle.status !== 'ASSIGNED'" class="state-msg">다음 단계에서 이어서 만듭니다.</p>
+        <p
+          v-if="battle.status !== 'RECRUITING' && battle.status !== 'ASSIGNED' && battle.status !== 'ENTRY'"
+          class="state-msg"
+        >다음 단계에서 이어서 만듭니다.</p>
       </template>
     </div>
 
@@ -219,7 +292,8 @@ import { tierPoint } from '@/lib/constants'
 import {
   getTeamBattle, getTeamBattlePlayers, joinTeamBattle, leaveTeamBattle,
   getTeamBattleMaps, setTeamBattleMaps, assignTeams, reassignLeader,
-  TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow,
+  getTeamBattleEntries, submitEntry, publishEntries, updateTeamBattleStatus,
+  TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow, type TeamBattleEntryRow,
 } from '@/lib/teamBattles'
 
 const route = useRoute()
@@ -256,13 +330,14 @@ const recruitmentClosed = computed(() => !!battle.value && new Date() >= new Dat
 async function load() {
   const id = route.params.id as string
   const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
-  const [b, p, all, me, maps, tbMaps] = await Promise.all([
+  const [b, p, all, me, maps, tbMaps, tbEntries] = await Promise.all([
     getTeamBattle(id),
     getTeamBattlePlayers(id),
     getPlayers(),
     discordId ? getPlayerByDiscordId(discordId) : Promise.resolve(null),
     getMaps(),
     getTeamBattleMaps(id),
+    getTeamBattleEntries(id),
   ])
   battle.value = b
   players.value = p
@@ -272,6 +347,8 @@ async function load() {
   const nonAce = tbMaps.filter(m => !m.is_ace).map(m => ({ order_index: m.order_index, map_id: m.map_id }))
   battleMaps.value = nonAce
   savedMapIds.value = nonAce.map(m => m.map_id)
+  entries.value = tbEntries
+  refreshEntryDrafts()
 }
 
 onMounted(async () => {
@@ -368,6 +445,95 @@ async function handleReassignLeader(teamNo: 1 | 2, userId: number) {
     assignError.value = e.message ?? '팀장 재지정 중 오류가 발생했습니다.'
   } finally {
     reassigning.value = false
+  }
+}
+
+const startingEntry = ref(false)
+
+async function handleStartEntry() {
+  if (!battle.value) return
+  startingEntry.value = true
+  assignError.value = null
+  try {
+    await updateTeamBattleStatus(battle.value.id, 'ENTRY')
+    battle.value = await getTeamBattle(battle.value.id)
+  } catch (e: any) {
+    assignError.value = e.message ?? '엔트리 제출 전환 중 오류가 발생했습니다.'
+  } finally {
+    startingEntry.value = false
+  }
+}
+
+// ── 엔트리 제출 ───────────────────────────────────────────
+const entries = ref<TeamBattleEntryRow[]>([])
+const entryDraft1 = ref<(number | null)[]>([])
+const entryDraft2 = ref<(number | null)[]>([])
+const submittingEntry = ref<1 | 2 | null>(null)
+const publishing = ref(false)
+const entryError = ref<string | null>(null)
+
+function initEntryDraft(teamNo: 1 | 2): (number | null)[] {
+  const existing = entries.value
+    .filter(e => e.team_no === teamNo)
+    .sort((a, b) => a.order_index - b.order_index)
+  return battleMaps.value.map((_, i) => existing[i]?.user_id ?? null)
+}
+
+function refreshEntryDrafts() {
+  entryDraft1.value = initEntryDraft(1)
+  entryDraft2.value = initEntryDraft(2)
+}
+
+function isMyCaptainTeam(teamNo: 1 | 2): boolean {
+  if (!myPlayer.value) return false
+  return players.value.some(p => p.user_id === myPlayer.value!.id && p.team_no === teamNo && p.is_leader)
+}
+
+function teamSubmitted(teamNo: 1 | 2): boolean {
+  return battleMaps.value.length > 0 && entries.value.filter(e => e.team_no === teamNo).length >= battleMaps.value.length
+}
+
+const canPublish = computed(() =>
+  isHost.value && battle.value?.status === 'ENTRY' && teamSubmitted(1) && teamSubmitted(2),
+)
+
+function setEntrySlot(teamNo: 1 | 2, index: number, rawValue: string) {
+  const value = rawValue === '' ? null : Number(rawValue)
+  const arr = teamNo === 1 ? entryDraft1.value : entryDraft2.value
+  arr[index] = value
+}
+
+async function handleSubmitEntry(teamNo: 1 | 2) {
+  if (!battle.value) return
+  const draft = teamNo === 1 ? entryDraft1.value : entryDraft2.value
+  if (draft.length === 0 || draft.some(id => id === null)) {
+    entryError.value = '모든 경기에 선수를 배정해야 합니다.'
+    return
+  }
+  submittingEntry.value = teamNo
+  entryError.value = null
+  try {
+    await submitEntry(battle.value.id, teamNo, draft as number[])
+    entries.value = await getTeamBattleEntries(battle.value.id)
+    refreshEntryDrafts()
+  } catch (e: any) {
+    entryError.value = e.message ?? '엔트리 제출 중 오류가 발생했습니다.'
+  } finally {
+    submittingEntry.value = null
+  }
+}
+
+async function handlePublishEntries() {
+  if (!battle.value) return
+  publishing.value = true
+  entryError.value = null
+  try {
+    await publishEntries(battle.value.id)
+    battle.value = await getTeamBattle(battle.value.id)
+  } catch (e: any) {
+    entryError.value = e.message ?? '엔트리 공개 중 오류가 발생했습니다.'
+  } finally {
+    publishing.value = false
   }
 }
 

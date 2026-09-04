@@ -195,6 +195,108 @@
 // ── 팀 배정 ─────────────────────────────────────────────
 .assign-section { margin-bottom: 24px; }
 
+.assign-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// ── 엔트리 제출 ───────────────────────────────────────────
+.entry-section { margin-bottom: 24px; }
+
+.entry-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.entry-team-panel {
+  border-radius: 14px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.entry-team-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.entry-team-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--c-text);
+  letter-spacing: 0.3px;
+}
+
+.entry-team-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+
+  &--done { color: #4ade80; }
+}
+
+.entry-slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.entry-slot-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.entry-slot-num {
+  flex-shrink: 0;
+  width: 42px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+}
+
+.entry-slot-map {
+  flex-shrink: 0;
+  width: 90px;
+  font-size: 12px;
+  color: var(--c-text-sub);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry-slot-select {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-input);
+  color: var(--c-text);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:disabled { opacity: 0.6; cursor: default; }
+  &:not(:disabled):focus { border-color: rgba(170, 59, 255, 0.5); }
+}
+
+.entry-publish-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 // ── 맵 ───────────────────────────────────────────────────
 .maps-section { margin-bottom: 24px; }
 
