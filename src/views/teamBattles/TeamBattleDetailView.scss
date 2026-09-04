@@ -289,6 +289,13 @@
 
   &:disabled { opacity: 0.6; cursor: default; }
   &:not(:disabled):focus { border-color: rgba(170, 59, 255, 0.5); }
+
+  // 펼쳐진 목록은 브라우저가 select의 색을 그대로 쓴다. --c-input/--c-text가
+  // 둘 다 반투명 흰색이라 흰 배경에 흰 글씨가 되어 안 보이므로 불투명 값으로 고정.
+  option {
+    background: var(--c-surface);
+    color: var(--c-text);
+  }
 }
 
 .entry-publish-row {
