@@ -67,43 +67,66 @@
               />
             </div>
 
-            <div class="field">
+            <div class="field date-field">
               <label class="field-label">시작 날짜</label>
-              <VueDatePicker
-                v-model="form.startDate"
-                :enable-time-picker="false"
-                :action-row="{ showNow: false }"
-                :locale="ko"
-                :dark="true"
-                auto-apply
-                :teleport="true"
-                :min-date="new Date()"
-              >
-                <template #trigger>
-                  <div class="dp-custom-input">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dp-custom-icon">
-                      <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-                      <path d="M4 1v2M10 1v2M1 5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                    </svg>
-                    <span :class="form.startDate ? 'dp-date-text' : 'dp-placeholder'">
-                      {{ form.startDate ? formatDateOnly(form.startDate) : '날짜 선택' }}
-                    </span>
-                  </div>
-                </template>
-              </VueDatePicker>
+              <button type="button" class="dp-custom-input" @click="showDatePicker = !showDatePicker">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="dp-custom-icon">
+                  <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M4 1v2M10 1v2M1 5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+                <span :class="form.startDate ? 'dp-date-text' : 'dp-placeholder'">
+                  {{ form.startDate ? formatDateOnly(form.startDate) : '날짜 선택' }}
+                </span>
+              </button>
+
+              <div v-if="showDatePicker" class="calendar-panel">
+                <div class="calendar-header">
+                  <button type="button" class="calendar-nav-btn" @click="shiftMonth(-1)">‹</button>
+                  <span class="calendar-month-label">{{ monthLabel }}</span>
+                  <button type="button" class="calendar-nav-btn" @click="shiftMonth(1)">›</button>
+                </div>
+                <div class="calendar-weekday-row">
+                  <span v-for="w in weekdayLabels" :key="w" class="calendar-weekday">{{ w }}</span>
+                </div>
+                <div class="calendar-grid">
+                  <button
+                    v-for="(day, i) in calendarDays"
+                    :key="i"
+                    type="button"
+                    class="calendar-day-btn"
+                    :class="{
+                      'calendar-day-btn--outside': !day.inMonth,
+                      'calendar-day-btn--selected': form.startDate && isSameDay(day.date, form.startDate),
+                      'calendar-day-btn--today': isSameDay(day.date, today),
+                    }"
+                    :disabled="day.disabled"
+                    @click="selectDay(day)"
+                  >{{ day.date.getDate() }}</button>
+                </div>
+              </div>
             </div>
 
             <div class="field">
               <label class="field-label">시작 시간</label>
-              <div class="time-select-row">
-                <select v-model="form.startHour" class="field-input time-select">
-                  <option value="" disabled>시</option>
-                  <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
-                </select>
-                <select v-model="form.startMinute" class="field-input time-select">
-                  <option value="" disabled>분</option>
-                  <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
-                </select>
+              <div class="hour-grid">
+                <button
+                  v-for="h in hourOptions"
+                  :key="h"
+                  type="button"
+                  class="hour-btn"
+                  :class="{ active: form.startHour === h }"
+                  @click="form.startHour = h"
+                >{{ h }}</button>
+              </div>
+              <div class="minute-row">
+                <button
+                  v-for="m in minuteOptions"
+                  :key="m"
+                  type="button"
+                  class="minute-btn"
+                  :class="{ active: form.startMinute === m }"
+                  @click="form.startMinute = m"
+                >{{ m }}분</button>
               </div>
               <p class="field-hint">이 시간이 되면 모집이 자동으로 마감됩니다.</p>
             </div>
@@ -125,11 +148,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { VueDatePicker } from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
-import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
@@ -157,6 +177,50 @@ function formatDateOnly(d: Date): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
+function startOfDay(d: Date): Date {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  return x
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+const today = startOfDay(new Date())
+
+// ── 커스텀 달력 (VueDatePicker 대신 자체 구현 — 네이티브/라이브러리
+// 팝업이 다크 테마를 따라오지 않는 문제를 피하기 위함) ──────────────
+interface CalendarDay { date: Date; inMonth: boolean; disabled: boolean }
+
+const showDatePicker = ref(false)
+const calendarMonth = ref(new Date())
+const weekdayLabels = ['월', '화', '수', '목', '금', '토', '일']
+
+const monthLabel = computed(() => `${calendarMonth.value.getFullYear()}년 ${calendarMonth.value.getMonth() + 1}월`)
+
+const calendarDays = computed<CalendarDay[]>(() => {
+  const year = calendarMonth.value.getFullYear()
+  const month = calendarMonth.value.getMonth()
+  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7
+  const gridStart = new Date(year, month, 1 - firstWeekday)
+
+  return Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i)
+    return { date: d, inMonth: d.getMonth() === month, disabled: startOfDay(d) < today }
+  })
+})
+
+function shiftMonth(delta: number) {
+  calendarMonth.value = new Date(calendarMonth.value.getFullYear(), calendarMonth.value.getMonth() + delta, 1)
+}
+
+function selectDay(day: CalendarDay) {
+  if (day.disabled) return
+  form.startDate = day.date
+  showDatePicker.value = false
+}
+
 onMounted(async () => {
   try {
     const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
@@ -178,7 +242,7 @@ const showForm = ref(false)
 const saving = ref(false)
 const saveError = ref<string | null>(null)
 const hourOptions = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
-const minuteOptions = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']
+const minuteOptions = ['00', '15', '30', '45']
 
 const form = reactive({
   name: '',
@@ -195,6 +259,8 @@ function openCreate() {
   form.startMinute = ''
   form.aceMode = 'RANDOM'
   saveError.value = null
+  showDatePicker.value = false
+  calendarMonth.value = new Date()
   showForm.value = true
 }
 
