@@ -24,6 +24,19 @@
 .race-color--p { color: var(--race-p); }
 
 // 배지용 (background + color)
+// 모양(패딩/크기)은 여기서 기본값을 잡고, 화면별로 필요하면 로컬 scoped 스타일로
+// 덮어쓸 수 있다(예: GamesView의 20x20 고정 아이콘형). 색상 모디파이어만 있던
+// 화면(PlayersView 등)도 이 기본 모양을 그대로 물려받는다.
+.tier-badge,
+.race-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 5px;
+}
+
 .race-badge--t { background: var(--race-t-bg); color: var(--race-t); }
 .race-badge--z { background: var(--race-z-bg); color: var(--race-z); }
 .race-badge--p { background: var(--race-p-bg); color: var(--race-p); }
