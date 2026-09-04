@@ -92,24 +92,6 @@
               </VueDatePicker>
               <p class="field-hint">이 시간이 되면 모집이 자동으로 마감됩니다.</p>
             </div>
-
-            <div class="field">
-              <label class="field-label">에이스 결정전 방식</label>
-              <div class="ace-mode-group">
-                <button
-                  type="button"
-                  class="ace-mode-btn"
-                  :class="{ active: form.aceMode === 'RANDOM' }"
-                  @click="form.aceMode = 'RANDOM'"
-                >랜덤 추첨</button>
-                <button
-                  type="button"
-                  class="ace-mode-btn"
-                  :class="{ active: form.aceMode === 'CAPTAIN' }"
-                  @click="form.aceMode = 'CAPTAIN'"
-                >팀장 지정</button>
-              </div>
-            </div>
           </div>
 
           <div class="modal-footer">
@@ -131,6 +113,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'

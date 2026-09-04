@@ -353,10 +353,11 @@ export async function setMatchWinner(battleId: string, orderIndex: number, winne
 // ── 에이스 결정전 ────────────────────────────────────────────
 /**
  * 에이스 맵 무작위 추첨 → team_battle_maps/team_battle_matches에 is_ace=true 행 생성.
- * ace_mode가 RANDOM이면 양 팀 선수도 이 시점에 무작위로 함께 배정하고,
+ * aceMode를 넘기면(생성 시점에 정하지 않고 이 시점에 정하는 경우) 배틀의 ace_mode를
+ * 함께 갱신한다. RANDOM이면 양 팀 선수도 이 시점에 무작위로 함께 배정하고,
  * CAPTAIN이면 선수는 비워둔 채(팀장이 웹에서 직접 선택) ACE_ENTRY로 전환한다.
  */
-export async function drawAceMatch(battleId: string): Promise<void> {
+export async function drawAceMatch(battleId: string, aceMode?: AceMode): Promise<void> {
   const [battle, players, existingMaps, mapsResult] = await Promise.all([
     getTeamBattle(battleId),
     getTeamBattlePlayers(battleId),
@@ -368,6 +369,15 @@ export async function drawAceMatch(battleId: string): Promise<void> {
   if (mapIds.length === 0) throw new Error('등록된 맵이 없습니다.')
   const mapId = mapIds[Math.floor(Math.random() * mapIds.length)]
   const orderIndex = existingMaps.filter(m => !m.is_ace).length
+
+  const effectiveMode = aceMode ?? battle.ace_mode
+  if (aceMode && aceMode !== battle.ace_mode) {
+    const { error: modeError } = await supabase
+      .from('team_battles')
+      .update({ ace_mode: aceMode, updated_at: new Date().toISOString() })
+      .eq('id', battleId)
+    if (modeError) throw modeError
+  }
 
   const { error: delMapError } = await supabase
     .from('team_battle_maps')
@@ -383,7 +393,7 @@ export async function drawAceMatch(battleId: string): Promise<void> {
 
   let team1UserId: number | null = null
   let team2UserId: number | null = null
-  if (battle.ace_mode === 'RANDOM') {
+  if (effectiveMode === 'RANDOM') {
     const team1 = players.filter(p => p.team_no === 1)
     const team2 = players.filter(p => p.team_no === 2)
     team1UserId = team1[Math.floor(Math.random() * team1.length)]?.user_id ?? null

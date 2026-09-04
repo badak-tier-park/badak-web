@@ -401,6 +401,18 @@
 // ── 에이스 결정전 ───────────────────────────────────────
 .ace-section { margin-bottom: 24px; }
 
+.ace-mode-group { display: flex; gap: 8px; margin: 8px 0 12px; }
+
+.ace-mode-btn {
+  @extend %toggle-btn;
+
+  &.active {
+    border-color: rgba(170, 59, 255, 0.5);
+    background: rgba(170, 59, 255, 0.1);
+    color: #c084fc;
+  }
+}
+
 .ace-match-panel {
   display: flex;
   flex-direction: column;

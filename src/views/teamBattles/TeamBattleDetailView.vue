@@ -277,18 +277,33 @@
           <p v-if="aceError" class="save-error">{{ aceError }}</p>
 
           <template v-if="battle.status === 'ACE_WAITING'">
-            <p class="state-msg">
-              동점으로 에이스 결정전에 돌입합니다.
-              ({{ battle.ace_mode === 'RANDOM' ? '선수 무작위 배정' : '팀장 지정' }})
-            </p>
-            <button
-              v-if="isHost"
-              class="btn-pill btn-pill--md btn-pill--orange"
-              :disabled="drawingAce"
-              @click="handleDrawAce"
-            >
-              {{ drawingAce ? '추첨 중...' : '에이스 맵 뽑기' }}
-            </button>
+            <p class="state-msg">동점으로 에이스 결정전에 돌입합니다.</p>
+
+            <template v-if="isHost">
+              <p class="field-hint">에이스 결정 방식을 선택하세요.</p>
+              <div class="ace-mode-group">
+                <button
+                  type="button"
+                  class="ace-mode-btn"
+                  :class="{ active: aceModeChoice === 'RANDOM' }"
+                  @click="aceModeChoice = 'RANDOM'"
+                >랜덤 추첨</button>
+                <button
+                  type="button"
+                  class="ace-mode-btn"
+                  :class="{ active: aceModeChoice === 'CAPTAIN' }"
+                  @click="aceModeChoice = 'CAPTAIN'"
+                >팀장 지정</button>
+              </div>
+              <button
+                class="btn-pill btn-pill--md btn-pill--orange"
+                :disabled="drawingAce"
+                @click="handleDrawAce"
+              >
+                {{ drawingAce ? '추첨 중...' : '에이스 맵 뽑기' }}
+              </button>
+            </template>
+            <p v-else class="state-msg">주최자가 에이스 결정 방식을 정하는 중입니다.</p>
           </template>
 
           <div v-else-if="aceMatch" class="ace-match-panel">
@@ -431,7 +446,7 @@ import {
   getTeamBattleEntries, submitEntry, publishEntries, updateTeamBattleStatus,
   getTeamBattleMatches, setMatchWinner, finishTeamBattle, drawAceMatch, setAcePlayer,
   TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow,
-  type TeamBattleEntryRow, type TeamBattleMatchRow,
+  type TeamBattleEntryRow, type TeamBattleMatchRow, type AceMode,
 } from '@/lib/teamBattles'
 
 const route = useRoute()
@@ -489,6 +504,7 @@ async function load() {
   entries.value = tbEntries
   refreshEntryDrafts()
   matches.value = tbMatches
+  aceModeChoice.value = b.ace_mode
 }
 
 onMounted(async () => {
@@ -731,6 +747,7 @@ async function handleStartAce() {
   try {
     await updateTeamBattleStatus(battle.value.id, 'ACE_WAITING')
     battle.value = await getTeamBattle(battle.value.id)
+    aceModeChoice.value = battle.value.ace_mode
   } catch (e: any) {
     matchError.value = e.message ?? '에이스 결정전 시작 중 오류가 발생했습니다.'
   } finally {
@@ -743,6 +760,7 @@ const drawingAce = ref(false)
 const submittingAce = ref<1 | 2 | null>(null)
 const aceError = ref<string | null>(null)
 const aceDraft = ref<{ 1: number | null; 2: number | null }>({ 1: null, 2: null })
+const aceModeChoice = ref<AceMode>('RANDOM')
 
 const aceMatch = computed(() => matches.value.find(m => m.is_ace) ?? null)
 
@@ -760,7 +778,7 @@ async function handleDrawAce() {
   drawingAce.value = true
   aceError.value = null
   try {
-    await drawAceMatch(battle.value.id)
+    await drawAceMatch(battle.value.id, aceModeChoice.value)
     const [b, m] = await Promise.all([getTeamBattle(battle.value.id), getTeamBattleMatches(battle.value.id)])
     battle.value = b
     matches.value = m

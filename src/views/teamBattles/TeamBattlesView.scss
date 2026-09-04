@@ -1,5 +1,4 @@
 @use '../../styles/page';
-@use '../../styles/toggle-group';
 
 .team-battles-page {
   position: relative;
@@ -67,14 +66,57 @@
   color: var(--c-text-faint);
 }
 
-.ace-mode-group { display: flex; gap: 8px; }
+// ── VueDatePicker 커스텀 트리거 ──────────────────────────
+.dp-custom-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 13px;
+  background: var(--c-input);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
 
-.ace-mode-btn {
-  @extend %toggle-btn;
-
-  &.active {
-    border-color: rgba(170, 59, 255, 0.5);
-    background: rgba(170, 59, 255, 0.1);
-    color: #c084fc;
-  }
+  &:hover { border-color: rgba(170, 59, 255, 0.45); }
 }
+
+.dp-custom-icon { color: var(--c-icon); flex-shrink: 0; }
+
+.dp-date-text {
+  font-size: 13px;
+  color: var(--c-text);
+}
+
+.dp-placeholder {
+  font-size: 13px;
+  color: var(--c-text-faint);
+}
+
+// ── VueDatePicker 커스텀 ──────────────────────────────────
+:deep(.dp__theme_dark) {
+  --dp-background-color: #13141d;
+  --dp-text-color: rgba(255, 255, 255, 0.82);
+  --dp-hover-color: rgba(170, 59, 255, 0.12);
+  --dp-hover-text-color: #c084fc;
+  --dp-hover-icon-color: #c084fc;
+  --dp-primary-color: #aa3bff;
+  --dp-primary-text-color: #fff;
+  --dp-secondary-color: rgba(255, 255, 255, 0.07);
+  --dp-border-color: rgba(255, 255, 255, 0.1);
+  --dp-menu-border-color: rgba(255, 255, 255, 0.1);
+  --dp-border-color-hover: rgba(170, 59, 255, 0.5);
+  --dp-disabled-color: rgba(255, 255, 255, 0.15);
+  --dp-icon-color: rgba(255, 255, 255, 0.35);
+  --dp-range-between-dates-background-color: rgba(170, 59, 255, 0.08);
+  --dp-range-between-border-color: transparent;
+  --dp-range-between-dates-text-color: rgba(255, 255, 255, 0.75);
+  --dp-font-family: system-ui, sans-serif;
+  --dp-font-size: 13px;
+  --dp-border-radius: 8px;
+}
+
+:deep(.dp__input) { padding: 10px 13px 10px 36px; font-size: 13px; }
+:deep(.dp__input_icon) { color: rgba(255, 255, 255, 0.25); }
