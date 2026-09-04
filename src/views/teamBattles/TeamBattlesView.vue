@@ -72,9 +72,9 @@
               <VueDatePicker
                 v-model="form.startAt"
                 :enable-time-picker="true"
+                :time-picker-inline="true"
                 :locale="ko"
                 :dark="true"
-                auto-apply
                 :teleport="true"
                 :min-date="new Date()"
               >
