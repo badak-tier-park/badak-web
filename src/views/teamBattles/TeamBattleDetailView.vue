@@ -24,6 +24,10 @@
           시작 {{ formatDateTime(battle.start_at) }} · 주최자 {{ hostName }} · 참가 {{ players.length }}명
         </p>
 
+        <p v-if="battle.status === 'FINISHED' && battle.winner_team" class="winner-banner">
+          TEAM {{ battle.winner_team }} 우승
+        </p>
+
         <p v-if="actionError" class="save-error">{{ actionError }}</p>
 
         <!-- ── RECRUITING ─────────────────────────────────── -->
@@ -205,6 +209,72 @@
           </div>
         </section>
 
+        <!-- ── 경기 결과 ──────────────────────────────────── -->
+        <section v-if="matches.length > 0" class="matches-section">
+          <div class="section-label-row">
+            <p class="section-label">경기 결과</p>
+            <span class="match-tally-score">{{ team1Wins }} : {{ team2Wins }}</span>
+          </div>
+
+          <div class="match-list">
+            <div
+              v-for="m in regularMatches"
+              :key="m.order_index"
+              class="match-row"
+              :class="{ 'match-row--decided': m.winner_team }"
+            >
+              <span class="match-num">{{ m.order_index + 1 }}경기</span>
+              <span class="match-map">{{ mapInfo(m.map_id)?.name ?? '알 수 없는 맵' }}</span>
+              <span class="match-side" :class="{ 'match-side--winner': m.winner_team === 1 }">
+                {{ nicknameOfOrDash(m.team1_user_id) }}
+              </span>
+              <span class="match-vs">vs</span>
+              <span class="match-side" :class="{ 'match-side--winner': m.winner_team === 2 }">
+                {{ nicknameOfOrDash(m.team2_user_id) }}
+              </span>
+              <div v-if="isHost && battle.status === 'PLAYING'" class="match-winner-btns">
+                <button
+                  class="match-winner-btn"
+                  :class="{ active: m.winner_team === 1 }"
+                  :disabled="reportingMatch === m.order_index"
+                  @click="handleSetWinner(m.order_index, 1)"
+                >1팀 승</button>
+                <button
+                  class="match-winner-btn"
+                  :class="{ active: m.winner_team === 2 }"
+                  :disabled="reportingMatch === m.order_index"
+                  @click="handleSetWinner(m.order_index, 2)"
+                >2팀 승</button>
+              </div>
+            </div>
+          </div>
+
+          <p v-if="matchError" class="save-error">{{ matchError }}</p>
+
+          <div v-if="isHost && battle.status === 'PLAYING' && allMatchesReported" class="match-decide-row">
+            <button
+              v-if="!isTie"
+              class="btn-pill btn-pill--md btn-pill--purple"
+              :disabled="finishing"
+              @click="handleFinish"
+            >
+              {{ finishing ? '처리 중...' : '경기 종료 확정' }}
+            </button>
+            <button
+              v-else
+              class="btn-pill btn-pill--md btn-pill--orange"
+              :disabled="startingAce"
+              @click="handleStartAce"
+            >
+              {{ startingAce ? '처리 중...' : '동점 — 에이스 결정전 시작' }}
+            </button>
+          </div>
+        </section>
+
+        <p v-if="battle.status === 'ACE_WAITING' || battle.status === 'ACE_ENTRY'" class="state-msg">
+          에이스 결정전 기능은 다음 단계에서 이어서 만듭니다.
+        </p>
+
         <!-- ── 맵 ─────────────────────────────────────────── -->
         <section class="maps-section">
           <div class="section-label-row">
@@ -232,10 +302,6 @@
           </div>
         </section>
 
-        <p
-          v-if="battle.status !== 'RECRUITING' && battle.status !== 'ASSIGNED' && battle.status !== 'ENTRY'"
-          class="state-msg"
-        >다음 단계에서 이어서 만듭니다.</p>
       </template>
     </div>
 
@@ -293,7 +359,9 @@ import {
   getTeamBattle, getTeamBattlePlayers, joinTeamBattle, leaveTeamBattle,
   getTeamBattleMaps, setTeamBattleMaps, assignTeams, reassignLeader,
   getTeamBattleEntries, submitEntry, publishEntries, updateTeamBattleStatus,
-  TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow, type TeamBattleEntryRow,
+  getTeamBattleMatches, setMatchWinner, finishTeamBattle,
+  TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow,
+  type TeamBattleEntryRow, type TeamBattleMatchRow,
 } from '@/lib/teamBattles'
 
 const route = useRoute()
@@ -330,7 +398,7 @@ const recruitmentClosed = computed(() => !!battle.value && new Date() >= new Dat
 async function load() {
   const id = route.params.id as string
   const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
-  const [b, p, all, me, maps, tbMaps, tbEntries] = await Promise.all([
+  const [b, p, all, me, maps, tbMaps, tbEntries, tbMatches] = await Promise.all([
     getTeamBattle(id),
     getTeamBattlePlayers(id),
     getPlayers(),
@@ -338,6 +406,7 @@ async function load() {
     getMaps(),
     getTeamBattleMaps(id),
     getTeamBattleEntries(id),
+    getTeamBattleMatches(id),
   ])
   battle.value = b
   players.value = p
@@ -349,6 +418,7 @@ async function load() {
   savedMapIds.value = nonAce.map(m => m.map_id)
   entries.value = tbEntries
   refreshEntryDrafts()
+  matches.value = tbMatches
 }
 
 onMounted(async () => {
@@ -530,10 +600,71 @@ async function handlePublishEntries() {
   try {
     await publishEntries(battle.value.id)
     battle.value = await getTeamBattle(battle.value.id)
+    matches.value = await getTeamBattleMatches(battle.value.id)
   } catch (e: any) {
     entryError.value = e.message ?? '엔트리 공개 중 오류가 발생했습니다.'
   } finally {
     publishing.value = false
+  }
+}
+
+// ── 경기 결과 ─────────────────────────────────────────────
+const matches = ref<TeamBattleMatchRow[]>([])
+const reportingMatch = ref<number | null>(null)
+const finishing = ref(false)
+const startingAce = ref(false)
+const matchError = ref<string | null>(null)
+
+const nicknameOfOrDash = (userId: number | null) => userId === null ? '-' : nicknameOf(userId)
+
+const regularMatches = computed(() => matches.value.filter(m => !m.is_ace).sort((a, b) => a.order_index - b.order_index))
+const team1Wins = computed(() => regularMatches.value.filter(m => m.winner_team === 1).length)
+const team2Wins = computed(() => regularMatches.value.filter(m => m.winner_team === 2).length)
+const allMatchesReported = computed(() =>
+  regularMatches.value.length > 0 && regularMatches.value.every(m => m.winner_team !== null),
+)
+const isTie = computed(() => allMatchesReported.value && team1Wins.value === team2Wins.value)
+
+async function handleSetWinner(orderIndex: number, winnerTeam: 1 | 2) {
+  if (!battle.value) return
+  reportingMatch.value = orderIndex
+  matchError.value = null
+  try {
+    await setMatchWinner(battle.value.id, orderIndex, winnerTeam)
+    matches.value = await getTeamBattleMatches(battle.value.id)
+  } catch (e: any) {
+    matchError.value = e.message ?? '경기 결과 저장 중 오류가 발생했습니다.'
+  } finally {
+    reportingMatch.value = null
+  }
+}
+
+async function handleFinish() {
+  if (!battle.value) return
+  finishing.value = true
+  matchError.value = null
+  try {
+    const winnerTeam = team1Wins.value > team2Wins.value ? 1 : 2
+    await finishTeamBattle(battle.value.id, winnerTeam)
+    battle.value = await getTeamBattle(battle.value.id)
+  } catch (e: any) {
+    matchError.value = e.message ?? '경기 종료 확정 중 오류가 발생했습니다.'
+  } finally {
+    finishing.value = false
+  }
+}
+
+async function handleStartAce() {
+  if (!battle.value) return
+  startingAce.value = true
+  matchError.value = null
+  try {
+    await updateTeamBattleStatus(battle.value.id, 'ACE_WAITING')
+    battle.value = await getTeamBattle(battle.value.id)
+  } catch (e: any) {
+    matchError.value = e.message ?? '에이스 결정전 시작 중 오류가 발생했습니다.'
+  } finally {
+    startingAce.value = false
   }
 }
 
