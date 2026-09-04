@@ -271,9 +271,79 @@
           </div>
         </section>
 
-        <p v-if="battle.status === 'ACE_WAITING' || battle.status === 'ACE_ENTRY'" class="state-msg">
-          에이스 결정전 기능은 다음 단계에서 이어서 만듭니다.
-        </p>
+        <!-- ── 에이스 결정전 ──────────────────────────────── -->
+        <section v-if="battle.status === 'ACE_WAITING' || battle.status === 'ACE_ENTRY'" class="ace-section">
+          <p class="section-label">에이스 결정전</p>
+          <p v-if="aceError" class="save-error">{{ aceError }}</p>
+
+          <template v-if="battle.status === 'ACE_WAITING'">
+            <p class="state-msg">
+              동점으로 에이스 결정전에 돌입합니다.
+              ({{ battle.ace_mode === 'RANDOM' ? '선수 무작위 배정' : '팀장 지정' }})
+            </p>
+            <button
+              v-if="isHost"
+              class="btn-pill btn-pill--md btn-pill--orange"
+              :disabled="drawingAce"
+              @click="handleDrawAce"
+            >
+              {{ drawingAce ? '추첨 중...' : '에이스 맵 뽑기' }}
+            </button>
+          </template>
+
+          <div v-else-if="aceMatch" class="ace-match-panel">
+            <p class="ace-map-name">맵: {{ mapInfo(aceMatch.map_id)?.name ?? '알 수 없는 맵' }}</p>
+
+            <div v-for="teamNo in [1, 2] as const" :key="teamNo" class="ace-team-row">
+              <span class="ace-team-label">TEAM {{ teamNo }}</span>
+              <template v-if="!acePlayerOf(teamNo)">
+                <select
+                  class="entry-slot-select"
+                  :disabled="!isMyCaptainTeam(teamNo)"
+                  @change="setAceDraft(teamNo, ($event.target as HTMLSelectElement).value)"
+                >
+                  <option value="" :selected="aceDraft[teamNo] === null">선수 선택</option>
+                  <option
+                    v-for="p in teamPlayers(teamNo)"
+                    :key="p.user_id"
+                    :value="p.user_id"
+                    :selected="aceDraft[teamNo] === p.user_id"
+                  >{{ nicknameOf(p.user_id) }} ({{ p.tier }})</option>
+                </select>
+                <button
+                  v-if="isMyCaptainTeam(teamNo)"
+                  class="btn-save"
+                  :disabled="!aceDraft[teamNo] || submittingAce === teamNo"
+                  @click="handleSubmitAcePlayer(teamNo)"
+                >
+                  {{ submittingAce === teamNo ? '제출 중...' : '선수 확정' }}
+                </button>
+              </template>
+              <span v-else class="ace-player-name">{{ nicknameOfOrDash(acePlayerOf(teamNo)) }}</span>
+            </div>
+
+            <div v-if="isHost && aceMatch.team1_user_id && aceMatch.team2_user_id" class="match-winner-btns">
+              <button
+                class="match-winner-btn"
+                :class="{ active: aceMatch.winner_team === 1 }"
+                :disabled="reportingMatch === aceMatch.order_index"
+                @click="handleSetWinner(aceMatch.order_index, 1)"
+              >1팀 승</button>
+              <button
+                class="match-winner-btn"
+                :class="{ active: aceMatch.winner_team === 2 }"
+                :disabled="reportingMatch === aceMatch.order_index"
+                @click="handleSetWinner(aceMatch.order_index, 2)"
+              >2팀 승</button>
+            </div>
+
+            <div v-if="isHost && aceMatch.winner_team" class="match-decide-row">
+              <button class="btn-pill btn-pill--md btn-pill--purple" :disabled="finishing" @click="handleFinishAce">
+                {{ finishing ? '처리 중...' : '경기 종료 확정' }}
+              </button>
+            </div>
+          </div>
+        </section>
 
         <!-- ── 맵 ─────────────────────────────────────────── -->
         <section class="maps-section">
@@ -359,7 +429,7 @@ import {
   getTeamBattle, getTeamBattlePlayers, joinTeamBattle, leaveTeamBattle,
   getTeamBattleMaps, setTeamBattleMaps, assignTeams, reassignLeader,
   getTeamBattleEntries, submitEntry, publishEntries, updateTeamBattleStatus,
-  getTeamBattleMatches, setMatchWinner, finishTeamBattle,
+  getTeamBattleMatches, setMatchWinner, finishTeamBattle, drawAceMatch, setAcePlayer,
   TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow,
   type TeamBattleEntryRow, type TeamBattleMatchRow,
 } from '@/lib/teamBattles'
@@ -665,6 +735,70 @@ async function handleStartAce() {
     matchError.value = e.message ?? '에이스 결정전 시작 중 오류가 발생했습니다.'
   } finally {
     startingAce.value = false
+  }
+}
+
+// ── 에이스 결정전 ─────────────────────────────────────────
+const drawingAce = ref(false)
+const submittingAce = ref<1 | 2 | null>(null)
+const aceError = ref<string | null>(null)
+const aceDraft = ref<{ 1: number | null; 2: number | null }>({ 1: null, 2: null })
+
+const aceMatch = computed(() => matches.value.find(m => m.is_ace) ?? null)
+
+function acePlayerOf(teamNo: 1 | 2): number | null {
+  if (!aceMatch.value) return null
+  return teamNo === 1 ? aceMatch.value.team1_user_id : aceMatch.value.team2_user_id
+}
+
+function setAceDraft(teamNo: 1 | 2, rawValue: string) {
+  aceDraft.value[teamNo] = rawValue === '' ? null : Number(rawValue)
+}
+
+async function handleDrawAce() {
+  if (!battle.value) return
+  drawingAce.value = true
+  aceError.value = null
+  try {
+    await drawAceMatch(battle.value.id)
+    const [b, m] = await Promise.all([getTeamBattle(battle.value.id), getTeamBattleMatches(battle.value.id)])
+    battle.value = b
+    matches.value = m
+    aceDraft.value = { 1: null, 2: null }
+  } catch (e: any) {
+    aceError.value = e.message ?? '에이스 맵 추첨 중 오류가 발생했습니다.'
+  } finally {
+    drawingAce.value = false
+  }
+}
+
+async function handleSubmitAcePlayer(teamNo: 1 | 2) {
+  if (!battle.value || !aceMatch.value) return
+  const userId = aceDraft.value[teamNo]
+  if (!userId) return
+  submittingAce.value = teamNo
+  aceError.value = null
+  try {
+    await setAcePlayer(battle.value.id, aceMatch.value.order_index, teamNo, userId)
+    matches.value = await getTeamBattleMatches(battle.value.id)
+  } catch (e: any) {
+    aceError.value = e.message ?? '에이스 선수 확정 중 오류가 발생했습니다.'
+  } finally {
+    submittingAce.value = null
+  }
+}
+
+async function handleFinishAce() {
+  if (!battle.value || !aceMatch.value?.winner_team) return
+  finishing.value = true
+  matchError.value = null
+  try {
+    await finishTeamBattle(battle.value.id, aceMatch.value.winner_team)
+    battle.value = await getTeamBattle(battle.value.id)
+  } catch (e: any) {
+    matchError.value = e.message ?? '경기 종료 확정 중 오류가 발생했습니다.'
+  } finally {
+    finishing.value = false
   }
 }
 

@@ -350,6 +350,78 @@ export async function setMatchWinner(battleId: string, orderIndex: number, winne
   if (error) throw error
 }
 
+// ── 에이스 결정전 ────────────────────────────────────────────
+/**
+ * 에이스 맵 무작위 추첨 → team_battle_maps/team_battle_matches에 is_ace=true 행 생성.
+ * ace_mode가 RANDOM이면 양 팀 선수도 이 시점에 무작위로 함께 배정하고,
+ * CAPTAIN이면 선수는 비워둔 채(팀장이 웹에서 직접 선택) ACE_ENTRY로 전환한다.
+ */
+export async function drawAceMatch(battleId: string): Promise<void> {
+  const [battle, players, existingMaps, mapsResult] = await Promise.all([
+    getTeamBattle(battleId),
+    getTeamBattlePlayers(battleId),
+    getTeamBattleMaps(battleId),
+    supabase.from('maps').select('id'),
+  ])
+  if (mapsResult.error) throw mapsResult.error
+  const mapIds = (mapsResult.data ?? []).map((m: { id: string }) => m.id)
+  if (mapIds.length === 0) throw new Error('등록된 맵이 없습니다.')
+  const mapId = mapIds[Math.floor(Math.random() * mapIds.length)]
+  const orderIndex = existingMaps.filter(m => !m.is_ace).length
+
+  const { error: delMapError } = await supabase
+    .from('team_battle_maps')
+    .delete()
+    .eq('battle_id', battleId)
+    .eq('is_ace', true)
+  if (delMapError) throw delMapError
+
+  const { error: mapError } = await supabase
+    .from('team_battle_maps')
+    .insert({ battle_id: battleId, order_index: orderIndex, map_id: mapId, is_ace: true })
+  if (mapError) throw mapError
+
+  let team1UserId: number | null = null
+  let team2UserId: number | null = null
+  if (battle.ace_mode === 'RANDOM') {
+    const team1 = players.filter(p => p.team_no === 1)
+    const team2 = players.filter(p => p.team_no === 2)
+    team1UserId = team1[Math.floor(Math.random() * team1.length)]?.user_id ?? null
+    team2UserId = team2[Math.floor(Math.random() * team2.length)]?.user_id ?? null
+  }
+
+  const { error: delMatchError } = await supabase
+    .from('team_battle_matches')
+    .delete()
+    .eq('battle_id', battleId)
+    .eq('is_ace', true)
+  if (delMatchError) throw delMatchError
+
+  const { error: matchError } = await supabase.from('team_battle_matches').insert({
+    battle_id: battleId,
+    order_index: orderIndex,
+    map_id: mapId,
+    team1_user_id: team1UserId,
+    team2_user_id: team2UserId,
+    winner_team: null,
+    is_ace: true,
+  })
+  if (matchError) throw matchError
+
+  await updateStatus(battleId, 'ACE_ENTRY')
+}
+
+/** 에이스전 선수 확정 (팀장 지정 모드) — 해당 팀의 출전 선수만 갱신 */
+export async function setAcePlayer(battleId: string, orderIndex: number, teamNo: 1 | 2, userId: number): Promise<void> {
+  const field = teamNo === 1 ? 'team1_user_id' : 'team2_user_id'
+  const { error } = await supabase
+    .from('team_battle_matches')
+    .update({ [field]: userId })
+    .eq('battle_id', battleId)
+    .eq('order_index', orderIndex)
+  if (error) throw error
+}
+
 export async function finishTeamBattle(battleId: string, winnerTeam: 1 | 2): Promise<void> {
   const { error } = await supabase
     .from('team_battles')
