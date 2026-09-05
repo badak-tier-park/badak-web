@@ -51,16 +51,16 @@
 // ── 네비게이션 카드 그리드 ─────────────────────────────────
 .nav-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
 }
 
 .nav-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
   border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
   text-decoration: none;
@@ -87,14 +87,17 @@
 }
 
 .nav-card-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   opacity: 0.85;
+
+  // 템플릿의 svg는 20px 고정이라 카드 축소에 맞춰 여기서 줄인다
+  svg { width: 17px; height: 17px; }
 
   &--blue   { background: rgba(88, 101, 242, 0.15); color: #818cf8; }
   &--red    { background: rgba(239, 68, 68, 0.12);  color: #f87171; }
@@ -109,15 +112,15 @@
 }
 
 .nav-card-title {
-  margin: 0 0 3px;
-  font-size: 13px;
+  margin: 0 0 2px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--c-text);
 }
 
 .nav-card-desc {
   margin: 0;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--c-text-muted);
   white-space: nowrap;
   overflow: hidden;
