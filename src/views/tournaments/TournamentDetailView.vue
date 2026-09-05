@@ -120,47 +120,60 @@
           <p v-else-if="!tournament.map_id" class="field-hint">맵을 먼저 지정해주세요.</p>
         </section>
 
-        <!-- ── 대진표 ─────────────────────────────────────── -->
+        <!-- ── 대진표 (좌→우 트리) ────────────────────────── -->
         <section v-if="matches.length > 0" class="bracket-section">
           <p class="section-label">대진표</p>
           <p v-if="matchError" class="save-error">{{ matchError }}</p>
 
-          <div v-for="round in roundNumbers" :key="round" class="round-group">
-            <p class="round-title">{{ roundLabelFor(round) }}</p>
-            <div class="match-list">
-              <div
-                v-for="m in matchesInRound(round)"
-                :key="m.slot"
-                class="match-row"
-                :class="{ 'match-row--decided': m.winner_user_id }"
-              >
-                <span
-                  class="match-side"
-                  :class="{ 'match-side--win': !!m.winner_user_id && m.winner_user_id === m.player1_user_id }"
-                >{{ m.player1_user_id === null ? '-' : nicknameOf(m.player1_user_id) }}</span>
-                <span class="match-vs">vs</span>
-                <span
-                  class="match-side"
-                  :class="{ 'match-side--win': !!m.winner_user_id && m.winner_user_id === m.player2_user_id }"
-                >{{ m.player2_user_id === null ? '부전승' : nicknameOf(m.player2_user_id) }}</span>
+          <div class="bracket-scroll">
+            <div class="bracket-tree" :style="{ width: `${bracketWidth}px`, height: `${bracketHeight + HEADER_OFFSET}px` }">
+              <span
+                v-for="round in roundNumbers"
+                :key="`h-${round}`"
+                class="bracket-round-label"
+                :style="{ left: `${round * (MATCH_WIDTH + COLUMN_GAP)}px`, width: `${MATCH_WIDTH}px` }"
+              >{{ roundLabelFor(round) }}</span>
 
+              <div
+                v-for="c in connectors"
+                :key="`${c.type}-${c.x}-${c.y}`"
+                :class="c.type === 'vertical' ? 'bracket-connector-v' : 'bracket-connector-h'"
+                :style="{
+                  left: `${c.x}px`,
+                  top: `${c.y + HEADER_OFFSET}px`,
+                  width: c.width ? `${c.width}px` : undefined,
+                  height: c.height ? `${c.height}px` : undefined,
+                }"
+              />
+
+              <div
+                v-for="m in positionedMatches"
+                :key="`${m.round}-${m.slot}`"
+                class="bracket-match"
+                :class="{
+                  'bracket-match--decided': m.winner_user_id,
+                  'bracket-match--saving': reportingMatch === `${m.round}-${m.slot}`,
+                }"
+                :style="{ left: `${m.x}px`, top: `${m.y + HEADER_OFFSET}px`, width: `${MATCH_WIDTH}px` }"
+              >
                 <div
-                  v-if="isHost && tournament.status === 'PLAYING' && m.player1_user_id && m.player2_user_id"
-                  class="match-winner-btns"
-                >
-                  <button
-                    class="match-winner-btn"
-                    :class="{ active: m.winner_user_id === m.player1_user_id }"
-                    :disabled="reportingMatch === `${m.round}-${m.slot}`"
-                    @click="handleSetWinner(m, m.player1_user_id)"
-                  >{{ nicknameOf(m.player1_user_id) }} 승</button>
-                  <button
-                    class="match-winner-btn"
-                    :class="{ active: m.winner_user_id === m.player2_user_id }"
-                    :disabled="reportingMatch === `${m.round}-${m.slot}`"
-                    @click="handleSetWinner(m, m.player2_user_id)"
-                  >{{ nicknameOf(m.player2_user_id) }} 승</button>
-                </div>
+                  class="bracket-row"
+                  :class="{
+                    'bracket-row--winner': !!m.winner_user_id && m.winner_user_id === m.player1_user_id,
+                    'bracket-row--clickable': canPickWinner(m),
+                  }"
+                  @click="canPickWinner(m) && m.player1_user_id && handleSetWinner(m, m.player1_user_id)"
+                >{{ m.player1_user_id === null ? '-' : nicknameOf(m.player1_user_id) }}</div>
+                <div class="bracket-row-divider"></div>
+                <div
+                  class="bracket-row"
+                  :class="{
+                    'bracket-row--winner': !!m.winner_user_id && m.winner_user_id === m.player2_user_id,
+                    'bracket-row--clickable': canPickWinner(m),
+                    'bracket-row--bye': m.player2_user_id === null && m.player1_user_id !== null,
+                  }"
+                  @click="canPickWinner(m) && m.player2_user_id && handleSetWinner(m, m.player2_user_id)"
+                >{{ m.player2_user_id === null ? (m.player1_user_id === null ? '-' : '부전승') : nicknameOf(m.player2_user_id) }}</div>
               </div>
             </div>
           </div>
@@ -380,15 +393,74 @@ const maxRound = computed(() =>
 const roundNumbers = computed(() => [...new Set(matches.value.map(m => m.round))].sort((a, b) => a - b))
 const finalMatch = computed(() => matches.value.find(m => m.round === maxRound.value) ?? null)
 
-function matchesInRound(round: number): TournamentMatchRow[] {
-  return matches.value.filter(m => m.round === round).sort((a, b) => a.slot - b.slot)
-}
-
 function roundLabelFor(round: number): string {
   if (round === maxRound.value) return '결승'
   if (round === maxRound.value - 1) return '준결승'
   return `${round + 1}라운드`
 }
+
+function canPickWinner(m: TournamentMatchRow): boolean {
+  return (
+    isHost.value && tournament.value?.status === 'PLAYING' &&
+    !!m.player1_user_id && !!m.player2_user_id && reportingMatch.value === null
+  )
+}
+
+// ── 좌→우 트리 레이아웃 ────────────────────────────────────
+// 항상 완전 이진트리(부전승으로 패딩된 size = 2^ceil(log2(n)))라
+// round/slot만으로 y좌표를 수식으로 바로 계산할 수 있다(DOM 측정 불필요).
+// y(r, s) = (s * 2^r + (2^r - 1) / 2) * LEAF_SPACING — 표준 이진트리 배치 공식.
+const MATCH_WIDTH = 150
+const COLUMN_GAP = 56
+const LEAF_SPACING = 56
+// 매치 박스는 CSS의 translateY(-50%)로 y좌표에 중심을 맞추므로, 라운드
+// 라벨이 들어갈 헤더 영역은 "라벨 높이 + 매치 박스 절반 높이"보다 커야
+// 겹치지 않는다 (라벨 높이 ~18px + 매치 절반 ~22px 기준으로 여유있게 44px).
+const HEADER_OFFSET = 44
+
+interface PositionedMatch extends TournamentMatchRow { x: number; y: number }
+
+const positionedMatches = computed<PositionedMatch[]>(() =>
+  matches.value.map(m => ({
+    ...m,
+    x: m.round * (MATCH_WIDTH + COLUMN_GAP),
+    y: (m.slot * 2 ** m.round + (2 ** m.round - 1) / 2) * LEAF_SPACING,
+  })),
+)
+
+const bracketWidth = computed(() => (maxRound.value + 1) * MATCH_WIDTH + maxRound.value * COLUMN_GAP)
+const bracketHeight = computed(() => {
+  const numPairs0 = matches.value.filter(m => m.round === 0).length
+  return numPairs0 * LEAF_SPACING
+})
+
+interface Connector { type: 'stub-out' | 'stub-in' | 'vertical'; x: number; y: number; width?: number; height?: number }
+
+const connectors = computed<Connector[]>(() => {
+  const result: Connector[] = []
+  const bySlot = new Map<string, PositionedMatch>()
+  for (const m of positionedMatches.value) bySlot.set(`${m.round}-${m.slot}`, m)
+
+  for (const m of positionedMatches.value) {
+    if (m.round === maxRound.value) continue
+    const xMid = m.x + MATCH_WIDTH + COLUMN_GAP / 2
+    result.push({ type: 'stub-out', x: m.x + MATCH_WIDTH, y: m.y, width: COLUMN_GAP / 2 })
+
+    if (m.slot % 2 === 0) {
+      const partner = bySlot.get(`${m.round}-${m.slot + 1}`)
+      if (partner) {
+        result.push({
+          type: 'vertical', x: xMid, y: Math.min(m.y, partner.y), height: Math.abs(partner.y - m.y),
+        })
+      }
+    }
+  }
+  for (const m of positionedMatches.value) {
+    if (m.round === 0) continue
+    result.push({ type: 'stub-in', x: m.x - COLUMN_GAP / 2, y: m.y, width: COLUMN_GAP / 2 })
+  }
+  return result
+})
 
 async function handleSetWinner(m: TournamentMatchRow, winnerUserId: number) {
   if (!tournament.value) return

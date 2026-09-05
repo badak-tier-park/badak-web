@@ -164,74 +164,84 @@
 // ── 대진 생성 ─────────────────────────────────────────────
 .bracket-generate-section { margin-bottom: 24px; }
 
-// ── 대진표 ────────────────────────────────────────────────
+// ── 대진표 (좌→우 트리) ────────────────────────────────────
 .bracket-section { margin-bottom: 24px; }
 
-.round-group { margin-bottom: 16px; }
+.bracket-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
 
-.round-title {
-  margin: 0 0 8px;
-  font-size: 12px;
+.bracket-tree {
+  position: relative;
+}
+
+.bracket-round-label {
+  position: absolute;
+  top: 0;
+  height: 16px;
+  line-height: 16px;
+  overflow: hidden;
+  text-align: center;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--c-text-sub);
+  color: var(--c-text-faint);
 }
 
-.match-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.bracket-connector-h {
+  position: absolute;
+  height: 2px;
+  background: var(--c-border-strong);
 }
 
-.match-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 10px;
+.bracket-connector-v {
+  position: absolute;
+  width: 2px;
+  background: var(--c-border-strong);
+}
+
+.bracket-match {
+  position: absolute;
+  transform: translateY(-50%);
+  border-radius: 8px;
   border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
+  overflow: hidden;
+  transition: opacity 0.15s;
 
   &--decided { border-color: var(--c-border-strong); }
+  &--saving { opacity: 0.6; }
 }
 
-.match-side {
-  flex: 1;
-  font-size: 13px;
-  color: var(--c-text-2);
-  text-align: center;
-
-  &--win { color: #4ade80; font-weight: 700; }
-}
-
-.match-vs {
-  flex-shrink: 0;
-  font-size: 11px;
-  color: var(--c-text-faint);
-}
-
-.match-winner-btns {
-  flex-shrink: 0;
+.bracket-row {
+  height: 21px;
+  padding: 0 10px;
   display: flex;
-  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--c-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+
+  &--winner { background: rgba(74, 222, 128, 0.1); color: #4ade80; font-weight: 700; }
+  &--bye { color: var(--c-text-faint); font-style: italic; }
+
+  &--clickable {
+    cursor: pointer;
+
+    &:hover { background: rgba(170, 59, 255, 0.12); color: #c084fc; }
+  }
 }
 
-.match-winner-btn {
-  padding: 4px 9px;
-  border-radius: 6px;
-  border: 1px solid var(--c-border-strong);
-  background: var(--c-overlay);
-  color: var(--c-text-faint);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover:not(:disabled) { border-color: var(--c-border-dashed); color: var(--c-text-sub); }
-  &.active { border-color: rgba(74, 222, 128, 0.5); background: rgba(74, 222, 128, 0.1); color: #4ade80; }
-  &:disabled { opacity: 0.6; cursor: default; }
+.bracket-row-divider {
+  height: 1px;
+  background: var(--c-border-faint);
 }
 
 .finish-row {
   display: flex;
   justify-content: flex-end;
+  margin-top: 12px;
 }
