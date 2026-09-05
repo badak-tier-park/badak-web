@@ -399,11 +399,14 @@ function roundLabelFor(round: number): string {
   return `${round + 1}라운드`
 }
 
+/** 주최자는 모든 경기를, 그 외엔 자기가 뛴 경기 결과만 직접 기록할 수 있다 */
 function canPickWinner(m: TournamentMatchRow): boolean {
-  return (
-    isHost.value && tournament.value?.status === 'PLAYING' &&
-    !!m.player1_user_id && !!m.player2_user_id && reportingMatch.value === null
-  )
+  if (tournament.value?.status !== 'PLAYING') return false
+  if (!m.player1_user_id || !m.player2_user_id) return false
+  if (reportingMatch.value !== null) return false
+  if (isHost.value) return true
+  const myId = myPlayer.value?.id
+  return myId === m.player1_user_id || myId === m.player2_user_id
 }
 
 // ── 좌→우 트리 레이아웃 ────────────────────────────────────
