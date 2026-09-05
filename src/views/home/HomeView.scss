@@ -51,7 +51,9 @@
 // ── 네비게이션 카드 그리드 ─────────────────────────────────
 .nav-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  // 220px = 1200px 컨텐츠 폭 기준 10개(관리자)가 5열 x 2줄로 딱 떨어지는 값.
+  // 아이콘/패딩/폰트는 압축한 크기 그대로 유지, 열 폭만 되돌린다.
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 10px;
 }
 
