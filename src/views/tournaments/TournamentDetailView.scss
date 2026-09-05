@@ -164,81 +164,8 @@
 // ── 대진 생성 ─────────────────────────────────────────────
 .bracket-generate-section { margin-bottom: 24px; }
 
-// ── 대진표 (좌→우 트리) ────────────────────────────────────
+// ── 대진표 (트리 렌더링 자체는 TournamentBracket.vue 내부 scoped 스타일) ──
 .bracket-section { margin-bottom: 24px; }
-
-.bracket-scroll {
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.bracket-tree {
-  position: relative;
-}
-
-.bracket-round-label {
-  position: absolute;
-  top: 0;
-  height: 16px;
-  line-height: 16px;
-  overflow: hidden;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--c-text-faint);
-}
-
-.bracket-connector-h {
-  position: absolute;
-  height: 2px;
-  background: var(--c-border-strong);
-}
-
-.bracket-connector-v {
-  position: absolute;
-  width: 2px;
-  background: var(--c-border-strong);
-}
-
-.bracket-match {
-  position: absolute;
-  transform: translateY(-50%);
-  border-radius: 8px;
-  border: 1px solid var(--c-border);
-  background: var(--c-surface-raised);
-  overflow: hidden;
-  transition: opacity 0.15s;
-
-  &--decided { border-color: var(--c-border-strong); }
-  &--saving { opacity: 0.6; }
-}
-
-.bracket-row {
-  height: 21px;
-  padding: 0 10px;
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  color: var(--c-text-2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-sizing: border-box;
-
-  &--winner { background: rgba(74, 222, 128, 0.1); color: #4ade80; font-weight: 700; }
-  &--bye { color: var(--c-text-faint); font-style: italic; }
-
-  &--clickable {
-    cursor: pointer;
-
-    &:hover { background: rgba(170, 59, 255, 0.12); color: #c084fc; }
-  }
-}
-
-.bracket-row-divider {
-  height: 1px;
-  background: var(--c-border-faint);
-}
 
 .finish-row {
   display: flex;

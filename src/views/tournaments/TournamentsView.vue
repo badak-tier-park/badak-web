@@ -61,19 +61,7 @@
             <!-- 대진이 있으면 결과 요약 -->
             <template v-else-if="summaryMatches.length > 0">
               <p v-if="t.winner_user_id" class="result-winner">{{ nicknameOf(t.winner_user_id) }} 우승</p>
-
-              <div class="result-match-list">
-                <div v-for="m in summaryMatches" :key="`${m.round}-${m.slot}`" class="result-match-row">
-                  <span class="result-match-no">{{ roundLabel(m.round, maxRound) }}</span>
-                  <span class="result-match-side" :class="{ 'result-match-side--win': !!m.winner_user_id && m.winner_user_id === m.player1_user_id }">
-                    {{ nicknameOf(m.player1_user_id) }}
-                  </span>
-                  <span class="result-match-vs">vs</span>
-                  <span class="result-match-side" :class="{ 'result-match-side--win': !!m.winner_user_id && m.winner_user_id === m.player2_user_id }">
-                    {{ m.player2_user_id === null ? '부전승' : nicknameOf(m.player2_user_id) }}
-                  </span>
-                </div>
-              </div>
+              <TournamentBracket :matches="summaryMatches" :nickname-of="nicknameOf" />
             </template>
 
             <!-- 아직 대진 전이면 참가자 목록 -->
@@ -188,6 +176,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
+import TournamentBracket from './TournamentBracket.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import {
@@ -318,16 +307,6 @@ const summaryLoading = ref(false)
 const summaryError = ref<string | null>(null)
 const summaryPlayers = ref<TournamentPlayerRow[]>([])
 const summaryMatches = ref<TournamentMatchRow[]>([])
-
-const maxRound = computed(() =>
-  summaryMatches.value.length > 0 ? Math.max(...summaryMatches.value.map(m => m.round)) : 0,
-)
-
-function roundLabel(round: number, max: number): string {
-  if (round === max) return '결승'
-  if (round === max - 1) return '준결승'
-  return `${round + 1}라운드`
-}
 
 async function toggleExpand(tournamentId: string) {
   if (expandedId.value === tournamentId) {

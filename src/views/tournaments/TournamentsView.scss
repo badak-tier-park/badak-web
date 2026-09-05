@@ -129,43 +129,6 @@
   color: var(--c-text-sub);
 }
 
-.result-match-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.result-match-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 7px;
-  background: var(--c-overlay);
-  font-size: 12px;
-}
-
-.result-match-no {
-  flex-shrink: 0;
-  width: 52px;
-  font-weight: 700;
-  color: var(--c-text-faint);
-}
-
-.result-match-side {
-  flex: 1;
-  text-align: center;
-  color: var(--c-text-2);
-
-  &--win { color: #4ade80; font-weight: 700; }
-}
-
-.result-match-vs {
-  flex-shrink: 0;
-  font-size: 11px;
-  color: var(--c-text-faint);
-}
-
 .result-player-chips {
   display: flex;
   flex-wrap: wrap;
