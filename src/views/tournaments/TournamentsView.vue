@@ -155,6 +155,21 @@
 
               <p class="field-hint">이 시간이 되면 모집이 자동으로 마감됩니다.</p>
             </div>
+
+            <div class="field">
+              <label class="field-label">참여 가능 티어</label>
+              <div class="tier-select-grid">
+                <button
+                  v-for="t in TIER_ORDER"
+                  :key="t"
+                  type="button"
+                  class="tier-toggle-btn"
+                  :class="[`tier-badge--${$tierClass(t)}`, { 'tier-toggle-btn--off': !selectedTiers.has(t) }]"
+                  @click="toggleTier(t)"
+                >{{ t }}</button>
+              </div>
+              <p class="field-hint">기본은 전체 참여 가능. 특정 티어 위주로 진행하려면 해제하세요.</p>
+            </div>
           </div>
 
           <div class="modal-footer">
@@ -183,6 +198,7 @@ import {
   getTournaments, createTournament, getTournamentSummary, TOURNAMENT_STATUS_LABEL,
   type TournamentListRow, type TournamentPlayerRow, type TournamentMatchRow,
 } from '@/lib/tournaments'
+import { TIER_ORDER } from '@/lib/constants'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -340,11 +356,22 @@ const form = reactive({
   startMinute: 0,
 })
 
+// ── 참여 가능 티어 (디폴트 전체 선택) ─────────────────────
+const selectedTiers = ref<Set<string>>(new Set(TIER_ORDER))
+
+function toggleTier(tier: string) {
+  const next = new Set(selectedTiers.value)
+  if (next.has(tier)) next.delete(tier)
+  else next.add(tier)
+  selectedTiers.value = next
+}
+
 function openCreate() {
   form.name = ''
   form.startDate = null
   form.startHour = 20
   form.startMinute = 0
+  selectedTiers.value = new Set(TIER_ORDER)
   calendarMonth.value = new Date()
   saveError.value = null
   showForm.value = true
@@ -359,12 +386,15 @@ async function handleCreate() {
   if (!myPlayer.value) { saveError.value = '선수 정보를 불러오지 못했습니다.'; return }
   if (!form.name.trim()) { saveError.value = '이름을 입력해주세요.'; return }
   if (!startAt.value) { saveError.value = '날짜를 선택해주세요.'; return }
+  if (selectedTiers.value.size === 0) { saveError.value = '참여 가능 티어를 최소 1개는 선택해주세요.'; return }
+
+  const allowedTiers = selectedTiers.value.size === TIER_ORDER.length ? null : [...selectedTiers.value]
 
   saving.value = true
   saveError.value = null
   try {
     const created = await createTournament(
-      { name: form.name.trim(), start_at: startAt.value.toISOString() },
+      { name: form.name.trim(), start_at: startAt.value.toISOString(), allowed_tiers: allowedTiers },
       myPlayer.value,
     )
     showForm.value = false

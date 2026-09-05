@@ -88,6 +88,43 @@
   line-height: 1.5;
 }
 
+// ── 참여 가능 티어 ───────────────────────────────────────
+.tier-restriction-section { margin-bottom: 24px; }
+
+.tier-restriction-value {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+}
+
+.tier-select-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+// 활성 상태 배색은 전역 .tier-badge--* 를 그대로 재사용, 여기선 모양/비활성만 정의
+.tier-toggle-btn {
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-input);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { border-color: var(--c-border-dashed); }
+
+  &--off {
+    background: var(--c-input);
+    color: var(--c-text-faint);
+    opacity: 0.5;
+  }
+}
+
 // ── 참가자 목록 ─────────────────────────────────────────
 .players-section { margin-bottom: 24px; }
 

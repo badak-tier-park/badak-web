@@ -17,6 +17,8 @@ export interface TournamentRow {
   map_id: string | null
   status: TournamentStatus
   winner_user_id: number | null
+  /** 참여 가능 티어 목록. null이면 전체 티어 참여 가능(제한 없음). */
+  allowed_tiers: string[] | null
   created_at: string
   updated_at: string
 }
@@ -69,7 +71,7 @@ export async function getTournament(id: string): Promise<TournamentRow> {
 
 /** 토너먼트 생성 + 주최자를 참가자로 자동 등록 (맵은 아직 미지정 — 별도 setTournamentMap) */
 export async function createTournament(
-  payload: { name: string; start_at: string },
+  payload: { name: string; start_at: string; allowed_tiers?: string[] | null },
   host: { id: number; race: 'T' | 'Z' | 'P'; tier: string },
 ): Promise<TournamentRow> {
   const { data: tournament, error } = await supabase
@@ -96,6 +98,18 @@ export async function cancelTournament(id: string): Promise<void> {
   const { error } = await supabase
     .from('tournaments')
     .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+/**
+ * 참여 가능 티어 변경 (null = 제한 없음). 이미 참가한 선수는 나중에 범위를
+ * 좁혀도 쫓겨나지 않는다 — 신규 참가 시에만 UI에서 가드한다(다른 참가 조건과 동일 패턴).
+ */
+export async function setTournamentAllowedTiers(id: string, tiers: string[] | null): Promise<void> {
+  const { error } = await supabase
+    .from('tournaments')
+    .update({ allowed_tiers: tiers, updated_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw error
 }
