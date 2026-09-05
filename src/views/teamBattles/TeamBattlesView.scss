@@ -23,13 +23,12 @@
 .battle-list { display: flex; flex-direction: column; gap: 10px; }
 
 .battle-card {
-  display: block;
-  padding: 16px 18px;
   border-radius: 14px;
   border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
-  text-decoration: none;
   color: inherit;
+  // #app에 text-align:center가 걸려 있어 명시하지 않으면 카드 내용이 가운데 정렬된다
+  text-align: left;
   transition: border-color 0.15s, box-shadow 0.15s;
 
   &:hover {
@@ -38,10 +37,23 @@
   }
 }
 
+.battle-card-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.battle-card-main {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 18px;
+  text-decoration: none;
+  color: inherit;
+}
+
 .battle-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
@@ -55,6 +67,141 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--c-text);
+}
+
+.battle-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.battle-expand-btn {
+  flex-shrink: 0;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-left: 1px solid var(--c-border-faint);
+  background: none;
+  color: var(--c-icon-sub);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  svg { transition: transform 0.2s; }
+
+  &:hover { background: var(--c-overlay); color: var(--c-text-2); }
+  &--open svg { transform: rotate(180deg); }
+}
+
+// ── 펼친 패널 ───────────────────────────────────────────
+.battle-expand-panel {
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--c-border-faint);
+}
+
+.result-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.result-team-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+
+  &:first-child { text-align: right; }
+  &:last-child { text-align: left; }
+}
+
+.result-score {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--c-text);
+}
+
+.result-winner {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #facc15;
+}
+
+.result-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-sub);
+}
+
+.result-match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.result-match-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: var(--c-overlay);
+  font-size: 12px;
+}
+
+.result-match-no {
+  flex-shrink: 0;
+  width: 40px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+}
+
+.result-match-map {
+  flex-shrink: 0;
+  width: 90px;
+  color: var(--c-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-match-side {
+  flex: 1;
+  text-align: center;
+  color: var(--c-text-2);
+
+  &--win { color: #4ade80; font-weight: 700; }
+}
+
+.result-match-vs {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--c-text-faint);
+}
+
+.result-player-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.result-player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--c-border);
+  background: var(--c-overlay);
+  font-size: 12px;
+  color: var(--c-text-2);
 }
 
 // ── 생성 모달 ───────────────────────────────────────────

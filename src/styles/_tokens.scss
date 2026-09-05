@@ -119,6 +119,7 @@
   &.status--playing,
   &.status--ace_waiting,
   &.status--ace_entry  { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
-  &.status--finished   { background: var(--c-surface-raised); color: var(--c-text-faint); }
+  // 카드 배경(--c-surface-raised)과 같은 값을 쓰면 배지가 배경에 묻혀 안 보인다
+  &.status--finished   { background: var(--c-badge-bg); color: var(--c-text-sub); }
   &.status--cancelled  { background: rgba(248, 113, 113, 0.1); color: #f87171; }
 }

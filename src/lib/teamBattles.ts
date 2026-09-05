@@ -71,13 +71,33 @@ export interface TeamBattleMatchRow {
 }
 
 // ── 팀배틀 본체 ─────────────────────────────────────────────
-export async function getTeamBattles(): Promise<TeamBattleRow[]> {
+/** 목록용 — 참가 인원수를 함께 집계해서 내려준다 */
+export interface TeamBattleListRow extends TeamBattleRow {
+  player_count: number
+}
+
+export async function getTeamBattles(): Promise<TeamBattleListRow[]> {
   const { data, error } = await supabase
     .from('team_battles')
-    .select('*')
+    .select('*, team_battle_players(count)')
     .order('created_at', { ascending: false })
   if (error) throw error
-  return data
+
+  return (data ?? []).map((row: any) => {
+    const { team_battle_players, ...battle } = row
+    return { ...battle, player_count: team_battle_players?.[0]?.count ?? 0 }
+  })
+}
+
+/** 목록에서 카드를 펼칠 때 필요한 상세(로스터 + 경기 결과)를 한 번에 */
+export async function getTeamBattleSummary(
+  battleId: string,
+): Promise<{ players: TeamBattlePlayerRow[]; matches: TeamBattleMatchRow[] }> {
+  const [players, matches] = await Promise.all([
+    getTeamBattlePlayers(battleId),
+    getTeamBattleMatches(battleId),
+  ])
+  return { players, matches }
 }
 
 export async function getTeamBattle(id: string): Promise<TeamBattleRow> {
