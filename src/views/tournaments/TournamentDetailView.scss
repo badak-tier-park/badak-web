@@ -147,3 +147,91 @@
   font-weight: 600;
   color: var(--c-text-2);
 }
+
+// ── 우승 배너 ─────────────────────────────────────────────
+.winner-banner {
+  margin: 0 0 16px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  background: rgba(250, 204, 21, 0.08);
+  color: #facc15;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+// ── 대진 생성 ─────────────────────────────────────────────
+.bracket-generate-section { margin-bottom: 24px; }
+
+// ── 대진표 ────────────────────────────────────────────────
+.bracket-section { margin-bottom: 24px; }
+
+.round-group { margin-bottom: 16px; }
+
+.round-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-sub);
+}
+
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+
+  &--decided { border-color: var(--c-border-strong); }
+}
+
+.match-side {
+  flex: 1;
+  font-size: 13px;
+  color: var(--c-text-2);
+  text-align: center;
+
+  &--win { color: #4ade80; font-weight: 700; }
+}
+
+.match-vs {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--c-text-faint);
+}
+
+.match-winner-btns {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.match-winner-btn {
+  padding: 4px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-faint);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) { border-color: var(--c-border-dashed); color: var(--c-text-sub); }
+  &.active { border-color: rgba(74, 222, 128, 0.5); background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+  &:disabled { opacity: 0.6; cursor: default; }
+}
+
+.finish-row {
+  display: flex;
+  justify-content: flex-end;
+}

@@ -24,6 +24,10 @@
           시작 {{ formatDateTime(tournament.start_at) }} · 주최자 {{ hostName }} · 참가 {{ players.length }}명
         </p>
 
+        <p v-if="tournament.status === 'FINISHED' && tournament.winner_user_id" class="winner-banner">
+          {{ nicknameOf(tournament.winner_user_id) }} 우승
+        </p>
+
         <p v-if="actionError" class="save-error">{{ actionError }}</p>
 
         <!-- ── RECRUITING ─────────────────────────────────── -->
@@ -100,7 +104,73 @@
           </button>
         </section>
 
-        <p v-if="tournament.status !== 'RECRUITING'" class="state-msg">다음 단계에서 이어서 만듭니다. (대진 생성 등)</p>
+        <!-- ── 대진 생성 ──────────────────────────────────── -->
+        <section v-if="isHost && tournament.status === 'RECRUITING'" class="bracket-generate-section">
+          <p class="section-label">대진 생성</p>
+          <button
+            class="btn-pill btn-pill--md btn-pill--purple"
+            :disabled="players.length < 4 || !tournament.map_id || generating"
+            @click="handleGenerateBracket"
+          >
+            {{ generating ? '생성 중...' : '대진 생성 (모집 마감)' }}
+          </button>
+          <p v-if="players.length < 4" class="field-hint">
+            최소 4명이 모여야 대진을 생성할 수 있습니다. (현재 {{ players.length }}명)
+          </p>
+          <p v-else-if="!tournament.map_id" class="field-hint">맵을 먼저 지정해주세요.</p>
+        </section>
+
+        <!-- ── 대진표 ─────────────────────────────────────── -->
+        <section v-if="matches.length > 0" class="bracket-section">
+          <p class="section-label">대진표</p>
+          <p v-if="matchError" class="save-error">{{ matchError }}</p>
+
+          <div v-for="round in roundNumbers" :key="round" class="round-group">
+            <p class="round-title">{{ roundLabelFor(round) }}</p>
+            <div class="match-list">
+              <div
+                v-for="m in matchesInRound(round)"
+                :key="m.slot"
+                class="match-row"
+                :class="{ 'match-row--decided': m.winner_user_id }"
+              >
+                <span
+                  class="match-side"
+                  :class="{ 'match-side--win': !!m.winner_user_id && m.winner_user_id === m.player1_user_id }"
+                >{{ m.player1_user_id === null ? '-' : nicknameOf(m.player1_user_id) }}</span>
+                <span class="match-vs">vs</span>
+                <span
+                  class="match-side"
+                  :class="{ 'match-side--win': !!m.winner_user_id && m.winner_user_id === m.player2_user_id }"
+                >{{ m.player2_user_id === null ? '부전승' : nicknameOf(m.player2_user_id) }}</span>
+
+                <div
+                  v-if="isHost && tournament.status === 'PLAYING' && m.player1_user_id && m.player2_user_id"
+                  class="match-winner-btns"
+                >
+                  <button
+                    class="match-winner-btn"
+                    :class="{ active: m.winner_user_id === m.player1_user_id }"
+                    :disabled="reportingMatch === `${m.round}-${m.slot}`"
+                    @click="handleSetWinner(m, m.player1_user_id)"
+                  >{{ nicknameOf(m.player1_user_id) }} 승</button>
+                  <button
+                    class="match-winner-btn"
+                    :class="{ active: m.winner_user_id === m.player2_user_id }"
+                    :disabled="reportingMatch === `${m.round}-${m.slot}`"
+                    @click="handleSetWinner(m, m.player2_user_id)"
+                  >{{ nicknameOf(m.player2_user_id) }} 승</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="isHost && tournament.status === 'PLAYING' && finalMatch?.winner_user_id" class="finish-row">
+            <button class="btn-pill btn-pill--md btn-pill--purple" :disabled="finishing" @click="handleFinish">
+              {{ finishing ? '처리 중...' : '우승 확정' }}
+            </button>
+          </div>
+        </section>
       </template>
     </div>
 
@@ -148,7 +218,8 @@ import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
 import {
   getTournament, getTournamentPlayers, joinTournament, leaveTournament, setTournamentMap,
-  TOURNAMENT_STATUS_LABEL, type TournamentRow, type TournamentPlayerRow,
+  generateBracket, getTournamentMatches, setTournamentMatchWinner, finishTournament,
+  TOURNAMENT_STATUS_LABEL, type TournamentRow, type TournamentPlayerRow, type TournamentMatchRow,
 } from '@/lib/tournaments'
 
 const route = useRoute()
@@ -159,6 +230,7 @@ const players = ref<TournamentPlayerRow[]>([])
 const allPlayers = ref<PlayerRow[]>([])
 const myPlayer = ref<PlayerRow | null>(null)
 const allMaps = ref<MapRow[]>([])
+const matches = ref<TournamentMatchRow[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const actionError = ref<string | null>(null)
@@ -188,18 +260,20 @@ const selectedMap = computed(() => allMaps.value.find(m => m.id === tournament.v
 async function load() {
   const id = route.params.id as string
   const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
-  const [t, p, all, me, maps] = await Promise.all([
+  const [t, p, all, me, maps, m] = await Promise.all([
     getTournament(id),
     getTournamentPlayers(id),
     getPlayers(),
     discordId ? getPlayerByDiscordId(discordId) : Promise.resolve(null),
     getMaps(),
+    getTournamentMatches(id),
   ])
   tournament.value = t
   players.value = p
   allPlayers.value = all
   myPlayer.value = me
   allMaps.value = maps
+  matches.value = m
 }
 
 onMounted(async () => {
@@ -275,6 +349,73 @@ async function handleSelectMap(mapId: string) {
     showMapPicker.value = false
   } catch (e: any) {
     actionError.value = e.message ?? '맵 지정 중 오류가 발생했습니다.'
+  }
+}
+
+// ── 대진 생성 ─────────────────────────────────────────────
+const generating = ref(false)
+
+async function handleGenerateBracket() {
+  if (!tournament.value) return
+  generating.value = true
+  actionError.value = null
+  try {
+    matches.value = await generateBracket(tournament.value.id)
+    tournament.value = await getTournament(tournament.value.id)
+  } catch (e: any) {
+    actionError.value = e.message ?? '대진 생성 중 오류가 발생했습니다.'
+  } finally {
+    generating.value = false
+  }
+}
+
+// ── 대진표 / 경기 결과 ────────────────────────────────────
+const reportingMatch = ref<string | null>(null)
+const matchError = ref<string | null>(null)
+const finishing = ref(false)
+
+const maxRound = computed(() =>
+  matches.value.length > 0 ? Math.max(...matches.value.map(m => m.round)) : 0,
+)
+const roundNumbers = computed(() => [...new Set(matches.value.map(m => m.round))].sort((a, b) => a - b))
+const finalMatch = computed(() => matches.value.find(m => m.round === maxRound.value) ?? null)
+
+function matchesInRound(round: number): TournamentMatchRow[] {
+  return matches.value.filter(m => m.round === round).sort((a, b) => a.slot - b.slot)
+}
+
+function roundLabelFor(round: number): string {
+  if (round === maxRound.value) return '결승'
+  if (round === maxRound.value - 1) return '준결승'
+  return `${round + 1}라운드`
+}
+
+async function handleSetWinner(m: TournamentMatchRow, winnerUserId: number) {
+  if (!tournament.value) return
+  const key = `${m.round}-${m.slot}`
+  reportingMatch.value = key
+  matchError.value = null
+  try {
+    await setTournamentMatchWinner(tournament.value.id, m.round, m.slot, winnerUserId)
+    matches.value = await getTournamentMatches(tournament.value.id)
+  } catch (e: any) {
+    matchError.value = e.message ?? '경기 결과 저장 중 오류가 발생했습니다.'
+  } finally {
+    reportingMatch.value = null
+  }
+}
+
+async function handleFinish() {
+  if (!tournament.value) return
+  finishing.value = true
+  matchError.value = null
+  try {
+    await finishTournament(tournament.value.id)
+    tournament.value = await getTournament(tournament.value.id)
+  } catch (e: any) {
+    matchError.value = e.message ?? '우승 확정 중 오류가 발생했습니다.'
+  } finally {
+    finishing.value = false
   }
 }
 </script>
