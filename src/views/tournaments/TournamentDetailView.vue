@@ -24,32 +24,152 @@
           시작 {{ formatDateTime(tournament.start_at) }} · 주최자 {{ hostName }} · 참가 {{ players.length }}명
         </p>
 
-        <p class="state-msg">다음 단계에서 이어서 만듭니다. (참가/맵/대진 생성 등)</p>
+        <p v-if="actionError" class="save-error">{{ actionError }}</p>
+
+        <!-- ── RECRUITING ─────────────────────────────────── -->
+        <template v-if="tournament.status === 'RECRUITING'">
+          <section v-if="!myEntry && myPlayer" class="join-section">
+            <template v-if="!myPlayer.is_active">
+              <p class="state-msg state-msg--error">정지된 계정은 토너먼트에 참가할 수 없습니다.</p>
+            </template>
+            <template v-else-if="recruitmentClosed">
+              <p class="state-msg">모집이 마감되었습니다.</p>
+            </template>
+            <template v-else>
+              <p class="section-label">참가 종족 선택</p>
+              <div class="race-select-group">
+                <button
+                  v-for="r in races"
+                  :key="r.value"
+                  type="button"
+                  class="race-select-btn"
+                  :class="[`race-select-btn--${r.value.toLowerCase()}`, { active: selectedRace === r.value }]"
+                  @click="selectedRace = r.value"
+                >{{ r.label }}</button>
+              </div>
+              <p v-if="selectedRace !== myPlayer.race" class="field-hint">
+                주종족({{ raceLabel(myPlayer.race) }})과 달라 부종족 참가로 처리됩니다.
+                티어는 주종족 티어({{ myPlayer.tier }})가 그대로 적용되고, 이 토너먼트의 전적은 반영되지 않습니다.
+              </p>
+              <button class="btn-save" :disabled="joining" @click="handleJoin">
+                {{ joining ? '참가 중...' : '참가하기' }}
+              </button>
+            </template>
+          </section>
+
+          <section v-else-if="myEntry" class="join-section">
+            <p class="state-msg">
+              참가 완료 — {{ raceLabel(myEntry.race) }}{{ myEntry.is_offrace ? ' (부종족)' : '' }} / {{ myEntry.tier }}
+            </p>
+            <button class="btn-cancel" :disabled="joining" @click="handleLeave">
+              {{ joining ? '처리 중...' : '참가 취소' }}
+            </button>
+          </section>
+        </template>
+
+        <!-- 참가자 목록 -->
+        <section class="players-section">
+          <p class="section-label">참가자 ({{ players.length }}명)</p>
+          <div v-if="players.length === 0" class="state-msg">아직 참가자가 없습니다.</div>
+          <div v-else class="player-chip-list">
+            <span
+              v-for="p in players"
+              :key="p.user_id"
+              class="player-chip"
+              :class="{ 'player-chip--host': p.user_id === tournament.host_user_id }"
+            >
+              <span class="tier-badge" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
+              <span class="race-badge" :class="`race-badge--${p.race.toLowerCase()}`">{{ raceLabel(p.race) }}</span>
+              {{ nicknameOf(p.user_id) }}
+              <span v-if="p.is_offrace" class="offrace-mark">부종</span>
+              <span v-if="p.user_id === tournament.host_user_id" class="host-mark">주최</span>
+            </span>
+          </div>
+        </section>
+
+        <!-- ── 맵 (단일) ──────────────────────────────────── -->
+        <section class="map-section">
+          <p class="section-label">경기 맵</p>
+          <div v-if="!selectedMap" class="state-msg">아직 맵이 선택되지 않았습니다.</div>
+          <div v-else class="map-selected-row">
+            <img v-if="selectedMap.thumbnail_url" :src="selectedMap.thumbnail_url" class="map-selected-thumb" alt="" />
+            <span class="map-selected-name">{{ selectedMap.name }}</span>
+          </div>
+          <button v-if="canEditMap" class="btn-pill btn-pill--md btn-pill--ghost" @click="openMapPicker">
+            {{ selectedMap ? '맵 변경' : '맵 선택' }}
+          </button>
+        </section>
+
+        <p v-if="tournament.status !== 'RECRUITING'" class="state-msg">다음 단계에서 이어서 만듭니다. (대진 생성 등)</p>
       </template>
     </div>
+
+    <!-- ── 맵 선택 오버레이 ───────────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="showMapPicker" class="overlay-backdrop">
+        <div class="picker-panel">
+          <div class="picker-header">
+            <span class="picker-title">맵 선택</span>
+            <button class="picker-close" @click="showMapPicker = false">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <input v-model="mapSearch" class="picker-search" placeholder="맵 이름 또는 별칭 검색..." type="text" />
+          <div class="picker-list">
+            <button
+              v-for="map in filteredMaps"
+              :key="map.id"
+              class="picker-item map-picker-item"
+              :class="{ selected: map.id === tournament?.map_id }"
+              @click="handleSelectMap(map.id)"
+            >
+              <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="picker-map-thumb" alt="" />
+              <div class="picker-map-info">
+                <span class="picker-name">{{ map.name }}</span>
+                <span class="picker-map-meta">{{ map.player_count }}인 · {{ map.tileset }}</span>
+              </div>
+            </button>
+            <div v-if="filteredMaps.length === 0" class="picker-empty">검색 결과 없음</div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
-import { getPlayers, type PlayerRow } from '@/lib/players'
+import { useAuthStore } from '@/stores/auth'
+import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
+import { getMaps, type MapRow } from '@/lib/maps'
 import {
-  getTournament, getTournamentPlayers, TOURNAMENT_STATUS_LABEL,
-  type TournamentRow, type TournamentPlayerRow,
+  getTournament, getTournamentPlayers, joinTournament, leaveTournament, setTournamentMap,
+  TOURNAMENT_STATUS_LABEL, type TournamentRow, type TournamentPlayerRow,
 } from '@/lib/tournaments'
 
 const route = useRoute()
+const auth = useAuthStore()
 
 const tournament = ref<TournamentRow | null>(null)
 const players = ref<TournamentPlayerRow[]>([])
 const allPlayers = ref<PlayerRow[]>([])
+const myPlayer = ref<PlayerRow | null>(null)
+const allMaps = ref<MapRow[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
+const actionError = ref<string | null>(null)
 
+const races = [
+  { value: 'T' as const, label: '테란' },
+  { value: 'Z' as const, label: '저그' },
+  { value: 'P' as const, label: '프로토스' },
+]
+const raceLabel = (r: string) => races.find(x => x.value === r)?.label ?? r
 const nicknameOf = (userId: number) => allPlayers.value.find(p => p.id === userId)?.nickname ?? `선수 ${userId}`
-const hostName = computed(() => tournament.value ? nicknameOf(tournament.value.host_user_id) : '')
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso)
@@ -58,23 +178,105 @@ function formatDateTime(iso: string): string {
   return `${date} ${time}`
 }
 
+const hostName = computed(() => tournament.value ? nicknameOf(tournament.value.host_user_id) : '')
+const myEntry = computed(() => players.value.find(p => p.user_id === myPlayer.value?.id) ?? null)
+const recruitmentClosed = computed(() => !!tournament.value && new Date() >= new Date(tournament.value.start_at))
+const isHost = computed(() => !!myPlayer.value && !!tournament.value && myPlayer.value.id === tournament.value.host_user_id)
+const canEditMap = computed(() => isHost.value && !!tournament.value && tournament.value.status === 'RECRUITING')
+const selectedMap = computed(() => allMaps.value.find(m => m.id === tournament.value?.map_id) ?? null)
+
+async function load() {
+  const id = route.params.id as string
+  const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
+  const [t, p, all, me, maps] = await Promise.all([
+    getTournament(id),
+    getTournamentPlayers(id),
+    getPlayers(),
+    discordId ? getPlayerByDiscordId(discordId) : Promise.resolve(null),
+    getMaps(),
+  ])
+  tournament.value = t
+  players.value = p
+  allPlayers.value = all
+  myPlayer.value = me
+  allMaps.value = maps
+}
+
 onMounted(async () => {
   try {
-    const id = route.params.id as string
-    const [t, p, all] = await Promise.all([
-      getTournament(id),
-      getTournamentPlayers(id),
-      getPlayers(),
-    ])
-    tournament.value = t
-    players.value = p
-    allPlayers.value = all
+    await load()
   } catch (e: any) {
     loadError.value = e.message ?? '토너먼트 정보를 불러올 수 없습니다.'
   } finally {
     loading.value = false
   }
 })
+
+// ── 참가/취소 ─────────────────────────────────────────────
+const selectedRace = ref<'T' | 'Z' | 'P'>('T')
+const joining = ref(false)
+
+function resetSelectedRace() {
+  if (myPlayer.value) selectedRace.value = myPlayer.value.race
+}
+
+async function handleJoin() {
+  if (!tournament.value || !myPlayer.value) return
+  joining.value = true
+  actionError.value = null
+  try {
+    await joinTournament(tournament.value.id, myPlayer.value, selectedRace.value)
+    players.value = await getTournamentPlayers(tournament.value.id)
+  } catch (e: any) {
+    actionError.value = e.message ?? '참가 처리 중 오류가 발생했습니다.'
+  } finally {
+    joining.value = false
+  }
+}
+
+async function handleLeave() {
+  if (!tournament.value || !myPlayer.value) return
+  joining.value = true
+  actionError.value = null
+  try {
+    await leaveTournament(tournament.value.id, myPlayer.value.id)
+    players.value = await getTournamentPlayers(tournament.value.id)
+  } catch (e: any) {
+    actionError.value = e.message ?? '참가 취소 중 오류가 발생했습니다.'
+  } finally {
+    joining.value = false
+  }
+}
+
+// myPlayer 로딩 완료 시 종족 선택 기본값을 주종족으로
+watch(myPlayer, resetSelectedRace)
+
+// ── 맵 선택 ───────────────────────────────────────────────
+const showMapPicker = ref(false)
+const mapSearch = ref('')
+
+const filteredMaps = computed(() => {
+  const q = mapSearch.value.trim().toLowerCase()
+  if (!q) return allMaps.value
+  return allMaps.value.filter(m => m.name.toLowerCase().includes(q) || m.aliases.some(a => a.toLowerCase().includes(q)))
+})
+
+function openMapPicker() {
+  mapSearch.value = ''
+  showMapPicker.value = true
+}
+
+async function handleSelectMap(mapId: string) {
+  if (!tournament.value) return
+  actionError.value = null
+  try {
+    await setTournamentMap(tournament.value.id, mapId)
+    tournament.value = await getTournament(tournament.value.id)
+    showMapPicker.value = false
+  } catch (e: any) {
+    actionError.value = e.message ?? '맵 지정 중 오류가 발생했습니다.'
+  }
+}
 </script>
 
 <style lang="scss" scoped>

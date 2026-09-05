@@ -1,4 +1,6 @@
 @use '../../styles/page';
+@use '../../styles/toggle-group';
+@use '../../styles/picker';
 
 .tournament-detail-page {
   position: relative;
@@ -51,4 +53,97 @@
   margin: 0 0 24px;
   font-size: 13px;
   color: var(--c-text-muted);
+}
+
+.section-label {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-sub);
+}
+
+// ── 참가/취소 ───────────────────────────────────────────
+.join-section {
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  margin-bottom: 24px;
+}
+
+.race-select-group { display: flex; gap: 8px; margin-bottom: 10px; }
+
+.race-select-btn {
+  @extend %toggle-btn;
+
+  &--t.active { border-color: var(--race-t-border); background: var(--race-t-bg); color: var(--race-t); }
+  &--z.active { border-color: var(--race-z-border); background: var(--race-z-bg); color: var(--race-z); }
+  &--p.active { border-color: var(--race-p-border); background: var(--race-p-bg); color: var(--race-p); }
+}
+
+.field-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--c-text-faint);
+  line-height: 1.5;
+}
+
+// ── 참가자 목록 ─────────────────────────────────────────
+.players-section { margin-bottom: 24px; }
+
+.player-chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--c-border);
+  background: var(--c-overlay);
+  font-size: 13px;
+  color: var(--c-text-2);
+
+  &--host { border-color: rgba(250, 204, 21, 0.35); }
+}
+
+.offrace-mark {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+}
+
+.host-mark {
+  font-size: 10px;
+  font-weight: 700;
+  color: #facc15;
+}
+
+// ── 맵 (단일) ────────────────────────────────────────────
+.map-section { margin-bottom: 24px; }
+
+.map-selected-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+}
+
+.map-selected-thumb {
+  width: 56px;
+  height: 42px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--c-overlay);
+}
+
+.map-selected-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
 }
