@@ -36,6 +36,9 @@
             <template v-if="!myPlayer.is_active">
               <p class="state-msg state-msg--error">정지된 계정은 팀배틀에 참가할 수 없습니다.</p>
             </template>
+            <template v-else-if="!isMyTierEligible">
+              <p class="state-msg state-msg--error">참여 가능한 티어가 아닙니다. (허용 티어: {{ allowedTiersLabel }})</p>
+            </template>
             <template v-else-if="recruitmentClosed">
               <p class="state-msg">모집이 마감되었습니다.</p>
             </template>
@@ -70,6 +73,29 @@
             </button>
           </section>
         </template>
+
+        <!-- ── 참여 가능 티어 ─────────────────────────────── -->
+        <section class="tier-restriction-section">
+          <p class="section-label">참여 가능 티어</p>
+          <p class="tier-restriction-value">{{ allowedTiersLabel }}</p>
+
+          <template v-if="canEditTiers">
+            <div class="tier-select-grid">
+              <button
+                v-for="t in TIER_ORDER"
+                :key="t"
+                type="button"
+                class="tier-toggle-btn"
+                :class="[`tier-badge--${$tierClass(t)}`, { 'tier-toggle-btn--off': !draftTiers.has(t) }]"
+                @click="toggleDraftTier(t)"
+              >{{ t }}</button>
+            </div>
+            <p v-if="tiersError" class="save-error">{{ tiersError }}</p>
+            <button v-if="tiersDirty" class="btn-save" :disabled="savingTiers" @click="handleSaveTiers">
+              {{ savingTiers ? '저장 중...' : '티어 설정 저장' }}
+            </button>
+          </template>
+        </section>
 
         <!-- 참가자 목록 (팀 배정 전) -->
         <section v-if="battle.status === 'RECRUITING'" class="players-section">
@@ -439,12 +465,13 @@ import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
-import { tierPoint } from '@/lib/constants'
+import { tierPoint, normalizeTier, TIER_ORDER } from '@/lib/constants'
 import {
   getTeamBattle, getTeamBattlePlayers, joinTeamBattle, leaveTeamBattle,
   getTeamBattleMaps, setTeamBattleMaps, assignTeams, reassignLeader,
   getTeamBattleEntries, submitEntry, publishEntries, updateTeamBattleStatus,
   getTeamBattleMatches, setMatchWinner, finishTeamBattle, drawAceMatch, setAcePlayer,
+  setTeamBattleAllowedTiers,
   TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow,
   type TeamBattleEntryRow, type TeamBattleMatchRow, type AceMode,
 } from '@/lib/teamBattles'
@@ -480,6 +507,48 @@ const hostName = computed(() => battle.value ? nicknameOf(battle.value.host_user
 const myEntry = computed(() => players.value.find(p => p.user_id === myPlayer.value?.id) ?? null)
 const recruitmentClosed = computed(() => !!battle.value && new Date() >= new Date(battle.value.start_at))
 
+// ── 참여 가능 티어 ─────────────────────────────────────────
+const draftTiers = ref<Set<string>>(new Set(TIER_ORDER))
+const savingTiers = ref(false)
+const tiersError = ref<string | null>(null)
+
+const allowedTiersLabel = computed(() =>
+  battle.value?.allowed_tiers ? battle.value.allowed_tiers.join(', ') : '전체 티어 참여 가능',
+)
+const isMyTierEligible = computed(() => {
+  if (!battle.value?.allowed_tiers || !myPlayer.value) return true
+  return battle.value.allowed_tiers.includes(normalizeTier(myPlayer.value.tier))
+})
+const canEditTiers = computed(() => isHost.value && !!battle.value && battle.value.status === 'RECRUITING')
+const tiersDirty = computed(() => {
+  const saved = [...(battle.value?.allowed_tiers ?? TIER_ORDER)].sort().join(',')
+  const draft = [...draftTiers.value].sort().join(',')
+  return saved !== draft
+})
+
+function toggleDraftTier(tier: string) {
+  const next = new Set(draftTiers.value)
+  if (next.has(tier)) next.delete(tier)
+  else next.add(tier)
+  draftTiers.value = next
+}
+
+async function handleSaveTiers() {
+  if (!battle.value) return
+  if (draftTiers.value.size === 0) { tiersError.value = '최소 1개 티어는 선택해야 합니다.'; return }
+  savingTiers.value = true
+  tiersError.value = null
+  try {
+    const tiers = draftTiers.value.size === TIER_ORDER.length ? null : [...draftTiers.value]
+    await setTeamBattleAllowedTiers(battle.value.id, tiers)
+    battle.value = await getTeamBattle(battle.value.id)
+  } catch (e: any) {
+    tiersError.value = e.message ?? '티어 설정 저장 중 오류가 발생했습니다.'
+  } finally {
+    savingTiers.value = false
+  }
+}
+
 async function load() {
   const id = route.params.id as string
   const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
@@ -505,6 +574,7 @@ async function load() {
   refreshEntryDrafts()
   matches.value = tbMatches
   aceModeChoice.value = b.ace_mode
+  draftTiers.value = new Set(b.allowed_tiers ?? TIER_ORDER)
 }
 
 onMounted(async () => {

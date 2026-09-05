@@ -32,6 +32,8 @@ export interface TeamBattleRow {
   status: TeamBattleStatus
   ace_mode: AceMode
   winner_team: 1 | 2 | null
+  /** 참여 가능 티어 목록. null이면 전체 티어 참여 가능(제한 없음). */
+  allowed_tiers: string[] | null
   created_at: string
   updated_at: string
 }
@@ -112,7 +114,7 @@ export async function getTeamBattle(id: string): Promise<TeamBattleRow> {
 
 /** 팀배틀 생성 + 주최자를 참가자로 자동 등록 */
 export async function createTeamBattle(
-  payload: { name: string; start_at: string; ace_mode: AceMode },
+  payload: { name: string; start_at: string; ace_mode: AceMode; allowed_tiers?: string[] | null },
   host: { id: number; race: 'T' | 'Z' | 'P'; tier: string },
 ): Promise<TeamBattleRow> {
   const { data: battle, error } = await supabase
@@ -139,6 +141,18 @@ export async function cancelTeamBattle(id: string): Promise<void> {
   const { error } = await supabase
     .from('team_battles')
     .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+/**
+ * 참여 가능 티어 변경 (null = 제한 없음). 이미 참가한 선수는 나중에 범위를
+ * 좁혀도 쫓겨나지 않는다 — 신규 참가 시에만 UI에서 가드한다(다른 참가 조건과 동일 패턴).
+ */
+export async function setTeamBattleAllowedTiers(id: string, tiers: string[] | null): Promise<void> {
+  const { error } = await supabase
+    .from('team_battles')
+    .update({ allowed_tiers: tiers, updated_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw error
 }
