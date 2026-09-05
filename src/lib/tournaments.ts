@@ -151,6 +151,17 @@ export async function joinTournament(
   if (error) throw error
 }
 
+/** 목록에서 카드를 펼칠 때 필요한 상세(참가자 + 대진)를 한 번에 */
+export async function getTournamentSummary(
+  tournamentId: string,
+): Promise<{ players: TournamentPlayerRow[]; matches: TournamentMatchRow[] }> {
+  const [players, matches] = await Promise.all([
+    getTournamentPlayers(tournamentId),
+    getTournamentMatches(tournamentId),
+  ])
+  return { players, matches }
+}
+
 export async function leaveTournament(tournamentId: string, userId: number): Promise<void> {
   const { error } = await supabase
     .from('tournament_players')

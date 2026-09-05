@@ -16,6 +16,18 @@ const router = createRouter({
       component: () => import('@/views/auth/LoginView.vue'),
     },
     {
+      path: '/tournaments',
+      name: 'tournaments',
+      component: () => import('@/views/tournaments/TournamentsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/tournaments/:id',
+      name: 'tournament-detail',
+      component: () => import('@/views/tournaments/TournamentDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/maps',
       name: 'maps',
       component: () => import('@/views/maps/MapsView.vue'),
