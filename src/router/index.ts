@@ -118,6 +118,18 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/team-battles',
+      name: 'team-battles',
+      component: () => import('@/views/teamBattles/TeamBattlesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/team-battles/:id',
+      name: 'team-battle-detail',
+      component: () => import('@/views/teamBattles/TeamBattleDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/hall-of-fame',
       name: 'hall-of-fame',
       component: () => import('@/views/hof/HallOfFameView.vue'),

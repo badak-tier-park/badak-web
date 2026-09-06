@@ -24,6 +24,19 @@
 .race-color--p { color: var(--race-p); }
 
 // 배지용 (background + color)
+// 모양(패딩/크기)은 여기서 기본값을 잡고, 화면별로 필요하면 로컬 scoped 스타일로
+// 덮어쓸 수 있다(예: GamesView의 20x20 고정 아이콘형). 색상 모디파이어만 있던
+// 화면(PlayersView 등)도 이 기본 모양을 그대로 물려받는다.
+.tier-badge,
+.race-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 5px;
+}
+
 .race-badge--t { background: var(--race-t-bg); color: var(--race-t); }
 .race-badge--z { background: var(--race-z-bg); color: var(--race-z); }
 .race-badge--p { background: var(--race-p-bg); color: var(--race-p); }
@@ -90,4 +103,23 @@
   &--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); outline: 1.5px solid var(--tier-d-plus); outline-offset: -1.5px; }
   &--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); outline: 1.5px dashed var(--tier-d-minus); outline-offset: -1.5px; }
   &--e { background: var(--tier-e-bg); color: var(--tier-e); }
+}
+
+// ── 팀배틀 상태 배지 (목록/상세 공용) ──────────────────────
+.battle-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+
+  &.status--recruiting { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
+  &.status--assigned,
+  &.status--entry      { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
+  &.status--playing,
+  &.status--ace_waiting,
+  &.status--ace_entry  { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
+  // 카드 배경(--c-surface-raised)과 같은 값을 쓰면 배지가 배경에 묻혀 안 보인다
+  &.status--finished   { background: var(--c-badge-bg); color: var(--c-text-sub); }
+  &.status--cancelled  { background: rgba(248, 113, 113, 0.1); color: #f87171; }
 }
