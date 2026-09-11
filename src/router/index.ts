@@ -16,6 +16,18 @@ const router = createRouter({
       component: () => import('@/views/auth/LoginView.vue'),
     },
     {
+      path: '/tournaments',
+      name: 'tournaments',
+      component: () => import('@/views/tournaments/TournamentsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/tournaments/:id',
+      name: 'tournament-detail',
+      component: () => import('@/views/tournaments/TournamentDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/maps',
       name: 'maps',
       component: () => import('@/views/maps/MapsView.vue'),
@@ -103,6 +115,18 @@ const router = createRouter({
       path: '/participate',
       name: 'participate',
       component: () => import('@/views/participate/ParticipateView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/team-battles',
+      name: 'team-battles',
+      component: () => import('@/views/teamBattles/TeamBattlesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/team-battles/:id',
+      name: 'team-battle-detail',
+      component: () => import('@/views/teamBattles/TeamBattleDetailView.vue'),
       meta: { requiresAuth: true },
     },
     {

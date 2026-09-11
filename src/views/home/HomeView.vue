@@ -145,6 +145,40 @@
           </svg>
         </RouterLink>
 
+        <RouterLink to="/team-battles" class="nav-card">
+          <div class="nav-card-icon nav-card-icon--purple">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M4 17V9M4 9a3 3 0 100-6 3 3 0 000 6zM16 17V9M16 9a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 13l2-2 2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="nav-card-body">
+            <p class="nav-card-title">팀배틀</p>
+            <p class="nav-card-desc">비정기 리그 · 자유롭게 개최/참여</p>
+          </div>
+          <svg class="nav-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </RouterLink>
+
+        <RouterLink to="/tournaments" class="nav-card">
+          <div class="nav-card-icon nav-card-icon--yellow">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M6 3h8v2a4 4 0 01-4 4 4 4 0 01-4-4V3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+              <path d="M6 4H3.5A1.5 1.5 0 004 7c.5 1 1.3 1.6 2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              <path d="M14 4h2.5A1.5 1.5 0 0116 7c-.5 1-1.3 1.6-2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              <path d="M10 9v4M7 17h6M8 15h4v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="nav-card-body">
+            <p class="nav-card-title">개인 토너먼트</p>
+            <p class="nav-card-desc">비정기 리그 · 자유롭게 개최/참여</p>
+          </div>
+          <svg class="nav-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </RouterLink>
+
       </div>
 
       <HomeCalendar />

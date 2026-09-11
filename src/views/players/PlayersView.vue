@@ -15,23 +15,37 @@
         <span class="player-count" v-if="!loading">{{ players.length }}명</span>
       </div>
 
-      <div class="search-bar">
-        <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4"/>
-          <path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-        </svg>
-        <input
-          v-model="searchQuery"
-          class="search-input"
-          type="text"
-          placeholder="닉네임 검색"
-        />
-        <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      <div class="players-toolbar">
+        <div class="search-bar">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
           </svg>
-        </button>
+          <input
+            v-model="searchQuery"
+            class="search-input"
+            type="text"
+            placeholder="닉네임 검색"
+          />
+          <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="csv-actions">
+          <button class="btn-pill btn-pill--md btn-pill--ghost" @click="handleExportXlsx">엑셀 다운로드</button>
+          <button class="btn-pill btn-pill--md btn-pill--ghost" @click="triggerImportFile">엑셀 업로드</button>
+          <input
+            ref="importFileInput"
+            type="file"
+            accept=".xlsx"
+            class="csv-file-input"
+            @change="handleImportFileChange"
+          />
+        </div>
       </div>
+      <p class="csv-hint">id/닉네임은 참고용이며 변경되지 않습니다. 종족·티어·군인·상태 칸은 엑셀에서 드롭다운으로만 선택할 수 있습니다.</p>
 
       <div v-if="loading" class="state-msg">불러오는 중...</div>
       <div v-else-if="loadError" class="state-msg state-msg--error">{{ loadError }}</div>
@@ -39,17 +53,26 @@
       <table v-else class="player-table">
         <thead>
           <tr>
-            <th>닉네임</th>
+            <th class="th-sortable" @click="toggleSort('nickname')">
+              닉네임
+              <span v-if="sortKey === 'nickname'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
+            </th>
             <th>Alias</th>
             <th>스타 닉네임</th>
-            <th>종족</th>
-            <th>티어</th>
-            <th>군인</th>
+            <th class="th-sortable" @click="toggleSort('race')">
+              종족
+              <span v-if="sortKey === 'race'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
+            </th>
+            <th class="th-sortable" @click="toggleSort('tier')">
+              티어
+              <span v-if="sortKey === 'tier'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
+            </th>
+            <th>상태</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="player in filteredPlayers" :key="player.id">
+          <tr v-for="player in displayedPlayers" :key="player.id">
             <td class="td-nickname" :class="{ 'td-nickname--admin': player.is_admin }">{{ player.nickname }}</td>
             <td class="td-aliases">
               <span v-if="player.aliases.length" class="alias-list">
@@ -91,11 +114,12 @@
               </span>
             </td>
             <td>
-              <span class="tier-badge" :class="`tier-badge--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
+              <span class="tier-badge" :class="`tier-badge--${$tierClass(player.tier)}`">{{ player.tier }}</span>
             </td>
-            <td class="td-military">
-              <span v-if="player.is_military" class="military-badge">군인</span>
-              <span v-else class="military-badge military-badge--none">-</span>
+            <td class="td-status">
+              <span v-if="player.is_military" class="status-badge status-badge--military">군인</span>
+              <span v-if="!player.is_active" class="status-badge status-badge--suspended">정지</span>
+              <span v-if="!player.is_military && player.is_active" class="status-badge status-badge--none">-</span>
             </td>
             <td class="td-action">
               <button class="edit-btn" @click="openEdit(player)">수정</button>
@@ -108,7 +132,7 @@
     <!-- 수정 모달 -->
     <Teleport to="body">
       <div v-if="editTarget" class="modal-backdrop">
-        <div class="modal">
+        <div class="modal edit-modal">
           <div class="modal-header">
             <span class="modal-title">선수 정보 수정</span>
             <button class="modal-close" @click="closeEdit">
@@ -206,7 +230,7 @@
                   v-for="t in tiers"
                   :key="t.value"
                   class="tier-btn"
-                  :class="[`tier-btn--${t.value.toLowerCase()}`, { active: form.tier === t.value }]"
+                  :class="[`tier-btn--${$tierClass(t.value)}`, { active: form.tier === t.value }]"
                   @click="form.tier = t.value"
                   type="button"
                 >
@@ -227,6 +251,19 @@
                 {{ form.is_military ? '군인 (엔트리 -1pt)' : '일반' }}
               </button>
             </div>
+
+            <!-- 회원 상태 -->
+            <div class="field">
+              <label class="field-label">회원 상태</label>
+              <button
+                type="button"
+                class="active-toggle"
+                :class="{ 'active-toggle--off': !form.is_active }"
+                @click="form.is_active = !form.is_active"
+              >
+                {{ form.is_active ? '활성' : '정지' }}
+              </button>
+            </div>
           </div>
 
           <div class="modal-footer">
@@ -235,6 +272,58 @@
               <button class="btn-cancel" @click="closeEdit" :disabled="saving">취소</button>
               <button class="btn-save" @click="handleSave" :disabled="saving">
                 {{ saving ? '저장 중...' : '저장' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 엑셀 업로드 미리보기 모달 -->
+    <Teleport to="body">
+      <div v-if="importPreview !== null" class="modal-backdrop">
+        <div class="modal modal--lg">
+          <div class="modal-header">
+            <span class="modal-title">엑셀 업로드 미리보기</span>
+            <button class="modal-close" @click="closeImportPreview">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <p class="import-summary">변경 {{ importPreview.length }}건 · 오류 {{ importErrors.length }}건</p>
+
+            <div v-if="importErrors.length" class="import-errors">
+              <p class="import-errors-title">적용되지 않는 행</p>
+              <ul>
+                <li v-for="err in importErrors" :key="err.rowNumber" class="import-error-row">
+                  {{ err.rowNumber }}행 (id: {{ err.id || '?' }}) — {{ err.reason }}
+                </li>
+              </ul>
+            </div>
+
+            <div v-if="importPreview.length" class="import-diff-list">
+              <div v-for="row in importPreview" :key="row.id" class="import-diff-row">
+                <span class="import-diff-player">{{ row.nickname }} <span class="import-diff-id">#{{ row.id }}</span></span>
+                <div class="import-diff-fields">
+                  <span v-for="c in row.changes" :key="c.label" class="import-diff-field">
+                    {{ c.label }}: <span class="diff-old">{{ c.oldValue }}</span> → <span class="diff-new">{{ c.newValue }}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <p v-else-if="!importErrors.length" class="state-msg">변경 사항이 없습니다.</p>
+          </div>
+
+          <div class="modal-footer">
+            <p v-if="importSaveError" class="save-error">{{ importSaveError }}</p>
+            <p v-if="importSaving" class="import-progress">{{ importDoneCount }}/{{ importTotalCount }} 처리 중...</p>
+            <div class="modal-actions">
+              <button class="btn-cancel" @click="closeImportPreview" :disabled="importSaving">취소</button>
+              <button class="btn-save" :disabled="importSaving || importPreview.length === 0" @click="confirmImport">
+                {{ importSaving ? '적용 중...' : `${importPreview.length}건 적용` }}
               </button>
             </div>
           </div>
@@ -261,13 +350,15 @@ function togglePopover(id: number, field: PopoverField) {
 function closePopover() { openPopover.value = null }
 import AppHeader from '@/components/AppHeader.vue'
 import { getPlayers, updatePlayer, type PlayerRow } from '@/lib/players'
+import { TIER_ORDER, RACE_ORDER, tierPoint, normalizeTier } from '@/lib/constants'
+import type { ColumnValidation } from '@/lib/xlsx'
 
 const players = ref<PlayerRow[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const searchQuery = ref('')
 
-const filteredPlayers = computed(() => {
+const searchedPlayers = computed(() => {
   const q = searchQuery.value.toLowerCase()
   if (!q) return players.value
   return players.value.filter(p =>
@@ -276,21 +367,238 @@ const filteredPlayers = computed(() => {
   )
 })
 
+// ── 정렬 ──────────────────────────────────────────────────
+type SortKey = 'nickname' | 'race' | 'tier'
+const sortKey = ref<SortKey | null>(null)
+const sortDir = ref<'asc' | 'desc'>('asc')
+
+function toggleSort(key: SortKey) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortDir.value = 'asc'
+  }
+}
+
+const displayedPlayers = computed(() => {
+  const dir = sortDir.value === 'asc' ? 1 : -1
+  return [...searchedPlayers.value].sort((a, b) => {
+    // 정지된 선수는 정렬 기준과 무관하게 항상 최하단
+    if (a.is_active !== b.is_active) return a.is_active ? -1 : 1
+    if (!sortKey.value) return 0
+    if (sortKey.value === 'nickname') return a.nickname.localeCompare(b.nickname, 'ko') * dir
+    if (sortKey.value === 'race') return (RACE_ORDER.indexOf(a.race) - RACE_ORDER.indexOf(b.race)) * dir
+    return (tierPoint(a.tier) - tierPoint(b.tier)) * dir
+  })
+})
+
 const races = [
   { value: 'T' as const, label: '테란' },
   { value: 'Z' as const, label: '저그' },
   { value: 'P' as const, label: '프로토스' },
 ]
 
-const tiers = [
-  { value: 'A' },
-  { value: 'B' },
-  { value: 'C' },
-  { value: 'D' },
-  { value: 'E' },
-]
+const tiers = TIER_ORDER.map(value => ({ value }))
 
 const raceLabel = (r: string) => races.find(x => x.value === r)?.label ?? r
+
+// ── 엑셀 내보내기 ────────────────────────────────────────────
+const XLSX_HEADERS = ['id', '닉네임', '종족', '티어', '군인', '상태']
+
+// 드롭다운 검증을 걸 컬럼 (0-based, XLSX_HEADERS 기준)
+const XLSX_VALIDATIONS: ColumnValidation[] = [
+  { col: 2, values: RACE_ORDER },
+  { col: 3, values: TIER_ORDER },
+  { col: 4, values: ['O', 'X'] },
+  { col: 5, values: ['활성', '정지'] },
+]
+
+function playerToXlsxRow(p: PlayerRow): string[] {
+  return [
+    String(p.id),
+    p.nickname,
+    p.race,
+    p.tier,
+    p.is_military ? 'O' : 'X',
+    p.is_active ? '활성' : '정지',
+  ]
+}
+
+function todayStamp(): string {
+  const d = new Date()
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+}
+
+async function handleExportXlsx() {
+  const { downloadXlsx } = await import('@/lib/xlsx')
+  const rows = [XLSX_HEADERS, ...displayedPlayers.value.map(playerToXlsxRow)]
+  await downloadXlsx(`players_${todayStamp()}.xlsx`, rows, XLSX_VALIDATIONS)
+}
+
+// ── 엑셀 업로드 ────────────────────────────────────────────
+interface ImportFieldChange { label: string; oldValue: string; newValue: string }
+interface ImportPatch {
+  race?: 'T' | 'Z' | 'P'
+  tier?: string
+  is_military?: boolean
+  is_active?: boolean
+}
+interface ImportRowResult {
+  id: number
+  nickname: string
+  changes: ImportFieldChange[]
+  patch: ImportPatch
+}
+interface ImportRowError { rowNumber: number; id: string; reason: string }
+
+const importFileInput = ref<HTMLInputElement | null>(null)
+const importPreview = ref<ImportRowResult[] | null>(null)
+const importErrors = ref<ImportRowError[]>([])
+const importSaving = ref(false)
+const importSaveError = ref<string | null>(null)
+const importDoneCount = ref(0)
+const importTotalCount = ref(0)
+
+function triggerImportFile() {
+  importFileInput.value?.click()
+}
+
+async function handleImportFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (importFileInput.value) importFileInput.value.value = ''
+  if (!file) return
+
+  const { readXlsx } = await import('@/lib/xlsx')
+  const rows = await readXlsx(file)
+  const [, ...dataRows] = rows // 헤더 행은 위치만 보고 건너뜀 (내용 검증 안 함)
+
+  const results: ImportRowResult[] = []
+  const errors: ImportRowError[] = []
+  const seenIds = new Set<number>()
+
+  dataRows.forEach((row, i) => {
+    const rowNumber = i + 2 // 헤더(+1) + 1-based(+1)
+    if (row.length <= 1 && (row[0] ?? '').trim() === '') return // 빈 줄 건너뜀
+
+    const [idStr, , raceStr, tierStr, militaryStr, statusStr] = row
+    const id = Number(idStr)
+
+    if (!idStr || Number.isNaN(id)) {
+      errors.push({ rowNumber, id: idStr ?? '', reason: 'id가 올바르지 않습니다.' })
+      return
+    }
+    if (seenIds.has(id)) {
+      errors.push({ rowNumber, id: idStr, reason: `id ${id}가 파일 내에 중복되어 있습니다.` })
+      return
+    }
+    const existing = players.value.find(p => p.id === id)
+    if (!existing) {
+      errors.push({ rowNumber, id: idStr, reason: `id ${id}에 해당하는 선수를 찾을 수 없습니다.` })
+      return
+    }
+
+    const race = (raceStr ?? '').trim().toUpperCase()
+    if (!(RACE_ORDER as readonly string[]).includes(race)) {
+      errors.push({ rowNumber, id: idStr, reason: `종족 값이 올바르지 않습니다: "${raceStr}"` })
+      return
+    }
+
+    const tier = normalizeTier(tierStr)
+    if (!(TIER_ORDER as readonly string[]).includes(tier)) {
+      errors.push({ rowNumber, id: idStr, reason: `티어 값이 올바르지 않습니다: "${tierStr}" (${TIER_ORDER.join('/')} 중 하나여야 함)` })
+      return
+    }
+
+    const militaryRaw = (militaryStr ?? '').trim().toUpperCase()
+    if (militaryRaw !== 'O' && militaryRaw !== 'X') {
+      errors.push({ rowNumber, id: idStr, reason: `군인 값이 올바르지 않습니다: "${militaryStr}" (O 또는 X)` })
+      return
+    }
+    const is_military = militaryRaw === 'O'
+
+    const statusRaw = (statusStr ?? '').trim()
+    if (statusRaw !== '활성' && statusRaw !== '정지') {
+      errors.push({ rowNumber, id: idStr, reason: `상태 값이 올바르지 않습니다: "${statusStr}" (활성 또는 정지)` })
+      return
+    }
+    const is_active = statusRaw === '활성'
+
+    seenIds.add(id)
+
+    const changes: ImportFieldChange[] = []
+    const patch: ImportPatch = {}
+    if (race !== existing.race) { changes.push({ label: '종족', oldValue: existing.race, newValue: race }); patch.race = race as 'T' | 'Z' | 'P' }
+    if (tier !== existing.tier) { changes.push({ label: '티어', oldValue: existing.tier, newValue: tier }); patch.tier = tier }
+    if (is_military !== existing.is_military) { changes.push({ label: '군인', oldValue: existing.is_military ? 'O' : 'X', newValue: is_military ? 'O' : 'X' }); patch.is_military = is_military }
+    if (is_active !== existing.is_active) { changes.push({ label: '상태', oldValue: existing.is_active ? '활성' : '정지', newValue: is_active ? '활성' : '정지' }); patch.is_active = is_active }
+
+    if (changes.length === 0) return // 변경 없음 — 오류도 미리보기도 아님
+
+    results.push({ id, nickname: existing.nickname, changes, patch })
+  })
+
+  importErrors.value = errors
+  importPreview.value = results
+  importSaveError.value = null
+}
+
+function closeImportPreview() {
+  if (importSaving.value) return
+  importPreview.value = null
+  importErrors.value = []
+  importSaveError.value = null
+}
+
+async function confirmImport() {
+  if (!importPreview.value || importPreview.value.length === 0) return
+  importSaving.value = true
+  importSaveError.value = null
+  importDoneCount.value = 0
+  importTotalCount.value = importPreview.value.length
+
+  const failures: { id: number; nickname: string; message: string }[] = []
+  const applied: ImportRowResult[] = []
+
+  for (const row of importPreview.value) {
+    const existing = players.value.find(p => p.id === row.id)
+    if (!existing) {
+      failures.push({ id: row.id, nickname: row.nickname, message: '선수를 찾을 수 없습니다.' })
+      importDoneCount.value++
+      continue
+    }
+    try {
+      const updated = await updatePlayer(row.id, {
+        nickname: existing.nickname,
+        aliases: existing.aliases,
+        star_nicknames: existing.star_nicknames,
+        race: row.patch.race ?? existing.race,
+        tier: row.patch.tier ?? existing.tier,
+        is_military: row.patch.is_military ?? existing.is_military,
+        is_active: row.patch.is_active ?? existing.is_active,
+      })
+      const idx = players.value.findIndex(p => p.id === updated.id)
+      if (idx !== -1) players.value[idx] = updated
+      applied.push(row)
+    } catch (e: any) {
+      failures.push({ id: row.id, nickname: row.nickname, message: e.message ?? '저장 실패' })
+    } finally {
+      importDoneCount.value++
+    }
+  }
+
+  importSaving.value = false
+
+  if (failures.length) {
+    importSaveError.value = `${failures.length}건 저장 실패: ` + failures.map(f => `${f.nickname}(#${f.id})`).join(', ')
+    // 실패한 행만 남기고 성공한 행은 미리보기에서 제거 (재시도 가능하도록 모달 유지)
+    const appliedIds = new Set(applied.map(r => r.id))
+    importPreview.value = importPreview.value.filter(r => !appliedIds.has(r.id))
+  } else {
+    importPreview.value = null
+    importErrors.value = []
+  }
+}
 
 onMounted(async () => {
   try {
@@ -309,7 +617,7 @@ onUnmounted(() => {
 
 // ── 수정 모달 ─────────────────────────────────────────────
 const editTarget = ref<PlayerRow | null>(null)
-const form = reactive({ nickname: '', aliases: [] as string[], star_nicknames: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '', is_military: false })
+const form = reactive({ nickname: '', aliases: [] as string[], star_nicknames: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '', is_military: false, is_active: true })
 const aliasInput = ref('')
 const starNicknameInput = ref('')
 const saving = ref(false)
@@ -343,6 +651,7 @@ function openEdit(player: PlayerRow) {
   form.race = player.race
   form.tier = player.tier
   form.is_military = player.is_military
+  form.is_active = player.is_active
   aliasInput.value = ''
   starNicknameInput.value = ''
   saveError.value = null
@@ -369,6 +678,7 @@ async function handleSave() {
       race: form.race,
       tier: form.tier.trim(),
       is_military: form.is_military,
+      is_active: form.is_active,
     })
     const idx = players.value.findIndex(p => p.id === updated.id)
     if (idx !== -1) players.value[idx] = updated

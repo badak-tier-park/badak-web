@@ -85,7 +85,7 @@
                 <div class="player-cell">
                   <div class="player-cell-name">
                     <span class="race-badge" :class="raceBadgeClass(game.winner_race)">{{ raceLabel(game.winner_race) }}</span>
-                    <span v-if="game.winner_tier" class="tier-badge" :class="`tier-badge--${game.winner_tier.toLowerCase()}`">{{ game.winner_tier }}</span>
+                    <span v-if="game.winner_tier" class="tier-badge" :class="`tier-badge--${$tierClass(game.winner_tier)}`">{{ game.winner_tier }}</span>
                     <span class="player-name" :class="{ 'player-name--unmatched': !game.winner_tier }">{{ game.winner_name ?? '-' }}</span>
                   </div>
                   <div v-if="game.winner_apm != null" class="player-cell-apm">APM {{ game.winner_apm }}</div>
@@ -96,7 +96,7 @@
                 <div class="player-cell">
                   <div class="player-cell-name">
                     <span class="race-badge" :class="raceBadgeClass(game.loser_race)">{{ raceLabel(game.loser_race) }}</span>
-                    <span v-if="game.loser_tier" class="tier-badge" :class="`tier-badge--${game.loser_tier.toLowerCase()}`">{{ game.loser_tier }}</span>
+                    <span v-if="game.loser_tier" class="tier-badge" :class="`tier-badge--${$tierClass(game.loser_tier)}`">{{ game.loser_tier }}</span>
                     <span class="player-name" :class="{ 'player-name--unmatched': !game.loser_tier }">{{ game.loser_name ?? '-' }}</span>
                   </div>
                   <div v-if="game.loser_apm != null" class="player-cell-apm">APM {{ game.loser_apm }}</div>
@@ -156,7 +156,7 @@
                 :disabled="linking"
               >
                 <span class="race-badge" :class="raceBadgeClass(p.race)">{{ raceLabel(p.race) }}</span>
-                <span class="tier-badge" :class="`tier-badge--${p.tier.toLowerCase()}`">{{ p.tier }}</span>
+                <span class="tier-badge" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
                 <span class="player-option-name">{{ p.nickname }}</span>
                 <span v-if="p.star_nicknames.length" class="player-option-sn">
                   {{ p.star_nicknames.slice(0, 2).join(', ') }}{{ p.star_nicknames.length > 2 ? ' ...' : '' }}
@@ -221,8 +221,9 @@ const linkError = ref<string | null>(null)
 
 const filteredPlayerOptions = computed(() => {
   const q = playerSearch.value.toLowerCase()
-  if (!q) return players.value
-  return players.value.filter(p =>
+  const base = players.value.filter(p => p.is_active)
+  if (!q) return base
+  return base.filter(p =>
     p.nickname.toLowerCase().includes(q) ||
     p.aliases.some(a => a.toLowerCase().includes(q))
   )
@@ -247,6 +248,7 @@ async function handleLink(player: PlayerRow) {
       race: player.race,
       tier: player.tier,
       is_military: player.is_military,
+      is_active: player.is_active,
     })
     // 로컬 players 업데이트
     const idx = players.value.findIndex(p => p.id === player.id)

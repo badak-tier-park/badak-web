@@ -4,7 +4,7 @@
       class="ps-trigger"
       :class="[
         { 'ps-trigger--open': open, 'ps-trigger--empty': !modelValue, 'ps-trigger--disabled': disabled },
-        selectedOpt?.tier ? `tier-badge--${selectedOpt.tier.toLowerCase()}` : '',
+        selectedOpt?.tier ? `tier-badge--${$tierClass(selectedOpt.tier)}` : '',
       ]"
       type="button"
       :disabled="disabled"
@@ -37,7 +37,7 @@
           class="ps-option"
           :class="[
             { 'ps-option--selected': opt.value === modelValue, 'ps-option--disabled': opt.disabled },
-            opt.tier ? `ps-option--tier-${opt.tier.toLowerCase()}` : '',
+            opt.tier ? `ps-option--tier-${$tierClass(opt.tier)}` : '',
           ]"
           :disabled="opt.disabled"
           type="button"
@@ -45,9 +45,9 @@
         >
           <template v-if="opt.tier">
             <span class="ps-opt-race" v-if="opt.race" :class="`race-badge--${opt.race.toLowerCase()}`">{{ opt.race }}</span>
-            <span class="ps-opt-name" :class="`tier-color--${opt.tier.toLowerCase()}`">{{ opt.label }}</span>
+            <span class="ps-opt-name" :class="`tier-color--${$tierClass(opt.tier)}`">{{ opt.label }}</span>
             <span v-if="opt.is_military" class="ps-opt-military">군</span>
-            <span class="ps-opt-pts" :class="`tier-color--${opt.tier.toLowerCase()}`">{{ opt.points }}pt</span>
+            <span class="ps-opt-pts" :class="`tier-color--${$tierClass(opt.tier)}`">{{ opt.points }}pt</span>
           </template>
           <template v-else>{{ opt.label }}</template>
         </button>

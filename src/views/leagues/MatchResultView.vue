@@ -48,7 +48,7 @@
                     }"
                     @click="setWinner(match, match.team_a_captain_id)"
                   >
-                    <span class="team-chip" :class="`tier--${teamMap.get(match.team_a_captain_id)?.tier.toLowerCase()}`">
+                    <span class="team-chip" :class="`tier--${$tierClass(teamMap.get(match.team_a_captain_id)?.tier)}`">
                       {{ teamName(match.team_a_captain_id) }}
                     </span>
                     <span v-if="match.winner_captain_id === match.team_a_captain_id" class="win-badge">WIN</span>
@@ -64,7 +64,7 @@
                     }"
                     @click="setWinner(match, match.team_b_captain_id)"
                   >
-                    <span class="team-chip" :class="`tier--${teamMap.get(match.team_b_captain_id)?.tier.toLowerCase()}`">
+                    <span class="team-chip" :class="`tier--${$tierClass(teamMap.get(match.team_b_captain_id)?.tier)}`">
                       {{ teamName(match.team_b_captain_id) }}
                     </span>
                     <span v-if="match.winner_captain_id === match.team_b_captain_id" class="win-badge">WIN</span>
@@ -100,8 +100,8 @@ import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import { getLeague, type LeagueRow } from '@/lib/leagues'
-import { getCaptains } from '@/lib/leagueDetail'
-import { getPlayers } from '@/lib/players'
+import { getCaptains, getLeaguePlayers } from '@/lib/leagueDetail'
+
 import { getTeamNames } from '@/lib/teamNames'
 import { getSchedules, updateMatchWinner, type ScheduleRow } from '@/lib/schedules'
 import { withTimeout } from '@/lib/supabase'
@@ -130,7 +130,7 @@ onMounted(async () => {
     const [leagueData, captains, players, teamNames, sched] = await withTimeout(Promise.all([
       getLeague(leagueId),
       getCaptains(leagueId),
-      getPlayers(),
+      getLeaguePlayers(leagueId),
       getTeamNames(leagueId),
       getSchedules(leagueId),
     ]))

@@ -152,7 +152,7 @@
         <div class="captain-list">
           <div v-for="(playerId, i) in captains" :key="playerId" class="captain-row">
             <span class="captain-order-badge">{{ i + 1 }}</span>
-            <span class="captain-tier" :class="`tier--${playerById(playerId)?.tier.toLowerCase()}`">
+            <span class="captain-tier" :class="`tier--${$tierClass(playerById(playerId)?.tier)}`">
               {{ playerById(playerId)?.tier }}
             </span>
             <span class="captain-race" :class="`race--${playerById(playerId)?.race.toLowerCase()}`">
@@ -204,7 +204,7 @@
         <div class="captain-list">
           <div v-for="(playerId, i) in seedHolders" :key="playerId" class="captain-row">
             <span class="captain-order-badge">{{ i + 1 }}</span>
-            <span class="captain-tier" :class="`tier--${playerById(playerId)?.tier.toLowerCase()}`">
+            <span class="captain-tier" :class="`tier--${$tierClass(playerById(playerId)?.tier)}`">
               {{ playerById(playerId)?.tier }}
             </span>
             <span class="captain-race" :class="`race--${playerById(playerId)?.race.toLowerCase()}`">
@@ -357,7 +357,7 @@
               :disabled="captains.includes(player.id)"
               @click="assignCaptain(player.id)"
             >
-              <span class="picker-tier" :class="`tier--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
+              <span class="picker-tier" :class="`tier--${$tierClass(player.tier)}`">{{ player.tier }}</span>
               <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
               <span class="picker-name">{{ player.nickname }}</span>
               <svg v-if="captains.includes(player.id)" class="picker-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -394,7 +394,7 @@
               :class="{ selected: seedHolders.includes(player.id) }"
               @click="assignSeedHolder(player.id)"
             >
-              <span class="picker-tier" :class="`tier--${player.tier.toLowerCase()}`">{{ player.tier }}</span>
+              <span class="picker-tier" :class="`tier--${$tierClass(player.tier)}`">{{ player.tier }}</span>
               <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
               <span class="picker-name">{{ player.nickname }}</span>
               <svg v-if="seedHolders.includes(player.id)" class="picker-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -477,10 +477,11 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import AppHeader from '@/components/AppHeader.vue'
 import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
-import { getPlayers, type PlayerRow } from '@/lib/players'
+import { type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
-import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders } from '@/lib/leagueDetail'
+import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders, getLeaguePlayers } from '@/lib/leagueDetail'
 import { FontSize } from '@/lib/tiptapFontSize'
+import { tierPoint } from '@/lib/constants'
 import { useToast } from '@/composables/useToast'
 
 // ── 토스트 ────────────────────────────────────────────────
@@ -538,7 +539,7 @@ onMounted(async () => {
   try {
     const [leagueData, playersData, mapsData, captainsData, matchMapsData, seedHoldersData, creatorId] = await Promise.all([
       getLeague(leagueId),
-      getPlayers(),
+      getLeaguePlayers(leagueId),
       getMaps(),
       getCaptains(leagueId),
       getMatchMaps(leagueId),
@@ -691,13 +692,11 @@ onBeforeUnmount(() => {
 
 // ── 팀장 선출 ─────────────────────────────────────────────
 // 티어 순위: 낮은 티어(E)가 앞 순번
-const TIER_RANK: Record<string, number> = { E: 1, D: 2, C: 3, B: 4, A: 5 }
-
 function autoSortCaptains() {
   captains.value = [...captains.value].sort((a, b) => {
     const ta = playerById(a)?.tier ?? 'A'
     const tb = playerById(b)?.tier ?? 'A'
-    return (TIER_RANK[ta] ?? 0) - (TIER_RANK[tb] ?? 0)
+    return tierPoint(ta) - tierPoint(tb)
   })
 }
 
@@ -718,7 +717,7 @@ const playerSearch = ref('')
 
 function sortPlayers(list: PlayerRow[]) {
   return [...list].sort((a, b) => {
-    const tierDiff = (TIER_RANK[a.tier] ?? 0) - (TIER_RANK[b.tier] ?? 0)
+    const tierDiff = tierPoint(a.tier) - tierPoint(b.tier)
     if (tierDiff !== 0) return tierDiff
     const raceDiff = a.race.localeCompare(b.race)
     if (raceDiff !== 0) return raceDiff
@@ -730,6 +729,7 @@ const filteredPlayers = computed(() => {
   const q = playerSearch.value.trim().toLowerCase()
   const list = players.value.filter((p) =>
     p.id !== creatorPlayerId.value &&
+    p.is_active &&
     (!q || p.nickname.toLowerCase().includes(q)),
   )
   return sortPlayers(list)
@@ -824,6 +824,7 @@ const filteredSeedPlayers = computed(() => {
   const q = seedSearch.value.trim().toLowerCase()
   const list = players.value.filter((p) =>
     p.id !== creatorPlayerId.value &&
+    p.is_active &&
     (!q || p.nickname.toLowerCase().includes(q)),
   )
   return sortPlayers(list)

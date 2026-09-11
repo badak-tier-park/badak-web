@@ -32,6 +32,27 @@
   --tier-e:         #9ca3af;
   --tier-e-bg:      rgba(156, 163, 175, 0.08);
   --tier-e-border:  rgba(156, 163, 175, 0.35);
+
+  // 티어 +/- 명도 구분 (밝은 +, 진한 -). 배경(-bg)은 공유.
+  --tier-a-plus:         #f87171;
+  --tier-a-plus-border:  rgba(248, 113, 113, 0.55);
+  --tier-a-minus:        #dc2626;
+  --tier-a-minus-border: rgba(220, 38, 38, 0.55);
+
+  --tier-b-plus:         #c084fc;
+  --tier-b-plus-border:  rgba(192, 132, 252, 0.55);
+  --tier-b-minus:        #9333ea;
+  --tier-b-minus-border: rgba(147, 51, 234, 0.55);
+
+  --tier-c-plus:         #58a6ff;
+  --tier-c-plus-border:  rgba(88, 166, 255, 0.55);
+  --tier-c-minus:        #2563eb;
+  --tier-c-minus-border: rgba(37, 99, 235, 0.55);
+
+  --tier-d-plus:         #4ade80;
+  --tier-d-plus-border:  rgba(74, 222, 128, 0.55);
+  --tier-d-minus:        #16a34a;
+  --tier-d-minus-border: rgba(22, 163, 74, 0.55);
 }
 
 // ── 글로벌 폰트 ──────────────────────────────────────────
@@ -112,6 +133,26 @@ body {
   --tier-d:         #16a34a;
   --tier-e-bg:      rgba(107, 114, 128, 0.12);
   --tier-e:         #6b7280;
+
+  --tier-a-plus:         #dc2626;
+  --tier-a-plus-border:  rgba(220, 38, 38, 0.5);
+  --tier-a-minus:        #991b1b;
+  --tier-a-minus-border: rgba(153, 27, 27, 0.5);
+
+  --tier-b-plus:         #7c3aed;
+  --tier-b-plus-border:  rgba(124, 58, 237, 0.5);
+  --tier-b-minus:        #5b21b6;
+  --tier-b-minus-border: rgba(91, 33, 182, 0.5);
+
+  --tier-c-plus:         #2563eb;
+  --tier-c-plus-border:  rgba(37, 99, 235, 0.5);
+  --tier-c-minus:        #1e40af;
+  --tier-c-minus-border: rgba(30, 64, 175, 0.5);
+
+  --tier-d-plus:         #16a34a;
+  --tier-d-plus-border:  rgba(22, 163, 74, 0.5);
+  --tier-d-minus:        #166534;
+  --tier-d-minus-border: rgba(22, 101, 52, 0.5);
 }
 
 // ── Light ─────────────────────────────────────────────────

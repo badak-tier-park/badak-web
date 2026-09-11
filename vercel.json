@@ -1,7 +1,9 @@
 {
   "git": {
     "deploymentEnabled": {
-      "main": true
+      "main": true,
+      "dev": true,
+      "fix/vercel-dev-deploy": true
     }
   },
   "rewrites": [

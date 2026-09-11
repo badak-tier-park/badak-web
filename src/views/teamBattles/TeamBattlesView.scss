@@ -1,0 +1,384 @@
+@use '../../styles/page';
+
+.team-battles-page {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.team-battles-content {
+  position: relative;
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+  box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+// ── 목록 ────────────────────────────────────────────────
+.battle-list { display: flex; flex-direction: column; gap: 10px; }
+
+.battle-card {
+  border-radius: 14px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  color: inherit;
+  // #app에 text-align:center가 걸려 있어 명시하지 않으면 카드 내용이 가운데 정렬된다
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    border-color: var(--c-border-strong);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.battle-card-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.battle-card-main {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 18px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.battle-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.battle-start {
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.battle-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.battle-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.battle-expand-btn {
+  flex-shrink: 0;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-left: 1px solid var(--c-border-faint);
+  background: none;
+  color: var(--c-icon-sub);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  svg { transition: transform 0.2s; }
+
+  &:hover { background: var(--c-overlay); color: var(--c-text-2); }
+  &--open svg { transform: rotate(180deg); }
+}
+
+// ── 펼친 패널 ───────────────────────────────────────────
+.battle-expand-panel {
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--c-border-faint);
+}
+
+.result-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.result-team-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+
+  &:first-child { text-align: right; }
+  &:last-child { text-align: left; }
+}
+
+.result-score {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--c-text);
+}
+
+.result-winner {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #facc15;
+}
+
+.result-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-sub);
+}
+
+.result-match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.result-match-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: var(--c-overlay);
+  font-size: 12px;
+}
+
+.result-match-no {
+  flex-shrink: 0;
+  width: 40px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+}
+
+.result-match-map {
+  flex-shrink: 0;
+  width: 90px;
+  color: var(--c-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-match-side {
+  flex: 1;
+  text-align: center;
+  color: var(--c-text-2);
+
+  &--win { color: #4ade80; font-weight: 700; }
+}
+
+.result-match-vs {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--c-text-faint);
+}
+
+.result-player-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.result-player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--c-border);
+  background: var(--c-overlay);
+  font-size: 12px;
+  color: var(--c-text-2);
+}
+
+// ── 생성 모달 ───────────────────────────────────────────
+.modal.edit-modal { max-width: 460px; }
+
+.field-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--c-text-faint);
+}
+
+// ── 날짜+시간 인라인 패널 ─────────────────────────────────
+// 팝오버가 아니라 폼의 일부. 위치 계산/teleport/z-index가 전혀 없다.
+.datetime-inline {
+  padding: 10px 12px 12px;
+  background: var(--c-input);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.calendar-nav-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--c-text-sub);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: rgba(170, 59, 255, 0.12); color: #c084fc; }
+}
+
+.calendar-month-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.calendar-weekday-row,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+  padding: 4px 0;
+}
+
+.calendar-day-btn {
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--c-text-2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) { background: rgba(170, 59, 255, 0.12); color: #c084fc; }
+
+  &--outside { color: var(--c-text-faint); opacity: 0.5; }
+
+  &--today { outline: 1px solid rgba(170, 59, 255, 0.4); outline-offset: -1px; }
+
+  &--selected {
+    background: #aa3bff;
+    color: #fff;
+
+    &:hover:not(:disabled) { background: #aa3bff; color: #fff; }
+  }
+
+  &:disabled { color: var(--c-text-faint); opacity: 0.3; cursor: not-allowed; }
+}
+
+// ── 시간 스피너 (시/분 위아래 버튼) ─────────────────────
+.time-spinner-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.time-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.spinner-arrow {
+  width: 28px;
+  height: 18px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--c-text-faint);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { background: rgba(170, 59, 255, 0.12); color: #c084fc; }
+}
+
+.spinner-value {
+  min-width: 40px;
+  padding: 6px 0;
+  border: 1px solid var(--c-border-strong);
+  border-radius: 6px;
+  background: var(--c-input);
+  color: var(--c-text);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.spinner-colon {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+}
+
+.datetime-summary {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c084fc;
+
+  &--empty {
+    font-weight: 500;
+    color: var(--c-text-faint);
+  }
+}
+
+// ── 참여 가능 티어 선택 ───────────────────────────────────
+.tier-select-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+// 활성 상태 배색은 전역 .tier-badge--* 를 그대로 재사용, 여기선 모양/비활성만 정의
+.tier-toggle-btn {
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-input);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { border-color: var(--c-border-dashed); }
+
+  &--off {
+    background: var(--c-input);
+    color: var(--c-text-faint);
+    opacity: 0.5;
+  }
+}

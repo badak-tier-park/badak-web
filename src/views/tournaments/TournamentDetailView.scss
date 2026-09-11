@@ -1,0 +1,211 @@
+@use '../../styles/page';
+@use '../../styles/toggle-group';
+@use '../../styles/picker';
+
+.tournament-detail-page {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tournament-detail-content {
+  position: relative;
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+  box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+// ── 상태 배지 (목록과 동일 — 로컬 스코프라 중복 정의) ─────
+.tournament-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+
+  &.status--recruiting { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
+  &.status--playing    { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
+  &.status--finished   { background: var(--c-badge-bg, rgba(255, 255, 255, 0.06)); color: var(--c-text-sub); }
+  &.status--cancelled  { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+}
+
+.tournament-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.tournament-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.tournament-meta {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--c-text-muted);
+}
+
+.section-label {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-sub);
+}
+
+// ── 참가/취소 ───────────────────────────────────────────
+.join-section {
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+  margin-bottom: 24px;
+}
+
+.race-select-group { display: flex; gap: 8px; margin-bottom: 10px; }
+
+.race-select-btn {
+  @extend %toggle-btn;
+
+  &--t.active { border-color: var(--race-t-border); background: var(--race-t-bg); color: var(--race-t); }
+  &--z.active { border-color: var(--race-z-border); background: var(--race-z-bg); color: var(--race-z); }
+  &--p.active { border-color: var(--race-p-border); background: var(--race-p-bg); color: var(--race-p); }
+}
+
+.field-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--c-text-faint);
+  line-height: 1.5;
+}
+
+// ── 참여 가능 티어 ───────────────────────────────────────
+.tier-restriction-section { margin-bottom: 24px; }
+
+.tier-restriction-value {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+}
+
+.tier-select-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+// 활성 상태 배색은 전역 .tier-badge--* 를 그대로 재사용, 여기선 모양/비활성만 정의
+.tier-toggle-btn {
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-input);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { border-color: var(--c-border-dashed); }
+
+  &--off {
+    background: var(--c-input);
+    color: var(--c-text-faint);
+    opacity: 0.5;
+  }
+}
+
+// ── 참가자 목록 ─────────────────────────────────────────
+.players-section { margin-bottom: 24px; }
+
+.player-chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--c-border);
+  background: var(--c-overlay);
+  font-size: 13px;
+  color: var(--c-text-2);
+
+  &--host { border-color: rgba(250, 204, 21, 0.35); }
+}
+
+.offrace-mark {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+}
+
+.host-mark {
+  font-size: 10px;
+  font-weight: 700;
+  color: #facc15;
+}
+
+// ── 맵 (단일) ────────────────────────────────────────────
+.map-section { margin-bottom: 24px; }
+
+.map-selected-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+}
+
+.map-selected-thumb {
+  width: 56px;
+  height: 42px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--c-overlay);
+}
+
+.map-selected-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+}
+
+// ── 우승 배너 ─────────────────────────────────────────────
+.winner-banner {
+  margin: 0 0 16px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  background: rgba(250, 204, 21, 0.08);
+  color: #facc15;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+// ── 대진 생성 ─────────────────────────────────────────────
+.bracket-generate-section { margin-bottom: 24px; }
+
+// ── 대진표 (트리 렌더링 자체는 TournamentBracket.vue 내부 scoped 스타일) ──
+.bracket-section { margin-bottom: 24px; }
+
+.finish-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}

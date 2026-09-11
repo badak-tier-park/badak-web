@@ -1,6 +1,6 @@
 import { ref, computed, type Ref } from 'vue'
 import type { PlayerRow } from '@/lib/players'
-import { TIER_RANK } from '@/lib/constants'
+import { tierPoint } from '@/lib/constants'
 
 export interface SwapLogEntry {
   seedHolderName: string
@@ -115,7 +115,7 @@ export function useSeedSwap(
     if (seedHolderIds.value.has(b.member.id)) return `${b.member.nickname}은 시드권 보유자로 교체 불가합니다`
     if (b.pickIdx === 0) return `1번 픽(${b.member.nickname})은 시드권 적용 불가합니다`
 
-    const tierDiff = Math.abs((TIER_RANK[a.member.tier] ?? 0) - (TIER_RANK[b.member.tier] ?? 0))
+    const tierDiff = Math.abs(tierPoint(a.member.tier) - tierPoint(b.member.tier))
     if (tierDiff >= 2) return '두 티어 이상 차이나는 멤버는 시드권 적용 불가합니다'
 
     const aNum = a.pickIdx + 1

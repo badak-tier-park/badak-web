@@ -76,9 +76,17 @@
   transition: filter 0.1s;
 
   &--tier-a { background: var(--tier-a-bg); }
+  &--tier-a-plus { background: var(--tier-a-bg); }
+  &--tier-a-minus { background: var(--tier-a-bg); }
   &--tier-b { background: var(--tier-b-bg); }
+  &--tier-b-plus { background: var(--tier-b-bg); }
+  &--tier-b-minus { background: var(--tier-b-bg); }
   &--tier-c { background: var(--tier-c-bg); }
+  &--tier-c-plus { background: var(--tier-c-bg); }
+  &--tier-c-minus { background: var(--tier-c-bg); }
   &--tier-d { background: var(--tier-d-bg); }
+  &--tier-d-plus { background: var(--tier-d-bg); }
+  &--tier-d-minus { background: var(--tier-d-bg); }
   &--tier-e { background: var(--tier-e-bg); }
 
   &:hover:not(:disabled) { filter: brightness(1.2); }

@@ -1,8 +1,16 @@
 // ── tier-- / race-- (LeagueDetailView 등 텍스트+배지 겸용) ──
 .tier--a { background: var(--tier-a-bg); color: var(--tier-a); }
+.tier--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); outline: 1.5px solid var(--tier-a-plus); outline-offset: -2px; }
+.tier--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); outline: 1.5px dashed var(--tier-a-minus); outline-offset: -2px; }
 .tier--b { background: var(--tier-b-bg); color: var(--tier-b); }
+.tier--b-plus { background: var(--tier-b-bg); color: var(--tier-b-plus); outline: 1.5px solid var(--tier-b-plus); outline-offset: -2px; }
+.tier--b-minus { background: var(--tier-b-bg); color: var(--tier-b-minus); outline: 1.5px dashed var(--tier-b-minus); outline-offset: -2px; }
 .tier--c { background: var(--tier-c-bg); color: var(--tier-c); }
+.tier--c-plus { background: var(--tier-c-bg); color: var(--tier-c-plus); outline: 1.5px solid var(--tier-c-plus); outline-offset: -2px; }
+.tier--c-minus { background: var(--tier-c-bg); color: var(--tier-c-minus); outline: 1.5px dashed var(--tier-c-minus); outline-offset: -2px; }
 .tier--d { background: var(--tier-d-bg); color: var(--tier-d); }
+.tier--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); outline: 1.5px solid var(--tier-d-plus); outline-offset: -2px; }
+.tier--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); outline: 1.5px dashed var(--tier-d-minus); outline-offset: -2px; }
 .tier--e { background: var(--tier-e-bg); color: var(--tier-e); }
 
 .race--t { color: var(--race-t); }
@@ -16,6 +24,19 @@
 .race-color--p { color: var(--race-p); }
 
 // 배지용 (background + color)
+// 모양(패딩/크기)은 여기서 기본값을 잡고, 화면별로 필요하면 로컬 scoped 스타일로
+// 덮어쓸 수 있다(예: GamesView의 20x20 고정 아이콘형). 색상 모디파이어만 있던
+// 화면(PlayersView 등)도 이 기본 모양을 그대로 물려받는다.
+.tier-badge,
+.race-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 5px;
+}
+
 .race-badge--t { background: var(--race-t-bg); color: var(--race-t); }
 .race-badge--z { background: var(--race-z-bg); color: var(--race-z); }
 .race-badge--p { background: var(--race-p-bg); color: var(--race-p); }
@@ -28,16 +49,32 @@
 // ── 티어 공통 클래스 ──────────────────────────────────────
 // color만 적용 (텍스트용)
 .tier-color--a { color: var(--tier-a); }
+.tier-color--a-plus { color: var(--tier-a-plus); }
+.tier-color--a-minus { color: var(--tier-a-minus); }
 .tier-color--b { color: var(--tier-b); }
+.tier-color--b-plus { color: var(--tier-b-plus); }
+.tier-color--b-minus { color: var(--tier-b-minus); }
 .tier-color--c { color: var(--tier-c); }
+.tier-color--c-plus { color: var(--tier-c-plus); }
+.tier-color--c-minus { color: var(--tier-c-minus); }
 .tier-color--d { color: var(--tier-d); }
+.tier-color--d-plus { color: var(--tier-d-plus); }
+.tier-color--d-minus { color: var(--tier-d-minus); }
 .tier-color--e { color: var(--tier-e); }
 
 // 배지용 (background + color)
 .tier-badge--a { background: var(--tier-a-bg); color: var(--tier-a); }
+.tier-badge--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); outline: 1.5px solid var(--tier-a-plus); outline-offset: -2px; }
+.tier-badge--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); outline: 1.5px dashed var(--tier-a-minus); outline-offset: -2px; }
 .tier-badge--b { background: var(--tier-b-bg); color: var(--tier-b); }
+.tier-badge--b-plus { background: var(--tier-b-bg); color: var(--tier-b-plus); outline: 1.5px solid var(--tier-b-plus); outline-offset: -2px; }
+.tier-badge--b-minus { background: var(--tier-b-bg); color: var(--tier-b-minus); outline: 1.5px dashed var(--tier-b-minus); outline-offset: -2px; }
 .tier-badge--c { background: var(--tier-c-bg); color: var(--tier-c); }
+.tier-badge--c-plus { background: var(--tier-c-bg); color: var(--tier-c-plus); outline: 1.5px solid var(--tier-c-plus); outline-offset: -2px; }
+.tier-badge--c-minus { background: var(--tier-c-bg); color: var(--tier-c-minus); outline: 1.5px dashed var(--tier-c-minus); outline-offset: -2px; }
 .tier-badge--d { background: var(--tier-d-bg); color: var(--tier-d); }
+.tier-badge--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); outline: 1.5px solid var(--tier-d-plus); outline-offset: -2px; }
+.tier-badge--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); outline: 1.5px dashed var(--tier-d-minus); outline-offset: -2px; }
 .tier-badge--e { background: var(--tier-e-bg); color: var(--tier-e); }
 
 // 버튼 active 상태용 (border + background + color)
@@ -54,8 +91,35 @@
   border-radius: 4px;
 
   &--a { background: var(--tier-a-bg); color: var(--tier-a); }
+  &--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); outline: 1.5px solid var(--tier-a-plus); outline-offset: -1.5px; }
+  &--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); outline: 1.5px dashed var(--tier-a-minus); outline-offset: -1.5px; }
   &--b { background: var(--tier-b-bg); color: var(--tier-b); }
+  &--b-plus { background: var(--tier-b-bg); color: var(--tier-b-plus); outline: 1.5px solid var(--tier-b-plus); outline-offset: -1.5px; }
+  &--b-minus { background: var(--tier-b-bg); color: var(--tier-b-minus); outline: 1.5px dashed var(--tier-b-minus); outline-offset: -1.5px; }
   &--c { background: var(--tier-c-bg); color: var(--tier-c); }
+  &--c-plus { background: var(--tier-c-bg); color: var(--tier-c-plus); outline: 1.5px solid var(--tier-c-plus); outline-offset: -1.5px; }
+  &--c-minus { background: var(--tier-c-bg); color: var(--tier-c-minus); outline: 1.5px dashed var(--tier-c-minus); outline-offset: -1.5px; }
   &--d { background: var(--tier-d-bg); color: var(--tier-d); }
+  &--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); outline: 1.5px solid var(--tier-d-plus); outline-offset: -1.5px; }
+  &--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); outline: 1.5px dashed var(--tier-d-minus); outline-offset: -1.5px; }
   &--e { background: var(--tier-e-bg); color: var(--tier-e); }
+}
+
+// ── 팀배틀 상태 배지 (목록/상세 공용) ──────────────────────
+.battle-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+
+  &.status--recruiting { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
+  &.status--assigned,
+  &.status--entry      { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
+  &.status--playing,
+  &.status--ace_waiting,
+  &.status--ace_entry  { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
+  // 카드 배경(--c-surface-raised)과 같은 값을 쓰면 배지가 배경에 묻혀 안 보인다
+  &.status--finished   { background: var(--c-badge-bg); color: var(--c-text-sub); }
+  &.status--cancelled  { background: rgba(248, 113, 113, 0.1); color: #f87171; }
 }
