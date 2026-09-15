@@ -163,8 +163,58 @@
             </button>
           </div>
         </section>
+
+        <!-- ── 삭제 / 강제 종료 ───────────────────────────── -->
+        <section v-if="canDelete || canForceEnd" class="danger-section">
+          <div class="danger-text">
+            <p class="danger-title">{{ canDelete ? '토너먼트 삭제' : '강제 종료' }}</p>
+            <p class="danger-desc">
+              {{ canDelete
+                ? '사람이 안 모였다면 지우고 다시 만들 수 있습니다. 되돌릴 수 없습니다.'
+                : '대진이 생성돼 삭제할 수 없습니다. 강제 종료하면 전적은 반영되지 않습니다.' }}
+            </p>
+          </div>
+          <button
+            class="btn-pill btn-pill--md"
+            :class="canDelete ? 'btn-pill--red' : 'btn-pill--orange'"
+            @click="dangerAction = canDelete ? 'delete' : 'force'"
+          >
+            {{ canDelete ? '삭제' : '강제 종료' }}
+          </button>
+        </section>
+
+        <p v-else-if="tournament.status === 'CANCELLED' || tournament.status === 'FINISHED'" class="danger-locked">
+          {{ tournament.status === 'CANCELLED' ? '강제 종료된' : '종료된' }} 토너먼트는 기록으로 남으며 삭제할 수 없습니다.
+        </p>
       </template>
     </div>
+
+    <!-- ── 삭제 / 강제 종료 확인 ──────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="dangerAction" class="modal-backdrop">
+        <div class="modal">
+          <div class="modal-header">
+            <span class="modal-title">{{ dangerAction === 'delete' ? '토너먼트를 삭제할까요?' : '강제 종료할까요?' }}</span>
+          </div>
+          <div class="modal-body">
+            <p class="danger-desc">
+              {{ dangerAction === 'delete'
+                ? '참가자 정보까지 전부 삭제되며 되돌릴 수 없습니다.'
+                : '진행 중인 대진이 즉시 종료되고, 이 토너먼트의 전적은 기록되지 않습니다.' }}
+            </p>
+          </div>
+          <div class="modal-footer">
+            <p v-if="dangerError" class="save-error">{{ dangerError }}</p>
+            <div class="modal-actions">
+              <button class="btn-cancel" :disabled="dangerBusy" @click="dangerAction = null">취소</button>
+              <button class="btn-save" :disabled="dangerBusy" @click="handleDangerConfirm">
+                {{ dangerBusy ? '처리 중...' : (dangerAction === 'delete' ? '삭제' : '강제 종료') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- ── 맵 선택 오버레이 ───────────────────────────────── -->
     <Teleport to="body">
@@ -203,7 +253,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import TournamentBracket from './TournamentBracket.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -213,11 +263,12 @@ import { normalizeTier, TIER_ORDER } from '@/lib/constants'
 import {
   getTournament, getTournamentPlayers, joinTournament, leaveTournament, setTournamentMap,
   generateBracket, getTournamentMatches, setTournamentMatchWinner, finishTournament,
-  setTournamentAllowedTiers,
+  setTournamentAllowedTiers, deleteTournament, cancelTournament,
   TOURNAMENT_STATUS_LABEL, type TournamentRow, type TournamentPlayerRow, type TournamentMatchRow,
 } from '@/lib/tournaments'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 
 const tournament = ref<TournamentRow | null>(null)
@@ -432,6 +483,35 @@ async function handleSetWinner(m: TournamentMatchRow, winnerUserId: number) {
     matchError.value = e.message ?? '경기 결과 저장 중 오류가 발생했습니다.'
   } finally {
     reportingMatch.value = null
+  }
+}
+
+// ── 삭제 / 강제 종료 ──────────────────────────────────────
+// 대진 생성 전에는 통째로 삭제, 생성 후에는 기록을 남기는 강제 종료만 허용한다.
+const dangerAction = ref<'delete' | 'force' | null>(null)
+const dangerBusy = ref(false)
+const dangerError = ref<string | null>(null)
+
+const canDelete = computed(() => isHost.value && tournament.value?.status === 'RECRUITING')
+const canForceEnd = computed(() => isHost.value && tournament.value?.status === 'PLAYING')
+
+async function handleDangerConfirm() {
+  if (!tournament.value || !dangerAction.value) return
+  dangerBusy.value = true
+  dangerError.value = null
+  try {
+    if (dangerAction.value === 'delete') {
+      await deleteTournament(tournament.value.id)
+      router.push({ name: 'tournaments' })
+      return
+    }
+    await cancelTournament(tournament.value.id)
+    tournament.value = await getTournament(tournament.value.id)
+    dangerAction.value = null
+  } catch (e: any) {
+    dangerError.value = e.message ?? '처리 중 오류가 발생했습니다.'
+  } finally {
+    dangerBusy.value = false
   }
 }
 
