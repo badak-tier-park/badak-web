@@ -30,17 +30,28 @@
 
         <p v-if="actionError" class="save-error">{{ actionError }}</p>
 
-        <!-- ── RECRUITING ─────────────────────────────────── -->
-        <template v-if="battle.status === 'RECRUITING'">
-          <section v-if="!myEntry && myPlayer" class="join-section">
-            <template v-if="!myPlayer.is_active">
-              <p class="state-msg state-msg--error">정지된 계정은 팀배틀에 참가할 수 없습니다.</p>
-            </template>
-            <template v-else-if="!isMyTierEligible">
-              <p class="state-msg state-msg--error">참여 가능한 티어가 아닙니다. (허용 티어: {{ allowedTiersLabel }})</p>
-            </template>
-            <template v-else>
-              <p class="section-label">참가 종족 선택</p>
+        <!-- ── 진행 단계 ──────────────────────────────────── -->
+        <ol class="step-rail">
+          <li
+            v-for="(label, i) in STEPS"
+            :key="label"
+            class="step"
+            :class="{ 'step--done': i < stepIndex, 'step--now': i === stepIndex }"
+          >
+            <span class="step-dot">{{ i + 1 }}</span>
+            <span class="step-name">{{ label }}</span>
+          </li>
+        </ol>
+
+        <!-- ── 지금 할 일 ─────────────────────────────────── -->
+        <section v-if="todoVisible" class="todo-bar">
+          <p class="todo-label">지금 할 일</p>
+
+          <!-- 모집 중: 참가 / 참가 취소 -->
+          <template v-if="battle.status === 'RECRUITING'">
+            <p v-if="joinBlockReason && !myEntry" class="todo-blocked">{{ joinBlockReason }}</p>
+
+            <div v-else-if="canJoin" class="todo-row">
               <div class="race-select-group">
                 <button
                   v-for="r in races"
@@ -51,48 +62,102 @@
                   @click="selectedRace = r.value"
                 >{{ r.label }}</button>
               </div>
-              <p v-if="selectedRace !== myPlayer.race" class="field-hint">
-                주종족({{ raceLabel(myPlayer.race) }})과 달라 부종족 참가로 처리됩니다.
-                티어는 주종족 티어({{ myPlayer.tier }})가 그대로 적용되고, 이 팀배틀의 전적은 반영되지 않습니다.
-              </p>
-              <button class="btn-save" :disabled="joining" @click="handleJoin">
+              <button class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled" :disabled="joining" @click="handleJoin">
                 {{ joining ? '참가 중...' : '참가하기' }}
               </button>
-            </template>
-          </section>
-
-          <section v-else-if="myEntry" class="join-section">
-            <p class="state-msg">
-              참가 완료 — {{ raceLabel(myEntry.race) }}{{ myEntry.is_offrace ? ' (부종족)' : '' }} / {{ myEntry.tier }}
-            </p>
-            <button class="btn-cancel" :disabled="joining" @click="handleLeave">
-              {{ joining ? '처리 중...' : '참가 취소' }}
-            </button>
-          </section>
-        </template>
-
-        <!-- ── 참여 가능 티어 ─────────────────────────────── -->
-        <section class="tier-restriction-section">
-          <p class="section-label">참여 가능 티어</p>
-          <p class="tier-restriction-value">{{ allowedTiersLabel }}</p>
-
-          <template v-if="canEditTiers">
-            <div class="tier-select-grid">
-              <button
-                v-for="t in TIER_ORDER"
-                :key="t"
-                type="button"
-                class="tier-toggle-btn"
-                :class="[`tier-badge--${$tierClass(t)}`, { 'tier-toggle-btn--off': !draftTiers.has(t) }]"
-                @click="toggleDraftTier(t)"
-              >{{ t }}</button>
             </div>
-            <p v-if="tiersError" class="save-error">{{ tiersError }}</p>
-            <button v-if="tiersDirty" class="btn-save" :disabled="savingTiers" @click="handleSaveTiers">
-              {{ savingTiers ? '저장 중...' : '티어 설정 저장' }}
-            </button>
+
+            <div v-else-if="myEntry" class="todo-row">
+              <span class="todo-state">
+                참가 완료 — {{ raceLabel(myEntry.race) }}{{ myEntry.is_offrace ? ' (부종족)' : '' }} / {{ myEntry.tier }}
+              </span>
+              <button class="btn-pill btn-pill--md btn-pill--ghost" :disabled="joining" @click="handleLeave">
+                {{ joining ? '처리 중...' : '참가 취소' }}
+              </button>
+            </div>
+
+            <p v-if="canJoin && myPlayer && selectedRace !== myPlayer.race" class="todo-hint">
+              주종족({{ raceLabel(myPlayer.race) }})과 달라 부종족 참가로 처리됩니다.
+              티어는 주종족 티어({{ myPlayer.tier }})가 그대로 적용되고, 이 팀배틀의 전적은 반영되지 않습니다.
+            </p>
+
+            <div v-if="isHost" class="todo-row todo-row--host">
+              <button
+                class="btn-pill btn-pill--md btn-pill--purple"
+                :disabled="assigning || players.length < 4"
+                @click="handleAssignTeams"
+              >
+                {{ assigning ? '배정 중...' : '팀 배정 (모집 마감)' }}
+              </button>
+              <span v-if="players.length < 4" class="todo-hint">
+                최소 4명이 모여야 합니다. (현재 {{ players.length }}명)
+              </span>
+            </div>
+          </template>
+
+          <!-- 팀 배정 완료: 엔트리 시작 -->
+          <template v-else-if="battle.status === 'ASSIGNED'">
+            <div v-if="isHost" class="todo-row">
+              <button
+                class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled"
+                :disabled="battleMaps.length === 0 || startingEntry"
+                @click="handleStartEntry"
+              >
+                {{ startingEntry ? '전환 중...' : '엔트리 제출 시작' }}
+              </button>
+              <button class="btn-pill btn-pill--md btn-pill--ghost" :disabled="assigning" @click="handleAssignTeams">
+                {{ assigning ? '배정 중...' : '팀 다시 배정' }}
+              </button>
+            </div>
+            <p v-else class="todo-state">주최자가 엔트리 제출을 시작하기를 기다리는 중입니다.</p>
+            <p v-if="isHost" class="todo-hint">
+              {{ battleMaps.length === 0
+                ? '맵을 먼저 등록해야 엔트리를 시작할 수 있습니다.'
+                : '맵 순서를 확정하고 넘어가세요. 엔트리는 이 순서대로 짜게 됩니다.' }}
+            </p>
+          </template>
+
+          <!-- 엔트리: 팀장 제출 → 주최자 공개 -->
+          <template v-else-if="battle.status === 'ENTRY'">
+            <div v-if="isHost" class="todo-row">
+              <button
+                class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled"
+                :disabled="!canPublish || publishing"
+                @click="handlePublishEntries"
+              >
+                {{ publishing ? '공개 중...' : '엔트리 공개 (경기 시작)' }}
+              </button>
+            </div>
+            <p class="todo-hint">
+              {{ teamSubmitted(1) && teamSubmitted(2)
+                ? '양 팀 제출 완료. 공개하면 경기가 시작됩니다.'
+                : '아직 엔트리를 제출하지 않은 팀이 있습니다.' }}
+            </p>
+          </template>
+
+          <!-- 경기 중 -->
+          <template v-else-if="battle.status === 'PLAYING'">
+            <p class="todo-state">
+              {{ allMatchesReported ? '모든 경기 결과가 입력되었습니다.' : '아래에서 경기 결과를 기록하세요.' }}
+            </p>
+            <div v-if="isHost && allMatchesReported" class="todo-row">
+              <button v-if="!isTie" class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled" :disabled="finishing" @click="handleFinish">
+                {{ finishing ? '처리 중...' : '경기 종료 확정' }}
+              </button>
+              <button v-else class="btn-pill btn-pill--md btn-pill--orange btn-pill--filled" :disabled="startingAce" @click="handleStartAce">
+                {{ startingAce ? '처리 중...' : '동점 — 에이스 결정전 시작' }}
+              </button>
+            </div>
+          </template>
+
+          <!-- 에이스 결정전 -->
+          <template v-else-if="battle.status === 'ACE_WAITING' || battle.status === 'ACE_ENTRY'">
+            <p class="todo-state">에이스 결정전 진행 중입니다. 아래에서 이어서 진행하세요.</p>
           </template>
         </section>
+
+        <div class="detail-cols">
+          <div class="detail-main">
 
         <!-- 참가자 목록 (팀 배정 전) -->
         <section v-if="battle.status === 'RECRUITING'" class="players-section">
@@ -144,36 +209,7 @@
           </div>
         </section>
 
-        <!-- ── 팀 배정 ────────────────────────────────────── -->
-        <section v-if="canAssign" class="assign-section">
-          <div class="section-label-row">
-            <p class="section-label">팀 배정</p>
-            <div class="assign-actions">
-              <button
-                class="btn-pill btn-pill--md btn-pill--purple"
-                :disabled="assigning || players.length < 4"
-                @click="handleAssignTeams"
-              >
-                {{ assigning ? '배정 중...' : (battle.status === 'ASSIGNED' ? '다시 배정' : '팀 배정 (모집 마감)') }}
-              </button>
-              <button
-                v-if="battle.status === 'ASSIGNED' && isHost"
-                class="btn-pill btn-pill--md btn-pill--blue"
-                :disabled="battleMaps.length === 0 || startingEntry"
-                @click="handleStartEntry"
-              >
-                {{ startingEntry ? '전환 중...' : '엔트리 제출 시작' }}
-              </button>
-            </div>
-          </div>
-          <p v-if="players.length < 4" class="field-hint">
-            최소 4명이 모여야 팀을 배정할 수 있습니다. (현재 {{ players.length }}명)
-          </p>
-          <p v-if="battle.status === 'ASSIGNED' && battleMaps.length === 0" class="field-hint">
-            엔트리 제출을 시작하려면 맵을 먼저 등록하세요.
-          </p>
-          <p v-if="assignError" class="save-error">{{ assignError }}</p>
-        </section>
+        <p v-if="assignError" class="save-error">{{ assignError }}</p>
 
         <!-- ── 엔트리 ─────────────────────────────────────── -->
         <section v-if="battle.status === 'ENTRY'" class="entry-section">
@@ -218,18 +254,6 @@
             </div>
           </div>
 
-          <div v-if="isHost" class="entry-publish-row">
-            <button
-              class="btn-pill btn-pill--md btn-pill--purple"
-              :disabled="!canPublish || publishing"
-              @click="handlePublishEntries"
-            >
-              {{ publishing ? '공개 중...' : '엔트리 공개 (경기 시작)' }}
-            </button>
-            <p v-if="!(teamSubmitted(1) && teamSubmitted(2))" class="field-hint">
-              양 팀 모두 엔트리를 제출해야 공개할 수 있습니다.
-            </p>
-          </div>
         </section>
 
         <!-- ── 경기 결과 ──────────────────────────────────── -->
@@ -274,24 +298,6 @@
 
           <p v-if="matchError" class="save-error">{{ matchError }}</p>
 
-          <div v-if="isHost && battle.status === 'PLAYING' && allMatchesReported" class="match-decide-row">
-            <button
-              v-if="!isTie"
-              class="btn-pill btn-pill--md btn-pill--purple"
-              :disabled="finishing"
-              @click="handleFinish"
-            >
-              {{ finishing ? '처리 중...' : '경기 종료 확정' }}
-            </button>
-            <button
-              v-else
-              class="btn-pill btn-pill--md btn-pill--orange"
-              :disabled="startingAce"
-              @click="handleStartAce"
-            >
-              {{ startingAce ? '처리 중...' : '동점 — 에이스 결정전 시작' }}
-            </button>
-          </div>
         </section>
 
         <!-- ── 에이스 결정전 ──────────────────────────────── -->
@@ -383,6 +389,10 @@
           </div>
         </section>
 
+          </div>
+
+          <div class="detail-side">
+
         <!-- ── 맵 ─────────────────────────────────────────── -->
         <section class="maps-section">
           <div class="section-label-row">
@@ -429,6 +439,44 @@
             엔트리 제출이 시작돼 맵이 확정되었습니다.
           </p>
         </section>
+
+        <!-- ── 설정 (참여 티어 / 에이스 방식 / 주최자) ─────── -->
+        <section class="settings-section">
+          <p class="section-label">설정</p>
+
+          <div class="setting-row">
+            <span class="setting-key">참여 티어</span>
+            <span class="setting-value">{{ allowedTiersLabel }}</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-key">에이스 결정</span>
+            <span class="setting-value">{{ battle.ace_mode === 'RANDOM' ? '랜덤 추첨' : '팀장 지정' }}</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-key">주최자</span>
+            <span class="setting-value">{{ hostName }}</span>
+          </div>
+
+          <template v-if="canEditTiers">
+            <div class="tier-select-grid">
+              <button
+                v-for="t in TIER_ORDER"
+                :key="t"
+                type="button"
+                class="tier-toggle-btn"
+                :class="[`tier-badge--${$tierClass(t)}`, { 'tier-toggle-btn--off': !draftTiers.has(t) }]"
+                @click="toggleDraftTier(t)"
+              >{{ t }}</button>
+            </div>
+            <p v-if="tiersError" class="save-error">{{ tiersError }}</p>
+            <button v-if="tiersDirty" class="btn-pill btn-pill--md btn-pill--purple" :disabled="savingTiers" @click="handleSaveTiers">
+              {{ savingTiers ? '저장 중...' : '티어 설정 저장' }}
+            </button>
+          </template>
+        </section>
+
+          </div>
+        </div>
 
         <!-- ── 삭제 / 강제 종료 ───────────────────────────── -->
         <section v-if="canDelete || canForceEnd" class="danger-section">
@@ -540,7 +588,7 @@ import {
   getTeamBattleEntries, submitEntry, publishEntries, updateTeamBattleStatus,
   getTeamBattleMatches, setMatchWinner, finishTeamBattle, drawAceMatch, setAcePlayer,
   setTeamBattleAllowedTiers, deleteTeamBattle, cancelTeamBattle,
-  TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow,
+  TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattleStatus, type TeamBattlePlayerRow,
   type TeamBattleEntryRow, type TeamBattleMatchRow, type AceMode,
 } from '@/lib/teamBattles'
 
@@ -567,6 +615,29 @@ const nicknameOf = (userId: number) => allPlayers.value.find(p => p.id === userI
 
 const hostName = computed(() => battle.value ? nicknameOf(battle.value.host_user_id) : '')
 const myEntry = computed(() => players.value.find(p => p.user_id === myPlayer.value?.id) ?? null)
+
+// ── 진행 단계 ─────────────────────────────────────────────
+const STEPS = ['모집', '팀 배정', '엔트리', '경기', '종료']
+const STEP_OF: Record<TeamBattleStatus, number> = {
+  RECRUITING: 0, ASSIGNED: 1, ENTRY: 2,
+  PLAYING: 3, ACE_WAITING: 3, ACE_ENTRY: 3,
+  FINISHED: 4, CANCELLED: 4,
+}
+const stepIndex = computed(() => battle.value ? STEP_OF[battle.value.status] : 0)
+
+/** 참가 버튼을 막아야 하는 이유 (없으면 null) */
+const joinBlockReason = computed(() => {
+  if (!myPlayer.value) return null
+  if (!myPlayer.value.is_active) return '정지된 계정은 팀배틀에 참가할 수 없습니다.'
+  if (!isMyTierEligible.value) return `참여 가능한 티어가 아닙니다. (허용 티어: ${allowedTiersLabel.value})`
+  return null
+})
+const canJoin = computed(() =>
+  battle.value?.status === 'RECRUITING' && !myEntry.value && !!myPlayer.value && !joinBlockReason.value,
+)
+const todoVisible = computed(() =>
+  !!battle.value && battle.value.status !== 'FINISHED' && battle.value.status !== 'CANCELLED',
+)
 
 // ── 참여 가능 티어 ─────────────────────────────────────────
 const draftTiers = ref<Set<string>>(new Set(TIER_ORDER))
@@ -689,10 +760,6 @@ watch(myPlayer, resetSelectedRace)
 const assigning = ref(false)
 const assignError = ref<string | null>(null)
 const reassigning = ref(false)
-
-const canAssign = computed(() =>
-  isHost.value && !!battle.value && (battle.value.status === 'RECRUITING' || battle.value.status === 'ASSIGNED'),
-)
 
 function teamPlayers(teamNo: 1 | 2): TeamBattlePlayerRow[] {
   return players.value

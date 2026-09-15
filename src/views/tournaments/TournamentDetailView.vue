@@ -30,17 +30,27 @@
 
         <p v-if="actionError" class="save-error">{{ actionError }}</p>
 
-        <!-- ── RECRUITING ─────────────────────────────────── -->
-        <template v-if="tournament.status === 'RECRUITING'">
-          <section v-if="!myEntry && myPlayer" class="join-section">
-            <template v-if="!myPlayer.is_active">
-              <p class="state-msg state-msg--error">정지된 계정은 토너먼트에 참가할 수 없습니다.</p>
-            </template>
-            <template v-else-if="!isMyTierEligible">
-              <p class="state-msg state-msg--error">참여 가능한 티어가 아닙니다. (허용 티어: {{ allowedTiersLabel }})</p>
-            </template>
-            <template v-else>
-              <p class="section-label">참가 종족 선택</p>
+        <!-- ── 진행 단계 ──────────────────────────────────── -->
+        <ol class="step-rail">
+          <li
+            v-for="(label, i) in STEPS"
+            :key="label"
+            class="step"
+            :class="{ 'step--done': i < stepIndex, 'step--now': i === stepIndex }"
+          >
+            <span class="step-dot">{{ i + 1 }}</span>
+            <span class="step-name">{{ label }}</span>
+          </li>
+        </ol>
+
+        <!-- ── 지금 할 일 ─────────────────────────────────── -->
+        <section v-if="todoVisible" class="todo-bar">
+          <p class="todo-label">지금 할 일</p>
+
+          <template v-if="tournament.status === 'RECRUITING'">
+            <p v-if="joinBlockReason && !myEntry" class="todo-blocked">{{ joinBlockReason }}</p>
+
+            <div v-else-if="canJoin" class="todo-row">
               <div class="race-select-group">
                 <button
                   v-for="r in races"
@@ -51,48 +61,56 @@
                   @click="selectedRace = r.value"
                 >{{ r.label }}</button>
               </div>
-              <p v-if="selectedRace !== myPlayer.race" class="field-hint">
-                주종족({{ raceLabel(myPlayer.race) }})과 달라 부종족 참가로 처리됩니다.
-                티어는 주종족 티어({{ myPlayer.tier }})가 그대로 적용되고, 이 토너먼트의 전적은 반영되지 않습니다.
-              </p>
-              <button class="btn-save" :disabled="joining" @click="handleJoin">
+              <button class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled" :disabled="joining" @click="handleJoin">
                 {{ joining ? '참가 중...' : '참가하기' }}
               </button>
-            </template>
-          </section>
-
-          <section v-else-if="myEntry" class="join-section">
-            <p class="state-msg">
-              참가 완료 — {{ raceLabel(myEntry.race) }}{{ myEntry.is_offrace ? ' (부종족)' : '' }} / {{ myEntry.tier }}
-            </p>
-            <button class="btn-cancel" :disabled="joining" @click="handleLeave">
-              {{ joining ? '처리 중...' : '참가 취소' }}
-            </button>
-          </section>
-        </template>
-
-        <!-- ── 참여 가능 티어 ─────────────────────────────── -->
-        <section class="tier-restriction-section">
-          <p class="section-label">참여 가능 티어</p>
-          <p class="tier-restriction-value">{{ allowedTiersLabel }}</p>
-
-          <template v-if="canEditTiers">
-            <div class="tier-select-grid">
-              <button
-                v-for="t in TIER_ORDER"
-                :key="t"
-                type="button"
-                class="tier-toggle-btn"
-                :class="[`tier-badge--${$tierClass(t)}`, { 'tier-toggle-btn--off': !draftTiers.has(t) }]"
-                @click="toggleDraftTier(t)"
-              >{{ t }}</button>
             </div>
-            <p v-if="tiersError" class="save-error">{{ tiersError }}</p>
-            <button v-if="tiersDirty" class="btn-save" :disabled="savingTiers" @click="handleSaveTiers">
-              {{ savingTiers ? '저장 중...' : '티어 설정 저장' }}
-            </button>
+
+            <div v-else-if="myEntry" class="todo-row">
+              <span class="todo-state">
+                참가 완료 — {{ raceLabel(myEntry.race) }}{{ myEntry.is_offrace ? ' (부종족)' : '' }} / {{ myEntry.tier }}
+              </span>
+              <button class="btn-pill btn-pill--md btn-pill--ghost" :disabled="joining" @click="handleLeave">
+                {{ joining ? '처리 중...' : '참가 취소' }}
+              </button>
+            </div>
+
+            <p v-if="canJoin && myPlayer && selectedRace !== myPlayer.race" class="todo-hint">
+              주종족({{ raceLabel(myPlayer.race) }})과 달라 부종족 참가로 처리됩니다.
+              티어는 주종족 티어({{ myPlayer.tier }})가 그대로 적용되고, 이 토너먼트의 전적은 반영되지 않습니다.
+            </p>
+
+            <div v-if="isHost" class="todo-row todo-row--host">
+              <button
+                class="btn-pill btn-pill--md btn-pill--purple"
+                :disabled="players.length < 4 || !tournament.map_id || generating"
+                @click="handleGenerateBracket"
+              >
+                {{ generating ? '생성 중...' : '대진 생성 (모집 마감)' }}
+              </button>
+              <span v-if="players.length < 4" class="todo-hint">
+                최소 4명이 모여야 합니다. (현재 {{ players.length }}명)
+              </span>
+              <span v-else-if="!tournament.map_id" class="todo-hint">맵을 먼저 지정해주세요.</span>
+            </div>
+          </template>
+
+          <template v-else-if="tournament.status === 'PLAYING'">
+            <p class="todo-state">
+              {{ finalMatch?.winner_user_id
+                ? '결승까지 끝났습니다. 우승을 확정하세요.'
+                : '아래 대진표에서 경기 결과를 기록하세요. 본인이 뛴 경기는 직접 기록할 수 있습니다.' }}
+            </p>
+            <div v-if="isHost && finalMatch?.winner_user_id" class="todo-row">
+              <button class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled" :disabled="finishing" @click="handleFinish">
+                {{ finishing ? '처리 중...' : '우승 확정' }}
+              </button>
+            </div>
           </template>
         </section>
+
+        <div class="detail-cols">
+          <div class="detail-main">
 
         <!-- 참가자 목록 -->
         <section class="players-section">
@@ -114,35 +132,6 @@
           </div>
         </section>
 
-        <!-- ── 맵 (단일) ──────────────────────────────────── -->
-        <section class="map-section">
-          <p class="section-label">경기 맵</p>
-          <div v-if="!selectedMap" class="state-msg">아직 맵이 선택되지 않았습니다.</div>
-          <div v-else class="map-selected-row">
-            <img v-if="selectedMap.thumbnail_url" :src="selectedMap.thumbnail_url" class="map-selected-thumb" alt="" />
-            <span class="map-selected-name">{{ selectedMap.name }}</span>
-          </div>
-          <button v-if="canEditMap" class="btn-pill btn-pill--md btn-pill--ghost" @click="openMapPicker">
-            {{ selectedMap ? '맵 변경' : '맵 선택' }}
-          </button>
-        </section>
-
-        <!-- ── 대진 생성 ──────────────────────────────────── -->
-        <section v-if="isHost && tournament.status === 'RECRUITING'" class="bracket-generate-section">
-          <p class="section-label">대진 생성</p>
-          <button
-            class="btn-pill btn-pill--md btn-pill--purple"
-            :disabled="players.length < 4 || !tournament.map_id || generating"
-            @click="handleGenerateBracket"
-          >
-            {{ generating ? '생성 중...' : '대진 생성 (모집 마감)' }}
-          </button>
-          <p v-if="players.length < 4" class="field-hint">
-            최소 4명이 모여야 대진을 생성할 수 있습니다. (현재 {{ players.length }}명)
-          </p>
-          <p v-else-if="!tournament.map_id" class="field-hint">맵을 먼저 지정해주세요.</p>
-        </section>
-
         <!-- ── 대진표 (좌→우 트리) ────────────────────────── -->
         <section v-if="matches.length > 0" class="bracket-section">
           <p class="section-label">대진표</p>
@@ -157,12 +146,63 @@
             @pick="handleSetWinner"
           />
 
-          <div v-if="isHost && tournament.status === 'PLAYING' && finalMatch?.winner_user_id" class="finish-row">
-            <button class="btn-pill btn-pill--md btn-pill--purple" :disabled="finishing" @click="handleFinish">
-              {{ finishing ? '처리 중...' : '우승 확정' }}
+        </section>
+
+          </div>
+
+          <div class="detail-side">
+
+        <!-- ── 맵 (단일) ──────────────────────────────────── -->
+        <section class="map-section">
+          <div class="section-label-row">
+            <p class="section-label">경기 맵</p>
+            <button v-if="canEditMap" class="btn-pill btn-pill--md btn-pill--ghost" @click="openMapPicker">
+              {{ selectedMap ? '변경' : '선택' }}
             </button>
           </div>
+          <div v-if="!selectedMap" class="state-msg">아직 맵이 선택되지 않았습니다.</div>
+          <div v-else class="map-selected-row">
+            <img v-if="selectedMap.thumbnail_url" :src="selectedMap.thumbnail_url" class="map-selected-thumb" alt="" />
+            <span class="map-selected-name">{{ selectedMap.name }}</span>
+          </div>
+          <p v-if="!canEditMap && selectedMap" class="map-locked-hint">
+            대진이 생성돼 맵이 확정되었습니다.
+          </p>
         </section>
+
+        <!-- ── 설정 (참여 티어 / 주최자) ──────────────────── -->
+        <section class="settings-section">
+          <p class="section-label">설정</p>
+
+          <div class="setting-row">
+            <span class="setting-key">참여 티어</span>
+            <span class="setting-value">{{ allowedTiersLabel }}</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-key">주최자</span>
+            <span class="setting-value">{{ hostName }}</span>
+          </div>
+
+          <template v-if="canEditTiers">
+            <div class="tier-select-grid">
+              <button
+                v-for="t in TIER_ORDER"
+                :key="t"
+                type="button"
+                class="tier-toggle-btn"
+                :class="[`tier-badge--${$tierClass(t)}`, { 'tier-toggle-btn--off': !draftTiers.has(t) }]"
+                @click="toggleDraftTier(t)"
+              >{{ t }}</button>
+            </div>
+            <p v-if="tiersError" class="save-error">{{ tiersError }}</p>
+            <button v-if="tiersDirty" class="btn-pill btn-pill--md btn-pill--purple" :disabled="savingTiers" @click="handleSaveTiers">
+              {{ savingTiers ? '저장 중...' : '티어 설정 저장' }}
+            </button>
+          </template>
+        </section>
+
+          </div>
+        </div>
 
         <!-- ── 삭제 / 강제 종료 ───────────────────────────── -->
         <section v-if="canDelete || canForceEnd" class="danger-section">
@@ -264,7 +304,7 @@ import {
   getTournament, getTournamentPlayers, joinTournament, leaveTournament, setTournamentMap,
   generateBracket, getTournamentMatches, setTournamentMatchWinner, finishTournament,
   setTournamentAllowedTiers, deleteTournament, cancelTournament,
-  TOURNAMENT_STATUS_LABEL, type TournamentRow, type TournamentPlayerRow, type TournamentMatchRow,
+  TOURNAMENT_STATUS_LABEL, type TournamentRow, type TournamentStatus, type TournamentPlayerRow, type TournamentMatchRow,
 } from '@/lib/tournaments'
 
 const route = useRoute()
@@ -292,6 +332,29 @@ const nicknameOf = (userId: number | null) =>
 
 const hostName = computed(() => tournament.value ? nicknameOf(tournament.value.host_user_id) : '')
 const myEntry = computed(() => players.value.find(p => p.user_id === myPlayer.value?.id) ?? null)
+
+// ── 진행 단계 ─────────────────────────────────────────────
+// 대진 생성과 동시에 PLAYING으로 넘어가므로 "대진"은 별도 단계로 두지 않는다.
+const STEPS = ['모집', '경기', '종료']
+const STEP_OF: Record<TournamentStatus, number> = {
+  RECRUITING: 0, PLAYING: 1, FINISHED: 2, CANCELLED: 2,
+}
+const stepIndex = computed(() => tournament.value ? STEP_OF[tournament.value.status] : 0)
+
+/** 참가 버튼을 막아야 하는 이유 (없으면 null) */
+const joinBlockReason = computed(() => {
+  if (!myPlayer.value) return null
+  if (!myPlayer.value.is_active) return '정지된 계정은 토너먼트에 참가할 수 없습니다.'
+  if (!isMyTierEligible.value) return `참여 가능한 티어가 아닙니다. (허용 티어: ${allowedTiersLabel.value})`
+  return null
+})
+const canJoin = computed(() =>
+  tournament.value?.status === 'RECRUITING' && !myEntry.value && !!myPlayer.value && !joinBlockReason.value,
+)
+const todoVisible = computed(() =>
+  !!tournament.value && tournament.value.status !== 'FINISHED' && tournament.value.status !== 'CANCELLED',
+)
+
 const isHost = computed(() => !!myPlayer.value && !!tournament.value && myPlayer.value.id === tournament.value.host_user_id)
 const canEditMap = computed(() => isHost.value && !!tournament.value && tournament.value.status === 'RECRUITING')
 const selectedMap = computed(() => allMaps.value.find(m => m.id === tournament.value?.map_id) ?? null)
