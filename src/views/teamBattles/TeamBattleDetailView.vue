@@ -394,20 +394,40 @@
 
           <div v-if="battleMaps.length === 0" class="state-msg">아직 맵이 선택되지 않았습니다.</div>
           <ol v-else class="map-order-list">
-            <li v-for="(m, i) in battleMaps" :key="`${m.order_index}-${i}`" class="map-order-item">
+            <li
+              v-for="(m, i) in battleMaps"
+              :key="`${i}-${m.map_id}`"
+              class="map-order-item"
+              :class="{
+                'map-order-item--dragging': dragIndex === i,
+                'map-order-item--over': dragIndex !== null && overIndex === i && dragIndex !== i,
+              }"
+              :data-drag-index="i"
+            >
+              <span
+                v-if="canEditMaps"
+                class="map-drag-handle"
+                title="끌어서 순서 변경"
+                @pointerdown="onMapPointerDown($event, i)"
+              >⠿</span>
               <span class="map-order-num">{{ i + 1 }}</span>
               <img v-if="mapInfo(m.map_id)?.thumbnail_url" :src="mapInfo(m.map_id)!.thumbnail_url!" class="map-order-thumb" alt="" />
               <span class="map-order-name">{{ mapInfo(m.map_id)?.name ?? '알 수 없는 맵' }}</span>
-              <button v-if="canEditMaps" class="map-order-remove" @click="removeMapAt(i)">×</button>
+              <span v-if="canEditMaps" class="map-order-tools">
+                <button class="map-order-move" :disabled="i === 0" aria-label="위로" @click="moveMap(i, i - 1)">↑</button>
+                <button class="map-order-move" :disabled="i === battleMaps.length - 1" aria-label="아래로" @click="moveMap(i, i + 1)">↓</button>
+                <button class="map-order-remove" aria-label="삭제" @click="removeMapAt(i)">×</button>
+              </span>
             </li>
           </ol>
 
-          <div v-if="canEditMaps && mapsDirty" class="maps-save-row">
-            <p v-if="mapsError" class="save-error">{{ mapsError }}</p>
-            <button class="btn-save" :disabled="savingMaps" @click="handleSaveMaps">
-              {{ savingMaps ? '저장 중...' : '맵 구성 저장' }}
-            </button>
-          </div>
+          <p v-if="mapsError" class="save-error">{{ mapsError }}</p>
+          <p v-else-if="canEditMaps" class="map-save-hint">
+            {{ savingMaps ? '저장 중...' : '변경하면 바로 저장됩니다. 이 순서가 그대로 경기 순서가 됩니다.' }}
+          </p>
+          <p v-else-if="battleMaps.length > 0" class="map-locked-hint">
+            엔트리 제출이 시작돼 맵이 확정되었습니다.
+          </p>
         </section>
 
         <!-- ── 삭제 / 강제 종료 ───────────────────────────── -->
@@ -512,6 +532,7 @@ import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
+import { useListDrag } from '@/composables/useListDrag'
 import { tierPoint, normalizeTier, TIER_ORDER } from '@/lib/constants'
 import {
   getTeamBattle, getTeamBattlePlayers, joinTeamBattle, leaveTeamBattle,
@@ -607,9 +628,7 @@ async function load() {
   allPlayers.value = all
   myPlayer.value = me
   allMaps.value = maps
-  const nonAce = tbMaps.filter(m => !m.is_ace).map(m => ({ order_index: m.order_index, map_id: m.map_id }))
-  battleMaps.value = nonAce
-  savedMapIds.value = nonAce.map(m => m.map_id)
+  battleMaps.value = tbMaps.filter(m => !m.is_ace).map(m => ({ order_index: m.order_index, map_id: m.map_id }))
   entries.value = tbEntries
   refreshEntryDrafts()
   matches.value = tbMatches
@@ -932,18 +951,15 @@ async function handleFinishAce() {
 
 // ── 맵 선택 ───────────────────────────────────────────────
 const battleMaps = ref<{ order_index: number; map_id: string }[]>([])
-const savedMapIds = ref<string[]>([])
 const showMapPicker = ref(false)
 const mapSearch = ref('')
 const savingMaps = ref(false)
 const mapsError = ref<string | null>(null)
 
 const isHost = computed(() => !!myPlayer.value && !!battle.value && myPlayer.value.id === battle.value.host_user_id)
+// 엔트리는 맵 순서에 맞춰 짜는 것이라, 엔트리 제출이 시작되면 맵을 확정한다.
 const canEditMaps = computed(() =>
   isHost.value && !!battle.value && (battle.value.status === 'RECRUITING' || battle.value.status === 'ASSIGNED'),
-)
-const mapsDirty = computed(() =>
-  JSON.stringify(battleMaps.value.map(m => m.map_id)) !== JSON.stringify(savedMapIds.value),
 )
 
 function mapInfo(mapId: string): MapRow | undefined {
@@ -962,15 +978,46 @@ function openMapPicker() {
   showMapPicker.value = true
 }
 
+/**
+ * 맵 변경은 무조건 즉시 저장한다. 예전에는 화면상 draft를 들고 있다가 "맵 구성 저장"을
+ * 눌러야 반영됐는데, 저장하지 않은 채로 엔트리 단계로 넘어가면 맵을 다시 넣을 수도
+ * 없어 통째로 사라졌다(엔트리 단계부터는 canEditMaps가 false). 미저장 상태를 아예
+ * 없애서 그 경로를 막는다.
+ */
+async function persistMaps(next: { order_index: number; map_id: string }[]) {
+  if (!battle.value) return
+  const prev = battleMaps.value
+  battleMaps.value = next.map((m, i) => ({ ...m, order_index: i }))
+  savingMaps.value = true
+  mapsError.value = null
+  try {
+    await setTeamBattleMaps(battle.value.id, battleMaps.value.map(m => m.map_id))
+  } catch (e: any) {
+    battleMaps.value = prev
+    mapsError.value = e.message ?? '맵 저장 중 오류가 발생했습니다.'
+  } finally {
+    savingMaps.value = false
+  }
+}
+
 function appendMap(mapId: string) {
   if (battleMaps.value.length >= 10) return
-  battleMaps.value.push({ order_index: battleMaps.value.length, map_id: mapId })
+  persistMaps([...battleMaps.value, { order_index: battleMaps.value.length, map_id: mapId }])
 }
 
 function removeMapAt(index: number) {
-  battleMaps.value.splice(index, 1)
-  battleMaps.value = battleMaps.value.map((m, i) => ({ ...m, order_index: i }))
+  persistMaps(battleMaps.value.filter((_, i) => i !== index))
 }
+
+function moveMap(from: number, to: number) {
+  if (to < 0 || to >= battleMaps.value.length || from === to) return
+  const next = [...battleMaps.value]
+  const [moved] = next.splice(from, 1)
+  next.splice(to, 0, moved)
+  persistMaps(next)
+}
+
+const { dragIndex, overIndex, onPointerDown: onMapPointerDown } = useListDrag(moveMap)
 
 // ── 삭제 / 강제 종료 ──────────────────────────────────────
 // 경기 시작 전에는 통째로 삭제, 시작 후에는 기록을 남기는 강제 종료만 허용한다.
@@ -1007,20 +1054,6 @@ async function handleDangerConfirm() {
   }
 }
 
-async function handleSaveMaps() {
-  if (!battle.value) return
-  savingMaps.value = true
-  mapsError.value = null
-  try {
-    const mapIds = battleMaps.value.map(m => m.map_id)
-    await setTeamBattleMaps(battle.value.id, mapIds)
-    savedMapIds.value = mapIds
-  } catch (e: any) {
-    mapsError.value = e.message ?? '맵 저장 중 오류가 발생했습니다.'
-  } finally {
-    savingMaps.value = false
-  }
-}
 </script>
 
 <style lang="scss" scoped>

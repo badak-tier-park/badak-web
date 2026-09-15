@@ -523,6 +523,53 @@
   border-radius: 10px;
   border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
+  transition: border-color 0.12s, opacity 0.12s;
+
+  // 드래그 중인 원본은 흐리게 두고, 복제본이 커서를 따라다닌다
+  &--dragging { opacity: 0.35; }
+  &--over { border-color: rgba(170, 59, 255, 0.55); }
+}
+
+.map-drag-handle {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  color: var(--c-text-faint);
+  font-size: 13px;
+  line-height: 1;
+  cursor: grab;
+  // 터치에서 드래그가 페이지 스크롤로 먹히지 않게
+  touch-action: none;
+  user-select: none;
+
+  &:active { cursor: grabbing; }
+  &:hover { color: var(--c-text-sub); }
+}
+
+.map-order-tools {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.map-order-move {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--c-icon-sub);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) { background: var(--c-overlay); color: var(--c-text-2); }
+  &:disabled { opacity: 0.25; cursor: not-allowed; }
 }
 
 .map-order-num {
@@ -569,11 +616,16 @@
   &:hover { background: rgba(248, 113, 113, 0.12); color: #f87171; }
 }
 
-.maps-save-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
+.map-save-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: #4ade80;
+}
+
+.map-locked-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--c-text-faint);
 }
 
 // ── 삭제 / 강제 종료 ──────────────────────────────────────
