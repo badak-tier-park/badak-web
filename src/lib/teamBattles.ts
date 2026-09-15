@@ -28,7 +28,6 @@ export interface TeamBattleRow {
   id: string
   name: string
   host_user_id: number
-  start_at: string
   status: TeamBattleStatus
   ace_mode: AceMode
   winner_team: 1 | 2 | null
@@ -114,7 +113,7 @@ export async function getTeamBattle(id: string): Promise<TeamBattleRow> {
 
 /** 팀배틀 생성 + 주최자를 참가자로 자동 등록 */
 export async function createTeamBattle(
-  payload: { name: string; start_at: string; ace_mode: AceMode; allowed_tiers?: string[] | null },
+  payload: { name: string; ace_mode: AceMode; allowed_tiers?: string[] | null },
   host: { id: number; race: 'T' | 'Z' | 'P'; tier: string },
 ): Promise<TeamBattleRow> {
   const { data: battle, error } = await supabase

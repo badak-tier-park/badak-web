@@ -21,7 +21,7 @@
           <h1 class="tournament-title">{{ tournament.name }}</h1>
         </div>
         <p class="tournament-meta">
-          시작 {{ formatDateTime(tournament.start_at) }} · 주최자 {{ hostName }} · 참가 {{ players.length }}명
+          주최자 {{ hostName }} · 참가 {{ players.length }}명
         </p>
 
         <p v-if="tournament.status === 'FINISHED' && tournament.winner_user_id" class="winner-banner">
@@ -38,9 +38,6 @@
             </template>
             <template v-else-if="!isMyTierEligible">
               <p class="state-msg state-msg--error">참여 가능한 티어가 아닙니다. (허용 티어: {{ allowedTiersLabel }})</p>
-            </template>
-            <template v-else-if="recruitmentClosed">
-              <p class="state-msg">모집이 마감되었습니다.</p>
             </template>
             <template v-else>
               <p class="section-label">참가 종족 선택</p>
@@ -242,16 +239,8 @@ const raceLabel = (r: string) => races.find(x => x.value === r)?.label ?? r
 const nicknameOf = (userId: number | null) =>
   userId === null ? '-' : (allPlayers.value.find(p => p.id === userId)?.nickname ?? `선수 ${userId}`)
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso)
-  const date = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-  return `${date} ${time}`
-}
-
 const hostName = computed(() => tournament.value ? nicknameOf(tournament.value.host_user_id) : '')
 const myEntry = computed(() => players.value.find(p => p.user_id === myPlayer.value?.id) ?? null)
-const recruitmentClosed = computed(() => !!tournament.value && new Date() >= new Date(tournament.value.start_at))
 const isHost = computed(() => !!myPlayer.value && !!tournament.value && myPlayer.value.id === tournament.value.host_user_id)
 const canEditMap = computed(() => isHost.value && !!tournament.value && tournament.value.status === 'RECRUITING')
 const selectedMap = computed(() => allMaps.value.find(m => m.id === tournament.value?.map_id) ?? null)

@@ -35,7 +35,6 @@
                 <span class="tournament-status" :class="`status--${t.status.toLowerCase()}`">
                   {{ TOURNAMENT_STATUS_LABEL[t.status] }}
                 </span>
-                <span class="tournament-start">{{ formatDateTime(t.start_at) }}</span>
               </div>
               <p class="tournament-name">{{ t.name }}</p>
               <p class="tournament-sub">참가 {{ t.player_count }}명 · 주최 {{ nicknameOf(t.host_user_id) }}</p>
@@ -107,56 +106,6 @@
             </div>
 
             <div class="field">
-              <label class="field-label">시작 일시</label>
-
-              <div class="datetime-inline">
-                <div class="calendar-header">
-                  <button type="button" class="calendar-nav-btn" @click="shiftMonth(-1)">‹</button>
-                  <span class="calendar-month-label">{{ monthLabel }}</span>
-                  <button type="button" class="calendar-nav-btn" @click="shiftMonth(1)">›</button>
-                </div>
-                <div class="calendar-weekday-row">
-                  <span v-for="w in weekdayLabels" :key="w" class="calendar-weekday">{{ w }}</span>
-                </div>
-                <div class="calendar-grid">
-                  <button
-                    v-for="(day, i) in calendarDays"
-                    :key="i"
-                    type="button"
-                    class="calendar-day-btn"
-                    :class="{
-                      'calendar-day-btn--outside': !day.inMonth,
-                      'calendar-day-btn--selected': form.startDate && isSameDay(day.date, form.startDate),
-                      'calendar-day-btn--today': isSameDay(day.date, today),
-                    }"
-                    :disabled="day.disabled"
-                    @click="pickDay(day)"
-                  >{{ day.date.getDate() }}</button>
-                </div>
-
-                <div class="time-spinner-row">
-                  <div class="time-spinner">
-                    <button type="button" class="spinner-arrow" @click="stepHour(1)">▲</button>
-                    <span class="spinner-value">{{ pad(form.startHour) }}</span>
-                    <button type="button" class="spinner-arrow" @click="stepHour(-1)">▼</button>
-                  </div>
-                  <span class="spinner-colon">:</span>
-                  <div class="time-spinner">
-                    <button type="button" class="spinner-arrow" @click="stepMinute(1)">▲</button>
-                    <span class="spinner-value">{{ pad(form.startMinute) }}</span>
-                    <button type="button" class="spinner-arrow" @click="stepMinute(-1)">▼</button>
-                  </div>
-                </div>
-
-                <p class="datetime-summary" :class="{ 'datetime-summary--empty': !form.startDate }">
-                  {{ selectedLabel }}
-                </p>
-              </div>
-
-              <p class="field-hint">이 시간이 되면 모집이 자동으로 마감됩니다.</p>
-            </div>
-
-            <div class="field">
               <label class="field-label">참여 가능 티어</label>
               <div class="tier-select-grid">
                 <button
@@ -223,82 +172,6 @@ const sortedTournaments = computed(() => {
   })
 })
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso)
-  const date = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-  return `${date} ${time}`
-}
-
-function startOfDay(d: Date): Date {
-  const x = new Date(d)
-  x.setHours(0, 0, 0, 0)
-  return x
-}
-
-function isSameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
-
-const today = startOfDay(new Date())
-
-// ── 날짜+시간 선택 (모달 안에 항상 펼쳐진 인라인 패널) ──────────
-// 팝오버로 띄우면 패널이 모달보다 커서 어디에 붙이든 잘리거나 모달 스크롤이
-// 늘어난다(팀배틀에서 검증됨). 그래서 팝업 없이 폼의 일부로 그냥 펼쳐 둔다.
-interface CalendarDay { date: Date; inMonth: boolean; disabled: boolean }
-
-const calendarMonth = ref(new Date())
-const weekdayLabels = ['월', '화', '수', '목', '금', '토', '일']
-
-const monthLabel = computed(() => `${calendarMonth.value.getFullYear()}년 ${calendarMonth.value.getMonth() + 1}월`)
-
-const calendarDays = computed<CalendarDay[]>(() => {
-  const year = calendarMonth.value.getFullYear()
-  const month = calendarMonth.value.getMonth()
-  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const cellCount = Math.ceil((firstWeekday + daysInMonth) / 7) * 7
-  const gridStart = new Date(year, month, 1 - firstWeekday)
-
-  return Array.from({ length: cellCount }, (_, i) => {
-    const d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i)
-    return { date: d, inMonth: d.getMonth() === month, disabled: startOfDay(d) < today }
-  })
-})
-
-function shiftMonth(delta: number) {
-  calendarMonth.value = new Date(calendarMonth.value.getFullYear(), calendarMonth.value.getMonth() + delta, 1)
-}
-
-function pickDay(day: CalendarDay) {
-  if (day.disabled) return
-  form.startDate = day.date
-}
-
-function pad(n: number): string {
-  return String(n).padStart(2, '0')
-}
-
-function stepHour(delta: number) {
-  form.startHour = (form.startHour + delta + 24) % 24
-}
-
-function stepMinute(delta: number) {
-  form.startMinute = (form.startMinute + delta + 60) % 60
-}
-
-/** 선택한 날짜 + 시/분을 하나의 Date로 합친 값 (날짜 미선택이면 null) */
-const startAt = computed<Date | null>(() => {
-  if (!form.startDate) return null
-  const d = new Date(form.startDate)
-  d.setHours(form.startHour, form.startMinute, 0, 0)
-  return d
-})
-
-const selectedLabel = computed(() =>
-  startAt.value ? formatDateTime(startAt.value.toISOString()) : '날짜를 선택하세요',
-)
-
 onMounted(async () => {
   try {
     const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
@@ -349,12 +222,7 @@ async function toggleExpand(tournamentId: string) {
 const showForm = ref(false)
 const saving = ref(false)
 const saveError = ref<string | null>(null)
-const form = reactive({
-  name: '',
-  startDate: null as Date | null,
-  startHour: 20,
-  startMinute: 0,
-})
+const form = reactive({ name: '' })
 
 // ── 참여 가능 티어 (디폴트 전체 선택) ─────────────────────
 const selectedTiers = ref<Set<string>>(new Set(TIER_ORDER))
@@ -368,11 +236,7 @@ function toggleTier(tier: string) {
 
 function openCreate() {
   form.name = ''
-  form.startDate = null
-  form.startHour = 20
-  form.startMinute = 0
   selectedTiers.value = new Set(TIER_ORDER)
-  calendarMonth.value = new Date()
   saveError.value = null
   showForm.value = true
 }
@@ -385,7 +249,6 @@ function closeCreate() {
 async function handleCreate() {
   if (!myPlayer.value) { saveError.value = '선수 정보를 불러오지 못했습니다.'; return }
   if (!form.name.trim()) { saveError.value = '이름을 입력해주세요.'; return }
-  if (!startAt.value) { saveError.value = '날짜를 선택해주세요.'; return }
   if (selectedTiers.value.size === 0) { saveError.value = '참여 가능 티어를 최소 1개는 선택해주세요.'; return }
 
   const allowedTiers = selectedTiers.value.size === TIER_ORDER.length ? null : [...selectedTiers.value]
@@ -394,7 +257,7 @@ async function handleCreate() {
   saveError.value = null
   try {
     const created = await createTournament(
-      { name: form.name.trim(), start_at: startAt.value.toISOString(), allowed_tiers: allowedTiers },
+      { name: form.name.trim(), allowed_tiers: allowedTiers },
       myPlayer.value,
     )
     showForm.value = false

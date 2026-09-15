@@ -13,7 +13,6 @@ export interface TournamentRow {
   id: string
   name: string
   host_user_id: number
-  start_at: string
   map_id: string | null
   status: TournamentStatus
   winner_user_id: number | null
@@ -71,7 +70,7 @@ export async function getTournament(id: string): Promise<TournamentRow> {
 
 /** 토너먼트 생성 + 주최자를 참가자로 자동 등록 (맵은 아직 미지정 — 별도 setTournamentMap) */
 export async function createTournament(
-  payload: { name: string; start_at: string; allowed_tiers?: string[] | null },
+  payload: { name: string; allowed_tiers?: string[] | null },
   host: { id: number; race: 'T' | 'Z' | 'P'; tier: string },
 ): Promise<TournamentRow> {
   const { data: tournament, error } = await supabase

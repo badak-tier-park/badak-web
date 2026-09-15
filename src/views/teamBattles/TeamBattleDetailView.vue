@@ -16,12 +16,12 @@
       <template v-else-if="battle">
         <div class="battle-header">
           <span class="battle-status" :class="`status--${battle.status.toLowerCase()}`">
-            {{ recruitmentClosed && battle.status === 'RECRUITING' ? '모집 마감' : TEAM_BATTLE_STATUS_LABEL[battle.status] }}
+            {{ TEAM_BATTLE_STATUS_LABEL[battle.status] }}
           </span>
           <h1 class="battle-title">{{ battle.name }}</h1>
         </div>
         <p class="battle-meta">
-          시작 {{ formatDateTime(battle.start_at) }} · 주최자 {{ hostName }} · 참가 {{ players.length }}명
+          주최자 {{ hostName }} · 참가 {{ players.length }}명
         </p>
 
         <p v-if="battle.status === 'FINISHED' && battle.winner_team" class="winner-banner">
@@ -38,9 +38,6 @@
             </template>
             <template v-else-if="!isMyTierEligible">
               <p class="state-msg state-msg--error">참여 가능한 티어가 아닙니다. (허용 티어: {{ allowedTiersLabel }})</p>
-            </template>
-            <template v-else-if="recruitmentClosed">
-              <p class="state-msg">모집이 마감되었습니다.</p>
             </template>
             <template v-else>
               <p class="section-label">참가 종족 선택</p>
@@ -496,16 +493,8 @@ const races = [
 const raceLabel = (r: string) => races.find(x => x.value === r)?.label ?? r
 const nicknameOf = (userId: number) => allPlayers.value.find(p => p.id === userId)?.nickname ?? `선수 ${userId}`
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso)
-  const date = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-  return `${date} ${time}`
-}
-
 const hostName = computed(() => battle.value ? nicknameOf(battle.value.host_user_id) : '')
 const myEntry = computed(() => players.value.find(p => p.user_id === myPlayer.value?.id) ?? null)
-const recruitmentClosed = computed(() => !!battle.value && new Date() >= new Date(battle.value.start_at))
 
 // ── 참여 가능 티어 ─────────────────────────────────────────
 const draftTiers = ref<Set<string>>(new Set(TIER_ORDER))
