@@ -28,7 +28,6 @@ export interface TeamBattleRow {
   id: string
   name: string
   host_user_id: number
-  start_at: string
   status: TeamBattleStatus
   ace_mode: AceMode
   winner_team: 1 | 2 | null
@@ -114,7 +113,7 @@ export async function getTeamBattle(id: string): Promise<TeamBattleRow> {
 
 /** 팀배틀 생성 + 주최자를 참가자로 자동 등록 */
 export async function createTeamBattle(
-  payload: { name: string; start_at: string; ace_mode: AceMode; allowed_tiers?: string[] | null },
+  payload: { name: string; ace_mode: AceMode; allowed_tiers?: string[] | null },
   host: { id: number; race: 'T' | 'Z' | 'P'; tier: string },
 ): Promise<TeamBattleRow> {
   const { data: battle, error } = await supabase
@@ -136,12 +135,28 @@ export async function createTeamBattle(
   return battle
 }
 
-/** 주최자 강제 종료 */
+/**
+ * 강제 종료 — 경기가 시작된 뒤 버그 등으로 중단해야 할 때.
+ * 정상 종료(finishTeamBattle)와 달리 games에 전적을 남기지 않는다.
+ */
 export async function cancelTeamBattle(id: string): Promise<void> {
   const { error } = await supabase
     .from('team_battles')
     .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
     .eq('id', id)
+  if (error) throw error
+}
+
+/**
+ * 완전 삭제 — 사람이 안 모여 없던 일로 할 때. 경기 시작 전에만 호출한다.
+ * FK에 ON DELETE CASCADE가 없어서 자식 행을 먼저 지워야 한다.
+ */
+export async function deleteTeamBattle(id: string): Promise<void> {
+  for (const table of ['team_battle_matches', 'team_battle_entries', 'team_battle_maps', 'team_battle_players']) {
+    const { error } = await supabase.from(table).delete().eq('battle_id', id)
+    if (error) throw error
+  }
+  const { error } = await supabase.from('team_battles').delete().eq('id', id)
   if (error) throw error
 }
 
