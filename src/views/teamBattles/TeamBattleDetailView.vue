@@ -553,16 +553,48 @@
               :key="map.id"
               class="picker-item map-picker-item"
               :disabled="battleMaps.length >= 10"
-              @click="appendMap(map.id)"
+              @click="handlePickMap($event, map.id)"
             >
               <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="picker-map-thumb" alt="" />
               <div class="picker-map-info">
                 <span class="picker-name">{{ map.name }}</span>
                 <span class="picker-map-meta">{{ map.player_count }}인 · {{ map.tileset }}</span>
               </div>
+              <span v-if="mapCount(map.id) > 0" class="picker-added">×{{ mapCount(map.id) }}</span>
             </button>
             <div v-if="filteredMaps.length === 0" class="picker-empty">검색 결과 없음</div>
           </div>
+
+          <!-- ── 담은 맵 — 클릭 결과가 모달 안에서 바로 보이도록 -->
+          <div class="picker-tray">
+            <div class="picker-tray-head">
+              <span class="picker-tray-title">담은 맵 <span class="picker-tray-count">{{ battleMaps.length }}개</span></span>
+              <span class="picker-tray-hint">끌어서 순서 변경 · 이 순서가 경기 순서</span>
+            </div>
+            <div v-if="battleMaps.length === 0" class="picker-tray-empty">위에서 맵을 누르면 여기에 쌓입니다</div>
+            <div v-else ref="trayStripEl" class="picker-tray-strip">
+              <div
+                v-for="(m, i) in battleMaps"
+                :key="`${i}-${m.map_id}`"
+                class="picker-chip"
+                :class="{
+                  'picker-chip--dragging': dragIndex === i,
+                  'picker-chip--over': dragIndex !== null && overIndex === i && dragIndex !== i,
+                }"
+                :data-drag-index="i"
+                @pointerdown="onMapPointerDown($event, i)"
+              >
+                <div class="picker-chip-top">
+                  <span class="picker-chip-order">{{ i + 1 }}경기</span>
+                  <button class="picker-chip-x" type="button" aria-label="빼기" @click.stop="removeMapAt(i)">×</button>
+                </div>
+                <img v-if="mapInfo(m.map_id)?.thumbnail_url" :src="mapInfo(m.map_id)!.thumbnail_url!" class="picker-chip-thumb" alt="" />
+                <div v-else class="picker-chip-thumb picker-chip-thumb--empty"></div>
+                <span class="picker-chip-name">{{ mapInfo(m.map_id)?.name ?? '알 수 없는 맵' }}</span>
+              </div>
+            </div>
+          </div>
+
           <div class="picker-footer">
             <span class="picker-footer-hint">{{ battleMaps.length }} / 10개 선택됨</span>
             <button class="picker-confirm" @click="showMapPicker = false">닫기</button>
@@ -574,7 +606,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -1033,6 +1065,11 @@ function mapInfo(mapId: string): MapRow | undefined {
   return allMaps.value.find(m => m.id === mapId)
 }
 
+/** 같은 맵을 여러 번 담을 수 있어 체크마크가 아니라 횟수로 보여준다. */
+function mapCount(mapId: string): number {
+  return battleMaps.value.filter(m => m.map_id === mapId).length
+}
+
 const filteredMaps = computed(() => {
   const q = mapSearch.value.trim().toLowerCase()
   if (!q) return allMaps.value
@@ -1070,6 +1107,52 @@ async function persistMaps(next: { order_index: number; map_id: string }[]) {
 function appendMap(mapId: string) {
   if (battleMaps.value.length >= 10) return
   persistMaps([...battleMaps.value, { order_index: battleMaps.value.length, map_id: mapId }])
+}
+
+// ── 담기 피드백: 누른 썸네일이 아래 "담은 맵" 트레이로 날아가는 것처럼 보여준다 ──
+// 클릭했는데도 화면에 아무 변화가 없어 눌렸는지 모르겠다는 피드백이 있었다.
+const trayStripEl = ref<HTMLElement | null>(null)
+
+async function handlePickMap(e: MouseEvent, mapId: string) {
+  if (battleMaps.value.length >= 10) return
+  const btn = e.currentTarget as HTMLElement
+  const thumb = btn.querySelector<HTMLElement>('.picker-map-thumb')
+  // 목록/트레이가 다시 그려지면 지금 잡은 엘리먼트는 DOM에서 떨어져 rect가 0이 되므로,
+  // 다시 그리기 전에 좌표를 먼저 떠 둔다.
+  const fromRect = (thumb ?? btn).getBoundingClientRect()
+  // document.createElement로 만드는 엘리먼트는 Vue scoped 스타일의 data-v-xxx 속성이
+  // 없어 .map-fly-ghost 규칙이 안 먹는다. 지금 눌린 버튼(scoped 트리 안)에서 그 속성을
+  // 그대로 복사해 붙인다.
+  const scopeAttr = [...btn.attributes].map(a => a.name).find(n => n.startsWith('data-v-'))
+
+  appendMap(mapId)
+  await nextTick()
+  flyToTray(fromRect, scopeAttr)
+}
+
+function flyToTray(fromRect: DOMRect, scopeAttr?: string) {
+  const target = trayStripEl.value?.lastElementChild as HTMLElement | null
+  if (!target) return
+  const toRect = target.getBoundingClientRect()
+  if (!fromRect.width || !toRect.width) return
+
+  const el = document.createElement('div')
+  el.className = 'map-fly-ghost'
+  if (scopeAttr) el.setAttribute(scopeAttr, '')
+  el.style.left = `${fromRect.left}px`
+  el.style.top = `${fromRect.top}px`
+  el.style.width = `${fromRect.width}px`
+  el.style.height = `${fromRect.height}px`
+  document.body.appendChild(el)
+
+  requestAnimationFrame(() => {
+    el.style.left = `${toRect.left}px`
+    el.style.top = `${toRect.top}px`
+    el.style.width = `${toRect.width}px`
+    el.style.height = `${toRect.height}px`
+    el.style.opacity = '0.2'
+  })
+  setTimeout(() => el.remove(), 380)
 }
 
 function removeMapAt(index: number) {
