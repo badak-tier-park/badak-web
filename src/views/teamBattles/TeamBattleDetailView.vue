@@ -16,12 +16,12 @@
       <template v-else-if="battle">
         <div class="battle-header">
           <span class="battle-status" :class="`status--${battle.status.toLowerCase()}`">
-            {{ recruitmentClosed && battle.status === 'RECRUITING' ? '모집 마감' : TEAM_BATTLE_STATUS_LABEL[battle.status] }}
+            {{ TEAM_BATTLE_STATUS_LABEL[battle.status] }}
           </span>
           <h1 class="battle-title">{{ battle.name }}</h1>
         </div>
         <p class="battle-meta">
-          시작 {{ formatDateTime(battle.start_at) }} · 주최자 {{ hostName }} · 참가 {{ players.length }}명
+          주최자 {{ hostName }} · 참가 {{ players.length }}명
         </p>
 
         <p v-if="battle.status === 'FINISHED' && battle.winner_team" class="winner-banner">
@@ -30,20 +30,28 @@
 
         <p v-if="actionError" class="save-error">{{ actionError }}</p>
 
-        <!-- ── RECRUITING ─────────────────────────────────── -->
-        <template v-if="battle.status === 'RECRUITING'">
-          <section v-if="!myEntry && myPlayer" class="join-section">
-            <template v-if="!myPlayer.is_active">
-              <p class="state-msg state-msg--error">정지된 계정은 팀배틀에 참가할 수 없습니다.</p>
-            </template>
-            <template v-else-if="!isMyTierEligible">
-              <p class="state-msg state-msg--error">참여 가능한 티어가 아닙니다. (허용 티어: {{ allowedTiersLabel }})</p>
-            </template>
-            <template v-else-if="recruitmentClosed">
-              <p class="state-msg">모집이 마감되었습니다.</p>
-            </template>
-            <template v-else>
-              <p class="section-label">참가 종족 선택</p>
+        <!-- ── 진행 단계 ──────────────────────────────────── -->
+        <ol class="step-rail">
+          <li
+            v-for="(label, i) in STEPS"
+            :key="label"
+            class="step"
+            :class="{ 'step--done': i < stepIndex, 'step--now': i === stepIndex }"
+          >
+            <span class="step-dot">{{ i + 1 }}</span>
+            <span class="step-name">{{ label }}</span>
+          </li>
+        </ol>
+
+        <!-- ── 지금 할 일 ─────────────────────────────────── -->
+        <section v-if="todoVisible" class="todo-bar">
+          <p class="todo-label">지금 할 일</p>
+
+          <!-- 모집 중: 참가 / 참가 취소 -->
+          <template v-if="battle.status === 'RECRUITING'">
+            <p v-if="joinBlockReason && !myEntry" class="todo-blocked">{{ joinBlockReason }}</p>
+
+            <div v-else-if="canJoin" class="todo-row">
               <div class="race-select-group">
                 <button
                   v-for="r in races"
@@ -54,48 +62,102 @@
                   @click="selectedRace = r.value"
                 >{{ r.label }}</button>
               </div>
-              <p v-if="selectedRace !== myPlayer.race" class="field-hint">
-                주종족({{ raceLabel(myPlayer.race) }})과 달라 부종족 참가로 처리됩니다.
-                티어는 주종족 티어({{ myPlayer.tier }})가 그대로 적용되고, 이 팀배틀의 전적은 반영되지 않습니다.
-              </p>
-              <button class="btn-save" :disabled="joining" @click="handleJoin">
+              <button class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled" :disabled="joining" @click="handleJoin">
                 {{ joining ? '참가 중...' : '참가하기' }}
               </button>
-            </template>
-          </section>
-
-          <section v-else-if="myEntry" class="join-section">
-            <p class="state-msg">
-              참가 완료 — {{ raceLabel(myEntry.race) }}{{ myEntry.is_offrace ? ' (부종족)' : '' }} / {{ myEntry.tier }}
-            </p>
-            <button class="btn-cancel" :disabled="joining" @click="handleLeave">
-              {{ joining ? '처리 중...' : '참가 취소' }}
-            </button>
-          </section>
-        </template>
-
-        <!-- ── 참여 가능 티어 ─────────────────────────────── -->
-        <section class="tier-restriction-section">
-          <p class="section-label">참여 가능 티어</p>
-          <p class="tier-restriction-value">{{ allowedTiersLabel }}</p>
-
-          <template v-if="canEditTiers">
-            <div class="tier-select-grid">
-              <button
-                v-for="t in TIER_ORDER"
-                :key="t"
-                type="button"
-                class="tier-toggle-btn"
-                :class="[`tier-badge--${$tierClass(t)}`, { 'tier-toggle-btn--off': !draftTiers.has(t) }]"
-                @click="toggleDraftTier(t)"
-              >{{ t }}</button>
             </div>
-            <p v-if="tiersError" class="save-error">{{ tiersError }}</p>
-            <button v-if="tiersDirty" class="btn-save" :disabled="savingTiers" @click="handleSaveTiers">
-              {{ savingTiers ? '저장 중...' : '티어 설정 저장' }}
-            </button>
+
+            <div v-else-if="myEntry" class="todo-row">
+              <span class="todo-state">
+                참가 완료 — {{ raceLabel(myEntry.race) }}{{ myEntry.is_offrace ? ' (부종족)' : '' }} / {{ myEntry.tier }}
+              </span>
+              <button class="btn-pill btn-pill--md btn-pill--ghost" :disabled="joining" @click="handleLeave">
+                {{ joining ? '처리 중...' : '참가 취소' }}
+              </button>
+            </div>
+
+            <p v-if="canJoin && myPlayer && selectedRace !== myPlayer.race" class="todo-hint">
+              주종족({{ raceLabel(myPlayer.race) }})과 달라 부종족 참가로 처리됩니다.
+              티어는 주종족 티어({{ myPlayer.tier }})가 그대로 적용되고, 이 팀배틀의 전적은 반영되지 않습니다.
+            </p>
+
+            <div v-if="isHost" class="todo-row todo-row--host">
+              <button
+                class="btn-pill btn-pill--md btn-pill--purple"
+                :disabled="assigning || players.length < 4"
+                @click="handleAssignTeams"
+              >
+                {{ assigning ? '배정 중...' : '팀 배정 (모집 마감)' }}
+              </button>
+              <span v-if="players.length < 4" class="todo-hint">
+                최소 4명이 모여야 합니다. (현재 {{ players.length }}명)
+              </span>
+            </div>
+          </template>
+
+          <!-- 팀 배정 완료: 엔트리 시작 -->
+          <template v-else-if="battle.status === 'ASSIGNED'">
+            <div v-if="isHost" class="todo-row">
+              <button
+                class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled"
+                :disabled="battleMaps.length === 0 || startingEntry"
+                @click="handleStartEntry"
+              >
+                {{ startingEntry ? '전환 중...' : '엔트리 제출 시작' }}
+              </button>
+              <button class="btn-pill btn-pill--md btn-pill--ghost" :disabled="assigning" @click="handleAssignTeams">
+                {{ assigning ? '배정 중...' : '팀 다시 배정' }}
+              </button>
+            </div>
+            <p v-else class="todo-state">주최자가 엔트리 제출을 시작하기를 기다리는 중입니다.</p>
+            <p v-if="isHost" class="todo-hint">
+              {{ battleMaps.length === 0
+                ? '맵을 먼저 등록해야 엔트리를 시작할 수 있습니다.'
+                : '맵 순서를 확정하고 넘어가세요. 엔트리는 이 순서대로 짜게 됩니다.' }}
+            </p>
+          </template>
+
+          <!-- 엔트리: 팀장 제출 → 주최자 공개 -->
+          <template v-else-if="battle.status === 'ENTRY'">
+            <div v-if="isHost" class="todo-row">
+              <button
+                class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled"
+                :disabled="!canPublish || publishing"
+                @click="handlePublishEntries"
+              >
+                {{ publishing ? '공개 중...' : '엔트리 공개 (경기 시작)' }}
+              </button>
+            </div>
+            <p class="todo-hint">
+              {{ teamSubmitted(1) && teamSubmitted(2)
+                ? '양 팀 제출 완료. 공개하면 경기가 시작됩니다.'
+                : '아직 엔트리를 제출하지 않은 팀이 있습니다.' }}
+            </p>
+          </template>
+
+          <!-- 경기 중 -->
+          <template v-else-if="battle.status === 'PLAYING'">
+            <p class="todo-state">
+              {{ allMatchesReported ? '모든 경기 결과가 입력되었습니다.' : '아래에서 경기 결과를 기록하세요.' }}
+            </p>
+            <div v-if="isHost && allMatchesReported" class="todo-row">
+              <button v-if="!isTie" class="btn-pill btn-pill--md btn-pill--purple btn-pill--filled" :disabled="finishing" @click="handleFinish">
+                {{ finishing ? '처리 중...' : '경기 종료 확정' }}
+              </button>
+              <button v-else class="btn-pill btn-pill--md btn-pill--orange btn-pill--filled" :disabled="startingAce" @click="handleStartAce">
+                {{ startingAce ? '처리 중...' : '동점 — 에이스 결정전 시작' }}
+              </button>
+            </div>
+          </template>
+
+          <!-- 에이스 결정전 -->
+          <template v-else-if="battle.status === 'ACE_WAITING' || battle.status === 'ACE_ENTRY'">
+            <p class="todo-state">에이스 결정전 진행 중입니다. 아래에서 이어서 진행하세요.</p>
           </template>
         </section>
+
+        <div class="detail-cols">
+          <div class="detail-main">
 
         <!-- 참가자 목록 (팀 배정 전) -->
         <section v-if="battle.status === 'RECRUITING'" class="players-section">
@@ -147,36 +209,7 @@
           </div>
         </section>
 
-        <!-- ── 팀 배정 ────────────────────────────────────── -->
-        <section v-if="canAssign" class="assign-section">
-          <div class="section-label-row">
-            <p class="section-label">팀 배정</p>
-            <div class="assign-actions">
-              <button
-                class="btn-pill btn-pill--md btn-pill--purple"
-                :disabled="assigning || players.length < 4"
-                @click="handleAssignTeams"
-              >
-                {{ assigning ? '배정 중...' : (battle.status === 'ASSIGNED' ? '다시 배정' : '팀 배정 (모집 마감)') }}
-              </button>
-              <button
-                v-if="battle.status === 'ASSIGNED' && isHost"
-                class="btn-pill btn-pill--md btn-pill--blue"
-                :disabled="battleMaps.length === 0 || startingEntry"
-                @click="handleStartEntry"
-              >
-                {{ startingEntry ? '전환 중...' : '엔트리 제출 시작' }}
-              </button>
-            </div>
-          </div>
-          <p v-if="players.length < 4" class="field-hint">
-            최소 4명이 모여야 팀을 배정할 수 있습니다. (현재 {{ players.length }}명)
-          </p>
-          <p v-if="battle.status === 'ASSIGNED' && battleMaps.length === 0" class="field-hint">
-            엔트리 제출을 시작하려면 맵을 먼저 등록하세요.
-          </p>
-          <p v-if="assignError" class="save-error">{{ assignError }}</p>
-        </section>
+        <p v-if="assignError" class="save-error">{{ assignError }}</p>
 
         <!-- ── 엔트리 ─────────────────────────────────────── -->
         <section v-if="battle.status === 'ENTRY'" class="entry-section">
@@ -221,18 +254,6 @@
             </div>
           </div>
 
-          <div v-if="isHost" class="entry-publish-row">
-            <button
-              class="btn-pill btn-pill--md btn-pill--purple"
-              :disabled="!canPublish || publishing"
-              @click="handlePublishEntries"
-            >
-              {{ publishing ? '공개 중...' : '엔트리 공개 (경기 시작)' }}
-            </button>
-            <p v-if="!(teamSubmitted(1) && teamSubmitted(2))" class="field-hint">
-              양 팀 모두 엔트리를 제출해야 공개할 수 있습니다.
-            </p>
-          </div>
         </section>
 
         <!-- ── 경기 결과 ──────────────────────────────────── -->
@@ -277,24 +298,6 @@
 
           <p v-if="matchError" class="save-error">{{ matchError }}</p>
 
-          <div v-if="isHost && battle.status === 'PLAYING' && allMatchesReported" class="match-decide-row">
-            <button
-              v-if="!isTie"
-              class="btn-pill btn-pill--md btn-pill--purple"
-              :disabled="finishing"
-              @click="handleFinish"
-            >
-              {{ finishing ? '처리 중...' : '경기 종료 확정' }}
-            </button>
-            <button
-              v-else
-              class="btn-pill btn-pill--md btn-pill--orange"
-              :disabled="startingAce"
-              @click="handleStartAce"
-            >
-              {{ startingAce ? '처리 중...' : '동점 — 에이스 결정전 시작' }}
-            </button>
-          </div>
         </section>
 
         <!-- ── 에이스 결정전 ──────────────────────────────── -->
@@ -386,6 +389,10 @@
           </div>
         </section>
 
+          </div>
+
+          <div class="detail-side">
+
         <!-- ── 맵 ─────────────────────────────────────────── -->
         <section class="maps-section">
           <div class="section-label-row">
@@ -397,24 +404,132 @@
 
           <div v-if="battleMaps.length === 0" class="state-msg">아직 맵이 선택되지 않았습니다.</div>
           <ol v-else class="map-order-list">
-            <li v-for="(m, i) in battleMaps" :key="`${m.order_index}-${i}`" class="map-order-item">
+            <li
+              v-for="(m, i) in battleMaps"
+              :key="`${i}-${m.map_id}`"
+              class="map-order-item"
+              :class="{
+                'map-order-item--dragging': dragIndex === i,
+                'map-order-item--over': dragIndex !== null && overIndex === i && dragIndex !== i,
+              }"
+              :data-drag-index="i"
+            >
+              <span
+                v-if="canEditMaps"
+                class="map-drag-handle"
+                title="끌어서 순서 변경"
+                @pointerdown="onMapPointerDown($event, i)"
+              >⠿</span>
               <span class="map-order-num">{{ i + 1 }}</span>
               <img v-if="mapInfo(m.map_id)?.thumbnail_url" :src="mapInfo(m.map_id)!.thumbnail_url!" class="map-order-thumb" alt="" />
               <span class="map-order-name">{{ mapInfo(m.map_id)?.name ?? '알 수 없는 맵' }}</span>
-              <button v-if="canEditMaps" class="map-order-remove" @click="removeMapAt(i)">×</button>
+              <span v-if="canEditMaps" class="map-order-tools">
+                <button class="map-order-move" :disabled="i === 0" aria-label="위로" @click="moveMap(i, i - 1)">↑</button>
+                <button class="map-order-move" :disabled="i === battleMaps.length - 1" aria-label="아래로" @click="moveMap(i, i + 1)">↓</button>
+                <button class="map-order-remove" aria-label="삭제" @click="removeMapAt(i)">×</button>
+              </span>
             </li>
           </ol>
 
-          <div v-if="canEditMaps && mapsDirty" class="maps-save-row">
-            <p v-if="mapsError" class="save-error">{{ mapsError }}</p>
-            <button class="btn-save" :disabled="savingMaps" @click="handleSaveMaps">
-              {{ savingMaps ? '저장 중...' : '맵 구성 저장' }}
-            </button>
-          </div>
+          <p v-if="mapsError" class="save-error">{{ mapsError }}</p>
+          <p v-else-if="canEditMaps" class="map-save-hint">
+            {{ savingMaps ? '저장 중...' : '변경하면 바로 저장됩니다. 이 순서가 그대로 경기 순서가 됩니다.' }}
+          </p>
+          <p v-else-if="battleMaps.length > 0" class="map-locked-hint">
+            엔트리 제출이 시작돼 맵이 확정되었습니다.
+          </p>
         </section>
+
+        <!-- ── 설정 (참여 티어 / 에이스 방식 / 주최자) ─────── -->
+        <section class="settings-section">
+          <p class="section-label">설정</p>
+
+          <div class="setting-row">
+            <span class="setting-key">참여 티어</span>
+            <span class="setting-value">{{ allowedTiersLabel }}</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-key">에이스 결정</span>
+            <span class="setting-value">{{ battle.ace_mode === 'RANDOM' ? '랜덤 추첨' : '팀장 지정' }}</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-key">주최자</span>
+            <span class="setting-value">{{ hostName }}</span>
+          </div>
+
+          <template v-if="canEditTiers">
+            <div class="tier-select-grid">
+              <button
+                v-for="t in TIER_ORDER"
+                :key="t"
+                type="button"
+                class="tier-toggle-btn"
+                :class="[`tier-badge--${$tierClass(t)}`, { 'tier-toggle-btn--off': !draftTiers.has(t) }]"
+                @click="toggleDraftTier(t)"
+              >{{ t }}</button>
+            </div>
+            <p v-if="tiersError" class="save-error">{{ tiersError }}</p>
+            <button v-if="tiersDirty" class="btn-pill btn-pill--md btn-pill--purple" :disabled="savingTiers" @click="handleSaveTiers">
+              {{ savingTiers ? '저장 중...' : '티어 설정 저장' }}
+            </button>
+          </template>
+        </section>
+
+          </div>
+        </div>
+
+        <!-- ── 삭제 / 강제 종료 ───────────────────────────── -->
+        <section v-if="canDelete || canForceEnd" class="danger-section">
+          <div class="danger-text">
+            <p class="danger-title">{{ canDelete ? '팀배틀 삭제' : '강제 종료' }}</p>
+            <p class="danger-desc">
+              {{ canDelete
+                ? '사람이 안 모였다면 지우고 다시 만들 수 있습니다. 되돌릴 수 없습니다.'
+                : '경기가 시작돼 삭제할 수 없습니다. 강제 종료하면 전적은 반영되지 않습니다.' }}
+            </p>
+          </div>
+          <button
+            class="btn-pill btn-pill--md"
+            :class="canDelete ? 'btn-pill--red' : 'btn-pill--orange'"
+            @click="dangerAction = canDelete ? 'delete' : 'force'"
+          >
+            {{ canDelete ? '삭제' : '강제 종료' }}
+          </button>
+        </section>
+
+        <p v-else-if="battle.status === 'CANCELLED' || battle.status === 'FINISHED'" class="danger-locked">
+          {{ battle.status === 'CANCELLED' ? '강제 종료된' : '종료된' }} 팀배틀은 기록으로 남으며 삭제할 수 없습니다.
+        </p>
 
       </template>
     </div>
+
+    <!-- ── 삭제 / 강제 종료 확인 ──────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="dangerAction" class="modal-backdrop">
+        <div class="modal">
+          <div class="modal-header">
+            <span class="modal-title">{{ dangerAction === 'delete' ? '팀배틀을 삭제할까요?' : '강제 종료할까요?' }}</span>
+          </div>
+          <div class="modal-body">
+            <p class="danger-desc">
+              {{ dangerAction === 'delete'
+                ? '참가자·맵·엔트리까지 전부 삭제되며 되돌릴 수 없습니다.'
+                : '진행 중인 경기가 즉시 종료되고, 이 팀배틀의 전적은 기록되지 않습니다.' }}
+            </p>
+          </div>
+          <div class="modal-footer">
+            <p v-if="dangerError" class="save-error">{{ dangerError }}</p>
+            <div class="modal-actions">
+              <button class="btn-cancel" :disabled="dangerBusy" @click="dangerAction = null">취소</button>
+              <button class="btn-save" :disabled="dangerBusy" @click="handleDangerConfirm">
+                {{ dangerBusy ? '처리 중...' : (dangerAction === 'delete' ? '삭제' : '강제 종료') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- ── 맵 선택 오버레이 ───────────────────────────────── -->
     <Teleport to="body">
@@ -438,16 +553,48 @@
               :key="map.id"
               class="picker-item map-picker-item"
               :disabled="battleMaps.length >= 10"
-              @click="appendMap(map.id)"
+              @click="handlePickMap($event, map.id)"
             >
               <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="picker-map-thumb" alt="" />
               <div class="picker-map-info">
                 <span class="picker-name">{{ map.name }}</span>
                 <span class="picker-map-meta">{{ map.player_count }}인 · {{ map.tileset }}</span>
               </div>
+              <span v-if="mapCount(map.id) > 0" class="picker-added">×{{ mapCount(map.id) }}</span>
             </button>
             <div v-if="filteredMaps.length === 0" class="picker-empty">검색 결과 없음</div>
           </div>
+
+          <!-- ── 담은 맵 — 클릭 결과가 모달 안에서 바로 보이도록 -->
+          <div class="picker-tray">
+            <div class="picker-tray-head">
+              <span class="picker-tray-title">담은 맵 <span class="picker-tray-count">{{ battleMaps.length }}개</span></span>
+              <span class="picker-tray-hint">끌어서 순서 변경 · 이 순서가 경기 순서</span>
+            </div>
+            <div v-if="battleMaps.length === 0" class="picker-tray-empty">위에서 맵을 누르면 여기에 쌓입니다</div>
+            <div v-else ref="trayStripEl" class="picker-tray-strip">
+              <div
+                v-for="(m, i) in battleMaps"
+                :key="`${i}-${m.map_id}`"
+                class="picker-chip"
+                :class="{
+                  'picker-chip--dragging': dragIndex === i,
+                  'picker-chip--over': dragIndex !== null && overIndex === i && dragIndex !== i,
+                }"
+                :data-drag-index="i"
+                @pointerdown="onMapPointerDown($event, i)"
+              >
+                <div class="picker-chip-top">
+                  <span class="picker-chip-order">{{ i + 1 }}경기</span>
+                  <button class="picker-chip-x" type="button" aria-label="빼기" @click.stop="removeMapAt(i)">×</button>
+                </div>
+                <img v-if="mapInfo(m.map_id)?.thumbnail_url" :src="mapInfo(m.map_id)!.thumbnail_url!" class="picker-chip-thumb" alt="" />
+                <div v-else class="picker-chip-thumb picker-chip-thumb--empty"></div>
+                <span class="picker-chip-name">{{ mapInfo(m.map_id)?.name ?? '알 수 없는 맵' }}</span>
+              </div>
+            </div>
+          </div>
+
           <div class="picker-footer">
             <span class="picker-footer-hint">{{ battleMaps.length }} / 10개 선택됨</span>
             <button class="picker-confirm" @click="showMapPicker = false">닫기</button>
@@ -459,24 +606,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getPlayers, getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
+import { useListDrag } from '@/composables/useListDrag'
 import { tierPoint, normalizeTier, TIER_ORDER } from '@/lib/constants'
 import {
   getTeamBattle, getTeamBattlePlayers, joinTeamBattle, leaveTeamBattle,
   getTeamBattleMaps, setTeamBattleMaps, assignTeams, reassignLeader,
   getTeamBattleEntries, submitEntry, publishEntries, updateTeamBattleStatus,
   getTeamBattleMatches, setMatchWinner, finishTeamBattle, drawAceMatch, setAcePlayer,
-  setTeamBattleAllowedTiers,
-  TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattlePlayerRow,
+  setTeamBattleAllowedTiers, deleteTeamBattle, cancelTeamBattle,
+  TEAM_BATTLE_STATUS_LABEL, type TeamBattleRow, type TeamBattleStatus, type TeamBattlePlayerRow,
   type TeamBattleEntryRow, type TeamBattleMatchRow, type AceMode,
 } from '@/lib/teamBattles'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 
 const battle = ref<TeamBattleRow | null>(null)
@@ -496,16 +645,31 @@ const races = [
 const raceLabel = (r: string) => races.find(x => x.value === r)?.label ?? r
 const nicknameOf = (userId: number) => allPlayers.value.find(p => p.id === userId)?.nickname ?? `선수 ${userId}`
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso)
-  const date = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-  return `${date} ${time}`
-}
-
 const hostName = computed(() => battle.value ? nicknameOf(battle.value.host_user_id) : '')
 const myEntry = computed(() => players.value.find(p => p.user_id === myPlayer.value?.id) ?? null)
-const recruitmentClosed = computed(() => !!battle.value && new Date() >= new Date(battle.value.start_at))
+
+// ── 진행 단계 ─────────────────────────────────────────────
+const STEPS = ['모집', '팀 배정', '엔트리', '경기', '종료']
+const STEP_OF: Record<TeamBattleStatus, number> = {
+  RECRUITING: 0, ASSIGNED: 1, ENTRY: 2,
+  PLAYING: 3, ACE_WAITING: 3, ACE_ENTRY: 3,
+  FINISHED: 4, CANCELLED: 4,
+}
+const stepIndex = computed(() => battle.value ? STEP_OF[battle.value.status] : 0)
+
+/** 참가 버튼을 막아야 하는 이유 (없으면 null) */
+const joinBlockReason = computed(() => {
+  if (!myPlayer.value) return null
+  if (!myPlayer.value.is_active) return '정지된 계정은 팀배틀에 참가할 수 없습니다.'
+  if (!isMyTierEligible.value) return `참여 가능한 티어가 아닙니다. (허용 티어: ${allowedTiersLabel.value})`
+  return null
+})
+const canJoin = computed(() =>
+  battle.value?.status === 'RECRUITING' && !myEntry.value && !!myPlayer.value && !joinBlockReason.value,
+)
+const todoVisible = computed(() =>
+  !!battle.value && battle.value.status !== 'FINISHED' && battle.value.status !== 'CANCELLED',
+)
 
 // ── 참여 가능 티어 ─────────────────────────────────────────
 const draftTiers = ref<Set<string>>(new Set(TIER_ORDER))
@@ -567,9 +731,7 @@ async function load() {
   allPlayers.value = all
   myPlayer.value = me
   allMaps.value = maps
-  const nonAce = tbMaps.filter(m => !m.is_ace).map(m => ({ order_index: m.order_index, map_id: m.map_id }))
-  battleMaps.value = nonAce
-  savedMapIds.value = nonAce.map(m => m.map_id)
+  battleMaps.value = tbMaps.filter(m => !m.is_ace).map(m => ({ order_index: m.order_index, map_id: m.map_id }))
   entries.value = tbEntries
   refreshEntryDrafts()
   matches.value = tbMatches
@@ -630,10 +792,6 @@ watch(myPlayer, resetSelectedRace)
 const assigning = ref(false)
 const assignError = ref<string | null>(null)
 const reassigning = ref(false)
-
-const canAssign = computed(() =>
-  isHost.value && !!battle.value && (battle.value.status === 'RECRUITING' || battle.value.status === 'ASSIGNED'),
-)
 
 function teamPlayers(teamNo: 1 | 2): TeamBattlePlayerRow[] {
   return players.value
@@ -892,22 +1050,24 @@ async function handleFinishAce() {
 
 // ── 맵 선택 ───────────────────────────────────────────────
 const battleMaps = ref<{ order_index: number; map_id: string }[]>([])
-const savedMapIds = ref<string[]>([])
 const showMapPicker = ref(false)
 const mapSearch = ref('')
 const savingMaps = ref(false)
 const mapsError = ref<string | null>(null)
 
 const isHost = computed(() => !!myPlayer.value && !!battle.value && myPlayer.value.id === battle.value.host_user_id)
+// 엔트리는 맵 순서에 맞춰 짜는 것이라, 엔트리 제출이 시작되면 맵을 확정한다.
 const canEditMaps = computed(() =>
   isHost.value && !!battle.value && (battle.value.status === 'RECRUITING' || battle.value.status === 'ASSIGNED'),
-)
-const mapsDirty = computed(() =>
-  JSON.stringify(battleMaps.value.map(m => m.map_id)) !== JSON.stringify(savedMapIds.value),
 )
 
 function mapInfo(mapId: string): MapRow | undefined {
   return allMaps.value.find(m => m.id === mapId)
+}
+
+/** 같은 맵을 여러 번 담을 수 있어 체크마크가 아니라 횟수로 보여준다. */
+function mapCount(mapId: string): number {
+  return battleMaps.value.filter(m => m.map_id === mapId).length
 }
 
 const filteredMaps = computed(() => {
@@ -922,30 +1082,128 @@ function openMapPicker() {
   showMapPicker.value = true
 }
 
-function appendMap(mapId: string) {
-  if (battleMaps.value.length >= 10) return
-  battleMaps.value.push({ order_index: battleMaps.value.length, map_id: mapId })
-}
-
-function removeMapAt(index: number) {
-  battleMaps.value.splice(index, 1)
-  battleMaps.value = battleMaps.value.map((m, i) => ({ ...m, order_index: i }))
-}
-
-async function handleSaveMaps() {
+/**
+ * 맵 변경은 무조건 즉시 저장한다. 예전에는 화면상 draft를 들고 있다가 "맵 구성 저장"을
+ * 눌러야 반영됐는데, 저장하지 않은 채로 엔트리 단계로 넘어가면 맵을 다시 넣을 수도
+ * 없어 통째로 사라졌다(엔트리 단계부터는 canEditMaps가 false). 미저장 상태를 아예
+ * 없애서 그 경로를 막는다.
+ */
+async function persistMaps(next: { order_index: number; map_id: string }[]) {
   if (!battle.value) return
+  const prev = battleMaps.value
+  battleMaps.value = next.map((m, i) => ({ ...m, order_index: i }))
   savingMaps.value = true
   mapsError.value = null
   try {
-    const mapIds = battleMaps.value.map(m => m.map_id)
-    await setTeamBattleMaps(battle.value.id, mapIds)
-    savedMapIds.value = mapIds
+    await setTeamBattleMaps(battle.value.id, battleMaps.value.map(m => m.map_id))
   } catch (e: any) {
+    battleMaps.value = prev
     mapsError.value = e.message ?? '맵 저장 중 오류가 발생했습니다.'
   } finally {
     savingMaps.value = false
   }
 }
+
+function appendMap(mapId: string) {
+  if (battleMaps.value.length >= 10) return
+  persistMaps([...battleMaps.value, { order_index: battleMaps.value.length, map_id: mapId }])
+}
+
+// ── 담기 피드백: 누른 썸네일이 아래 "담은 맵" 트레이로 날아가는 것처럼 보여준다 ──
+// 클릭했는데도 화면에 아무 변화가 없어 눌렸는지 모르겠다는 피드백이 있었다.
+const trayStripEl = ref<HTMLElement | null>(null)
+
+async function handlePickMap(e: MouseEvent, mapId: string) {
+  if (battleMaps.value.length >= 10) return
+  const btn = e.currentTarget as HTMLElement
+  const thumb = btn.querySelector<HTMLElement>('.picker-map-thumb')
+  // 목록/트레이가 다시 그려지면 지금 잡은 엘리먼트는 DOM에서 떨어져 rect가 0이 되므로,
+  // 다시 그리기 전에 좌표를 먼저 떠 둔다.
+  const fromRect = (thumb ?? btn).getBoundingClientRect()
+  // document.createElement로 만드는 엘리먼트는 Vue scoped 스타일의 data-v-xxx 속성이
+  // 없어 .map-fly-ghost 규칙이 안 먹는다. 지금 눌린 버튼(scoped 트리 안)에서 그 속성을
+  // 그대로 복사해 붙인다.
+  const scopeAttr = [...btn.attributes].map(a => a.name).find(n => n.startsWith('data-v-'))
+
+  appendMap(mapId)
+  await nextTick()
+  flyToTray(fromRect, scopeAttr)
+}
+
+function flyToTray(fromRect: DOMRect, scopeAttr?: string) {
+  const target = trayStripEl.value?.lastElementChild as HTMLElement | null
+  if (!target) return
+  const toRect = target.getBoundingClientRect()
+  if (!fromRect.width || !toRect.width) return
+
+  const el = document.createElement('div')
+  el.className = 'map-fly-ghost'
+  if (scopeAttr) el.setAttribute(scopeAttr, '')
+  el.style.left = `${fromRect.left}px`
+  el.style.top = `${fromRect.top}px`
+  el.style.width = `${fromRect.width}px`
+  el.style.height = `${fromRect.height}px`
+  document.body.appendChild(el)
+
+  requestAnimationFrame(() => {
+    el.style.left = `${toRect.left}px`
+    el.style.top = `${toRect.top}px`
+    el.style.width = `${toRect.width}px`
+    el.style.height = `${toRect.height}px`
+    el.style.opacity = '0.2'
+  })
+  setTimeout(() => el.remove(), 380)
+}
+
+function removeMapAt(index: number) {
+  persistMaps(battleMaps.value.filter((_, i) => i !== index))
+}
+
+function moveMap(from: number, to: number) {
+  if (to < 0 || to >= battleMaps.value.length || from === to) return
+  const next = [...battleMaps.value]
+  const [moved] = next.splice(from, 1)
+  next.splice(to, 0, moved)
+  persistMaps(next)
+}
+
+const { dragIndex, overIndex, onPointerDown: onMapPointerDown } = useListDrag(moveMap)
+
+// ── 삭제 / 강제 종료 ──────────────────────────────────────
+// 경기 시작 전에는 통째로 삭제, 시작 후에는 기록을 남기는 강제 종료만 허용한다.
+const dangerAction = ref<'delete' | 'force' | null>(null)
+const dangerBusy = ref(false)
+const dangerError = ref<string | null>(null)
+
+const PRE_GAME_STATUSES = ['RECRUITING', 'ASSIGNED', 'ENTRY']
+
+const canDelete = computed(() =>
+  isHost.value && !!battle.value && PRE_GAME_STATUSES.includes(battle.value.status),
+)
+const canForceEnd = computed(() =>
+  isHost.value && !!battle.value && ['PLAYING', 'ACE_WAITING', 'ACE_ENTRY'].includes(battle.value.status),
+)
+
+async function handleDangerConfirm() {
+  if (!battle.value || !dangerAction.value) return
+  dangerBusy.value = true
+  dangerError.value = null
+  try {
+    if (dangerAction.value === 'delete') {
+      await deleteTeamBattle(battle.value.id)
+      router.push({ name: 'team-battles' })
+      return
+    }
+    await cancelTeamBattle(battle.value.id)
+    battle.value = await getTeamBattle(battle.value.id)
+    dangerAction.value = null
+  } catch (e: any) {
+    dangerError.value = e.message ?? '처리 중 오류가 발생했습니다.'
+  } finally {
+    dangerBusy.value = false
+  }
+}
+
 </script>
 
 <style lang="scss" scoped>

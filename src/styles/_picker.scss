@@ -158,6 +158,162 @@
   font-weight: 400;
 }
 
+// 같은 항목을 여러 번 담을 수 있는 피커에서, 체크마크 대신 담은 횟수를 보여준다
+.picker-added {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #c084fc;
+  background: rgba(170, 59, 255, 0.14);
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+// ── 담은 항목 트레이 ────────────────────────────────────────
+// 목록에서 고른 결과가 모달 안에서 바로 보이도록, 목록과 푸터 사이에 붙인다.
+// 클릭 → 목록 갱신 사이의 공간 단절이 "눌렸는지 모르겠다"는 문제의 원인이었다.
+.picker-tray {
+  flex-shrink: 0;
+  border-top: 1px solid var(--c-border);
+  background: rgba(255, 255, 255, 0.015);
+  padding: 12px 16px 14px;
+}
+
+.picker-tray-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.picker-tray-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-2);
+}
+
+.picker-tray-count { color: #c084fc; }
+
+.picker-tray-hint {
+  font-size: 11px;
+  color: var(--c-text-faint);
+}
+
+.picker-tray-empty {
+  padding: 14px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--c-text-faint);
+  border: 1px dashed var(--c-border-strong);
+  border-radius: 8px;
+}
+
+.picker-tray-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.picker-chip {
+  flex-shrink: 0;
+  width: 86px;
+  border: 1px solid var(--c-border);
+  border-radius: 9px;
+  background: var(--c-overlay);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  cursor: grab;
+  // 터치에서 드래그가 트레이 가로 스크롤로 먹히지 않게
+  touch-action: none;
+  user-select: none;
+  transition: border-color 0.12s, opacity 0.12s;
+  animation: picker-chip-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+  &:active { cursor: grabbing; }
+  &--dragging { opacity: 0.35; }
+  &--over { border-color: rgba(170, 59, 255, 0.55); }
+}
+
+@keyframes picker-chip-pop {
+  0%   { transform: scale(0.7) translateY(6px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.picker-chip-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.picker-chip-order {
+  font-size: 10px;
+  font-weight: 700;
+  color: #c084fc;
+  background: rgba(170, 59, 255, 0.14);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.picker-chip-x {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  line-height: 1;
+  border: none;
+  background: none;
+  color: var(--c-text-faint);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover { background: rgba(248, 113, 113, 0.14); color: #f87171; }
+}
+
+.picker-chip-thumb {
+  width: 100%;
+  height: 34px;
+  border-radius: 5px;
+  object-fit: cover;
+  background: var(--c-overlay);
+
+  &--empty { background: var(--c-overlay); }
+}
+
+.picker-chip-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 클릭한 맵 썸네일이 트레이로 날아가는 것처럼 보여주는 잔상 엘리먼트.
+// JS(flyToTray)가 body에 직접 붙였다 지운다 — Vue 트리 바깥이라 scoped 대상이 아니다.
+.map-fly-ghost {
+  position: fixed;
+  z-index: 999;
+  pointer-events: none;
+  border-radius: 5px;
+  background: var(--c-overlay);
+  border: 1px solid rgba(170, 59, 255, 0.5);
+  transition: left 0.34s cubic-bezier(0.4, 0, 0.2, 1), top 0.34s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.34s cubic-bezier(0.4, 0, 0.2, 1), height 0.34s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.34s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picker-chip { animation: none; }
+  .map-fly-ghost { display: none; }
+}
+
 // ── 피커 푸터 ─────────────────────────────────────────────
 .picker-footer {
   padding: 12px 16px;
