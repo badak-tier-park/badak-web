@@ -62,6 +62,20 @@ AI가 작성하는 커밋일수록 이 맥락이 유실되기 쉬우므로 의�
 - 함정을 피해 간 구현이라면 그 함정을 한 줄 남긴다 — 같은 곳을 다시 건드릴 때를 위해
 - 제목은 간결하게, 배경 설명은 본문에
 
+### PR 생성
+조직 공통 PR 템플릿을 따른다. 템플릿은 이 저장소가 아니라 **`badak-tier-park/.github`** 에 있고,
+`gh pr create --body`로 만들면 **자동 적용되지 않으므로** 직접 구조를 맞춰야 한다.
+
+PR을 만들기 전에 현재 템플릿을 가져와 그 섹션 구성을 그대로 쓴다:
+```
+gh api repos/badak-tier-park/.github/contents/.github/PULL_REQUEST_TEMPLATE.md --jq '.content' | base64 -d
+```
+
+- 체크박스는 실제로 해당하는 항목만 채운다. 하지 않은 테스트를 체크하지 않는다
+- PR 타입에 맞는 항목이 없으면(예: 문서 작업) 가장 가까운 것을 고르고 작업 내용에 명시한다
+- **DB 변경은 코드 diff에 나타나지 않는다.** Supabase MCP로 적용한 스키마·정책 변경이 있으면
+  영향 범위에 반드시 적는다 — PR만 봐서는 알 수 없기 때문
+
 ## 코드 컨벤션
 - 스타일은 외부 분리: `<style lang="scss" scoped>@use './ComponentName.scss';</style>`
 - 공통 헤더 `AppHeader.vue` — `#actions` slot으로 페이지별 버튼 주입
