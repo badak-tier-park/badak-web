@@ -431,6 +431,7 @@
                   <span v-if="team.captainId === standingsModal.championId" class="standing-award standing-award--champion">우승</span>
                   <span v-else-if="team.captainId === standingsModal.runnerUpId" class="standing-award standing-award--runner-up">준우승</span>
                   <div class="standing-stats">
+                    <span v-if="team.tied" class="standing-tie">재대결 필요</span>
                     <span class="standing-record">{{ team.wins }}승 {{ team.losses }}패</span>
                     <span class="standing-pts">{{ team.matchPoints }}<span class="standing-pts-label">pt</span></span>
                   </div>
@@ -492,9 +493,9 @@
               </div>
             </div>
             <div class="epi-divider" />
-            <div class="epi" :class="{ 'epi--over': teamPoints > entryModal.teamMax }">
+            <div class="epi" :class="{ 'epi--over': teamPoints > entryModal.teamMax || teamUnderMin }">
               <div class="epi-top">
-                <span class="epi-label">팀전</span>
+                <span class="epi-label">팀전<span v-if="entryModal.teamMin !== null" class="epi-min"> 최소 {{ entryModal.teamMin }}</span></span>
                 <span class="epi-val">{{ teamPoints }}<span class="epi-max">/{{ entryModal.teamMax }}</span></span>
               </div>
               <div class="epi-track">
@@ -660,7 +661,10 @@ import PredictionsTab from './PredictionsTab.vue'
 import RankingsTab from './RankingsTab.vue'
 
 const activeTab = ref<'leagues' | 'predictions' | 'rankings'>('leagues')
-import { getLeagues, getLeagueStatus, type LeagueRow, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
+import {
+  getLeagues, getLeagueStatus, calculateStandings, matchPointsOf,
+  type LeagueRow, type LeagueStatus, type EligibilityType, type StandingMatch,
+} from '@/lib/leagues'
 import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
@@ -671,7 +675,7 @@ import {
   getEntries, saveEntries, submitEntry, getEntryStatusMap, computeFinalRosters,
   consentReveal, checkBothConsented, getConsentedSet,
   getAceTierBan, saveAceTierBan, getEntriesForSchedules,
-  TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
+  TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS, MILITARY_DEDUCTION, calcEntryPoints, pointTiebreakWinner,
   type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
@@ -685,17 +689,15 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { FontSize } from '@/lib/tiptapFontSize'
 
-// 슬롯별 승점
-const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
-
 // 슬롯 결과 + 엔트리 포인트로 실제 경기 승자 계산
-// 3:3 동률이고 에결 없을 경우, 전체 엔트리 포인트 낮은 팀 승리 (차이 3pt 이상)
+// 3:3 동률이고 에결 없을 경우, 전체 엔트리 포인트 낮은 팀 승리 (차이가 리그 기준 이상)
 function resolveMatchWinner(
   capA: number,
   capB: number,
   slots: { slot_num: number; winner_captain_id: number | null }[],
   entries: EntryRecord[],
   playerMap: Map<number, PlayerRow>,
+  aceSkipGap: number | null,
 ): { winner: number | null; tiebreak: boolean } {
   let winsA = 0, winsB = 0
   let aceWinner: number | null = null
@@ -709,11 +711,10 @@ function resolveMatchWinner(
 
   // 3:3 동률 + 에결 없음 → 포인트 룰
   const calcPt = (cid: number) =>
-    entries.filter(e => e.captain_player_id === cid)
-      .reduce((sum, e) => sum + e.player_ids.reduce((s, id) => s + (TIER_POINTS[playerMap.get(id)?.tier ?? ''] ?? 0), 0), 0)
+    calcEntryPoints(entries.filter(e => e.captain_player_id === cid), id => playerMap.get(id)).total
   const ptA = calcPt(capA), ptB = calcPt(capB)
-  if (Math.abs(ptA - ptB) >= 3) return { winner: ptA < ptB ? capA : capB, tiebreak: true }
-  return { winner: null, tiebreak: false }
+  const winner = pointTiebreakWinner(ptA, ptB, capA, capB, aceSkipGap)
+  return { winner, tiebreak: winner !== null }
 }
 
 const SLOT_CONFIG = [
@@ -840,6 +841,7 @@ interface MyMatchItem {
   soloMax: number
   teamMax: number
   totalMax: number
+  teamMin: number | null
 }
 const matchListModal = reactive({
   open: false,
@@ -929,6 +931,8 @@ interface TeamStanding {
   wins: number
   losses: number
   matchPoints: number
+  /** 승리 수·승점 동률인데 재대결 결과가 아직 반영되지 않음 */
+  tied?: boolean
   matches: MatchResultItem[]
 }
 
@@ -1046,39 +1050,43 @@ async function openStandingsList(league: LeagueRow) {
       })
     }
 
+    const regularMatches: StandingMatch[] = []
     for (const s of schedules) {
       const { team_a_captain_id: capA, team_b_captain_id: capB } = s
       const slots = slotsBySchedule.get(s.id) ?? []
       const entries = entriesBySchedule.get(s.id) ?? []
 
-      let ptsA = 0, ptsB = 0
-      for (const slot of slots) {
-        const pts = MATCH_SLOT_POINTS[slot.slot_num] ?? 1
-        if (slot.winner_captain_id === capA) ptsA += pts
-        else if (slot.winner_captain_id === capB) ptsB += pts
-      }
+      const ptsA = matchPointsOf(slots, capA)
+      const ptsB = matchPointsOf(slots, capB)
 
-      const { winner } = resolveMatchWinner(capA, capB, slots, entries, playerMap)
+      // 경기 완료 시 저장된 승자를 우선한다(플레이오프 화면과 같은 기준). 3:3을 승자 없이 저장하던
+      // 이전 경기만 엔트리 포인트로 다시 판정한다
+      const winner = s.winner_captain_id
+        ?? resolveMatchWinner(capA, capB, slots, entries, playerMap, league.ace_skip_point_gap ?? null).winner
+      // 순위는 예선(정규경기)만으로 매긴다 — 플레이오프 결과는 우승/준우승 배지로만 보여준다
+      if (s.match_type === 'regular') regularMatches.push({ teamA: capA, teamB: capB, winner, pointsA: ptsA, pointsB: ptsB })
       const tNameA = teamName(capA)
       const tNameB = teamName(capB)
 
       if (standingsMap.has(capA)) {
         const st = standingsMap.get(capA)!
-        winner === capA ? st.wins++ : st.losses++
-        st.matchPoints += ptsA
         st.matches.push({ schedule: s, opponentName: tNameB, myPoints: ptsA, oppPoints: ptsB, isWin: winner === capA, teamAName: tNameA, teamBName: tNameB })
       }
       if (standingsMap.has(capB)) {
         const st = standingsMap.get(capB)!
-        winner === capB ? st.wins++ : st.losses++
-        st.matchPoints += ptsB
         st.matches.push({ schedule: s, opponentName: tNameA, myPoints: ptsB, oppPoints: ptsA, isWin: winner === capB, teamAName: tNameA, teamBName: tNameB })
       }
     }
 
-    standingsModal.standings = [...standingsMap.values()].sort((a, b) =>
-      b.wins !== a.wins ? b.wins - a.wins : b.matchPoints - a.matchPoints
-    )
+    // 순위는 플레이오프 화면과 같은 함수로 계산한다 (승리 수 → 승점 → 재대결 결과)
+    const ranked = calculateStandings(captains.map(c => c.player_id), regularMatches, league.standings_tiebreak_order ?? null)
+    standingsModal.standings = ranked.map(r => ({
+      ...standingsMap.get(r.captainId)!,
+      wins: r.wins,
+      losses: r.losses,
+      matchPoints: r.matchPoints,
+      tied: r.tied,
+    }))
 
     // 플레이오프 결과로 우승/준우승 판별
     let championId: number | null = null
@@ -1155,6 +1163,8 @@ interface EntryModalState {
   soloMax: number
   teamMax: number
   totalMax: number
+  /** 팀전 최소 포인트. null이면 제한 없음 */
+  teamMin: number | null
 }
 const entryModal = reactive<EntryModalState>({
   open: false,
@@ -1173,6 +1183,7 @@ const entryModal = reactive<EntryModalState>({
   soloMax: 16,
   teamMax: 7,
   totalMax: 23,
+  teamMin: null,
 })
 
 // ── 데이터 로드 ──────────────────────────────────────────────
@@ -1271,6 +1282,8 @@ async function openMatchList(league: LeagueRow) {
           soloMax: league.entry_solo_max,
           teamMax: league.entry_team_max,
           totalMax: league.entry_total_max,
+          // DB 컬럼 추가 전 배포돼도 undefined가 "최소 있음"으로 오인되지 않게 null로 맞춘다
+          teamMin: league.entry_team_min ?? null,
         }
       })
       .sort((a, b) => {
@@ -1323,40 +1336,30 @@ function buildOptions(slotNum: number, idx: number): SelectOption[] {
         label: m.nickname,
         tier: m.tier,
         race: m.race,
-        points: m.is_military ? Math.max(0, base - 1) : base,
+        points: m.is_military ? Math.max(0, base - MILITARY_DEDUCTION) : base,
         is_military: m.is_military,
       }
     })
 }
 
-const playerTierMap = computed(() => {
-  const m = new Map<number, string>()
-  for (const p of entryModal.teamMembers) m.set(p.id, p.tier)
-  return m
-})
+const teamMemberMap = computed(() => new Map(entryModal.teamMembers.map(p => [p.id, p])))
 
-const playerMilitaryMap = computed(() => {
-  const m = new Map<number, boolean>()
-  for (const p of entryModal.teamMembers) m.set(p.id, p.is_military ?? false)
-  return m
-})
-
-function effectivePoints(playerId: number): number {
-  const base = TIER_POINTS[playerTierMap.value.get(playerId) ?? ''] ?? 0
-  return playerMilitaryMap.value.get(playerId) ? Math.max(0, base - 1) : base
-}
-
-const individualPoints = computed(() =>
-  (INDIVIDUAL_SLOTS as readonly number[]).reduce((sum, slotNum) => {
-    const id = entryModal.selections[slotNum]?.[0] ?? 0
-    return sum + (id ? effectivePoints(id) : 0)
-  }, 0)
+// 군인 감점은 개인전·팀전 중복 출전 시 한쪽에서만 — calcEntryPoints가 처리한다
+const entryPoints = computed(() =>
+  calcEntryPoints(
+    Object.entries(entryModal.selections).map(([slot, ids]) => ({ match_slot: Number(slot), player_ids: ids })),
+    id => teamMemberMap.value.get(id),
+  )
 )
-const teamPoints = computed(() =>
-  (entryModal.selections[TEAM_SLOT] ?? []).reduce((sum, id) =>
-    sum + (id ? effectivePoints(id) : 0), 0)
+const individualPoints = computed(() => entryPoints.value.solo)
+const teamPoints = computed(() => entryPoints.value.team)
+const totalPoints = computed(() => entryPoints.value.total)
+// 팀전 2명을 다 고른 뒤에만 최소 미달로 표시한다 — 고르는 도중엔 당연히 모자라므로
+const teamUnderMin = computed(() =>
+  entryModal.teamMin !== null &&
+  (entryModal.selections[TEAM_SLOT] ?? []).filter(Boolean).length >= 2 &&
+  teamPoints.value < entryModal.teamMin
 )
-const totalPoints = computed(() => individualPoints.value + teamPoints.value)
 
 async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.open = true
@@ -1374,6 +1377,7 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.soloMax = item.soloMax
   entryModal.teamMax = item.teamMax
   entryModal.totalMax = item.totalMax
+  entryModal.teamMin = item.teamMin
   entryError.value = null
   initSelections()
   loadingEntry.value = true
@@ -1490,6 +1494,10 @@ async function handleEntrySubmit() {
   }
   if (teamPoints.value > entryModal.teamMax) {
     entryError.value = `팀전 포인트(${teamPoints.value})가 한도(${entryModal.teamMax})를 초과했습니다.`
+    return
+  }
+  if (entryModal.teamMin !== null && teamPoints.value < entryModal.teamMin) {
+    entryError.value = `팀전 포인트(${teamPoints.value})가 최소(${entryModal.teamMin})보다 낮습니다.`
     return
   }
   if (totalPoints.value > entryModal.totalMax) {

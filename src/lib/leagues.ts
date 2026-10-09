@@ -1,34 +1,126 @@
 import { supabase } from './supabase'
 import type { ScheduleRow } from './schedules'
 
+/**
+ * 경기 슬롯별 승점 — 리그 규정: 개인전 +1, 팀전(4경기) +2, 에이스 결정전(7경기) +2.
+ * 패배는 0점이고, 이긴 슬롯만큼 **승리팀·패배팀 모두** 받는다.
+ */
+export const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
+
+/** 한 경기에서 해당 팀이 받은 승점 */
+export function matchPointsOf(
+  slots: { slot_num: number; winner_captain_id: number | null }[],
+  captainId: number,
+): number {
+  return slots
+    .filter(s => s.winner_captain_id === captainId)
+    .reduce((sum, s) => sum + (MATCH_SLOT_POINTS[s.slot_num] ?? 1), 0)
+}
+
+export interface StandingMatch {
+  teamA: number
+  teamB: number
+  winner: number | null
+  pointsA: number
+  pointsB: number
+}
+
 export interface StandingEntry {
   captainId: number
   wins: number
   losses: number
+  matchPoints: number
   rank: number
+  /** 승리 수·승점이 같은 팀이 있는데 관리자가 재대결 결과(순서)를 아직 정하지 않음 */
+  tied: boolean
 }
 
-// 정규경기 기반 순위 계산 (wins 내림차순, 동률이면 captainId 오름차순)
+/** 완료된 정규경기를 순위 계산용 경기 목록으로 변환 (승자는 경기 완료 시 저장된 값) */
+export function toStandingMatches(
+  schedules: ScheduleRow[],
+  slots: { schedule_id: number; slot_num: number; winner_captain_id: number | null }[],
+): StandingMatch[] {
+  return schedules
+    .filter(s => s.is_completed && s.match_type === 'regular')
+    .map(s => {
+      const own = slots.filter(r => r.schedule_id === s.id)
+      return {
+        teamA: s.team_a_captain_id,
+        teamB: s.team_b_captain_id,
+        winner: s.winner_captain_id,
+        pointsA: matchPointsOf(own, s.team_a_captain_id),
+        pointsB: matchPointsOf(own, s.team_b_captain_id),
+      }
+    })
+}
+
+/**
+ * 예선 순위 — 리그 규정: 승리 수 → 승점 → (둘 다 같으면) 재대결.
+ *
+ * 재대결은 운영진이 따로 치르고, 관리자가 그 결과를 `leagues.standings_tiebreak_order`(팀장 id 순서)로
+ * 저장한다. 순서가 정해지지 않은 동률 팀은 `tied`로 표시되고 임시로 팀장 id 순으로 놓인다.
+ * 사용자 순위표와 플레이오프 대진이 같은 결과를 보도록 순위는 반드시 이 함수로만 계산한다.
+ */
 export function calculateStandings(
   captainIds: number[],
-  regularSchedules: ScheduleRow[],
+  matches: StandingMatch[],
+  tiebreakOrder: number[] | null = null,
 ): StandingEntry[] {
-  const completed = regularSchedules.filter(s => s.is_completed && s.match_type === 'regular')
-  const winsMap = new Map<number, number>(captainIds.map(id => [id, 0]))
-  const lossesMap = new Map<number, number>(captainIds.map(id => [id, 0]))
-
-  for (const s of completed) {
-    if (s.winner_captain_id == null) continue
-    winsMap.set(s.winner_captain_id, (winsMap.get(s.winner_captain_id) ?? 0) + 1)
-    const loserId = s.winner_captain_id === s.team_a_captain_id ? s.team_b_captain_id : s.team_a_captain_id
-    lossesMap.set(loserId, (lossesMap.get(loserId) ?? 0) + 1)
+  const stat = new Map(captainIds.map(id => [id, { wins: 0, losses: 0, matchPoints: 0 }]))
+  for (const m of matches) {
+    const a = stat.get(m.teamA)
+    const b = stat.get(m.teamB)
+    if (a) a.matchPoints += m.pointsA
+    if (b) b.matchPoints += m.pointsB
+    if (m.winner == null) continue
+    const winner = stat.get(m.winner)
+    const loser = stat.get(m.winner === m.teamA ? m.teamB : m.teamA)
+    if (winner) winner.wins++
+    if (loser) loser.losses++
   }
 
-  const sorted = captainIds
-    .map(id => ({ captainId: id, wins: winsMap.get(id) ?? 0, losses: lossesMap.get(id) ?? 0 }))
-    .sort((a, b) => b.wins - a.wins || a.captainId - b.captainId)
+  const orderIdx = (id: number) => {
+    const i = tiebreakOrder?.indexOf(id) ?? -1
+    return i < 0 ? Number.POSITIVE_INFINITY : i
+  }
+  const rows = captainIds.map(id => ({ captainId: id, ...stat.get(id)! }))
+  const sameRecord = (x: typeof rows[number], y: typeof rows[number]) =>
+    x.wins === y.wins && x.matchPoints === y.matchPoints
 
-  return sorted.map((e, i) => ({ ...e, rank: i + 1 }))
+  return rows
+    .map(r => ({
+      ...r,
+      // 같은 성적의 다른 팀이 있고, 둘 중 하나라도 재대결 순서가 없으면 미해결 동률
+      tied: rows.some(o => o.captainId !== r.captainId && sameRecord(o, r) &&
+        (orderIdx(r.captainId) === Number.POSITIVE_INFINITY || orderIdx(o.captainId) === Number.POSITIVE_INFINITY)),
+    }))
+    .sort((x, y) =>
+      y.wins - x.wins ||
+      y.matchPoints - x.matchPoints ||
+      orderIdx(x.captainId) - orderIdx(y.captainId) ||
+      x.captainId - y.captainId)
+    .map((e, i) => ({ ...e, rank: i + 1 }))
+}
+
+/**
+ * 미해결 동률이 플레이오프 진출을 가르는 경계(1위|2위 = 결승 직행, 3위|4위 = 준결승 진출)에 걸렸는지.
+ * 2위·3위 동률은 둘 다 준결승이라 대진에 영향이 없다.
+ */
+export function tieBlocksPlayoffs(standings: StandingEntry[]): boolean {
+  return [1, 3].some(upper => {
+    const a = standings.find(s => s.rank === upper)
+    const b = standings.find(s => s.rank === upper + 1)
+    return !!a && !!b && a.tied && b.tied && a.wins === b.wins && a.matchPoints === b.matchPoints
+  })
+}
+
+/** 재대결 결과(동률 팀 순서)를 저장한다. null이면 초기화 */
+export async function updateStandingsTiebreakOrder(id: string, order: number[] | null): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ standings_tiebreak_order: order, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
 }
 
 export function allRegularMatchesDone(regularSchedules: ScheduleRow[]): boolean {
@@ -55,6 +147,16 @@ export interface LeagueRow {
   entry_solo_max: number
   entry_team_max: number
   entry_total_max: number
+  /** 팀전 최소 포인트. null이면 제한 없음 */
+  entry_team_min: number | null
+  /** 3:3에서 에결을 생략하고 포인트 적게 쓴 팀을 승자로 하는 포인트 차이. null이면 항상 에결 */
+  ace_skip_point_gap: number | null
+  /** 시드권 교체 시 허용하는 최대 티어 단계 차이 (0.5P = 1단계). null이면 제한 없음 */
+  seed_swap_max_tier_steps: number | null
+  /** 시드권 교체 시 허용하는 최대 픽 순번 차이. null이면 제한 없음 */
+  seed_swap_max_pick_gap: number | null
+  /** 승리 수·승점 동률 시 재대결 결과로 관리자가 정한 팀 순서 (팀장 player id). null이면 미정 */
+  standings_tiebreak_order: number[] | null
   is_ready: boolean
   picks_completed: boolean
   draft_completed: boolean
@@ -190,9 +292,20 @@ export async function getLeagueCreatorPlayerId(leagueId: string): Promise<number
   return data ?? null
 }
 
+export async function updateLeagueSeedSwapLimits(
+  id: string,
+  fields: { seed_swap_max_tier_steps: number | null; seed_swap_max_pick_gap: number | null },
+): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function updateLeagueEntryLimits(
   id: string,
-  fields: { entry_solo_max: number; entry_team_max: number; entry_total_max: number },
+  fields: { entry_solo_max: number; entry_team_max: number; entry_total_max: number; entry_team_min: number | null; ace_skip_point_gap: number | null },
 ): Promise<void> {
   const { error } = await supabase
     .from('leagues')

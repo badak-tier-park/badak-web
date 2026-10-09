@@ -44,10 +44,44 @@
             >
               <span class="standing-rank">{{ entry.rank }}</span>
               <span class="standing-team">{{ teamLabel(entry.captainId) }}</span>
-              <span class="standing-record">{{ entry.wins }}승 {{ entry.losses }}패</span>
+              <span class="standing-record">{{ entry.wins }}승 {{ entry.losses }}패 · 승점 {{ entry.matchPoints }}</span>
+              <span v-if="entry.tied" class="standing-badge standing-badge--tie">동률 · 재대결 필요</span>
               <span v-if="entry.rank === 1" class="standing-badge standing-badge--gold">결승 직행</span>
               <span v-else-if="entry.rank === 2 || entry.rank === 3" class="standing-badge standing-badge--silver">준결승</span>
             </div>
+          </div>
+
+          <!-- 재대결 결과 반영: 승리 수·승점이 같은 팀끼리만 순서를 바꿀 수 있다 -->
+          <div v-if="regularAllDone && !semifinal && (hasTie || tiebreakOrder)" class="tiebreak-box">
+            <template v-if="!tiebreakEditing">
+              <p v-if="hasTie" class="tiebreak-desc">
+                승리 수와 승점이 같은 팀이 있습니다. 재대결을 진행한 뒤 결과 순서를 반영해 주세요.
+              </p>
+              <p v-else class="tiebreak-desc">재대결 결과로 정한 순서가 반영되어 있습니다.</p>
+              <div class="tiebreak-actions">
+                <button class="btn-pill btn-pill--sm btn-pill--purple" @click="openTiebreakEditor">재대결 결과 반영</button>
+                <button v-if="tiebreakOrder" class="btn-pill btn-pill--sm btn-pill--ghost" :disabled="tiebreakSaving" @click="resetTiebreak">초기화</button>
+              </div>
+            </template>
+            <template v-else>
+              <p class="tiebreak-desc">재대결 결과대로 순서를 정하세요. 성적이 같은 팀끼리만 이동할 수 있습니다.</p>
+              <div class="tiebreak-list">
+                <div v-for="(cid, i) in tiebreakDraft" :key="cid" class="tiebreak-row">
+                  <span class="standing-rank">{{ i + 1 }}</span>
+                  <span class="standing-team">{{ teamLabel(cid) }}</span>
+                  <span class="standing-record">{{ recordLabel(cid) }}</span>
+                  <button class="reorder-btn" :disabled="!canSwapTiebreak(i, i - 1)" @click="moveTiebreak(i, -1)">▲</button>
+                  <button class="reorder-btn" :disabled="!canSwapTiebreak(i, i + 1)" @click="moveTiebreak(i, 1)">▼</button>
+                </div>
+              </div>
+              <p v-if="tiebreakError" class="tiebreak-error">{{ tiebreakError }}</p>
+              <div class="tiebreak-actions">
+                <button class="btn-pill btn-pill--sm btn-pill--ghost" :disabled="tiebreakSaving" @click="tiebreakEditing = false">취소</button>
+                <button class="btn-pill btn-pill--sm btn-pill--purple btn-pill--filled" :disabled="tiebreakSaving" @click="saveTiebreak">
+                  {{ tiebreakSaving ? '저장 중...' : '저장' }}
+                </button>
+              </div>
+            </template>
           </div>
         </section>
 
@@ -75,6 +109,10 @@
               <path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
             </svg>
             정규경기가 모두 완료되면 설정할 수 있습니다.
+          </div>
+
+          <div v-else-if="!semifinal && playoffBlockedByTie" class="stage-locked">
+            진출 순위에 동률이 있습니다. 재대결 결과를 반영하면 경기를 만들 수 있습니다.
           </div>
 
           <template v-else-if="!semifinal">
@@ -340,7 +378,10 @@ import '@vuepic/vue-datepicker/dist/main.css'
 import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
-import { getLeague, calculateStandings, allRegularMatchesDone, type LeagueRow } from '@/lib/leagues'
+import {
+  getLeague, calculateStandings, toStandingMatches, tieBlocksPlayoffs, updateStandingsTiebreakOrder,
+  allRegularMatchesDone, type LeagueRow,
+} from '@/lib/leagues'
 import { getCaptains } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
@@ -350,6 +391,8 @@ import {
   createPlayoffMatch,
   deletePlayoffMatch,
   revealEntries,
+  getSlotResultsForSchedules,
+  type SlotResult,
 
   type ScheduleRow,
 } from '@/lib/schedules'
@@ -380,7 +423,71 @@ const bothSubmittedSet = ref(new Set<number>())
 
 // ── 파생 ────────────────────────────────────────────────────
 const regularAllDone = computed(() => allRegularMatchesDone(regularSchedules.value))
-const standings = computed(() => calculateStandings(captainIds.value, regularSchedules.value))
+const regularSlots = ref<SlotResult[]>([])
+const tiebreakOrder = ref<number[] | null>(null)
+const standings = computed(() =>
+  calculateStandings(captainIds.value, toStandingMatches(regularSchedules.value, regularSlots.value), tiebreakOrder.value))
+const hasTie = computed(() => standings.value.some(s => s.tied))
+// 결승 직행(1|2위)·준결승 진출(3|4위) 경계에 동률이 걸리면 대진을 만들 수 없다
+const playoffBlockedByTie = computed(() => tieBlocksPlayoffs(standings.value))
+
+// ── 재대결 결과 반영 ──────────────────────────────────────────
+const tiebreakEditing = ref(false)
+const tiebreakDraft = ref<number[]>([])
+const tiebreakSaving = ref(false)
+const tiebreakError = ref<string | null>(null)
+
+const standingOf = (cid: number) => standings.value.find(s => s.captainId === cid)
+const recordLabel = (cid: number) => {
+  const s = standingOf(cid)
+  return s ? `${s.wins}승 · 승점 ${s.matchPoints}` : ''
+}
+
+function openTiebreakEditor() {
+  tiebreakDraft.value = standings.value.map(s => s.captainId)
+  tiebreakError.value = null
+  tiebreakEditing.value = true
+}
+
+// 성적(승리 수·승점)이 같은 팀끼리만 자리를 바꿀 수 있다 — 재대결은 동률 팀 사이에서만 의미가 있다
+function canSwapTiebreak(i: number, j: number): boolean {
+  const a = standingOf(tiebreakDraft.value[i])
+  const b = standingOf(tiebreakDraft.value[j])
+  return !!a && !!b && a.wins === b.wins && a.matchPoints === b.matchPoints
+}
+
+function moveTiebreak(i: number, dir: -1 | 1) {
+  const j = i + dir
+  if (!canSwapTiebreak(i, j)) return
+  const arr = [...tiebreakDraft.value]
+  ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  tiebreakDraft.value = arr
+}
+
+async function saveTiebreak() {
+  tiebreakSaving.value = true
+  tiebreakError.value = null
+  try {
+    // 전체 순서를 저장해 두면 동률 팀 사이의 순서가 모두 확정된다
+    await updateStandingsTiebreakOrder(leagueId, tiebreakDraft.value)
+    tiebreakOrder.value = [...tiebreakDraft.value]
+    tiebreakEditing.value = false
+  } catch (e: any) {
+    tiebreakError.value = e.message ?? '저장 중 오류가 발생했습니다.'
+  } finally {
+    tiebreakSaving.value = false
+  }
+}
+
+async function resetTiebreak() {
+  tiebreakSaving.value = true
+  try {
+    await updateStandingsTiebreakOrder(leagueId, null)
+    tiebreakOrder.value = null
+  } finally {
+    tiebreakSaving.value = false
+  }
+}
 
 const semifinal = computed(() => playoffSchedules.value.find(s => s.match_type === 'semifinal') ?? null)
 const finalSet1 = computed(() => playoffSchedules.value.find(s => s.match_type === 'final_set1') ?? null)
@@ -444,7 +551,9 @@ async function loadData() {
     getPlayoffSchedules(leagueId),
   ]))
   league.value = leagueData
+  tiebreakOrder.value = leagueData.standings_tiebreak_order ?? null
   regularSchedules.value = regular
+  regularSlots.value = await getSlotResultsForSchedules(regular.filter(s => s.is_completed).map(s => s.id))
   playoffSchedules.value = playoff
   captainIds.value = captains.map(c => c.player_id)
 
@@ -489,6 +598,7 @@ onMounted(async () => {
 
 // ── 준결승 ──────────────────────────────────────────────────
 async function createSemifinal() {
+  if (playoffBlockedByTie.value) return
   const rank2 = standings.value.find(s => s.rank === 2)
   const rank3 = standings.value.find(s => s.rank === 3)
   if (!rank2 || !rank3) return
