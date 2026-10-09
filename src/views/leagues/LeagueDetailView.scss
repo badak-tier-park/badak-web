@@ -893,6 +893,13 @@
   gap: 14px;
 }
 
+// 시드권자 탭에서 목록 아래에 교체 기준 입력칸을 붙인다
+.seed-limits-grid {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--c-border-faint);
+}
+
 .entry-points-field {
   display: grid;
   grid-template-columns: 1fr 140px;

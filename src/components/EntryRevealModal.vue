@@ -311,10 +311,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getScheduleEntries, TIER_POINTS, getAceTierBans, type EntryRecord } from '@/lib/entries'
+import { getScheduleEntries, TIER_POINTS, getAceTierBans, calcEntryPoints, pointTiebreakWinner, INDIVIDUAL_SLOTS, TEAM_SLOT, type EntryRecord } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
+import { getLeague } from '@/lib/leagues'
 import { type PlayerRow } from '@/lib/players'
 import { getSlotResults, type SlotResult } from '@/lib/schedules'
 import { withTimeout } from '@/lib/supabase'
@@ -374,18 +375,21 @@ const aceSlotResult = ref<SlotResult | null>(null)
 const aceTierBanA = ref<string | null>(null)
 const aceTierBanB = ref<string | null>(null)
 const allMapsById = ref(new Map<string, MapInfo>())
+const aceSkipGap = ref<number | null>(null)
 
 onMounted(async () => {
   try {
-    const [entries, players, matchMaps, allMaps, slotResultsData, aceTierBans] = await withTimeout(Promise.all([
+    const [entries, players, matchMaps, allMaps, slotResultsData, aceTierBans, league] = await withTimeout(Promise.all([
       getScheduleEntries(props.scheduleId),
       getLeaguePlayers(props.leagueId),
       getMatchMaps(props.leagueId),
       getMaps(),
       props.showResults ? getSlotResults(props.scheduleId) : Promise.resolve([] as SlotResult[]),
       getAceTierBans(props.scheduleId),
+      getLeague(props.leagueId),
     ]))
 
+    aceSkipGap.value = league.ace_skip_point_gap ?? null
     playerMap.value = new Map(players.map(p => [p.id, p]))
 
     const mapInfoMap = new Map<string, MapInfo>(allMaps.map(m => [m.id, { id: m.id, name: m.name, thumbnail_url: m.thumbnail_url ?? null }]))
@@ -519,15 +523,22 @@ function playerPt(id: number): number {
   return TIER_POINTS[playerTier(id)] ?? 0
 }
 
+const getPlayer = (id: number) => playerMap.value.get(id)
+
+// 대타가 나와도 포인트는 제출한 엔트리 그대로 진행한다(규정) — 대타 선수가 아니라 원래 엔트리로 합산
+const entryPlayerIds = (captainId: number, slotNum: number) => getEntry(captainId, slotNum)?.player_ids ?? []
+
+// 군인 감점은 개인전·팀전 중복 출전 시 개인전 쪽에서만 빠지므로, 팀전 합계는 엔트리 전체를 보고 계산한다
 function slotTotal(captainId: number, slotNum: number): number {
-  return getSlotPlayerIds(captainId, slotNum).reduce((sum, id) => sum + playerPt(id), 0)
+  if (slotNum !== TEAM_SLOT) {
+    return calcEntryPoints([{ match_slot: slotNum, player_ids: entryPlayerIds(captainId, slotNum) }], getPlayer).total
+  }
+  const slots = [...INDIVIDUAL_SLOTS, TEAM_SLOT].map(n => ({ match_slot: n, player_ids: entryPlayerIds(captainId, n) }))
+  return calcEntryPoints(slots, getPlayer).team
 }
 
 function totalPoints(captainId: number): number {
-  return [...(entriesMap.value.get(captainId)?.values() ?? [])].reduce(
-    (sum, e) => sum + e.player_ids.reduce((s, id) => s + playerPt(id), 0),
-    0,
-  )
+  return calcEntryPoints([...(entriesMap.value.get(captainId)?.values() ?? [])], getPlayer).total
 }
 
 // ── 결과 로직 ─────────────────────────────────────────────────
@@ -558,13 +569,11 @@ const acePlayed = computed(() => {
   return !!(aceSlotResult.value?.ace_player_a_id || aceSlotResult.value?.ace_player_b_id || aceSlotResult.value?.winner_captain_id)
 })
 
-// 3:3 동률 + 포인트 차이 3pt 이상 → 낮은 포인트 팀 승리
+// 3:3 동률 + 포인트 차이가 리그 기준 이상 → 낮은 포인트 팀 승리
 const tieBreakWinner = computed((): number | null => {
   if (!props.showResults || acePlayed.value) return null
   if (regularScoreA.value !== regularScoreB.value) return null
-  const diff = Math.abs(ptA.value - ptB.value)
-  if (diff < 3) return null
-  return ptA.value < ptB.value ? props.teamACaptainId : props.teamBCaptainId
+  return pointTiebreakWinner(ptA.value, ptB.value, props.teamACaptainId, props.teamBCaptainId, aceSkipGap.value)
 })
 
 const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
