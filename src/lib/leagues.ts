@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { ScheduleRow } from './schedules'
+import type { HandicapRow } from './handicap'
 
 /**
  * 경기 슬롯별 승점 — 리그 규정: 개인전 +1, 팀전(4경기) +2, 에이스 결정전(7경기) +2.
@@ -114,6 +115,17 @@ export function tieBlocksPlayoffs(standings: StandingEntry[]): boolean {
   })
 }
 
+export async function updateLeagueHandicap(
+  id: string,
+  fields: { handicap_point_gap: number | null; handicap_table: HandicapRow[] },
+): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
 /** 재대결 결과(동률 팀 순서)를 저장한다. null이면 초기화 */
 export async function updateStandingsTiebreakOrder(id: string, order: number[] | null): Promise<void> {
   const { error } = await supabase
@@ -157,6 +169,10 @@ export interface LeagueRow {
   seed_swap_max_pick_gap: number | null
   /** 승리 수·승점 동률 시 재대결 결과로 관리자가 정한 팀 순서 (팀장 player id). null이면 미정 */
   standings_tiebreak_order: number[] | null
+  /** 핸디를 적용하는 양팀 엔트리 포인트 차이. null이면 핸디 없음 */
+  handicap_point_gap: number | null
+  /** 티어 단계 차이별 핸디 (체력 % + 추가 텍스트). 빈 단계는 핸디 없음 */
+  handicap_table: HandicapRow[] | null
   is_ready: boolean
   picks_completed: boolean
   draft_completed: boolean
