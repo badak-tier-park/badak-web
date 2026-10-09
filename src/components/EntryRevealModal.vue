@@ -315,7 +315,7 @@ import { getScheduleEntries, TIER_POINTS, getAceTierBans, calcEntryPoints, point
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
-import { getLeague } from '@/lib/leagues'
+import { getLeague, MATCH_SLOT_POINTS } from '@/lib/leagues'
 import { type PlayerRow } from '@/lib/players'
 import { getSlotResults, type SlotResult } from '@/lib/schedules'
 import { withTimeout } from '@/lib/supabase'
@@ -576,7 +576,6 @@ const tieBreakWinner = computed((): number | null => {
   return pointTiebreakWinner(ptA.value, ptB.value, props.teamACaptainId, props.teamBCaptainId, aceSkipGap.value)
 })
 
-const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
 
 const matchPointsA = computed(() => {
   let pts = 0

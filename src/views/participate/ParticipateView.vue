@@ -431,6 +431,7 @@
                   <span v-if="team.captainId === standingsModal.championId" class="standing-award standing-award--champion">우승</span>
                   <span v-else-if="team.captainId === standingsModal.runnerUpId" class="standing-award standing-award--runner-up">준우승</span>
                   <div class="standing-stats">
+                    <span v-if="team.tied" class="standing-tie">재대결 필요</span>
                     <span class="standing-record">{{ team.wins }}승 {{ team.losses }}패</span>
                     <span class="standing-pts">{{ team.matchPoints }}<span class="standing-pts-label">pt</span></span>
                   </div>
@@ -660,7 +661,10 @@ import PredictionsTab from './PredictionsTab.vue'
 import RankingsTab from './RankingsTab.vue'
 
 const activeTab = ref<'leagues' | 'predictions' | 'rankings'>('leagues')
-import { getLeagues, getLeagueStatus, type LeagueRow, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
+import {
+  getLeagues, getLeagueStatus, calculateStandings, matchPointsOf,
+  type LeagueRow, type LeagueStatus, type EligibilityType, type StandingMatch,
+} from '@/lib/leagues'
 import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
@@ -684,9 +688,6 @@ import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import { FontSize } from '@/lib/tiptapFontSize'
-
-// 슬롯별 승점
-const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
 
 // 슬롯 결과 + 엔트리 포인트로 실제 경기 승자 계산
 // 3:3 동률이고 에결 없을 경우, 전체 엔트리 포인트 낮은 팀 승리 (차이가 리그 기준 이상)
@@ -930,6 +931,8 @@ interface TeamStanding {
   wins: number
   losses: number
   matchPoints: number
+  /** 승리 수·승점 동률인데 재대결 결과가 아직 반영되지 않음 */
+  tied?: boolean
   matches: MatchResultItem[]
 }
 
@@ -1047,39 +1050,43 @@ async function openStandingsList(league: LeagueRow) {
       })
     }
 
+    const regularMatches: StandingMatch[] = []
     for (const s of schedules) {
       const { team_a_captain_id: capA, team_b_captain_id: capB } = s
       const slots = slotsBySchedule.get(s.id) ?? []
       const entries = entriesBySchedule.get(s.id) ?? []
 
-      let ptsA = 0, ptsB = 0
-      for (const slot of slots) {
-        const pts = MATCH_SLOT_POINTS[slot.slot_num] ?? 1
-        if (slot.winner_captain_id === capA) ptsA += pts
-        else if (slot.winner_captain_id === capB) ptsB += pts
-      }
+      const ptsA = matchPointsOf(slots, capA)
+      const ptsB = matchPointsOf(slots, capB)
 
-      const { winner } = resolveMatchWinner(capA, capB, slots, entries, playerMap, league.ace_skip_point_gap ?? null)
+      // 경기 완료 시 저장된 승자를 우선한다(플레이오프 화면과 같은 기준). 3:3을 승자 없이 저장하던
+      // 이전 경기만 엔트리 포인트로 다시 판정한다
+      const winner = s.winner_captain_id
+        ?? resolveMatchWinner(capA, capB, slots, entries, playerMap, league.ace_skip_point_gap ?? null).winner
+      // 순위는 예선(정규경기)만으로 매긴다 — 플레이오프 결과는 우승/준우승 배지로만 보여준다
+      if (s.match_type === 'regular') regularMatches.push({ teamA: capA, teamB: capB, winner, pointsA: ptsA, pointsB: ptsB })
       const tNameA = teamName(capA)
       const tNameB = teamName(capB)
 
       if (standingsMap.has(capA)) {
         const st = standingsMap.get(capA)!
-        winner === capA ? st.wins++ : st.losses++
-        st.matchPoints += ptsA
         st.matches.push({ schedule: s, opponentName: tNameB, myPoints: ptsA, oppPoints: ptsB, isWin: winner === capA, teamAName: tNameA, teamBName: tNameB })
       }
       if (standingsMap.has(capB)) {
         const st = standingsMap.get(capB)!
-        winner === capB ? st.wins++ : st.losses++
-        st.matchPoints += ptsB
         st.matches.push({ schedule: s, opponentName: tNameA, myPoints: ptsB, oppPoints: ptsA, isWin: winner === capB, teamAName: tNameA, teamBName: tNameB })
       }
     }
 
-    standingsModal.standings = [...standingsMap.values()].sort((a, b) =>
-      b.wins !== a.wins ? b.wins - a.wins : b.matchPoints - a.matchPoints
-    )
+    // 순위는 플레이오프 화면과 같은 함수로 계산한다 (승리 수 → 승점 → 재대결 결과)
+    const ranked = calculateStandings(captains.map(c => c.player_id), regularMatches, league.standings_tiebreak_order ?? null)
+    standingsModal.standings = ranked.map(r => ({
+      ...standingsMap.get(r.captainId)!,
+      wins: r.wins,
+      losses: r.losses,
+      matchPoints: r.matchPoints,
+      tied: r.tied,
+    }))
 
     // 플레이오프 결과로 우승/준우승 판별
     let championId: number | null = null
