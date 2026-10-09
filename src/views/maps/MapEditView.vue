@@ -3,11 +3,11 @@
     <AppHeader />
 
     <div class="page-inner">
-      <button class="btn-back" @click="$router.push({ name: 'home' })">
+      <button class="btn-back" @click="$router.push({ name: 'maps' })">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
           <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        홈
+        맵 목록
       </button>
 
       <header class="page-header">
@@ -334,7 +334,7 @@ async function handleSubmit() {
       tileset: form.value.tileset,
       imageFile: form.value.imageFile,
     }, existingImageUrl.value, existingThumbnailUrl.value)
-    router.push({ name: 'home' })
+    router.push({ name: 'maps' })
   } catch (e: any) {
     submitError.value = e.message ?? '저장 중 오류가 발생했습니다.'
   } finally {
