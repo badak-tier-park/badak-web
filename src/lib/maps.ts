@@ -96,6 +96,15 @@ export interface MapInsert {
   imageFile: File | null
 }
 
+/** 리퀴피디아에서 불러와 등록할 때만 붙는 정보 */
+export interface MapLiquipediaFields {
+  liquipedia_name: string
+  version: string | null
+  /** 불러온 리퀴피디아 이미지를 그대로 등록할 때만. 관리자가 이미지를 바꿨으면 넘기지 않는다 */
+  image_author?: string | null
+  image_source?: string | null
+}
+
 export async function getMaps(): Promise<MapRow[]> {
   const { data, error } = await supabase
     .from('maps')
@@ -171,7 +180,7 @@ export async function updateMap(
   return map
 }
 
-export async function createMap(data: MapInsert) {
+export async function createMap(data: MapInsert, liquipedia?: MapLiquipediaFields) {
   let image_url: string | null = null
   let thumbnail_url: string | null = null
 
@@ -192,6 +201,9 @@ export async function createMap(data: MapInsert) {
       tileset: data.tileset,
       image_url,
       thumbnail_url,
+      // 리퀴피디아에서 불러온 맵은 그 이름을 같이 저장해 두면, 나중에 래더에 들어왔을 때
+      // 동기화가 같은 맵으로 알아보고 자동으로 연결한다
+      ...(liquipedia ?? {}),
     })
     .select()
     .single()
@@ -201,7 +213,7 @@ export async function createMap(data: MapInsert) {
 }
 
 // ── 래더 맵 동기화 (리퀴피디아) ──────────────────────────────────
-// 가져오기는 /api/ladder-maps(서버)가 하고, 반영은 관리자가 검토 화면에서 고른 대로
+// 가져오기는 /api/liquipedia-maps(서버)가 하고, 반영은 관리자가 검토 화면에서 고른 대로
 // 여기서 한다. 매칭 규칙은 ladderMatch.ts.
 
 async function authHeader(): Promise<Record<string, string>> {
@@ -211,20 +223,30 @@ async function authHeader(): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${token}` }
 }
 
-export async function fetchLadderPool(): Promise<LadderPool> {
-  const res = await fetch('/api/ladder-maps', { headers: await authHeader() })
+async function getLiquipediaApi<T>(query: string): Promise<T> {
+  const res = await fetch(`/api/liquipedia-maps${query}`, { headers: await authHeader() })
   // Vite 개발 서버에는 /api 함수가 없어 index.html(HTML)이 돌아온다
   if (!(res.headers.get('content-type') ?? '').includes('application/json')) {
-    throw new Error('동기화 API에 연결하지 못했습니다. 로컬 개발 서버(npm run dev)에서는 동작하지 않으니 Vercel 프리뷰에서 확인해주세요.')
+    throw new Error('리퀴피디아 API에 연결하지 못했습니다. 로컬 개발 서버(npm run dev)에서는 동작하지 않으니 Vercel 프리뷰에서 확인해주세요.')
   }
   const body = await res.json()
-  if (!res.ok) throw new Error(body.error ?? `동기화 API 오류 (${res.status})`)
-  return body as LadderPool
+  if (!res.ok) throw new Error(body.error ?? `리퀴피디아 API 오류 (${res.status})`)
+  return body as T
+}
+
+export function fetchLadderPool(): Promise<LadderPool> {
+  return getLiquipediaApi<LadderPool>('')
+}
+
+/** 래더와 무관하게 리퀴피디아 맵을 검색한다. 영문 이름만 걸린다 (영어 위키라) */
+export async function searchLiquipediaMaps(query: string): Promise<LadderMapInfo[]> {
+  const body = await getLiquipediaApi<{ results: LadderMapInfo[] }>(`?search=${encodeURIComponent(query)}`)
+  return body.results
 }
 
 /** 리퀴피디아 이미지를 /api를 거쳐 받는다 (같은 출처라 canvas 압축이 막히지 않는다) */
-async function fetchLadderImage(url: string): Promise<File> {
-  const res = await fetch(`/api/ladder-maps?image=${encodeURIComponent(url)}`, { headers: await authHeader() })
+export async function fetchLiquipediaImage(url: string): Promise<File> {
+  const res = await fetch(`/api/liquipedia-maps?image=${encodeURIComponent(url)}`, { headers: await authHeader() })
   const type = res.headers.get('content-type') ?? ''
   if (!res.ok || !type.startsWith('image/')) {
     const body = type.includes('application/json') ? await res.json() : null
@@ -238,7 +260,7 @@ async function fetchLadderImage(url: string): Promise<File> {
  * 끌어다 쓰게 되고, 파일 이름이 바뀌면 이미지가 깨진다.
  */
 async function importLadderImage(image: LadderMapImage) {
-  const stored = await storeMapImage(await fetchLadderImage(image.url))
+  const stored = await storeMapImage(await fetchLiquipediaImage(image.url))
   return { ...stored, image_author: image.author, image_source: image.source }
 }
 

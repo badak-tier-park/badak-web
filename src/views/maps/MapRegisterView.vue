@@ -18,6 +18,17 @@
         </div>
       </header>
 
+      <LiquipediaMapSearch :maps="existingMaps" :busy="loadingImage" @select="applyLiquipedia" />
+
+      <div v-if="imported" class="import-banner">
+        <div class="import-banner-text">
+          <strong>리퀴피디아 '{{ imported.liquipedia_name }}'에서 불러왔어요.</strong>
+          <span v-if="loadingImage">이미지를 가져오는 중...</span>
+          <span v-for="n in importNotices" :key="n" class="import-notice">{{ n }}</span>
+        </div>
+        <button type="button" class="import-unlink" :disabled="submitting" @click="unlinkLiquipedia">연결 해제</button>
+      </div>
+
       <form class="register-form" @submit.prevent="handleSubmit">
 
         <!-- 이미지 업로드 -->
@@ -54,6 +65,13 @@
               </svg>
             </button>
           </div>
+          <p v-if="imageCredit" class="image-credit">
+            이미지 {{ imageCredit.author ?? '작가 미상' }}
+            · 출처
+            <a v-if="imageCredit.href" :href="imageCredit.href" target="_blank" rel="noopener noreferrer">{{ imageCredit.label }}</a>
+            <span v-else>{{ imageCredit.label }}</span>
+            <span class="image-credit-via">(리퀴피디아에서 불러옴)</span>
+          </p>
         </section>
 
         <!-- 기본 정보 -->
@@ -190,10 +208,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
-import { createMap } from '@/lib/maps'
+import LiquipediaMapSearch from './LiquipediaMapSearch.vue'
+import { createMap, getMaps, fetchLiquipediaImage, type MapRow } from '@/lib/maps'
+import { aliasesWith, findExistingMap, type LadderMapInfo } from '@/lib/ladderMatch'
+import { safeSourceLink } from '@/lib/sourceLink'
 
 const router = useRouter()
 
@@ -239,15 +260,81 @@ function onDrop(e: DragEvent) {
   if (file && ['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) setImage(file)
 }
 
-function setImage(file: File) {
+function setImage(file: File, fromLiquipedia = false) {
   form.value.imageFile = file
   previewUrl.value = URL.createObjectURL(file)
+  // 관리자가 직접 고른 이미지면 더 이상 리퀴피디아 이미지가 아니므로 원작자 표기를 떼어낸다
+  imageFromLiquipedia.value = fromLiquipedia
 }
 
 function removeImage() {
   form.value.imageFile = null
   previewUrl.value = null
+  imageFromLiquipedia.value = false
   if (fileInput.value) fileInput.value.value = ''
+}
+
+// --- 리퀴피디아에서 불러오기 ---
+const existingMaps = ref<MapRow[]>([])
+const imported = ref<LadderMapInfo | null>(null)
+const imageFromLiquipedia = ref(false)
+const loadingImage = ref(false)
+const importNotices = ref<string[]>([])
+
+onMounted(async () => {
+  // 중복 등록 안내용이라 실패해도 등록 자체는 막지 않는다
+  try { existingMaps.value = await getMaps() } catch { existingMaps.value = [] }
+})
+
+const imageCredit = computed(() => {
+  const image = imported.value?.image
+  if (!imageFromLiquipedia.value || !image?.source) return null
+  return { author: image.author, ...safeSourceLink(image.source) }
+})
+
+async function applyLiquipedia(info: LadderMapInfo) {
+  imported.value = info
+  const notices: string[] = []
+
+  form.value.name = info.name
+  if (info.player_count) form.value.playerCount = info.player_count
+  if (info.width && info.height) {
+    form.value.width = info.width
+    form.value.height = info.height
+    isCustomSize.value = !sizePresets.some(p => p.w === info.width && p.h === info.height)
+  }
+  if (info.tileset) form.value.tileset = info.tileset
+
+  const missing = [
+    !(info.width && info.height) && '크기',
+    !info.player_count && '인원',
+    !info.tileset && '타일셋',
+  ].filter(Boolean)
+  if (missing.length) notices.push(`리퀴피디아에 ${missing.join('·')} 정보가 없어요. 아래에서 직접 확인해주세요.`)
+
+  const match = findExistingMap(info, existingMaps.value)
+  if (match?.kind === 'same-name') notices.push(`이미 등록된 '${match.map.name}'와(과) 같은 맵 같아요. 중복 등록인지 확인해주세요.`)
+  if (match?.kind === 'similar') notices.push(`버전만 다른 '${match.map.name}'이(가) 이미 있어요.`)
+  if (!info.image) notices.push('리퀴피디아에 이미지가 없어요. 직접 올려주세요.')
+  importNotices.value = notices
+
+  if (info.image) {
+    loadingImage.value = true
+    try {
+      setImage(await fetchLiquipediaImage(info.image.url), true)
+    } catch (e: any) {
+      importNotices.value = [...importNotices.value, `이미지를 가져오지 못했어요. (${e.message ?? '오류'}) 직접 올려주세요.`]
+    } finally {
+      loadingImage.value = false
+    }
+  }
+}
+
+/** 리퀴피디아 연결만 끊는다. 이미 채워진 폼 값은 그대로 두고, 원작자 표기는 뗀다 */
+function unlinkLiquipedia() {
+  imported.value = null
+  imageFromLiquipedia.value = false
+  importNotices.value = []
 }
 
 // --- 맵 크기 ---
@@ -297,19 +384,37 @@ async function handleSubmit() {
     return
   }
 
+  const lp = imported.value
+  if (lp && findExistingMap(lp, existingMaps.value)?.kind === 'same-page') {
+    submitError.value = `'${lp.liquipedia_name}'은(는) 이미 등록된 맵이에요.`
+    return
+  }
+
   submitting.value = true
   submitError.value = null
 
   try {
-    await createMap({
-      name: form.value.name,
-      aliases: form.value.aliases,
-      width: form.value.width,
-      height: form.value.height,
-      player_count: form.value.playerCount,
-      tileset: form.value.tileset,
-      imageFile: form.value.imageFile,
-    })
+    await createMap(
+      {
+        name: form.value.name,
+        // 이름을 한글로 바꿔 등록해도 리플레이에 찍히는 영문명으로 전적이 매칭되게
+        aliases: lp ? aliasesWith({ name: form.value.name, aliases: form.value.aliases }, [lp.liquipedia_name]) : form.value.aliases,
+        width: form.value.width,
+        height: form.value.height,
+        player_count: form.value.playerCount,
+        tileset: form.value.tileset,
+        imageFile: form.value.imageFile,
+      },
+      lp
+        ? {
+            liquipedia_name: lp.liquipedia_name,
+            version: lp.version,
+            ...(imageFromLiquipedia.value && lp.image
+              ? { image_author: lp.image.author, image_source: lp.image.source }
+              : {}),
+          }
+        : undefined,
+    )
     router.push({ name: 'maps' })
   } catch (e: any) {
     submitError.value = e.message ?? '저장 중 오류가 발생했습니다.'

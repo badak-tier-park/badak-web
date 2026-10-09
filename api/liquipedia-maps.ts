@@ -7,8 +7,9 @@ import { createClient } from '@supabase/supabase-js'
 setDefaultAutoSelectFamilyAttemptTimeout(2000)
 
 /**
- * GET /api/ladder-maps — 리퀴피디아에서 현재 시즌 스타 리마스터 래더 맵 풀과 맵별 정보를 가져온다.
- * GET /api/ladder-maps?image=<리퀴피디아 이미지 주소> — 그 맵 이미지 파일을 대신 받아 돌려준다.
+ * GET /api/liquipedia-maps — 리퀴피디아에서 현재 시즌 스타 리마스터 래더 맵 풀과 맵별 정보를 가져온다.
+ * GET /api/liquipedia-maps?image=<리퀴피디아 이미지 주소> — 그 맵 이미지 파일을 대신 받아 돌려준다.
+ * GET /api/liquipedia-maps?search=<영문 맵 이름> — 래더와 무관하게 리퀴피디아 맵 페이지를 검색한다.
  *
  * 브라우저에서 리퀴피디아를 직접 부르지 않고 서버를 거치는 이유: 리퀴피디아 API 이용 규칙이
  * 연락처가 담긴 User-Agent를 요구하는데, 브라우저 fetch는 User-Agent를 바꿀 수 없다.
@@ -71,6 +72,24 @@ export interface LadderPool {
 }
 
 let cache: { at: number; pool: LadderPool } | null = null
+const searchCache = new Map<string, { at: number; results: LadderMapInfo[] }>()
+const SEARCH_CACHE_MAX = 50
+
+// 리퀴피디아 API 요청을 한 줄로 세워 요청 사이 간격(REQUEST_GAP_MS)을 지킨다.
+// 동기화와 검색이 같은 인스턴스에 동시에 들어와도 간격이 깨지지 않게, 시각 비교가 아니라 큐로 한다.
+let requestQueue: Promise<unknown> = Promise.resolve()
+let lastRequestAt = 0
+
+function politeFetch(url: string): Promise<Response> {
+  const run = requestQueue.then(async () => {
+    const wait = lastRequestAt + REQUEST_GAP_MS - Date.now()
+    if (wait > 0) await sleep(wait)
+    lastRequestAt = Date.now()
+    return fetch(url, { headers: { 'User-Agent': USER_AGENT, 'Accept-Encoding': 'gzip' } })
+  })
+  requestQueue = run.catch(() => {})
+  return run
+}
 
 export async function GET(request: Request): Promise<Response> {
   const denied = await rejectNonAdmin(request)
@@ -78,6 +97,17 @@ export async function GET(request: Request): Promise<Response> {
 
   const imageUrl = new URL(request.url).searchParams.get('image')
   if (imageUrl !== null) return proxyImage(imageUrl)
+
+  const search = new URL(request.url).searchParams.get('search')
+  if (search !== null) {
+    const query = toSearchQuery(search)
+    if (!query) return json({ error: '영문 맵 이름을 입력해주세요. (예: Fighting Spirit)' }, 400)
+    try {
+      return json({ query: search.trim(), results: await searchMaps(query) })
+    } catch (e) {
+      return json({ error: `리퀴피디아 검색에 실패했습니다. (${e instanceof Error ? e.message : String(e)})` }, 502)
+    }
+  }
 
   try {
     if (!cache || Date.now() - cache.at > CACHE_TTL_MS) {
@@ -127,7 +157,6 @@ export async function loadLadderPool(): Promise<LadderPool> {
 
   const { season, names } = parsePoolTable(poolText)
 
-  await sleep(REQUEST_GAP_MS)
   // 맵 9개 내외라 한 번의 query로 묶는다 (titles는 최대 50개)
   const mapPages = await fetchWikitexts(names)
 
@@ -136,19 +165,10 @@ export async function loadLadderPool(): Promise<LadderPool> {
   const warnings: string[] = []
 
   // 이미지 정보는 부가 정보라, 못 가져와도 맵 풀 동기화 자체는 진행한다
-  const files = contents.map(c => (c ? infoboxImageFile(c) : null))
-  const wanted = [...new Set(files.filter((f): f is string => !!f))]
-  if (wanted.length > 0) {
-    try {
-      await sleep(REQUEST_GAP_MS)
-      const images = await fetchCommonsImages(wanted)
-      maps.forEach((m, i) => {
-        const file = files[i]
-        m.image = file ? images.get(file) ?? null : null
-      })
-    } catch (e) {
-      warnings.push(`맵 이미지 정보를 가져오지 못했습니다. (${e instanceof Error ? e.message : String(e)})`)
-    }
+  try {
+    await attachImages(maps, contents)
+  } catch (e) {
+    warnings.push(`맵 이미지 정보를 가져오지 못했습니다. (${e instanceof Error ? e.message : String(e)})`)
   }
 
   return {
@@ -180,9 +200,7 @@ async function queryPages(api: string, titles: string[], props: Record<string, s
     titles: titles.join('|'),
     ...props,
   })
-  const res = await fetch(`${api}?${params}`, {
-    headers: { 'User-Agent': USER_AGENT, 'Accept-Encoding': 'gzip' },
-  })
+  const res = await politeFetch(`${api}?${params}`)
   if (!res.ok) throw new Error(`리퀴피디아 응답 ${res.status}`)
 
   const body = await res.json() as {
@@ -218,6 +236,93 @@ async function fetchWikitexts(titles: string[]): Promise<Map<string, WikiPage | 
     result.set(requested, page && content ? { title: page.title, content } : null)
   }
   return result
+}
+
+/**
+ * 맵 페이지 내용(contents[i])에서 이미지 파일을 찾아 maps[i].image를 채운다.
+ * 이미지 파일 설명에 원작자가 없으면(예: Polypoid, 투혼) 맵 정보 상자의 제작자를 쓴다 —
+ * 맵 이미지는 그 맵을 그린 것이라 맵 제작자가 곧 원작자다.
+ */
+async function attachImages(maps: LadderMapInfo[], contents: (string | null)[]): Promise<void> {
+  const files = contents.map(c => (c ? infoboxImageFile(c) : null))
+  const wanted = [...new Set(files.filter((f): f is string => !!f))]
+  if (wanted.length === 0) return
+  const images = await fetchCommonsImages(wanted)
+  maps.forEach((m, i) => {
+    const file = files[i]
+    const image = file ? images.get(file) : undefined
+    const content = contents[i]
+    m.image = image
+      ? { ...image, author: image.author ?? (content ? infoboxCreator(content) : null) }
+      : null
+  })
+}
+
+// ── 맵 검색 ─────────────────────────────────────────────────────
+/**
+ * 사용자 입력을 리퀴피디아 검색어로 바꾼다. 리퀴피디아 검색(CirrusSearch)은
+ * insource:/정규식/ 같은 특수 문법을 지원해서 입력을 그대로 넘기면 저쪽 서버에 무거운
+ * 쿼리를 던지는 통로가 된다. 영문·숫자와 맵 이름에 쓰이는 몇 글자만 남긴다.
+ * 부분 입력(polypo)은 그대로면 아무것도 안 나와서 마지막 단어에 *를 붙인다.
+ * 한글은 리퀴피디아가 영어 위키라 어차피 걸리지 않으므로 남기지 않는다.
+ */
+export function toSearchQuery(input: string): string | null {
+  const words = input
+    .slice(0, 60)
+    .replace(/[^A-Za-z0-9 .'-]/g, ' ')
+    .split(/\s+/)
+    .map(w => w.replace(/^[.'-]+|[.'-]+$/g, ''))
+    .filter(Boolean)
+  if (words.length === 0) return null
+  const last = words.length - 1
+  if (/^[A-Za-z0-9]{2,}$/.test(words[last])) words[last] += '*'
+  // 맵 정보 상자를 쓰는 페이지만 — 이 조건이 없으면 대회·선수 페이지가 섞여 나온다
+  return `hastemplate:"Infobox map" ${words.join(' ')}`
+}
+
+interface SearchPage extends RawPage { index?: number }
+
+/** 검색 결과 상위 10개 맵의 정보·이미지. 검색 1번 + 이미지 정보 1번 */
+export async function searchMaps(query: string): Promise<LadderMapInfo[]> {
+  const hit = searchCache.get(query)
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.results
+
+  const params = new URLSearchParams({
+    action: 'query',
+    format: 'json',
+    formatversion: '2',
+    generator: 'search',
+    gsrsearch: query,
+    gsrnamespace: '0',
+    gsrlimit: '10',
+    prop: 'revisions',
+    rvprop: 'content',
+    rvslots: 'main',
+  })
+  const res = await politeFetch(`${LP_API}?${params}`)
+  if (!res.ok) throw new Error(`리퀴피디아 응답 ${res.status}`)
+  const body = await res.json() as { query?: { pages?: SearchPage[] } }
+  // generator 결과는 순서가 섞여 오고, 검색 순위는 index에 들어 있다
+  const pages = (body.query?.pages ?? []).sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+
+  const results: LadderMapInfo[] = []
+  const contents: string[] = []
+  for (const page of pages) {
+    const content = page.revisions?.[0]?.slots.main.content
+    if (!content || !extractTemplate(content, 'Infobox map')) continue
+    results.push(toMapInfo(page.title, content))
+    contents.push(content)
+  }
+
+  try {
+    await attachImages(results, contents)
+  } catch {
+    // 이미지는 부가 정보 — 검색 결과는 그대로 돌려준다
+  }
+
+  if (searchCache.size >= SEARCH_CACHE_MAX) searchCache.delete(searchCache.keys().next().value!)
+  searchCache.set(query, { at: Date.now(), results })
+  return results
 }
 
 /** 파일 이름 → 이미지 주소·크기 + 파일 설명({{FileInfo}})의 원작자·출처. 한 번의 query로 묶는다 */
@@ -323,6 +428,13 @@ export function toMapInfo(liquipediaName: string, content: string | null): Ladde
     missing_page: !infobox,
     image: null,
   }
+}
+
+/** 정보 상자의 `creator=` — 맵 제작자. 이미지 파일 설명에 원작자가 없을 때 대신 쓴다 */
+export function infoboxCreator(content: string): string | null {
+  const infobox = extractTemplate(content, 'Infobox map')
+  const raw = infobox ? templateParams(infobox).creator : undefined
+  return (raw && cleanWiki(raw)) || null
 }
 
 /** 정보 상자의 `image=Radeon.jpg` → `Radeon.jpg`. 공백·`File:` 접두사가 섞여 있어도 파일 이름만 */

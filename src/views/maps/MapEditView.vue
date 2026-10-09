@@ -193,6 +193,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { getMap, updateMap } from '@/lib/maps'
+import { safeSourceLink } from '@/lib/sourceLink'
 
 const router = useRouter()
 const route = useRoute()
@@ -262,18 +263,10 @@ function removeImage() {
 }
 
 // --- 이미지 원작자·출처 ---
-// 출처는 리퀴피디아 위키에서 누구나 편집할 수 있는 값이라, javascript: 같은 주소를
-// 링크로 걸면 클릭 시 스크립트가 실행된다. http(s) 주소일 때만 링크로 만든다.
 const imageCredit = computed(() => {
   // 새 이미지를 고르거나 지우면 저장할 때 원작자 표기도 지워지므로 미리 숨긴다
   if (form.value.imageFile || !existingImageUrl.value || !imageSource.value) return null
-  let href: string | null = null
-  let label = imageSource.value
-  try {
-    const u = new URL(imageSource.value)
-    if (u.protocol === 'https:' || u.protocol === 'http:') { href = u.href; label = u.hostname }
-  } catch { /* 주소가 아니면 글자로만 보여준다 */ }
-  return { author: imageAuthor.value, href, label }
+  return { author: imageAuthor.value, ...safeSourceLink(imageSource.value) }
 })
 
 // --- 맵 크기 ---

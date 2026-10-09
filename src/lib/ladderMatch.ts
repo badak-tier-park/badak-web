@@ -3,7 +3,7 @@ import type { MapRow } from './maps'
 // ── 래더 맵 동기화: 리퀴피디아 맵 풀 ↔ 등록된 맵 매칭 ─────────────────
 // DB에 손대지 않는 순수 로직만 둔다(테스트 가능하게). 조회·반영은 maps.ts.
 
-// api/ladder-maps.ts의 같은 이름 타입과 같은 모양 (api 쪽은 Node 전용이라 직접 import하지 않는다)
+// api/liquipedia-maps.ts의 같은 이름 타입과 같은 모양 (api 쪽은 Node 전용이라 직접 import하지 않는다)
 export interface LadderMapImage {
   url: string
   width: number | null
@@ -82,6 +82,32 @@ export function buildLadderSyncPreview(pool: LadderPool, maps: MapRow[]): Ladder
   const dropped = maps.filter(m => m.is_ladder && !(m.liquipedia_name && poolNames.has(m.liquipedia_name)))
 
   return { pool, linked, fresh, dropped }
+}
+
+export interface ExistingMatch {
+  map: MapRow
+  /**
+   * same-page: 같은 리퀴피디아 페이지로 이미 등록됨 — 다시 등록하면 안 된다(liquipedia_name 중복)
+   * same-name: 이름·별칭이 같음 — 거의 확실히 같은 맵
+   * similar:   버전 표기만 다름 (Octagon / Octagon SE) — 다른 버전일 수도 있어 알리기만 한다
+   */
+  kind: 'same-page' | 'same-name' | 'similar'
+}
+
+/** 리퀴피디아에서 찾은 맵이 이미 등록돼 있는지. 맵 등록 화면에서 중복 등록을 막는 데 쓴다 */
+export function findExistingMap(info: LadderMapInfo, maps: MapRow[]): ExistingMatch | null {
+  const key = normalizeMapName(info.liquipedia_name)
+  const samePage = maps.find(m => m.liquipedia_name && normalizeMapName(m.liquipedia_name) === key)
+  if (samePage) return { map: samePage, kind: 'same-page' }
+
+  const names = (m: MapRow) => [m.name, ...m.aliases]
+  const exact = new Set([info.liquipedia_name, info.name].map(normalizeMapName))
+  const sameName = maps.find(m => names(m).some(n => exact.has(normalizeMapName(n))))
+  if (sameName) return { map: sameName, kind: 'same-name' }
+
+  const base = baseMapName(info.liquipedia_name)
+  const similar = maps.find(m => names(m).some(n => baseMapName(n) === base))
+  return similar ? { map: similar, kind: 'similar' } : null
 }
 
 /**
