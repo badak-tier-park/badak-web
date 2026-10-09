@@ -525,12 +525,15 @@ function playerPt(id: number): number {
 
 const getPlayer = (id: number) => playerMap.value.get(id)
 
+// 대타가 나와도 포인트는 제출한 엔트리 그대로 진행한다(규정) — 대타 선수가 아니라 원래 엔트리로 합산
+const entryPlayerIds = (captainId: number, slotNum: number) => getEntry(captainId, slotNum)?.player_ids ?? []
+
 // 군인 감점은 개인전·팀전 중복 출전 시 개인전 쪽에서만 빠지므로, 팀전 합계는 엔트리 전체를 보고 계산한다
 function slotTotal(captainId: number, slotNum: number): number {
   if (slotNum !== TEAM_SLOT) {
-    return calcEntryPoints([{ match_slot: slotNum, player_ids: getSlotPlayerIds(captainId, slotNum) }], getPlayer).total
+    return calcEntryPoints([{ match_slot: slotNum, player_ids: entryPlayerIds(captainId, slotNum) }], getPlayer).total
   }
-  const slots = [...INDIVIDUAL_SLOTS, TEAM_SLOT].map(n => ({ match_slot: n, player_ids: getSlotPlayerIds(captainId, n) }))
+  const slots = [...INDIVIDUAL_SLOTS, TEAM_SLOT].map(n => ({ match_slot: n, player_ids: entryPlayerIds(captainId, n) }))
   return calcEntryPoints(slots, getPlayer).team
 }
 
