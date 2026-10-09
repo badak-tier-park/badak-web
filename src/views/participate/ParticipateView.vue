@@ -671,7 +671,7 @@ import {
   getEntries, saveEntries, submitEntry, getEntryStatusMap, computeFinalRosters,
   consentReveal, checkBothConsented, getConsentedSet,
   getAceTierBan, saveAceTierBan, getEntriesForSchedules,
-  TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS,
+  TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS, MILITARY_DEDUCTION, calcEntryPoints,
   type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
@@ -709,8 +709,7 @@ function resolveMatchWinner(
 
   // 3:3 동률 + 에결 없음 → 포인트 룰
   const calcPt = (cid: number) =>
-    entries.filter(e => e.captain_player_id === cid)
-      .reduce((sum, e) => sum + e.player_ids.reduce((s, id) => s + (TIER_POINTS[playerMap.get(id)?.tier ?? ''] ?? 0), 0), 0)
+    calcEntryPoints(entries.filter(e => e.captain_player_id === cid), id => playerMap.get(id)).total
   const ptA = calcPt(capA), ptB = calcPt(capB)
   if (Math.abs(ptA - ptB) >= 3) return { winner: ptA < ptB ? capA : capB, tiebreak: true }
   return { winner: null, tiebreak: false }
@@ -1329,40 +1328,24 @@ function buildOptions(slotNum: number, idx: number): SelectOption[] {
         label: m.nickname,
         tier: m.tier,
         race: m.race,
-        points: m.is_military ? Math.max(0, base - 1) : base,
+        points: m.is_military ? Math.max(0, base - MILITARY_DEDUCTION) : base,
         is_military: m.is_military,
       }
     })
 }
 
-const playerTierMap = computed(() => {
-  const m = new Map<number, string>()
-  for (const p of entryModal.teamMembers) m.set(p.id, p.tier)
-  return m
-})
+const teamMemberMap = computed(() => new Map(entryModal.teamMembers.map(p => [p.id, p])))
 
-const playerMilitaryMap = computed(() => {
-  const m = new Map<number, boolean>()
-  for (const p of entryModal.teamMembers) m.set(p.id, p.is_military ?? false)
-  return m
-})
-
-function effectivePoints(playerId: number): number {
-  const base = TIER_POINTS[playerTierMap.value.get(playerId) ?? ''] ?? 0
-  return playerMilitaryMap.value.get(playerId) ? Math.max(0, base - 1) : base
-}
-
-const individualPoints = computed(() =>
-  (INDIVIDUAL_SLOTS as readonly number[]).reduce((sum, slotNum) => {
-    const id = entryModal.selections[slotNum]?.[0] ?? 0
-    return sum + (id ? effectivePoints(id) : 0)
-  }, 0)
+// 군인 감점은 개인전·팀전 중복 출전 시 한쪽에서만 — calcEntryPoints가 처리한다
+const entryPoints = computed(() =>
+  calcEntryPoints(
+    Object.entries(entryModal.selections).map(([slot, ids]) => ({ match_slot: Number(slot), player_ids: ids })),
+    id => teamMemberMap.value.get(id),
+  )
 )
-const teamPoints = computed(() =>
-  (entryModal.selections[TEAM_SLOT] ?? []).reduce((sum, id) =>
-    sum + (id ? effectivePoints(id) : 0), 0)
-)
-const totalPoints = computed(() => individualPoints.value + teamPoints.value)
+const individualPoints = computed(() => entryPoints.value.solo)
+const teamPoints = computed(() => entryPoints.value.team)
+const totalPoints = computed(() => entryPoints.value.total)
 // 팀전 2명을 다 고른 뒤에만 최소 미달로 표시한다 — 고르는 도중엔 당연히 모자라므로
 const teamUnderMin = computed(() =>
   entryModal.teamMin !== null &&
