@@ -15,12 +15,31 @@
           <h1 class="page-title">맵 관리</h1>
           <span v-if="!loading" class="map-count">{{ maps.length }}개</span>
         </div>
-        <RouterLink to="/maps/register" class="btn-create">
-          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-            <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          맵 등록
-        </RouterLink>
+        <div class="title-actions">
+          <button type="button" class="btn-pill btn-pill--md btn-pill--purple" :disabled="loading" @click="showSync = true">
+            래더 맵 동기화
+          </button>
+          <RouterLink to="/maps/register" class="btn-create">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+              <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            맵 등록
+          </RouterLink>
+        </div>
+      </div>
+
+      <div v-if="!loading && maps.length > 0" class="filter-row">
+        <button
+          v-for="f in filters"
+          :key="f.key"
+          type="button"
+          class="filter-chip"
+          :class="{ active: filter === f.key }"
+          @click="filter = f.key"
+        >
+          {{ f.label }} <span class="filter-count">{{ f.count }}</span>
+        </button>
+        <span v-if="lastSyncedLabel" class="sync-stamp">마지막 래더 동기화 {{ lastSyncedLabel }}</span>
       </div>
 
       <div class="search-bar">
@@ -68,7 +87,12 @@
             </div>
           </div>
           <div class="map-info">
-            <span class="map-name">{{ map.name }}</span>
+            <div class="map-name-row">
+              <span class="map-name">{{ map.name }}</span>
+              <span v-if="map.is_ladder" class="map-badge map-badge--ladder">래더</span>
+              <span v-if="map.version" class="map-version">v{{ map.version }}</span>
+              <span v-if="!map.thumbnail_url" class="map-badge map-badge--noimage">이미지 필요</span>
+            </div>
             <div class="map-meta">
               <span>{{ map.width }}×{{ map.height }}</span>
               <span>{{ map.player_count }}인</span>
@@ -83,6 +107,8 @@
         </RouterLink>
       </div>
     </div>
+
+    <LadderSyncModal v-if="showSync" :maps="maps" @close="showSync = false" @applied="reloadMaps" />
   </div>
 </template>
 
@@ -90,21 +116,51 @@
 import { ref, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
+import LadderSyncModal from './LadderSyncModal.vue'
 import { getMaps, type MapRow } from '@/lib/maps'
 
 const maps = ref<MapRow[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const searchQuery = ref('')
+const showSync = ref(false)
+
+type FilterKey = 'all' | 'ladder' | 'noimage'
+const filter = ref<FilterKey>('all')
+
+const filters = computed(() => [
+  { key: 'all' as const, label: '전체', count: maps.value.length },
+  { key: 'ladder' as const, label: '래더', count: maps.value.filter(m => m.is_ladder).length },
+  { key: 'noimage' as const, label: '이미지 필요', count: maps.value.filter(m => !m.thumbnail_url).length },
+])
 
 const filteredMaps = computed(() => {
   const q = searchQuery.value.toLowerCase()
-  if (!q) return maps.value
-  return maps.value.filter(m =>
-    m.name.toLowerCase().includes(q) ||
-    m.aliases.some(a => a.toLowerCase().includes(q))
-  )
+  const list = maps.value.filter(m => {
+    if (filter.value === 'ladder' && !m.is_ladder) return false
+    if (filter.value === 'noimage' && m.thumbnail_url) return false
+    if (!q) return true
+    return m.name.toLowerCase().includes(q) || m.aliases.some(a => a.toLowerCase().includes(q))
+  })
+  // 현재 래더 맵을 위로. sort는 안정 정렬이라 그 안에서는 기존 순서(최근 등록순)가 유지된다
+  return [...list].sort((a, b) => Number(b.is_ladder) - Number(a.is_ladder))
 })
+
+const lastSyncedLabel = computed(() => {
+  const stamps = maps.value.map(m => m.ladder_synced_at).filter((s): s is string => !!s)
+  if (stamps.length === 0) return null
+  const d = new Date(stamps.reduce((a, b) => (a > b ? a : b)))
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+})
+
+async function reloadMaps() {
+  try {
+    maps.value = await getMaps()
+  } catch (e: any) {
+    loadError.value = e.message ?? '맵 목록을 불러올 수 없습니다.'
+  }
+}
 
 const tilesets: Record<string, { label: string; color: string }> = {
   badlands: { label: '황무지',     color: '#c97d3a' },
