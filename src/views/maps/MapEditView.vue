@@ -247,6 +247,8 @@ function removeImage() {
   form.value.imageFile = null
   previewUrl.value = null
   existingImageUrl.value = null
+  // 목록·피커는 원본이 아니라 썸네일을 보여주므로 같이 비워야 삭제가 화면에 반영된다
+  existingThumbnailUrl.value = null
   if (fileInput.value) fileInput.value.value = ''
 }
 
