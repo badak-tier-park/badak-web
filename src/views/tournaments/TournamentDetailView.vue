@@ -279,8 +279,8 @@
             >
               <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="picker-map-thumb" alt="" />
               <div class="picker-map-info">
-                <span class="picker-name">{{ map.name }}</span>
-                <span class="picker-map-meta"><span v-if="map.is_ladder" class="picker-ladder-tag">래더</span>{{ map.player_count }}인 · {{ map.tileset }}</span>
+                <span class="picker-name">{{ map.name }}<span v-if="map.is_ladder" class="picker-ladder-tag">래더</span></span>
+                <span class="picker-map-meta">{{ map.player_count }}인 · {{ map.tileset }}</span>
               </div>
             </button>
             <div v-if="filteredMaps.length === 0" class="picker-empty">검색 결과 없음</div>
@@ -476,11 +476,8 @@ const mapSearch = ref('')
 
 const filteredMaps = computed(() => {
   const q = mapSearch.value.trim().toLowerCase()
-  const list = q
-    ? allMaps.value.filter(m => m.name.toLowerCase().includes(q) || m.aliases.some(a => a.toLowerCase().includes(q)))
-    : allMaps.value
-  // 현재 래더 맵을 위로 — 대부분 래더 맵으로 하는데 전체 목록에서 일일이 찾아야 했다
-  return [...list].sort((a, b) => Number(b.is_ladder) - Number(a.is_ladder))
+  if (!q) return allMaps.value
+  return allMaps.value.filter(m => m.name.toLowerCase().includes(q) || m.aliases.some(a => a.toLowerCase().includes(q)))
 })
 
 function openMapPicker() {

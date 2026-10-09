@@ -136,14 +136,12 @@ const filters = computed(() => [
 
 const filteredMaps = computed(() => {
   const q = searchQuery.value.toLowerCase()
-  const list = maps.value.filter(m => {
+  return maps.value.filter(m => {
     if (filter.value === 'ladder' && !m.is_ladder) return false
     if (filter.value === 'noimage' && m.thumbnail_url) return false
     if (!q) return true
     return m.name.toLowerCase().includes(q) || m.aliases.some(a => a.toLowerCase().includes(q))
   })
-  // 현재 래더 맵을 위로. sort는 안정 정렬이라 그 안에서는 기존 순서(최근 등록순)가 유지된다
-  return [...list].sort((a, b) => Number(b.is_ladder) - Number(a.is_ladder))
 })
 
 const lastSyncedLabel = computed(() => {

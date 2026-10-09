@@ -158,13 +158,16 @@
   font-weight: 400;
 }
 
+// 현재 래더 맵 표시. 정렬은 바꾸지 않고(등록순 + 검색) 이름 옆에 붙이기만 한다
 .picker-ladder-tag {
   display: inline-block;
-  margin-right: 6px;
+  margin-left: 6px;
   padding: 0 5px;
   border-radius: 4px;
   font-size: 10px;
   font-weight: 700;
+  line-height: 16px;
+  vertical-align: 1px;
   color: #c084fc;
   background: rgba(170, 59, 255, 0.14);
 }
