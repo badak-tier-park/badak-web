@@ -107,7 +107,8 @@ gh api repos/badak-tier-park/.github/contents/.github/PULL_REQUEST_TEMPLATE.md -
 아래는 놓치면 버그가 되는 항목만 추린 것:
 
 - **엔트리 포인트 한도는 상수가 아니다.** `leagues.entry_solo_max` / `entry_team_max` /
-  `entry_total_max` 리그별 설정값이며 16/7/23은 기본값일 뿐 — 하드코딩 금지
+  `entry_total_max` / `entry_team_min`(팀전 최소, null=제한 없음) 리그별 설정값이며
+  관리자가 리그마다 입력한다 — 하드코딩 금지. 0.5 단위라 컬럼은 `numeric(4,1)`
 - **팀장 수도 설정값**이다 (`leagues.captain_count`, 기본 4) — 4로 하드코딩 금지
 - **리그 진행 중 선수 정보는 `users`가 아니라 `league_player_snapshots`를 우선 참조**한다.
   지목식 최종 저장 시점의 티어/종족/군인여부가 박제되며, 이후 티어가 재산정돼도
