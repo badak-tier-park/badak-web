@@ -55,6 +55,14 @@ export interface LeagueRow {
   entry_solo_max: number
   entry_team_max: number
   entry_total_max: number
+  /** 팀전 최소 포인트. null이면 제한 없음 */
+  entry_team_min: number | null
+  /** 3:3에서 에결을 생략하고 포인트 적게 쓴 팀을 승자로 하는 포인트 차이. null이면 항상 에결 */
+  ace_skip_point_gap: number | null
+  /** 시드권 교체 시 허용하는 최대 티어 단계 차이 (0.5P = 1단계). null이면 제한 없음 */
+  seed_swap_max_tier_steps: number | null
+  /** 시드권 교체 시 허용하는 최대 픽 순번 차이. null이면 제한 없음 */
+  seed_swap_max_pick_gap: number | null
   is_ready: boolean
   picks_completed: boolean
   draft_completed: boolean
@@ -190,9 +198,20 @@ export async function getLeagueCreatorPlayerId(leagueId: string): Promise<number
   return data ?? null
 }
 
+export async function updateLeagueSeedSwapLimits(
+  id: string,
+  fields: { seed_swap_max_tier_steps: number | null; seed_swap_max_pick_gap: number | null },
+): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function updateLeagueEntryLimits(
   id: string,
-  fields: { entry_solo_max: number; entry_team_max: number; entry_total_max: number },
+  fields: { entry_solo_max: number; entry_team_max: number; entry_total_max: number; entry_team_min: number | null; ace_skip_point_gap: number | null },
 ): Promise<void> {
   const { error } = await supabase
     .from('leagues')

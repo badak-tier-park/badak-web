@@ -248,7 +248,7 @@
                 :class="{ 'military-toggle--on': form.is_military }"
                 @click="form.is_military = !form.is_military"
               >
-                {{ form.is_military ? '군인 (엔트리 -1pt)' : '일반' }}
+                {{ form.is_military ? '군인 (엔트리 -0.5pt)' : '일반' }}
               </button>
             </div>
 

@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import type { CaptainRow } from './leagueDetail'
 import type { DraftPickRow, SwapLogRow } from './draft'
+import { tierPoint } from './constants'
 
 // ── 상수 ────────────────────────────────────────────────────
 export { TIER_POINTS } from './constants'
@@ -8,6 +9,68 @@ export const INDIVIDUAL_SLOTS = [1, 2, 3, 5, 6] as const
 export const TEAM_SLOT = 4
 // NOTE: 엔트리 포인트 한도(개인전 / 팀전 / 전체)는 리그별로 leagues 테이블의
 // entry_solo_max / entry_team_max / entry_total_max 컬럼에서 설정한다.
+
+/** 군인(병사) 엔트리 포인트 감점 */
+export const MILITARY_DEDUCTION = 0.5
+
+// ── 엔트리 포인트 계산 ───────────────────────────────────────
+export interface EntryPointPlayer {
+  tier: string
+  is_military?: boolean
+}
+
+export interface EntryPoints {
+  solo: number
+  team: number
+  total: number
+}
+
+/**
+ * 한 팀 엔트리의 개인전 / 팀전 / 전체 포인트.
+ *
+ * 군인은 MILITARY_DEDUCTION 만큼 빼되, 개인전과 팀전에 중복 출전해도 **한쪽에서만** 뺀다
+ * (리그 규정). 개인전 슬롯을 먼저 세어 개인전 쪽에서 차감하므로 solo + team = total이 유지된다.
+ * 엔트리 합계는 참가·공개·결과 화면이 모두 이 함수로 계산해야 숫자가 어긋나지 않는다.
+ */
+export function calcEntryPoints(
+  slots: { match_slot: number; player_ids: number[] }[],
+  getPlayer: (id: number) => EntryPointPlayer | undefined,
+): EntryPoints {
+  const deducted = new Set<number>()
+  const pointOf = (id: number) => {
+    const p = getPlayer(id)
+    const base = tierPoint(p?.tier)
+    if (!p?.is_military || deducted.has(id)) return base
+    deducted.add(id)
+    return Math.max(0, base - MILITARY_DEDUCTION)
+  }
+  const sumSlots = (slotNums: readonly number[]) =>
+    slots
+      .filter(s => slotNums.includes(s.match_slot))
+      .reduce((sum, s) => sum + s.player_ids.reduce((acc, id) => acc + (id ? pointOf(id) : 0), 0), 0)
+
+  const solo = sumSlots(INDIVIDUAL_SLOTS)
+  const team = sumSlots([TEAM_SLOT])
+  return { solo, team, total: solo + team }
+}
+
+/**
+ * 양팀 엔트리 포인트 차이로 에이스 결정전을 생략하는지.
+ *
+ * 기준(gap)은 시즌마다 바뀌는 규정이라 리그별 설정값(`leagues.ace_skip_point_gap`)을 받는다.
+ * null이면 포인트로 판정하지 않고 3:3이면 항상 에결을 한다.
+ */
+export function isAceSkippedByPoints(ptA: number, ptB: number, gap: number | null | undefined): boolean {
+  return gap != null && Math.abs(ptA - ptB) >= gap
+}
+
+/** 3:3 동률에서 에결이 생략된 경우의 승자 — 포인트를 적게 쓴 팀. 생략 대상이 아니면 null */
+export function pointTiebreakWinner(
+  ptA: number, ptB: number, capA: number, capB: number, gap: number | null | undefined,
+): number | null {
+  if (!isAceSkippedByPoints(ptA, ptB, gap)) return null
+  return ptA < ptB ? capA : capB
+}
 
 // ── 타입 ────────────────────────────────────────────────────
 export interface EntrySlot {
