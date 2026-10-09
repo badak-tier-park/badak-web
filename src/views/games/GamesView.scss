@@ -298,6 +298,7 @@
   border-radius: 4px;
   flex-shrink: 0;
 
+  &--s { background: var(--tier-s-bg); color: var(--tier-s); outline: 1.5px solid var(--tier-s-border); outline-offset: -2px; box-shadow: 0 0 8px rgba(251, 191, 36, 0.25); }
   &--a { background: var(--tier-a-bg); color: var(--tier-a); }
   &--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); outline: 1.5px solid var(--tier-a-plus); outline-offset: -2px; }
   &--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); outline: 1.5px dashed var(--tier-a-minus); outline-offset: -2px; }

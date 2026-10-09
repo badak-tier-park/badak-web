@@ -75,6 +75,7 @@
   border-radius: 5px;
   transition: filter 0.1s;
 
+  &--tier-s { background: var(--tier-s-bg); }
   &--tier-a { background: var(--tier-a-bg); }
   &--tier-a-plus { background: var(--tier-a-bg); }
   &--tier-a-minus { background: var(--tier-a-bg); }
