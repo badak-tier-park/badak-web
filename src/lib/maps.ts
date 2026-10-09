@@ -201,7 +201,7 @@ export async function createMap(data: MapInsert) {
 }
 
 // ── 래더 맵 동기화 (리퀴피디아) ──────────────────────────────────
-// 가져오기는 /api/ladder-maps(서버)가 하고, 반영은 관리자가 검토 화면에서 고른 대로
+// 가져오기는 /api/liquipedia-maps(서버)가 하고, 반영은 관리자가 검토 화면에서 고른 대로
 // 여기서 한다. 매칭 규칙은 ladderMatch.ts.
 
 async function authHeader(): Promise<Record<string, string>> {
@@ -212,7 +212,7 @@ async function authHeader(): Promise<Record<string, string>> {
 }
 
 export async function fetchLadderPool(): Promise<LadderPool> {
-  const res = await fetch('/api/ladder-maps', { headers: await authHeader() })
+  const res = await fetch('/api/liquipedia-maps', { headers: await authHeader() })
   // Vite 개발 서버에는 /api 함수가 없어 index.html(HTML)이 돌아온다
   if (!(res.headers.get('content-type') ?? '').includes('application/json')) {
     throw new Error('동기화 API에 연결하지 못했습니다. 로컬 개발 서버(npm run dev)에서는 동작하지 않으니 Vercel 프리뷰에서 확인해주세요.')
@@ -224,7 +224,7 @@ export async function fetchLadderPool(): Promise<LadderPool> {
 
 /** 리퀴피디아 이미지를 /api를 거쳐 받는다 (같은 출처라 canvas 압축이 막히지 않는다) */
 async function fetchLadderImage(url: string): Promise<File> {
-  const res = await fetch(`/api/ladder-maps?image=${encodeURIComponent(url)}`, { headers: await authHeader() })
+  const res = await fetch(`/api/liquipedia-maps?image=${encodeURIComponent(url)}`, { headers: await authHeader() })
   const type = res.headers.get('content-type') ?? ''
   if (!res.ok || !type.startsWith('image/')) {
     const body = type.includes('application/json') ? await res.json() : null

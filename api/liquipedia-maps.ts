@@ -7,8 +7,8 @@ import { createClient } from '@supabase/supabase-js'
 setDefaultAutoSelectFamilyAttemptTimeout(2000)
 
 /**
- * GET /api/ladder-maps — 리퀴피디아에서 현재 시즌 스타 리마스터 래더 맵 풀과 맵별 정보를 가져온다.
- * GET /api/ladder-maps?image=<리퀴피디아 이미지 주소> — 그 맵 이미지 파일을 대신 받아 돌려준다.
+ * GET /api/liquipedia-maps — 리퀴피디아에서 현재 시즌 스타 리마스터 래더 맵 풀과 맵별 정보를 가져온다.
+ * GET /api/liquipedia-maps?image=<리퀴피디아 이미지 주소> — 그 맵 이미지 파일을 대신 받아 돌려준다.
  *
  * 브라우저에서 리퀴피디아를 직접 부르지 않고 서버를 거치는 이유: 리퀴피디아 API 이용 규칙이
  * 연락처가 담긴 User-Agent를 요구하는데, 브라우저 fetch는 User-Agent를 바꿀 수 없다.

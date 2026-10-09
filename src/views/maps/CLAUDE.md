@@ -9,7 +9,7 @@
 
 ## 래더 맵 동기화 (리퀴피디아)
 스타 리마스터는 래더 맵 풀을 조회할 공개 API가 없어, 시즌별 맵 풀과 맵 정보가 구조화돼
-있는 리퀴피디아(`Maps/Ladder_Maps`)를 출처로 쓴다. 조회는 `api/ladder-maps.ts`,
+있는 리퀴피디아(`Maps/Ladder_Maps`)를 출처로 쓴다. 조회는 `api/liquipedia-maps.ts`,
 매칭 규칙은 `src/lib/ladderMatch.ts`, 반영은 `src/lib/maps.ts`.
 
 - **자동 반영하지 않고 관리자 검토를 거친다.** 리퀴피디아는 영문명(Fighting Spirit),
