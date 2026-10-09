@@ -435,6 +435,7 @@
   font-size: 14px;
   font-weight: 700;
 
+  &--s.active { border-color: var(--tier-s-border); background: var(--tier-s-bg); color: var(--tier-s); }
   &--a.active { border-color: var(--tier-a-border); background: var(--tier-a-bg); color: var(--tier-a); }
   &--a-plus.active { border-color: var(--tier-a-plus-border); border-style: solid; background: var(--tier-a-bg); color: var(--tier-a-plus); }
   &--a-minus.active { border-color: var(--tier-a-minus-border); border-style: dashed; background: var(--tier-a-bg); color: var(--tier-a-minus); }
