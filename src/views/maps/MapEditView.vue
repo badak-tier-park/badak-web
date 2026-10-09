@@ -55,6 +55,13 @@
               </svg>
             </button>
           </div>
+          <p v-if="imageCredit" class="image-credit">
+            이미지 {{ imageCredit.author ?? '작가 미상' }}
+            · 출처
+            <a v-if="imageCredit.href" :href="imageCredit.href" target="_blank" rel="noopener noreferrer">{{ imageCredit.label }}</a>
+            <span v-else>{{ imageCredit.label }}</span>
+            <span class="image-credit-via">(리퀴피디아 동기화로 가져옴)</span>
+          </p>
         </section>
 
         <!-- 기본 정보 -->
@@ -182,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { getMap, updateMap } from '@/lib/maps'
@@ -195,6 +202,8 @@ const mapId = route.params.id as string
 const existingImageUrl = ref<string | null>(null)
 const existingThumbnailUrl = ref<string | null>(null)
 const loadError = ref<string | null>(null)
+const imageAuthor = ref<string | null>(null)
+const imageSource = ref<string | null>(null)
 
 // --- 폼 상태 ---
 const form = ref({
@@ -252,6 +261,21 @@ function removeImage() {
   if (fileInput.value) fileInput.value.value = ''
 }
 
+// --- 이미지 원작자·출처 ---
+// 출처는 리퀴피디아 위키에서 누구나 편집할 수 있는 값이라, javascript: 같은 주소를
+// 링크로 걸면 클릭 시 스크립트가 실행된다. http(s) 주소일 때만 링크로 만든다.
+const imageCredit = computed(() => {
+  // 새 이미지를 고르거나 지우면 저장할 때 원작자 표기도 지워지므로 미리 숨긴다
+  if (form.value.imageFile || !existingImageUrl.value || !imageSource.value) return null
+  let href: string | null = null
+  let label = imageSource.value
+  try {
+    const u = new URL(imageSource.value)
+    if (u.protocol === 'https:' || u.protocol === 'http:') { href = u.href; label = u.hostname }
+  } catch { /* 주소가 아니면 글자로만 보여준다 */ }
+  return { author: imageAuthor.value, href, label }
+})
+
 // --- 맵 크기 ---
 const sizePresets = [
   { label: '소형',   w: 64,  h: 64  },
@@ -301,6 +325,8 @@ onMounted(async () => {
     form.value.tileset = map.tileset
     existingImageUrl.value = map.image_url
     existingThumbnailUrl.value = map.thumbnail_url
+    imageAuthor.value = map.image_author
+    imageSource.value = map.image_source
 
     if (map.image_url) previewUrl.value = map.image_url
 
