@@ -158,6 +158,20 @@
   font-weight: 400;
 }
 
+// 현재 래더 맵 표시. 정렬은 바꾸지 않고(등록순 + 검색) 이름 옆에 붙이기만 한다
+.picker-ladder-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  vertical-align: 1px;
+  color: #c084fc;
+  background: rgba(170, 59, 255, 0.14);
+}
+
 // 같은 항목을 여러 번 담을 수 있는 피커에서, 체크마크 대신 담은 횟수를 보여준다
 .picker-added {
   flex-shrink: 0;

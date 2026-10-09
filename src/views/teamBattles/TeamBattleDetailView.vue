@@ -557,7 +557,7 @@
             >
               <img v-if="map.thumbnail_url" :src="map.thumbnail_url" class="picker-map-thumb" alt="" />
               <div class="picker-map-info">
-                <span class="picker-name">{{ map.name }}</span>
+                <span class="picker-name">{{ map.name }}<span v-if="map.is_ladder" class="picker-ladder-tag">래더</span></span>
                 <span class="picker-map-meta">{{ map.player_count }}인 · {{ map.tileset }}</span>
               </div>
               <span v-if="mapCount(map.id) > 0" class="picker-added">×{{ mapCount(map.id) }}</span>

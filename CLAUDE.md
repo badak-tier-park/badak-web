@@ -38,6 +38,8 @@
   **공개 저장소이므로 project ID는 문서에 쓰지 말고** `list_projects`로 조회해 쓴다
 - 로컬 env는 `.env` 하나(dev를 바라봄). 키 목록은 `.env.example` 참고
 - Vercel: `main`→Production(prod DB), 그 외 브랜치→Preview(dev DB)
+- `api/`는 Vercel 서버리스 함수다. Vite 개발 서버(`npm run dev`)에는 없으므로 Vercel 프리뷰에서
+  확인한다. 함수도 웹과 같은 `VITE_SUPABASE_*` 환경변수를 런타임에 읽는다
 
 ### RLS 규칙
 - 인증 확인은 `auth.uid()` 기반 (deprecated `auth.role()` 금지)
@@ -91,6 +93,13 @@ gh api repos/badak-tier-park/.github/contents/.github/PULL_REQUEST_TEMPLATE.md -
 | 포인트 | 5 | 4.5 | 4 | 3.5 | 3 | 2.5 | 2 | 1.5 | 1 |
 
 구 5단계(A/B/C/D)는 동일 점수의 레거시 별칭. DB 마이그레이션 완료 후 제거 가능.
+
+## 맵 작업 시 주의
+상세(래더 맵 동기화 포함)는 **`src/views/maps/CLAUDE.md`**. 놓치면 버그가 되는 것만:
+
+- **맵은 삭제하지 않는다.** 리그·팀배틀·토너먼트가 FK로 참조한다. 래더에서 빠지면 `is_ladder`만 끈다
+- **맵 이름을 바꿀 땐 옛 이름을 별칭에 남긴다.** 전적(`games`)은 맵 이름 텍스트로 매칭되므로
+  옛 이름이 사라지면 지난 전적이 그 맵에서 떨어져 나간다
 
 ## 리그 작업 시 주의
 정규리그 룰(맵 가이드라인, 지목식, 시드권, 엔트리) 상세는 **`src/views/leagues/CLAUDE.md`** 에 있다.
