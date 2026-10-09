@@ -893,6 +893,82 @@
   gap: 14px;
 }
 
+// 시드권자 탭에서 목록 아래에 교체 기준 입력칸을 붙인다
+.seed-limits-grid {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--c-border-faint);
+}
+
+// ── 핸디 표 ──────────────────────────────────────────────
+.handicap-table {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.handicap-head,
+.handicap-row {
+  display: grid;
+  grid-template-columns: 150px 96px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.handicap-head {
+  padding: 0 4px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-faint);
+}
+
+.handicap-steps {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.handicap-example {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--c-text-faint);
+}
+
+.handicap-hp {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.handicap-unit {
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.handicap-input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-input);
+  color: var(--c-text-bright);
+  font-size: 13px;
+  text-align: center;
+  box-sizing: border-box;
+
+  &--text { text-align: left; }
+}
+
+@media (max-width: 560px) {
+  .handicap-head { display: none; }
+  .handicap-row {
+    grid-template-columns: 1fr 90px;
+    .handicap-input--text { grid-column: 1 / -1; }
+  }
+}
+
 .entry-points-field {
   display: grid;
   grid-template-columns: 1fr 140px;
