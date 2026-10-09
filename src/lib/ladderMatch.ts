@@ -84,6 +84,32 @@ export function buildLadderSyncPreview(pool: LadderPool, maps: MapRow[]): Ladder
   return { pool, linked, fresh, dropped }
 }
 
+export interface ExistingMatch {
+  map: MapRow
+  /**
+   * same-page: 같은 리퀴피디아 페이지로 이미 등록됨 — 다시 등록하면 안 된다(liquipedia_name 중복)
+   * same-name: 이름·별칭이 같음 — 거의 확실히 같은 맵
+   * similar:   버전 표기만 다름 (Octagon / Octagon SE) — 다른 버전일 수도 있어 알리기만 한다
+   */
+  kind: 'same-page' | 'same-name' | 'similar'
+}
+
+/** 리퀴피디아에서 찾은 맵이 이미 등록돼 있는지. 맵 등록 화면에서 중복 등록을 막는 데 쓴다 */
+export function findExistingMap(info: LadderMapInfo, maps: MapRow[]): ExistingMatch | null {
+  const key = normalizeMapName(info.liquipedia_name)
+  const samePage = maps.find(m => m.liquipedia_name && normalizeMapName(m.liquipedia_name) === key)
+  if (samePage) return { map: samePage, kind: 'same-page' }
+
+  const names = (m: MapRow) => [m.name, ...m.aliases]
+  const exact = new Set([info.liquipedia_name, info.name].map(normalizeMapName))
+  const sameName = maps.find(m => names(m).some(n => exact.has(normalizeMapName(n))))
+  if (sameName) return { map: sameName, kind: 'same-name' }
+
+  const base = baseMapName(info.liquipedia_name)
+  const similar = maps.find(m => names(m).some(n => baseMapName(n) === base))
+  return similar ? { map: similar, kind: 'similar' } : null
+}
+
 /**
  * 실제로 래더 표시를 끌 맵. 지난 시즌 맵(Octagon)에 이번 시즌 버전(Octagon SE)을 연결하면
  * 그 맵은 dropped에도 들어 있는데, 끄면 방금 연결한 게 무효가 되므로 연결 대상은 뺀다.
