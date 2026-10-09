@@ -55,6 +55,8 @@ export interface LeagueRow {
   entry_solo_max: number
   entry_team_max: number
   entry_total_max: number
+  /** 팀전 최소 포인트. null이면 제한 없음 */
+  entry_team_min: number | null
   is_ready: boolean
   picks_completed: boolean
   draft_completed: boolean
@@ -192,7 +194,7 @@ export async function getLeagueCreatorPlayerId(leagueId: string): Promise<number
 
 export async function updateLeagueEntryLimits(
   id: string,
-  fields: { entry_solo_max: number; entry_team_max: number; entry_total_max: number },
+  fields: { entry_solo_max: number; entry_team_max: number; entry_total_max: number; entry_team_min: number | null },
 ): Promise<void> {
   const { error } = await supabase
     .from('leagues')

@@ -299,7 +299,7 @@
       <section v-if="activeTab === 'entry_points'" class="detail-section">
         <div class="section-header">
           <p class="section-desc">
-            팀장이 엔트리를 제출할 때 사용 가능한 포인트 한도입니다. 티어별 포인트(A=5 / B=4 / C=3 / D=2 / E=1)를 합산하여 아래 한도를 넘지 않아야 합니다.
+            팀장이 엔트리를 제출할 때 사용 가능한 포인트 한도입니다. 티어별 포인트({{ tierPointGuide }})를 합산하여 아래 한도를 넘지 않아야 합니다. 0.5 단위로 입력할 수 있습니다.
           </p>
         </div>
 
@@ -307,19 +307,25 @@
           <label class="entry-points-field">
             <span class="entry-points-label">개인전 경기 최대 포인트</span>
             <span class="entry-points-desc">1·2·3·5·6경기에서 출전한 1명의 포인트 합계 한도</span>
-            <input v-model.number="entryPointsForm.solo" type="number" min="1" class="entry-points-input" :disabled="draftLocked" />
+            <input v-model.number="entryPointsForm.solo" type="number" min="0.5" step="0.5" class="entry-points-input" :disabled="draftLocked" />
           </label>
 
           <label class="entry-points-field">
             <span class="entry-points-label">팀전 경기 최대 포인트</span>
             <span class="entry-points-desc">4경기에서 출전한 2명의 포인트 합계 한도</span>
-            <input v-model.number="entryPointsForm.team" type="number" min="1" class="entry-points-input" :disabled="draftLocked" />
+            <input v-model.number="entryPointsForm.team" type="number" min="0.5" step="0.5" class="entry-points-input" :disabled="draftLocked" />
           </label>
 
           <label class="entry-points-field">
             <span class="entry-points-label">전체 최대 포인트</span>
             <span class="entry-points-desc">개인전 + 팀전 합산 포인트 한도</span>
-            <input v-model.number="entryPointsForm.total" type="number" min="1" class="entry-points-input" :disabled="draftLocked" />
+            <input v-model.number="entryPointsForm.total" type="number" min="0.5" step="0.5" class="entry-points-input" :disabled="draftLocked" />
+          </label>
+
+          <label class="entry-points-field">
+            <span class="entry-points-label">팀전 경기 최소 포인트</span>
+            <span class="entry-points-desc">4경기 2명의 포인트 합계 하한. 비워두면 제한 없음</span>
+            <input v-model.number="entryPointsForm.teamMin" type="number" min="0.5" step="0.5" placeholder="제한 없음" class="entry-points-input" :disabled="draftLocked" />
           </label>
         </div>
 
@@ -481,7 +487,7 @@ import { type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
 import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders, getLeaguePlayers } from '@/lib/leagueDetail'
 import { FontSize } from '@/lib/tiptapFontSize'
-import { tierPoint } from '@/lib/constants'
+import { tierPoint, TIER_ORDER } from '@/lib/constants'
 import { useToast } from '@/composables/useToast'
 
 // ── 토스트 ────────────────────────────────────────────────
@@ -908,7 +914,8 @@ async function saveMapsData() {
 }
 
 // ── 엔트리 포인트 ─────────────────────────────────────────
-const entryPointsForm = reactive({ solo: 16, team: 7, total: 23 })
+const entryPointsForm = reactive({ solo: 16, team: 7, total: 23, teamMin: '' as number | '' })
+const tierPointGuide = TIER_ORDER.map(t => `${t}=${tierPoint(t)}`).join(' / ')
 const entryPointsSaving = ref(false)
 const entryPointsError = ref<string | null>(null)
 
@@ -917,16 +924,23 @@ watch(league, (lg) => {
     entryPointsForm.solo  = lg.entry_solo_max
     entryPointsForm.team  = lg.entry_team_max
     entryPointsForm.total = lg.entry_total_max
+    entryPointsForm.teamMin = lg.entry_team_min ?? ''
   }
 }, { immediate: true })
 
 async function saveEntryPointsData() {
   entryPointsError.value = null
   const { solo, team, total } = entryPointsForm
-  if (!Number.isInteger(solo) || solo <= 0 ||
-      !Number.isInteger(team) || team <= 0 ||
-      !Number.isInteger(total) || total <= 0) {
-    entryPointsError.value = '포인트 한도는 1 이상의 정수여야 합니다.'
+  // 티어 포인트가 0.5 단위라 한도도 0.5 단위만 의미가 있다
+  const isHalfStep = (v: number) => Number.isFinite(v) && v > 0 && Number.isInteger(v * 2)
+  if (!isHalfStep(solo) || !isHalfStep(team) || !isHalfStep(total)) {
+    entryPointsError.value = '포인트 한도는 0.5 단위의 양수여야 합니다.'
+    return
+  }
+  // v-model.number는 빈 칸을 ''로 남긴다 → 제한 없음(null)
+  const teamMin = entryPointsForm.teamMin === '' ? null : entryPointsForm.teamMin
+  if (teamMin !== null && (!isHalfStep(teamMin) || teamMin > team)) {
+    entryPointsError.value = '팀전 최소 포인트는 0.5 단위이며 팀전 최대 포인트 이하여야 합니다.'
     return
   }
   entryPointsSaving.value = true
@@ -935,11 +949,13 @@ async function saveEntryPointsData() {
       entry_solo_max: solo,
       entry_team_max: team,
       entry_total_max: total,
+      entry_team_min: teamMin,
     })
     if (league.value) {
       league.value.entry_solo_max  = solo
       league.value.entry_team_max  = team
       league.value.entry_total_max = total
+      league.value.entry_team_min  = teamMin
     }
     showToast('엔트리 포인트가 저장되었습니다.')
   } catch (e: any) {
