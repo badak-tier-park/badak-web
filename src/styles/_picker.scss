@@ -158,6 +158,17 @@
   font-weight: 400;
 }
 
+.picker-ladder-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #c084fc;
+  background: rgba(170, 59, 255, 0.14);
+}
+
 // 같은 항목을 여러 번 담을 수 있는 피커에서, 체크마크 대신 담은 횟수를 보여준다
 .picker-added {
   flex-shrink: 0;
