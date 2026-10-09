@@ -327,6 +327,12 @@
             <span class="entry-points-desc">4경기 2명의 포인트 합계 하한. 비워두면 제한 없음</span>
             <input v-model.number="entryPointsForm.teamMin" type="number" min="0.5" step="0.5" placeholder="제한 없음" class="entry-points-input" :disabled="draftLocked" />
           </label>
+
+          <label class="entry-points-field">
+            <span class="entry-points-label">에이스 결정전 생략 포인트 차이</span>
+            <span class="entry-points-desc">양팀 엔트리 포인트 차이가 이 값 이상이면 3:3에서 에결 없이 포인트를 적게 쓴 팀이 승리. 비워두면 항상 에결</span>
+            <input v-model.number="entryPointsForm.aceGap" type="number" min="0.5" step="0.5" placeholder="항상 에결" class="entry-points-input" :disabled="draftLocked" />
+          </label>
         </div>
 
         <div v-if="!draftLocked" class="section-footer">
@@ -914,7 +920,7 @@ async function saveMapsData() {
 }
 
 // ── 엔트리 포인트 ─────────────────────────────────────────
-const entryPointsForm = reactive({ solo: 16, team: 7, total: 23, teamMin: '' as number | '' })
+const entryPointsForm = reactive({ solo: 16, team: 7, total: 23, teamMin: '' as number | '', aceGap: '' as number | '' })
 const tierPointGuide = TIER_ORDER.map(t => `${t}=${tierPoint(t)}`).join(' / ')
 const entryPointsSaving = ref(false)
 const entryPointsError = ref<string | null>(null)
@@ -925,6 +931,7 @@ watch(league, (lg) => {
     entryPointsForm.team  = lg.entry_team_max
     entryPointsForm.total = lg.entry_total_max
     entryPointsForm.teamMin = lg.entry_team_min ?? ''
+    entryPointsForm.aceGap = lg.ace_skip_point_gap ?? ''
   }
 }, { immediate: true })
 
@@ -943,6 +950,11 @@ async function saveEntryPointsData() {
     entryPointsError.value = '팀전 최소 포인트는 0.5 단위이며 팀전 최대 포인트 이하여야 합니다.'
     return
   }
+  const aceGap = entryPointsForm.aceGap === '' ? null : entryPointsForm.aceGap
+  if (aceGap !== null && !isHalfStep(aceGap)) {
+    entryPointsError.value = '에결 생략 포인트 차이는 0.5 단위의 양수여야 합니다.'
+    return
+  }
   entryPointsSaving.value = true
   try {
     await updateLeagueEntryLimits(leagueId, {
@@ -950,12 +962,14 @@ async function saveEntryPointsData() {
       entry_team_max: team,
       entry_total_max: total,
       entry_team_min: teamMin,
+      ace_skip_point_gap: aceGap,
     })
     if (league.value) {
       league.value.entry_solo_max  = solo
       league.value.entry_team_max  = team
       league.value.entry_total_max = total
       league.value.entry_team_min  = teamMin
+      league.value.ace_skip_point_gap = aceGap
     }
     showToast('엔트리 포인트가 저장되었습니다.')
   } catch (e: any) {

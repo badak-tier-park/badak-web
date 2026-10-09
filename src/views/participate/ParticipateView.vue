@@ -671,7 +671,7 @@ import {
   getEntries, saveEntries, submitEntry, getEntryStatusMap, computeFinalRosters,
   consentReveal, checkBothConsented, getConsentedSet,
   getAceTierBan, saveAceTierBan, getEntriesForSchedules,
-  TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS, MILITARY_DEDUCTION, calcEntryPoints,
+  TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS, MILITARY_DEDUCTION, calcEntryPoints, pointTiebreakWinner,
   type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
@@ -689,13 +689,14 @@ import { FontSize } from '@/lib/tiptapFontSize'
 const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }
 
 // 슬롯 결과 + 엔트리 포인트로 실제 경기 승자 계산
-// 3:3 동률이고 에결 없을 경우, 전체 엔트리 포인트 낮은 팀 승리 (차이 3pt 이상)
+// 3:3 동률이고 에결 없을 경우, 전체 엔트리 포인트 낮은 팀 승리 (차이가 리그 기준 이상)
 function resolveMatchWinner(
   capA: number,
   capB: number,
   slots: { slot_num: number; winner_captain_id: number | null }[],
   entries: EntryRecord[],
   playerMap: Map<number, PlayerRow>,
+  aceSkipGap: number | null,
 ): { winner: number | null; tiebreak: boolean } {
   let winsA = 0, winsB = 0
   let aceWinner: number | null = null
@@ -711,8 +712,8 @@ function resolveMatchWinner(
   const calcPt = (cid: number) =>
     calcEntryPoints(entries.filter(e => e.captain_player_id === cid), id => playerMap.get(id)).total
   const ptA = calcPt(capA), ptB = calcPt(capB)
-  if (Math.abs(ptA - ptB) >= 3) return { winner: ptA < ptB ? capA : capB, tiebreak: true }
-  return { winner: null, tiebreak: false }
+  const winner = pointTiebreakWinner(ptA, ptB, capA, capB, aceSkipGap)
+  return { winner, tiebreak: winner !== null }
 }
 
 const SLOT_CONFIG = [
@@ -1058,7 +1059,7 @@ async function openStandingsList(league: LeagueRow) {
         else if (slot.winner_captain_id === capB) ptsB += pts
       }
 
-      const { winner } = resolveMatchWinner(capA, capB, slots, entries, playerMap)
+      const { winner } = resolveMatchWinner(capA, capB, slots, entries, playerMap, league.ace_skip_point_gap ?? null)
       const tNameA = teamName(capA)
       const tNameB = teamName(capB)
 
