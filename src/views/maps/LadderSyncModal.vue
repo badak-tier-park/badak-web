@@ -25,7 +25,16 @@
           <p v-else-if="loadError" class="sync-state sync-state--error">{{ loadError }}</p>
 
           <template v-else-if="preview">
+            <p v-for="w in preview.pool.warnings" :key="w" class="sync-warning">{{ w }}</p>
             <p v-if="nothingToDo" class="sync-state">이미 최신 상태입니다. 바뀐 맵이 없습니다.</p>
+
+            <label v-if="imageCandidates > 0" class="sync-image-option">
+              <input v-model="withImages" type="checkbox" :disabled="applying || done" />
+              <span class="sync-image-text">
+                <span>리퀴피디아 맵 이미지도 가져오기 <b>{{ imageCandidates }}개</b></span>
+                <small>이미지가 없는 맵에만 넣고, 직접 올린 이미지는 바꾸지 않아요. 원작자·출처도 함께 기록됩니다.</small>
+              </span>
+            </label>
 
             <!-- ── 처음 보는 맵: 관리자가 결정 ── -->
             <section v-if="rows.length" class="sync-group">
@@ -41,6 +50,7 @@
                     <span class="sync-name">{{ row.info.liquipedia_name }}</span>
                     <span v-if="row.info.version" class="sync-version">v{{ row.info.version }}</span>
                     <span class="sync-meta">{{ metaLabel(row.info) }}</span>
+                    <span v-if="row.info.image" class="sync-has-image">이미지 있음</span>
                   </div>
                   <select v-model="row.choice" class="sync-select" :disabled="applying || done">
                     <option value="create">새 맵으로 등록</option>
@@ -121,7 +131,7 @@
               :disabled="!preview || applying || nothingToDo"
               @click="handleApply"
             >
-              {{ applying ? '반영 중...' : '반영' }}
+              {{ applying ? (withImages && imageCandidates > 0 ? '반영 중... (이미지 처리 포함)' : '반영 중...') : '반영' }}
             </button>
           </div>
         </div>
@@ -162,6 +172,7 @@ const rows = ref<Row[]>([])
 const applying = ref(false)
 const applyError = ref<string | null>(null)
 const done = ref(false)
+const withImages = ref(true)
 
 onMounted(async () => {
   try {
@@ -198,9 +209,22 @@ const chosenLinkIds = computed(() =>
 // 반영과 같은 기준(droppedAfter)으로 보여준다 — 버전업으로 연결한 맵은 빠지는 맵이 아니다
 const dropped = computed(() => (preview.value ? droppedAfter(preview.value, chosenLinkIds.value) : []))
 
+/** 이미지를 넣게 될 맵 수 — 리퀴피디아에 이미지가 있고, 대상 맵에 아직 이미지가 없는 것 */
+const imageCandidates = computed(() => {
+  if (!preview.value) return 0
+  let n = preview.value.linked.filter(l => l.info.image && !l.map.thumbnail_url).length
+  for (const r of rows.value) {
+    if (!r.info.image || r.choice === 'later') continue
+    if (r.choice === 'create') n++
+    else if (!props.maps.find(m => m.id === r.choice)?.thumbnail_url) n++
+  }
+  return n
+})
+
 const nothingToDo = computed(() =>
   !!preview.value && rows.value.length === 0 && dropped.value.length === 0
-  && preview.value.linked.every(l => l.map.is_ladder && l.map.version === l.info.version),
+  && preview.value.linked.every(l => l.map.is_ladder && l.map.version === l.info.version)
+  && imageCandidates.value === 0,
 )
 
 function metaLabel(info: LadderMapInfo): string {
@@ -259,12 +283,17 @@ async function handleApply() {
   applying.value = true
   applyError.value = null
   try {
-    const { failed } = await applyLadderSync(preview.value, rows.value.map(toDecision))
+    const { failed, imageFailed } = await applyLadderSync(preview.value, rows.value.map(toDecision), {
+      withImages: withImages.value,
+    })
     emit('applied')
-    if (failed.length === 0) { emit('close'); return }
+    if (failed.length === 0 && imageFailed.length === 0) { emit('close'); return }
     // 일부 실패 — 미리보기가 이미 낡았으니 다시 반영하지 못하게 닫기만 남긴다
     done.value = true
-    applyError.value = `일부 항목을 반영하지 못했습니다: ${failed.map(f => `${f.label} (${f.message})`).join(', ')}`
+    const messages: string[] = []
+    if (failed.length) messages.push(`반영하지 못한 맵: ${failed.map(f => `${f.label} (${f.message})`).join(', ')}`)
+    if (imageFailed.length) messages.push(`맵은 반영됐지만 이미지를 못 가져온 맵: ${imageFailed.join(', ')} — 맵 수정 화면에서 직접 올려주세요.`)
+    applyError.value = messages.join(' / ')
   } catch (e: any) {
     applyError.value = e.message ?? '반영 중 오류가 발생했습니다.'
   } finally {

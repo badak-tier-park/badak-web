@@ -236,12 +236,14 @@ async function fetchCommonsImages(files: string[]): Promise<Map<string, LadderMa
     const description = page?.revisions?.[0]?.slots.main.content ?? ''
     const fileInfo = extractTemplate(description, 'FileInfo')
     const p = fileInfo ? templateParams(fileInfo) : {}
+    // 원출처가 안 적힌 파일(예: 투혼)도 어디서 가져왔는지는 남도록 리퀴피디아 파일 페이지를 출처로 둔다
+    const filePage = `https://liquipedia.net/commons/${encodeURI(page!.title.replace(/ /g, '_'))}`
     result.set(file, {
       url: info.url,
       width: info.width ?? null,
       height: info.height ?? null,
       author: p.author ? cleanWiki(p.author) || null : null,
-      source: p.source ? cleanWiki(p.source) || null : null,
+      source: (p.source && cleanWiki(p.source)) || filePage,
     })
   }
   return result
