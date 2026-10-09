@@ -8,9 +8,12 @@ setDefaultAutoSelectFamilyAttemptTimeout(2000)
 
 /**
  * GET /api/ladder-maps — 리퀴피디아에서 현재 시즌 스타 리마스터 래더 맵 풀과 맵별 정보를 가져온다.
+ * GET /api/ladder-maps?image=<리퀴피디아 이미지 주소> — 그 맵 이미지 파일을 대신 받아 돌려준다.
  *
  * 브라우저에서 리퀴피디아를 직접 부르지 않고 서버를 거치는 이유: 리퀴피디아 API 이용 규칙이
  * 연락처가 담긴 User-Agent를 요구하는데, 브라우저 fetch는 User-Agent를 바꿀 수 없다.
+ * 이미지도 같은 이유 + 브라우저가 다른 출처 이미지를 canvas로 압축하려면 CORS가 필요해서
+ * 같은 출처(/api)로 받는다.
  *
  * 읽기 전용 프록시다. DB에는 쓰지 않는다 — 관리자가 검토 화면에서 고른 결과만 웹앱이
  * 기존 RLS 아래에서 반영한다. 자동으로 반영하지 않는 이유는 리퀴피디아는 영문명,
@@ -18,12 +21,26 @@ setDefaultAutoSelectFamilyAttemptTimeout(2000)
  */
 
 const LP_API = 'https://liquipedia.net/starcraft/api.php'
+// 맵 이미지 파일과 그 설명(원작자·출처)은 위키들이 공유하는 commons에 있다
+const COMMONS_API = 'https://liquipedia.net/commons/api.php'
 const POOL_PAGE = 'Maps/Ladder_Maps'
 const USER_AGENT = 'BadakTier-LadderSync/1.0 (+https://github.com/badak-tier-park/badak-web)'
 // 리퀴피디아 규칙: 요청 사이 2초 이상. parse 액션은 제한이 훨씬 엄격해 query 액션만 쓴다.
 const REQUEST_GAP_MS = 2100
 // 관리자가 버튼을 연달아 눌러도 리퀴피디아를 반복해서 두드리지 않게 (웜 인스턴스 한정)
 const CACHE_TTL_MS = 10 * 60 * 1000
+// 리퀴피디아 맵 이미지는 원본이 2048px·2MB까지 있다. 넉넉히 잡되 상한은 둔다
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
+export interface LadderMapImage {
+  url: string
+  width: number | null
+  height: number | null
+  /** 리퀴피디아 파일 설명의 author — 보통 맵 제작자 */
+  author: string | null
+  /** 리퀴피디아 파일 설명의 source — 리퀴피디아가 가져온 원출처 (제작자 블로그 등) */
+  source: string | null
+}
 
 export interface LadderMapInfo {
   /** 맵 풀 표에 적힌 이름. 다음 동기화 때 같은 맵을 알아보는 키로 maps.liquipedia_name에 저장된다 */
@@ -39,6 +56,8 @@ export interface LadderMapInfo {
   tileset_raw: string | null
   /** 맵 개별 페이지가 없어 크기·타일셋 등을 못 가져온 경우 */
   missing_page: boolean
+  /** 리퀴피디아에 등록된 맵 이미지. 없거나 못 가져왔으면 null */
+  image: LadderMapImage | null
 }
 
 export interface LadderPool {
@@ -46,6 +65,8 @@ export interface LadderPool {
   source_url: string
   fetched_at: string
   maps: LadderMapInfo[]
+  /** 맵 풀은 가져왔지만 일부(이미지 정보 등)를 못 가져온 경우의 안내 */
+  warnings: string[]
 }
 
 let cache: { at: number; pool: LadderPool } | null = null
@@ -53,6 +74,9 @@ let cache: { at: number; pool: LadderPool } | null = null
 export async function GET(request: Request): Promise<Response> {
   const denied = await rejectNonAdmin(request)
   if (denied) return denied
+
+  const imageUrl = new URL(request.url).searchParams.get('image')
+  if (imageUrl !== null) return proxyImage(imageUrl)
 
   try {
     if (!cache || Date.now() - cache.at > CACHE_TTL_MS) {
@@ -106,34 +130,56 @@ export async function loadLadderPool(): Promise<LadderPool> {
   // 맵 9개 내외라 한 번의 query로 묶는다 (titles는 최대 50개)
   const mapPages = await fetchWikitexts(names)
 
-  const maps = names.map(liquipediaName => {
-    const content = mapPages.get(liquipediaName)?.content ?? null
-    return toMapInfo(liquipediaName, content)
-  })
+  const contents = names.map(n => mapPages.get(n)?.content ?? null)
+  const maps = names.map((n, i) => toMapInfo(n, contents[i]))
+  const warnings: string[] = []
+
+  // 이미지 정보는 부가 정보라, 못 가져와도 맵 풀 동기화 자체는 진행한다
+  const files = contents.map(c => (c ? infoboxImageFile(c) : null))
+  const wanted = [...new Set(files.filter((f): f is string => !!f))]
+  if (wanted.length > 0) {
+    try {
+      await sleep(REQUEST_GAP_MS)
+      const images = await fetchCommonsImages(wanted)
+      maps.forEach((m, i) => {
+        const file = files[i]
+        m.image = file ? images.get(file) ?? null : null
+      })
+    } catch (e) {
+      warnings.push(`맵 이미지 정보를 가져오지 못했습니다. (${e instanceof Error ? e.message : String(e)})`)
+    }
+  }
 
   return {
     season,
     source_url: `https://liquipedia.net/starcraft/${POOL_PAGE}`,
     fetched_at: new Date().toISOString(),
     maps,
+    warnings,
   }
 }
 
-interface WikiPage { title: string; content: string }
+interface RawPage {
+  title: string
+  missing?: boolean
+  revisions?: { slots: { main: { content: string } } }[]
+  imageinfo?: { url: string; width?: number; height?: number }[]
+}
 
-/** 요청한 제목 → 실제 페이지 내용. 제목 정규화(밑줄→공백)와 리다이렉트를 따라가 원래 요청한 제목으로 돌려준다 */
-async function fetchWikitexts(titles: string[]): Promise<Map<string, WikiPage | null>> {
+/**
+ * MediaWiki query 한 번. 요청한 제목 → 실제 페이지. 제목 정규화(밑줄→공백)와 리다이렉트
+ * (예: File:Silver_Wing.jpg → Fighting_Spirit_sc.jpg)를 따라가 원래 요청한 제목으로 돌려준다.
+ */
+async function queryPages(api: string, titles: string[], props: Record<string, string>): Promise<Map<string, RawPage | null>> {
   const params = new URLSearchParams({
     action: 'query',
     format: 'json',
     formatversion: '2',
-    prop: 'revisions',
-    rvprop: 'content',
-    rvslots: 'main',
     redirects: '1',
     titles: titles.join('|'),
+    ...props,
   })
-  const res = await fetch(`${LP_API}?${params}`, {
+  const res = await fetch(`${api}?${params}`, {
     headers: { 'User-Agent': USER_AGENT, 'Accept-Encoding': 'gzip' },
   })
   if (!res.ok) throw new Error(`리퀴피디아 응답 ${res.status}`)
@@ -142,7 +188,7 @@ async function fetchWikitexts(titles: string[]): Promise<Map<string, WikiPage | 
     query?: {
       normalized?: { from: string; to: string }[]
       redirects?: { from: string; to: string }[]
-      pages?: { title: string; missing?: boolean; revisions?: { slots: { main: { content: string } } }[] }[]
+      pages?: RawPage[]
     }
   }
   const q = body.query
@@ -152,15 +198,89 @@ async function fetchWikitexts(titles: string[]): Promise<Map<string, WikiPage | 
   const redirects = new Map((q.redirects ?? []).map(r => [r.from, r.to]))
   const pages = new Map(q.pages.map(p => [p.title, p]))
 
-  const result = new Map<string, WikiPage | null>()
+  const result = new Map<string, RawPage | null>()
   for (const requested of titles) {
     const n = normalized.get(requested) ?? requested
-    const finalTitle = redirects.get(n) ?? n
-    const page = pages.get(finalTitle)
-    const content = page && !page.missing ? page.revisions?.[0]?.slots.main.content : undefined
-    result.set(requested, content ? { title: finalTitle, content } : null)
+    const page = pages.get(redirects.get(n) ?? n)
+    result.set(requested, page && !page.missing ? page : null)
   }
   return result
+}
+
+interface WikiPage { title: string; content: string }
+
+async function fetchWikitexts(titles: string[]): Promise<Map<string, WikiPage | null>> {
+  const raw = await queryPages(LP_API, titles, { prop: 'revisions', rvprop: 'content', rvslots: 'main' })
+  const result = new Map<string, WikiPage | null>()
+  for (const [requested, page] of raw) {
+    const content = page?.revisions?.[0]?.slots.main.content
+    result.set(requested, page && content ? { title: page.title, content } : null)
+  }
+  return result
+}
+
+/** 파일 이름 → 이미지 주소·크기 + 파일 설명({{FileInfo}})의 원작자·출처. 한 번의 query로 묶는다 */
+async function fetchCommonsImages(files: string[]): Promise<Map<string, LadderMapImage>> {
+  const raw = await queryPages(COMMONS_API, files.map(f => `File:${f}`), {
+    prop: 'imageinfo|revisions',
+    iiprop: 'url|size',
+    rvprop: 'content',
+    rvslots: 'main',
+  })
+  const result = new Map<string, LadderMapImage>()
+  for (const file of files) {
+    const page = raw.get(`File:${file}`)
+    const info = page?.imageinfo?.[0]
+    if (!info?.url || !isAllowedImageUrl(info.url)) continue
+    const description = page?.revisions?.[0]?.slots.main.content ?? ''
+    const fileInfo = extractTemplate(description, 'FileInfo')
+    const p = fileInfo ? templateParams(fileInfo) : {}
+    result.set(file, {
+      url: info.url,
+      width: info.width ?? null,
+      height: info.height ?? null,
+      author: p.author ? cleanWiki(p.author) || null : null,
+      source: p.source ? cleanWiki(p.source) || null : null,
+    })
+  }
+  return result
+}
+
+// ── 이미지 대리 다운로드 ────────────────────────────────────────
+/**
+ * 리퀴피디아 이미지 저장소 주소만 받는다. 아무 주소나 받아주면 이 함수가 남의 서버를
+ * 대신 두드리는 통로(SSRF)가 되므로, URL로 파싱한 뒤(../ 같은 경로 조작이 정리된 상태)
+ * 호스트와 경로 접두사를 확인한다.
+ */
+export function isAllowedImageUrl(raw: string): boolean {
+  let u: URL
+  try { u = new URL(raw) } catch { return false }
+  return u.protocol === 'https:'
+    && u.hostname === 'liquipedia.net'
+    && !u.port
+    && !u.username && !u.password
+    && u.pathname.startsWith('/commons/images/')
+}
+
+export async function proxyImage(raw: string): Promise<Response> {
+  if (!isAllowedImageUrl(raw)) return json({ error: '리퀴피디아 이미지 주소만 받을 수 있습니다.' }, 400)
+
+  let res: Response
+  try {
+    res = await fetch(raw, { headers: { 'User-Agent': USER_AGENT } })
+  } catch (e) {
+    return json({ error: `이미지를 받지 못했습니다. (${e instanceof Error ? e.message : String(e)})` }, 502)
+  }
+  const type = res.headers.get('content-type') ?? ''
+  if (!res.ok || !type.startsWith('image/')) return json({ error: `이미지를 받지 못했습니다. (${res.status})` }, 502)
+  if (Number(res.headers.get('content-length') ?? 0) > MAX_IMAGE_BYTES) return json({ error: '이미지가 너무 큽니다.' }, 413)
+
+  const bytes = await res.arrayBuffer()
+  if (bytes.byteLength > MAX_IMAGE_BYTES) return json({ error: '이미지가 너무 큽니다.' }, 413)
+  return new Response(bytes, {
+    status: 200,
+    headers: { 'Content-Type': type, 'Cache-Control': 'private, max-age=3600' },
+  })
 }
 
 // ── 위키 문법 파싱 ──────────────────────────────────────────────
@@ -198,7 +318,16 @@ export function toMapInfo(liquipediaName: string, content: string | null): Ladde
     tileset: tilesetRaw ? toTilesetId(tilesetRaw) : null,
     tileset_raw: tilesetRaw,
     missing_page: !infobox,
+    image: null,
   }
+}
+
+/** 정보 상자의 `image=Radeon.jpg` → `Radeon.jpg`. 공백·`File:` 접두사가 섞여 있어도 파일 이름만 */
+export function infoboxImageFile(content: string): string | null {
+  const infobox = extractTemplate(content, 'Infobox map')
+  const raw = infobox ? templateParams(infobox).image : undefined
+  const file = raw ? cleanWiki(raw).replace(/^(file|image):/i, '').trim() : ''
+  return file || null
 }
 
 /** `{{이름 ...}}` 템플릿 하나를, 안에 중첩된 템플릿까지 고려해 통째로 잘라낸다 */
