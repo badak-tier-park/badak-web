@@ -3,7 +3,15 @@ import type { MapRow } from './maps'
 // ── 래더 맵 동기화: 리퀴피디아 맵 풀 ↔ 등록된 맵 매칭 ─────────────────
 // DB에 손대지 않는 순수 로직만 둔다(테스트 가능하게). 조회·반영은 maps.ts.
 
-/** api/ladder-maps.ts의 LadderMapInfo와 같은 모양 (api 쪽은 Node 전용이라 직접 import하지 않는다) */
+// api/ladder-maps.ts의 같은 이름 타입과 같은 모양 (api 쪽은 Node 전용이라 직접 import하지 않는다)
+export interface LadderMapImage {
+  url: string
+  width: number | null
+  height: number | null
+  author: string | null
+  source: string | null
+}
+
 export interface LadderMapInfo {
   liquipedia_name: string
   name: string
@@ -14,6 +22,7 @@ export interface LadderMapInfo {
   tileset: string | null
   tileset_raw: string | null
   missing_page: boolean
+  image: LadderMapImage | null
 }
 
 export interface LadderPool {
@@ -21,6 +30,7 @@ export interface LadderPool {
   source_url: string
   fetched_at: string
   maps: LadderMapInfo[]
+  warnings: string[]
 }
 
 export interface LadderSyncPreview {

@@ -1,5 +1,8 @@
 import { supabase } from '@/lib/supabase'
-import { aliasesWith, droppedAfter, type LadderMapInfo, type LadderPool, type LadderSyncPreview } from './ladderMatch'
+import {
+  aliasesWith, droppedAfter,
+  type LadderMapImage, type LadderMapInfo, type LadderPool, type LadderSyncPreview,
+} from './ladderMatch'
 
 export interface MapRow {
   id: string
@@ -17,6 +20,9 @@ export interface MapRow {
   is_ladder: boolean
   version: string | null
   ladder_synced_at: string | null
+  /** 리퀴피디아에서 가져온 이미지의 원작자·원출처. 관리자가 직접 올린 이미지면 null */
+  image_author: string | null
+  image_source: string | null
   created_at: string
   updated_at: string
 }
@@ -117,6 +123,17 @@ async function uploadImage(file: File, path: string): Promise<string> {
   return supabase.storage.from('map-images').getPublicUrl(path).data.publicUrl
 }
 
+/** 원본을 압축본(1280px)과 썸네일(320px)로 만들어 저장소에 올린다 */
+async function storeMapImage(file: File): Promise<{ image_url: string; thumbnail_url: string }> {
+  const base = crypto.randomUUID()
+  const [compressed, thumb] = await Promise.all([compressImage(file), generateThumbnail(file)])
+  const [image_url, thumbnail_url] = await Promise.all([
+    uploadImage(compressed, `${base}.jpg`),
+    uploadImage(thumb, `${base}_thumb.jpg`),
+  ])
+  return { image_url, thumbnail_url }
+}
+
 export async function updateMap(
   id: string,
   data: MapInsert,
@@ -127,17 +144,9 @@ export async function updateMap(
   let thumbnail_url = existingThumbnailUrl
 
   if (data.imageFile) {
-    const base = crypto.randomUUID()
-    const [compressed, thumb] = await Promise.all([
-      compressImage(data.imageFile),
-      generateThumbnail(data.imageFile),
-    ])
-    const [origUrl, thumbUrl] = await Promise.all([
-      uploadImage(compressed, `${base}.jpg`),
-      uploadImage(thumb, `${base}_thumb.jpg`),
-    ])
-    image_url = origUrl
-    thumbnail_url = thumbUrl
+    const stored = await storeMapImage(data.imageFile)
+    image_url = stored.image_url
+    thumbnail_url = stored.thumbnail_url
   }
 
   const { data: map, error } = await supabase
@@ -151,6 +160,8 @@ export async function updateMap(
       tileset: data.tileset,
       image_url,
       thumbnail_url,
+      // 이미지를 새로 올리거나 지웠으면 더 이상 리퀴피디아 이미지가 아니므로 원작자 표기도 지운다
+      ...(data.imageFile || !existingImageUrl ? { image_author: null, image_source: null } : {}),
     })
     .eq('id', id)
     .select()
@@ -165,17 +176,9 @@ export async function createMap(data: MapInsert) {
   let thumbnail_url: string | null = null
 
   if (data.imageFile) {
-    const base = crypto.randomUUID()
-    const [compressed, thumb] = await Promise.all([
-      compressImage(data.imageFile),
-      generateThumbnail(data.imageFile),
-    ])
-    const [origUrl, thumbUrl] = await Promise.all([
-      uploadImage(compressed, `${base}.jpg`),
-      uploadImage(thumb, `${base}_thumb.jpg`),
-    ])
-    image_url = origUrl
-    thumbnail_url = thumbUrl
+    const stored = await storeMapImage(data.imageFile)
+    image_url = stored.image_url
+    thumbnail_url = stored.thumbnail_url
   }
 
   const { data: map, error } = await supabase
@@ -201,12 +204,15 @@ export async function createMap(data: MapInsert) {
 // 가져오기는 /api/ladder-maps(서버)가 하고, 반영은 관리자가 검토 화면에서 고른 대로
 // 여기서 한다. 매칭 규칙은 ladderMatch.ts.
 
-export async function fetchLadderPool(): Promise<LadderPool> {
+async function authHeader(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession()
   const token = data.session?.access_token
   if (!token) throw new Error('로그인이 필요합니다.')
+  return { Authorization: `Bearer ${token}` }
+}
 
-  const res = await fetch('/api/ladder-maps', { headers: { Authorization: `Bearer ${token}` } })
+export async function fetchLadderPool(): Promise<LadderPool> {
+  const res = await fetch('/api/ladder-maps', { headers: await authHeader() })
   // Vite 개발 서버에는 /api 함수가 없어 index.html(HTML)이 돌아온다
   if (!(res.headers.get('content-type') ?? '').includes('application/json')) {
     throw new Error('동기화 API에 연결하지 못했습니다. 로컬 개발 서버(npm run dev)에서는 동작하지 않으니 Vercel 프리뷰에서 확인해주세요.')
@@ -214,6 +220,26 @@ export async function fetchLadderPool(): Promise<LadderPool> {
   const body = await res.json()
   if (!res.ok) throw new Error(body.error ?? `동기화 API 오류 (${res.status})`)
   return body as LadderPool
+}
+
+/** 리퀴피디아 이미지를 /api를 거쳐 받는다 (같은 출처라 canvas 압축이 막히지 않는다) */
+async function fetchLadderImage(url: string): Promise<File> {
+  const res = await fetch(`/api/ladder-maps?image=${encodeURIComponent(url)}`, { headers: await authHeader() })
+  const type = res.headers.get('content-type') ?? ''
+  if (!res.ok || !type.startsWith('image/')) {
+    const body = type.includes('application/json') ? await res.json() : null
+    throw new Error(body?.error ?? `이미지를 받지 못했습니다. (${res.status})`)
+  }
+  return new File([await res.blob()], url.split('/').pop() || 'map.jpg', { type })
+}
+
+/**
+ * 리퀴피디아 이미지를 우리 저장소로 복사한다. 링크를 걸지 않는 이유: 리퀴피디아 트래픽을
+ * 끌어다 쓰게 되고, 파일 이름이 바뀌면 이미지가 깨진다.
+ */
+async function importLadderImage(image: LadderMapImage) {
+  const stored = await storeMapImage(await fetchLadderImage(image.url))
+  return { ...stored, image_author: image.author, image_source: image.source }
 }
 
 export type LadderDecision =
@@ -229,29 +255,54 @@ export type LadderDecision =
   | { kind: 'link'; info: LadderMapInfo; mapId: string }
   | { kind: 'later'; info: LadderMapInfo }
 
+export interface LadderSyncResult {
+  failed: { label: string; message: string }[]
+  /** 맵은 반영됐지만 이미지만 못 가져온 경우 — 맵 반영 실패와 구분해 알린다 */
+  imageFailed: string[]
+}
+
 /**
  * 검토 결과를 반영한다. 실패한 항목이 있어도 나머지는 계속 진행하고 실패 목록을 돌려준다 —
  * 다음 동기화 때 전부 다시 계산되므로 일부만 반영된 상태도 안전하다.
+ *
+ * withImages면 이미지가 없는 맵에만 리퀴피디아 이미지를 넣는다. 관리자가 직접 올린
+ * 이미지는 절대 덮어쓰지 않는다.
  */
 export async function applyLadderSync(
   preview: LadderSyncPreview,
   decisions: LadderDecision[],
-): Promise<{ failed: { label: string; message: string }[] }> {
+  options: { withImages: boolean },
+): Promise<LadderSyncResult> {
   const now = new Date().toISOString()
-  const failed: { label: string; message: string }[] = []
+  const failed: LadderSyncResult['failed'] = []
+  const imageFailed: string[] = []
   const run = async (label: string, op: () => PromiseLike<{ error: { message: string } | null }>) => {
     const { error } = await op()
     if (error) failed.push({ label, message: error.message })
   }
+  // 이미지는 부가 정보라, 못 가져와도 맵 반영은 계속한다
+  const imageFields = async (info: LadderMapInfo, hasImage: boolean) => {
+    if (!options.withImages || hasImage || !info.image) return {}
+    try {
+      return await importLadderImage(info.image)
+    } catch (e: any) {
+      imageFailed.push(`${info.liquipedia_name} (${e.message ?? '오류'})`)
+      return {}
+    }
+  }
 
   for (const { info, map } of preview.linked) {
+    const image = await imageFields(info, !!map.thumbnail_url)
     await run(info.liquipedia_name, () =>
-      supabase.from('maps').update({ is_ladder: true, version: info.version, ladder_synced_at: now }).eq('id', map.id),
+      supabase.from('maps')
+        .update({ is_ladder: true, version: info.version, ladder_synced_at: now, ...image })
+        .eq('id', map.id),
     )
   }
 
   for (const d of decisions) {
     if (d.kind === 'create') {
+      const image = await imageFields(d.info, false)
       await run(d.info.liquipedia_name, () =>
         supabase.from('maps').insert({
           name: d.name,
@@ -267,6 +318,7 @@ export async function applyLadderSync(
           is_ladder: true,
           version: d.info.version,
           ladder_synced_at: now,
+          ...image,
         }),
       )
     } else if (d.kind === 'link') {
@@ -278,6 +330,7 @@ export async function applyLadderSync(
         failed.push({ label: d.info.liquipedia_name, message: e.message ?? '연결할 맵을 찾지 못했습니다.' })
         continue
       }
+      const image = await imageFields(d.info, !!target.thumbnail_url)
       await run(d.info.liquipedia_name, () =>
         supabase.from('maps')
           .update({
@@ -287,6 +340,7 @@ export async function applyLadderSync(
             ladder_synced_at: now,
             // 새 이름과 버전업 전 이름(이전 liquipedia_name)을 별칭에 남겨 옛 리플레이 전적도 계속 매칭되게
             aliases: aliasesWith(target, [d.info.liquipedia_name, d.info.name, target.liquipedia_name]),
+            ...image,
           })
           .eq('id', d.mapId),
       )
@@ -300,5 +354,5 @@ export async function applyLadderSync(
     )
   }
 
-  return { failed }
+  return { failed, imageFailed }
 }
