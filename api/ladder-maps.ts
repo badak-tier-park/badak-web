@@ -29,8 +29,9 @@ const USER_AGENT = 'BadakTier-LadderSync/1.0 (+https://github.com/badak-tier-par
 const REQUEST_GAP_MS = 2100
 // 관리자가 버튼을 연달아 눌러도 리퀴피디아를 반복해서 두드리지 않게 (웜 인스턴스 한정)
 const CACHE_TTL_MS = 10 * 60 * 1000
-// 리퀴피디아 맵 이미지는 원본이 2048px·2MB까지 있다. 넉넉히 잡되 상한은 둔다
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+// 리퀴피디아 맵 이미지는 원본이 2048px·2MB까지 있다. Vercel 함수 응답 한도(4.5MB)를
+// 넘으면 우리 에러 대신 플랫폼 에러로 끊기므로 그 안쪽에서 먼저 거절한다
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024
 
 export interface LadderMapImage {
   url: string
