@@ -492,9 +492,9 @@
               </div>
             </div>
             <div class="epi-divider" />
-            <div class="epi" :class="{ 'epi--over': teamPoints > entryModal.teamMax }">
+            <div class="epi" :class="{ 'epi--over': teamPoints > entryModal.teamMax || teamUnderMin }">
               <div class="epi-top">
-                <span class="epi-label">팀전</span>
+                <span class="epi-label">팀전<span v-if="entryModal.teamMin !== null" class="epi-min"> 최소 {{ entryModal.teamMin }}</span></span>
                 <span class="epi-val">{{ teamPoints }}<span class="epi-max">/{{ entryModal.teamMax }}</span></span>
               </div>
               <div class="epi-track">
@@ -839,6 +839,7 @@ interface MyMatchItem {
   soloMax: number
   teamMax: number
   totalMax: number
+  teamMin: number | null
 }
 const matchListModal = reactive({
   open: false,
@@ -1154,6 +1155,8 @@ interface EntryModalState {
   soloMax: number
   teamMax: number
   totalMax: number
+  /** 팀전 최소 포인트. null이면 제한 없음 */
+  teamMin: number | null
 }
 const entryModal = reactive<EntryModalState>({
   open: false,
@@ -1172,6 +1175,7 @@ const entryModal = reactive<EntryModalState>({
   soloMax: 16,
   teamMax: 7,
   totalMax: 23,
+  teamMin: null,
 })
 
 // ── 데이터 로드 ──────────────────────────────────────────────
@@ -1270,6 +1274,8 @@ async function openMatchList(league: LeagueRow) {
           soloMax: league.entry_solo_max,
           teamMax: league.entry_team_max,
           totalMax: league.entry_total_max,
+          // DB 컬럼 추가 전 배포돼도 undefined가 "최소 있음"으로 오인되지 않게 null로 맞춘다
+          teamMin: league.entry_team_min ?? null,
         }
       })
       .sort((a, b) => {
@@ -1340,7 +1346,12 @@ const entryPoints = computed(() =>
 const individualPoints = computed(() => entryPoints.value.solo)
 const teamPoints = computed(() => entryPoints.value.team)
 const totalPoints = computed(() => entryPoints.value.total)
-
+// 팀전 2명을 다 고른 뒤에만 최소 미달로 표시한다 — 고르는 도중엔 당연히 모자라므로
+const teamUnderMin = computed(() =>
+  entryModal.teamMin !== null &&
+  (entryModal.selections[TEAM_SLOT] ?? []).filter(Boolean).length >= 2 &&
+  teamPoints.value < entryModal.teamMin
+)
 async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.open = true
   entryModal.readonly = readonly
@@ -1357,6 +1368,7 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.soloMax = item.soloMax
   entryModal.teamMax = item.teamMax
   entryModal.totalMax = item.totalMax
+  entryModal.teamMin = item.teamMin
   entryError.value = null
   initSelections()
   loadingEntry.value = true
@@ -1473,6 +1485,10 @@ async function handleEntrySubmit() {
   }
   if (teamPoints.value > entryModal.teamMax) {
     entryError.value = `팀전 포인트(${teamPoints.value})가 한도(${entryModal.teamMax})를 초과했습니다.`
+    return
+  }
+  if (entryModal.teamMin !== null && teamPoints.value < entryModal.teamMin) {
+    entryError.value = `팀전 포인트(${teamPoints.value})가 최소(${entryModal.teamMin})보다 낮습니다.`
     return
   }
   if (totalPoints.value > entryModal.totalMax) {
