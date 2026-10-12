@@ -453,7 +453,7 @@ import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 
 import { getTeamNames } from '@/lib/teamNames'
 import { getSchedules, getPlayoffSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
-import { getScheduleEntries, computeFinalRosters, getAceTierBans } from '@/lib/entries'
+import { getScheduleEntries, computeFinalRosters, getAceTierBans, calcEntryPoints } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
@@ -1179,10 +1179,7 @@ onMounted(async () => {
 
     // 팀별 총 포인트
     const calcPoints = (captainId: number) =>
-      entries
-        .filter(e => e.captain_player_id === captainId)
-        .flatMap(e => e.player_ids)
-        .reduce((sum, pid) => sum + (tierPoint(playerMap.get(pid)?.tier ?? 'E')), 0)
+      calcEntryPoints(entries.filter(e => e.captain_player_id === captainId), id => playerMap.get(id)).total
     entryPointsA.value = calcPoints(match.team_a_captain_id)
     entryPointsB.value = calcPoints(match.team_b_captain_id)
 
