@@ -50,6 +50,7 @@
               <span class="slot-type" :class="slot.type === 'team' ? 'slot-type--team' : ''">
                 {{ slot.type === 'team' ? '팀전' : '개인전' }}
               </span>
+              <span v-if="slotHandicapLabel(slot.num)" class="slot-handicap">핸디 · {{ slotHandicapLabel(slot.num) }}</span>
             </div>
 
             <div class="slot-teams">
@@ -449,6 +450,7 @@ import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import PlayerSelect, { type SelectOption } from '@/components/PlayerSelect.vue'
 import { getLeague } from '@/lib/leagues'
+import { isHandicapMatch, slotHandicap, handicapText, type HandicapRow } from '@/lib/handicap'
 import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 
 import { getTeamNames } from '@/lib/teamNames'
@@ -506,6 +508,8 @@ const slotPlayerMap = ref(new Map<number, SlotPlayers>())
 const entryPointsA = ref(0)
 const entryPointsB = ref(0)
 const aceSkipGap = ref<number | null>(null)
+const handicapGap = ref<number | null>(null)
+const handicapTable = ref<HandicapRow[] | null>(null)
 
 // 맵 관련 상태
 const allMapsById = ref(new Map<string, MapInfo>())
@@ -580,6 +584,18 @@ const scoreA = computed(() =>
 const scoreB = computed(() =>
   [...slotWinners.value.entries()].filter(([, w]) => w === schedule.value?.team_b_captain_id).length
 )
+
+// 핸디: 양팀 엔트리 포인트 차이가 리그 기준 이상일 때, 개인전마다 상위 티어 선수에게.
+// 포인트와 마찬가지로 대타가 아니라 제출한 엔트리 선수(slotPlayerMap) 기준이다
+const handicapActive = computed(() => isHandicapMatch(entryPointsA.value, entryPointsB.value, handicapGap.value))
+function slotHandicapLabel(slotNum: number): string | null {
+  if (!handicapActive.value) return null
+  const a = slotPlayerMap.value.get(slotNum)?.teamA?.[0]
+  const b = slotPlayerMap.value.get(slotNum)?.teamB?.[0]
+  if (!a || !b) return null
+  const h = slotHandicap(slotNum, a.tier, b.tier, handicapTable.value)
+  return h ? handicapText(h, (h.stronger === 'A' ? a : b).nickname) : null
+}
 
 const showAce = computed(() => {
   if (score6A.value !== 3 || score6B.value !== 3) return false
@@ -1127,6 +1143,8 @@ onMounted(async () => {
     ]))
 
     aceSkipGap.value = leagueData.ace_skip_point_gap ?? null
+    handicapGap.value = leagueData.handicap_point_gap ?? null
+    handicapTable.value = leagueData.handicap_table ?? null
 
     const match = schedules.find(s => s.id === matchId)
     if (!match) throw new Error('경기를 찾을 수 없습니다.')

@@ -356,6 +356,48 @@
           </button>
         </div>
       </section>
+
+      <!-- ── 탭 6: 핸디 ─────────────────────────────────── -->
+      <section v-if="activeTab === 'handicap'" class="detail-section">
+        <div class="section-header">
+          <p class="section-desc">
+            양팀 엔트리 포인트 차이가 기준 이상인 경기에서, 개인전마다 <b>상위 티어 선수</b>가 받는 핸디입니다.
+            팀전과 에이스 결정전은 핸디가 없습니다. 티어 1단계 = 0.5P (예: A+ ↔ B+ = 2단계).
+            시즌 중에도 운영진 합의에 따라 수정할 수 있습니다.
+          </p>
+        </div>
+
+        <div class="entry-points-grid">
+          <label class="entry-points-field">
+            <span class="entry-points-label">핸디 적용 포인트 차이</span>
+            <span class="entry-points-desc">양팀 엔트리 포인트 차이가 이 값 이상이면 핸디 적용. 비워두면 핸디 없음</span>
+            <input v-model.number="handicapForm.gap" type="number" min="0.5" step="0.5" placeholder="핸디 없음" class="entry-points-input" />
+          </label>
+        </div>
+
+        <div class="handicap-table">
+          <div class="handicap-head">
+            <span>티어 차이</span>
+            <span>체력</span>
+            <span>추가 핸디 (체력 외)</span>
+          </div>
+          <div v-for="row in handicapForm.rows" :key="row.steps" class="handicap-row">
+            <span class="handicap-steps">{{ row.steps }}단계 <span class="handicap-example">{{ stepExample(row.steps) }}</span></span>
+            <div class="handicap-hp">
+              <input v-model.number="row.hp" type="number" min="1" max="100" step="1" placeholder="-" class="handicap-input" />
+              <span class="handicap-unit">%</span>
+            </div>
+            <input v-model="row.note" type="text" maxlength="60" placeholder="예) 일꾼 4기 시작" class="handicap-input handicap-input--text" />
+          </div>
+        </div>
+
+        <div class="section-footer">
+          <p v-if="handicapError" class="save-error">{{ handicapError }}</p>
+          <button class="btn-save" :disabled="handicapSaving" @click="saveHandicapData">
+            {{ handicapSaving ? '저장 중...' : '저장' }}
+          </button>
+        </div>
+      </section>
     </div>
 
     <!-- ── 선수 선택 오버레이 ──────────────────────────── -->
@@ -502,7 +544,8 @@ import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, updateLeagueSeedSwapLimits, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
+import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, updateLeagueSeedSwapLimits, updateLeagueHandicap, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
+import { MAX_TIER_STEPS, type HandicapRow } from '@/lib/handicap'
 import { type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
 import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders, getLeaguePlayers } from '@/lib/leagueDetail'
@@ -514,7 +557,7 @@ import { useToast } from '@/composables/useToast'
 const { toast, showToast, clearToast } = useToast()
 
 // ── 탭 ───────────────────────────────────────────────────
-type TabKey = 'description' | 'captains' | 'seed_holders' | 'maps' | 'entry_points'
+type TabKey = 'description' | 'captains' | 'seed_holders' | 'maps' | 'entry_points' | 'handicap'
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: 'description',  label: '리그 설명' },
@@ -522,6 +565,7 @@ const tabs: { key: TabKey; label: string }[] = [
   { key: 'seed_holders', label: '시드권자' },
   { key: 'maps',         label: '경기별 맵 선택' },
   { key: 'entry_points', label: '엔트리 포인트' },
+  { key: 'handicap',     label: '핸디' },
 ]
 
 const activeTab = ref<TabKey>('description')
@@ -532,6 +576,8 @@ function isTabDone(key: TabKey): boolean {
   if (key === 'captains') return captains.value.length === captainCount.value
   if (key === 'seed_holders') return seedHolders.value.length > 0
   if (key === 'maps') return matchConfigs.every((m) => (matchMaps.value[m.number]?.length ?? 0) > 0)
+  // 핸디는 선택 사항 — 기준을 넣었을 때만 완료로 표시
+  if (key === 'handicap') return league.value?.handicap_point_gap != null
   if (key === 'entry_points') return !!league.value && league.value.entry_solo_max > 0 && league.value.entry_team_max > 0 && league.value.entry_total_max > 0
   return false
 }
@@ -952,6 +998,61 @@ async function saveMapsData() {
     mapError.value = e.message ?? '저장 중 오류가 발생했습니다.'
   } finally {
     mapSaving.value = false
+  }
+}
+
+// ── 핸디 ─────────────────────────────────────────────────
+// v-model.number는 빈 칸을 ''로 남긴다 → 핸디 없음(null)
+type HandicapFormRow = { steps: number; hp: number | ''; note: string }
+const handicapForm = reactive({
+  gap: '' as number | '',
+  rows: Array.from({ length: MAX_TIER_STEPS }, (_, i): HandicapFormRow => ({ steps: i + 1, hp: '', note: '' })),
+})
+const handicapSaving = ref(false)
+const handicapError = ref<string | null>(null)
+
+// 단계 차이 예시 — 맨 위 티어(S) 기준
+const stepExample = (steps: number) => `(${TIER_ORDER[0]} ↔ ${TIER_ORDER[steps] ?? ''})`
+
+watch(league, (lg) => {
+  if (!lg) return
+  handicapForm.gap = lg.handicap_point_gap ?? ''
+  for (const row of handicapForm.rows) {
+    const saved = lg.handicap_table?.find(r => r.steps === row.steps)
+    row.hp = saved?.hp ?? ''
+    row.note = saved?.note ?? ''
+  }
+}, { immediate: true })
+
+async function saveHandicapData() {
+  handicapError.value = null
+  const gap = handicapForm.gap === '' ? null : handicapForm.gap
+  if (gap !== null && !(Number.isFinite(gap) && gap > 0 && Number.isInteger(gap * 2))) {
+    handicapError.value = '핸디 적용 포인트 차이는 0.5 단위의 양수여야 합니다.'
+    return
+  }
+  const bad = handicapForm.rows.find(r => r.hp !== '' && !(Number.isFinite(r.hp) && r.hp > 0 && r.hp <= 100))
+  if (bad) {
+    handicapError.value = `${bad.steps}단계 체력은 1~100 사이여야 합니다.`
+    return
+  }
+  // 체력도 추가 핸디도 없는 단계는 저장하지 않는다 (= 핸디 없음)
+  const table: HandicapRow[] = handicapForm.rows
+    .filter(r => r.hp !== '' || r.note.trim())
+    .map(r => ({ steps: r.steps, hp: r.hp === '' ? null : r.hp, note: r.note.trim() }))
+
+  handicapSaving.value = true
+  try {
+    await updateLeagueHandicap(leagueId, { handicap_point_gap: gap, handicap_table: table })
+    if (league.value) {
+      league.value.handicap_point_gap = gap
+      league.value.handicap_table = table
+    }
+    showToast('핸디 설정이 저장되었습니다.')
+  } catch (e: any) {
+    handicapError.value = e.message ?? '저장 중 오류가 발생했습니다.'
+  } finally {
+    handicapSaving.value = false
   }
 }
 

@@ -44,6 +44,7 @@
               <div class="rsl-center-label">
                 <span class="rsl-num">경기{{ slot.num }}</span>
                 <span v-if="slot.type === 'team'" class="rsl-type">팀전</span>
+                <span v-if="slotHandicapLabel(slot.num)" class="rsl-handicap">핸디 · {{ slotHandicapLabel(slot.num) }}</span>
               </div>
 
               <!-- 3컬럼: 팀A | 맵 | 팀B -->
@@ -316,6 +317,7 @@ import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getLeague, MATCH_SLOT_POINTS } from '@/lib/leagues'
+import { isHandicapMatch, slotHandicap, handicapText, type HandicapRow } from '@/lib/handicap'
 import { type PlayerRow } from '@/lib/players'
 import { getSlotResults, type SlotResult } from '@/lib/schedules'
 import { withTimeout } from '@/lib/supabase'
@@ -376,6 +378,8 @@ const aceTierBanA = ref<string | null>(null)
 const aceTierBanB = ref<string | null>(null)
 const allMapsById = ref(new Map<string, MapInfo>())
 const aceSkipGap = ref<number | null>(null)
+const handicapGap = ref<number | null>(null)
+const handicapTable = ref<HandicapRow[] | null>(null)
 
 onMounted(async () => {
   try {
@@ -390,6 +394,8 @@ onMounted(async () => {
     ]))
 
     aceSkipGap.value = league.ace_skip_point_gap ?? null
+    handicapGap.value = league.handicap_point_gap ?? null
+    handicapTable.value = league.handicap_table ?? null
     playerMap.value = new Map(players.map(p => [p.id, p]))
 
     const mapInfoMap = new Map<string, MapInfo>(allMaps.map(m => [m.id, { id: m.id, name: m.name, thumbnail_url: m.thumbnail_url ?? null }]))
@@ -562,6 +568,18 @@ const regularScoreB = computed(() =>
 
 const ptA = computed(() => totalPoints(props.teamACaptainId))
 const ptB = computed(() => totalPoints(props.teamBCaptainId))
+
+// 핸디: 양팀 엔트리 포인트 차이가 리그 기준 이상일 때, 개인전마다 상위 티어 선수에게.
+// 포인트와 마찬가지로 대타가 아니라 제출한 엔트리 선수 기준이다
+const handicapActive = computed(() => isHandicapMatch(ptA.value, ptB.value, handicapGap.value))
+function slotHandicapLabel(slotNum: number): string | null {
+  if (!handicapActive.value) return null
+  const idA = entryPlayerIds(props.teamACaptainId, slotNum)[0]
+  const idB = entryPlayerIds(props.teamBCaptainId, slotNum)[0]
+  if (!idA || !idB) return null
+  const h = slotHandicap(slotNum, playerTier(idA), playerTier(idB), handicapTable.value)
+  return h ? handicapText(h, playerName(h.stronger === 'A' ? idA : idB)) : null
+}
 
 // 에이스 결정전이 실제로 진행됐는지 여부
 const acePlayed = computed(() => {
