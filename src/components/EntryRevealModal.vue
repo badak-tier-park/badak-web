@@ -311,10 +311,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getScheduleEntries, TIER_POINTS, getAceTierBans, calcEntryPoints, INDIVIDUAL_SLOTS, TEAM_SLOT, type EntryRecord } from '@/lib/entries'
+import { getScheduleEntries, TIER_POINTS, getAceTierBans, calcEntryPoints, pointTiebreakWinner, INDIVIDUAL_SLOTS, TEAM_SLOT, type EntryRecord } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
+import { getLeague } from '@/lib/leagues'
 import { type PlayerRow } from '@/lib/players'
 import { getSlotResults, type SlotResult } from '@/lib/schedules'
 import { withTimeout } from '@/lib/supabase'
@@ -374,18 +375,21 @@ const aceSlotResult = ref<SlotResult | null>(null)
 const aceTierBanA = ref<string | null>(null)
 const aceTierBanB = ref<string | null>(null)
 const allMapsById = ref(new Map<string, MapInfo>())
+const aceSkipGap = ref<number | null>(null)
 
 onMounted(async () => {
   try {
-    const [entries, players, matchMaps, allMaps, slotResultsData, aceTierBans] = await withTimeout(Promise.all([
+    const [entries, players, matchMaps, allMaps, slotResultsData, aceTierBans, league] = await withTimeout(Promise.all([
       getScheduleEntries(props.scheduleId),
       getLeaguePlayers(props.leagueId),
       getMatchMaps(props.leagueId),
       getMaps(),
       props.showResults ? getSlotResults(props.scheduleId) : Promise.resolve([] as SlotResult[]),
       getAceTierBans(props.scheduleId),
+      getLeague(props.leagueId),
     ]))
 
+    aceSkipGap.value = league.ace_skip_point_gap ?? null
     playerMap.value = new Map(players.map(p => [p.id, p]))
 
     const mapInfoMap = new Map<string, MapInfo>(allMaps.map(m => [m.id, { id: m.id, name: m.name, thumbnail_url: m.thumbnail_url ?? null }]))
@@ -562,13 +566,11 @@ const acePlayed = computed(() => {
   return !!(aceSlotResult.value?.ace_player_a_id || aceSlotResult.value?.ace_player_b_id || aceSlotResult.value?.winner_captain_id)
 })
 
-// 3:3 동률 + 포인트 차이 3pt 이상 → 낮은 포인트 팀 승리
+// 3:3 동률 + 포인트 차이가 리그 기준 이상 → 낮은 포인트 팀 승리
 const tieBreakWinner = computed((): number | null => {
   if (!props.showResults || acePlayed.value) return null
   if (regularScoreA.value !== regularScoreB.value) return null
-  const diff = Math.abs(ptA.value - ptB.value)
-  if (diff < 3) return null
-  return ptA.value < ptB.value ? props.teamACaptainId : props.teamBCaptainId
+  return pointTiebreakWinner(ptA.value, ptB.value, props.teamACaptainId, props.teamBCaptainId, aceSkipGap.value)
 })
 
 const MATCH_SLOT_POINTS: Record<number, number> = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 1, 6: 1, 7: 2 }

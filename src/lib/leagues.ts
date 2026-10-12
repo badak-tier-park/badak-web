@@ -57,6 +57,8 @@ export interface LeagueRow {
   entry_total_max: number
   /** 팀전 최소 포인트. null이면 제한 없음 */
   entry_team_min: number | null
+  /** 3:3에서 에결을 생략하고 포인트 적게 쓴 팀을 승자로 하는 포인트 차이. null이면 항상 에결 */
+  ace_skip_point_gap: number | null
   is_ready: boolean
   picks_completed: boolean
   draft_completed: boolean
@@ -194,7 +196,7 @@ export async function getLeagueCreatorPlayerId(leagueId: string): Promise<number
 
 export async function updateLeagueEntryLimits(
   id: string,
-  fields: { entry_solo_max: number; entry_team_max: number; entry_total_max: number; entry_team_min: number | null },
+  fields: { entry_solo_max: number; entry_team_max: number; entry_total_max: number; entry_team_min: number | null; ace_skip_point_gap: number | null },
 ): Promise<void> {
   const { error } = await supabase
     .from('leagues')

@@ -54,6 +54,24 @@ export function calcEntryPoints(
   return { solo, team, total: solo + team }
 }
 
+/**
+ * 양팀 엔트리 포인트 차이로 에이스 결정전을 생략하는지.
+ *
+ * 기준(gap)은 시즌마다 바뀌는 규정이라 리그별 설정값(`leagues.ace_skip_point_gap`)을 받는다.
+ * null이면 포인트로 판정하지 않고 3:3이면 항상 에결을 한다.
+ */
+export function isAceSkippedByPoints(ptA: number, ptB: number, gap: number | null | undefined): boolean {
+  return gap != null && Math.abs(ptA - ptB) >= gap
+}
+
+/** 3:3 동률에서 에결이 생략된 경우의 승자 — 포인트를 적게 쓴 팀. 생략 대상이 아니면 null */
+export function pointTiebreakWinner(
+  ptA: number, ptB: number, capA: number, capB: number, gap: number | null | undefined,
+): number | null {
+  if (!isAceSkippedByPoints(ptA, ptB, gap)) return null
+  return ptA < ptB ? capA : capB
+}
+
 // ── 타입 ────────────────────────────────────────────────────
 export interface EntrySlot {
   match_slot: number
