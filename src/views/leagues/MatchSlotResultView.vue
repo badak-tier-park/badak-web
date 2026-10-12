@@ -873,11 +873,14 @@ function openSubModal(slotNum: number, isTeamA: boolean, playerIndex: number) {
   const originalRank = tierPoint(originalPlayer.tier)
   const assigned = getAlreadyAssignedIds(captainId, slotNum)
 
+  // 대타 규정: 상위 티어 불가 / 같은 티어는 같은 종족만 / 하위 티어는 종족 무관.
+  // "같은 티어"는 정확히 같은 티어다(B+와 B-는 다른 티어 — B- 자리에 B+는 상위라 불가)
   const options: SelectOption[] = roster
     .filter(p => {
       if (assigned.has(p.id)) return false
       const rank = tierPoint(p.tier)
-      return rank <= originalRank
+      if (rank < originalRank) return true
+      return rank === originalRank && p.race === originalPlayer.race
     })
     .map(p => ({
       value: p.id,
