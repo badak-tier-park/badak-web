@@ -20,6 +20,18 @@ export const TIER_POINTS: Record<string, number> = {
   A: 5, B: 4, C: 3, D: 2,
 }
 
+/**
+ * 티어 목록을 TIER_ORDER 순(S → E)으로 정렬한다. 목록에 없는 값(구 5단계 등)은 뒤로.
+ * 문자열 정렬(.sort())을 쓰면 'S'가 'E' 뒤로 가므로 티어 배열은 반드시 이 함수로 정렬한다.
+ */
+export function sortTiers(tiers: readonly string[]): string[] {
+  const idx = (t: string) => {
+    const i = (TIER_ORDER as readonly string[]).indexOf(normalizeTier(t))
+    return i < 0 ? TIER_ORDER.length : i
+  }
+  return [...tiers].sort((a, b) => idx(a) - idx(b))
+}
+
 /** 공백/전각 기호를 정리하고 대문자화한다. */
 export function normalizeTier(t?: string | null): string {
   return (t ?? '')
