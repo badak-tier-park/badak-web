@@ -130,6 +130,20 @@
   white-space: nowrap;
 }
 
+// 핸디 받는(상위 티어) 선수 옆 배지 — 전체 문구는 title 툴팁
+.hp-badge {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.12);
+  border: 1px solid rgba(251, 146, 60, 0.35);
+  white-space: nowrap;
+  cursor: help;
+}
+
 // 승패 확정 후 치르지 않는 경기
 .slot-row--locked {
   opacity: 0.4;
@@ -139,13 +153,6 @@
   margin: 0;
   font-size: 12px;
   color: var(--c-text-muted);
-}
-
-.slot-handicap {
-  font-size: 10px;
-  font-weight: 700;
-  color: #fb923c;
-  white-space: nowrap;
 }
 
 .slot-type {

@@ -50,7 +50,6 @@
               <span class="slot-type" :class="slot.type === 'team' ? 'slot-type--team' : ''">
                 {{ slot.type === 'team' ? '팀전' : '개인전' }}
               </span>
-              <span v-if="slotHandicapLabel(slot.num)" class="slot-handicap">핸디 · {{ slotHandicapLabel(slot.num) }}</span>
             </div>
 
             <div class="slot-teams">
@@ -81,6 +80,7 @@
                       <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
                       <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
                       <span class="slot-player-name" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.nickname }}</span>
+                      <span v-if="idx === 0 && hpBadge(slot.num, 'A')" class="hp-badge" :title="hpTitle(slot.num)">❤{{ hpBadge(slot.num, 'A') }}</span>
                       <span v-if="isSubstituted(slot.num, true, idx)" class="sub-badge">대체</span>
                     </div>
                   </template>
@@ -124,6 +124,7 @@
                   <template v-if="slotPlayerMap.get(slot.num)?.teamB?.length">
                     <div v-for="(p, idx) in getActivePlayers(slot.num, false)" :key="p.id" class="slot-player-row slot-player-row--right">
                       <span v-if="isSubstituted(slot.num, false, idx)" class="sub-badge">대체</span>
+                      <span v-if="idx === 0 && hpBadge(slot.num, 'B')" class="hp-badge" :title="hpTitle(slot.num)">❤{{ hpBadge(slot.num, 'B') }}</span>
                       <span class="slot-player-name" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.nickname }}</span>
                       <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
                       <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
@@ -590,13 +591,24 @@ const scoreB = computed(() =>
 // 핸디: 양팀 엔트리 포인트 차이가 리그 기준 이상일 때, 개인전마다 상위 티어 선수에게.
 // 포인트와 마찬가지로 대타가 아니라 제출한 엔트리 선수(slotPlayerMap) 기준이다
 const handicapActive = computed(() => isHandicapMatch(entryPointsA.value, entryPointsB.value, handicapGap.value))
-function slotHandicapLabel(slotNum: number): string | null {
+function slotHandicapOf(slotNum: number) {
   if (!handicapActive.value) return null
   const a = slotPlayerMap.value.get(slotNum)?.teamA?.[0]
   const b = slotPlayerMap.value.get(slotNum)?.teamB?.[0]
   if (!a || !b) return null
   const h = slotHandicap(slotNum, a.tier, b.tier, handicapTable.value)
-  return h ? handicapText(h, (h.stronger === 'A' ? a : b).nickname) : null
+  return h ? { h, name: (h.stronger === 'A' ? a : b).nickname } : null
+}
+/** 핸디 받는(상위 티어) 쪽 선수 옆 배지 문구 — 체력 %가 없으면 '핸디' */
+function hpBadge(slotNum: number, side: 'A' | 'B'): string | null {
+  const r = slotHandicapOf(slotNum)
+  if (!r || r.h.stronger !== side) return null
+  return r.h.hp != null ? `${r.h.hp}%` : '핸디'
+}
+/** 배지에 마우스를 올리면 보이는 전체 문구 (추가 텍스트 포함) */
+function hpTitle(slotNum: number): string {
+  const r = slotHandicapOf(slotNum)
+  return r ? `핸디 · ${handicapText(r.h, r.name)}` : ''
 }
 
 // ── 승패 확정 ─────────────────────────────────────────────

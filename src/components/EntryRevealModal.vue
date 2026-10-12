@@ -44,7 +44,6 @@
               <div class="rsl-center-label">
                 <span class="rsl-num">경기{{ slot.num }}</span>
                 <span v-if="slot.type === 'team'" class="rsl-type">팀전</span>
-                <span v-if="slotHandicapLabel(slot.num)" class="rsl-handicap">핸디 · {{ slotHandicapLabel(slot.num) }}</span>
               </div>
 
               <!-- 3컬럼: 팀A | 맵 | 팀B -->
@@ -83,6 +82,7 @@
                       <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                       <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                       <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
+                      <span v-if="pidIdx === 0 && hpBadge(slot.num, 'A')" class="rse-hp-badge" :title="hpTitle(slot.num)">❤{{ hpBadge(slot.num, 'A') }}</span>
                       <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
                     </div>
                   </template>
@@ -136,6 +136,7 @@
                       class="rse-player"
                     >
                       <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
+                      <span v-if="pidIdx === 0 && hpBadge(slot.num, 'B')" class="rse-hp-badge" :title="hpTitle(slot.num)">❤{{ hpBadge(slot.num, 'B') }}</span>
                       <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
                       <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                       <span class="rse-pt">{{ playerPt(pid) }}pt</span>
@@ -572,13 +573,24 @@ const ptB = computed(() => totalPoints(props.teamBCaptainId))
 // 핸디: 양팀 엔트리 포인트 차이가 리그 기준 이상일 때, 개인전마다 상위 티어 선수에게.
 // 포인트와 마찬가지로 대타가 아니라 제출한 엔트리 선수 기준이다
 const handicapActive = computed(() => isHandicapMatch(ptA.value, ptB.value, handicapGap.value))
-function slotHandicapLabel(slotNum: number): string | null {
+function slotHandicapOf(slotNum: number) {
   if (!handicapActive.value) return null
   const idA = entryPlayerIds(props.teamACaptainId, slotNum)[0]
   const idB = entryPlayerIds(props.teamBCaptainId, slotNum)[0]
   if (!idA || !idB) return null
   const h = slotHandicap(slotNum, playerTier(idA), playerTier(idB), handicapTable.value)
-  return h ? handicapText(h, playerName(h.stronger === 'A' ? idA : idB)) : null
+  return h ? { h, name: playerName(h.stronger === 'A' ? idA : idB) } : null
+}
+/** 핸디 받는(상위 티어) 쪽 선수 옆 배지 문구 — 체력 %가 없으면 '핸디' */
+function hpBadge(slotNum: number, side: 'A' | 'B'): string | null {
+  const r = slotHandicapOf(slotNum)
+  if (!r || r.h.stronger !== side) return null
+  return r.h.hp != null ? `${r.h.hp}%` : '핸디'
+}
+/** 배지에 마우스를 올리면 보이는 전체 문구 (추가 텍스트 포함) */
+function hpTitle(slotNum: number): string {
+  const r = slotHandicapOf(slotNum)
+  return r ? `핸디 · ${handicapText(r.h, r.name)}` : ''
 }
 
 // 에이스 결정전이 실제로 진행됐는지 여부
