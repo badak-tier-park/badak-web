@@ -1351,7 +1351,7 @@ const teamUnderMin = computed(() =>
   entryModal.teamMin !== null &&
   (entryModal.selections[TEAM_SLOT] ?? []).filter(Boolean).length >= 2 &&
   teamPoints.value < entryModal.teamMin
-
+)
 async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.open = true
   entryModal.readonly = readonly
