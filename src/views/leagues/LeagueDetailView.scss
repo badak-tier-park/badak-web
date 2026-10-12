@@ -89,6 +89,10 @@
   border-radius: 12px;
   padding: 6px;
   position: relative;
+  // 탭이 6개(핸디 추가)로 늘어 좁은 화면에선 마지막 탭이 박스 밖으로 넘친다 → 가로 스크롤
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
 
 .step-sep {
