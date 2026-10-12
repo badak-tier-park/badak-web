@@ -239,6 +239,20 @@
           </button>
         </div>
 
+        <div class="entry-points-grid seed-limits-grid">
+          <label class="entry-points-field">
+            <span class="entry-points-label">허용 티어 차이 (단계)</span>
+            <span class="entry-points-desc">교체 가능한 최대 티어 단계 차이. 예) 2 → A+는 A-, B+까지. 비워두면 제한 없음</span>
+            <input v-model.number="seedLimitsForm.tierSteps" type="number" min="0" step="1" placeholder="제한 없음" class="entry-points-input" :disabled="draftLocked" />
+          </label>
+
+          <label class="entry-points-field">
+            <span class="entry-points-label">허용 픽 차이</span>
+            <span class="entry-points-desc">교체 가능한 최대 픽 순번 차이. 예) 2 → 상대 3번 픽은 우리 5번 픽까지. 비워두면 제한 없음</span>
+            <input v-model.number="seedLimitsForm.pickGap" type="number" min="0" step="1" placeholder="제한 없음" class="entry-points-input" :disabled="draftLocked" />
+          </label>
+        </div>
+
         <div v-if="!draftLocked" class="section-footer">
           <p v-if="seedError" class="save-error">{{ seedError }}</p>
           <button class="btn-save" :disabled="seedSaving" @click="saveSeedHoldersData">
@@ -488,7 +502,7 @@ import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
+import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, updateLeagueSeedSwapLimits, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
 import { type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
 import { getCaptains, saveCaptains, getMatchMaps, saveMatchMaps, getSeedHolders, saveSeedHolders, getLeaguePlayers } from '@/lib/leagueDetail'
@@ -867,12 +881,34 @@ function moveSeedHolder(index: number, direction: -1 | 1) {
   seedHolders.value = arr
 }
 
+// v-model.number는 빈 칸을 ''로 남긴다 → 제한 없음(null)
+const seedLimitsForm = reactive({ tierSteps: '' as number | '', pickGap: '' as number | '' })
+
+watch(league, (lg) => {
+  if (lg) {
+    seedLimitsForm.tierSteps = lg.seed_swap_max_tier_steps ?? ''
+    seedLimitsForm.pickGap = lg.seed_swap_max_pick_gap ?? ''
+  }
+}, { immediate: true })
+
 async function saveSeedHoldersData() {
-  seedSaving.value = true
   seedError.value = null
+  const tierSteps = seedLimitsForm.tierSteps === '' ? null : seedLimitsForm.tierSteps
+  const pickGap = seedLimitsForm.pickGap === '' ? null : seedLimitsForm.pickGap
+  const isCount = (v: number | null) => v === null || (Number.isInteger(v) && v >= 0)
+  if (!isCount(tierSteps) || !isCount(pickGap)) {
+    seedError.value = '허용 티어 차이와 픽 차이는 0 이상의 정수여야 합니다.'
+    return
+  }
+  seedSaving.value = true
   try {
     const payload = seedHolders.value.map((pid, i) => ({ player_id: pid, order_num: i + 1 }))
     await saveSeedHolders(leagueId, payload)
+    await updateLeagueSeedSwapLimits(leagueId, { seed_swap_max_tier_steps: tierSteps, seed_swap_max_pick_gap: pickGap })
+    if (league.value) {
+      league.value.seed_swap_max_tier_steps = tierSteps
+      league.value.seed_swap_max_pick_gap = pickGap
+    }
     showToast('시드권자 정보가 저장되었습니다.')
     goNext()
   } catch (e: any) {

@@ -661,7 +661,10 @@ const {
   openSeedOrderSetup, moveSeedOrder, confirmSeedOrder,
   resetSeedSwap: _resetSeedSwap,
   onMemberClick, passSeed,
-} = useSeedSwap(teams, captainIds, seedHolderIds, seedOrderIds, playerById, showToast)
+} = useSeedSwap(teams, captainIds, seedHolderIds, seedOrderIds, playerById, showToast, computed(() => ({
+  maxTierSteps: league.value?.seed_swap_max_tier_steps ?? null,
+  maxPickGap: league.value?.seed_swap_max_pick_gap ?? null,
+})))
 
 // ── 지목식 시작 ───────────────────────────────────────────
 async function startDraft() {
