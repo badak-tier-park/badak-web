@@ -82,7 +82,7 @@
                       <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                       <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                       <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
-                      <span v-if="pidIdx === 0 && hpBadge(slot.num, 'A')" class="rse-hp-badge" :title="hpTitle(slot.num)">❤{{ hpBadge(slot.num, 'A') }}</span>
+                      <span v-if="pidIdx === 0 && hpBadge(slot.num, 'A')" class="rse-hp-badge" :title="hpTitle(slot.num)">{{ hpBadge(slot.num, 'A') }}</span>
                       <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
                     </div>
                   </template>
@@ -136,7 +136,7 @@
                       class="rse-player"
                     >
                       <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
-                      <span v-if="pidIdx === 0 && hpBadge(slot.num, 'B')" class="rse-hp-badge" :title="hpTitle(slot.num)">❤{{ hpBadge(slot.num, 'B') }}</span>
+                      <span v-if="pidIdx === 0 && hpBadge(slot.num, 'B')" class="rse-hp-badge" :title="hpTitle(slot.num)">{{ hpBadge(slot.num, 'B') }}</span>
                       <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
                       <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
                       <span class="rse-pt">{{ playerPt(pid) }}pt</span>
@@ -581,11 +581,11 @@ function slotHandicapOf(slotNum: number) {
   const h = slotHandicap(slotNum, playerTier(idA), playerTier(idB), handicapTable.value)
   return h ? { h, name: playerName(h.stronger === 'A' ? idA : idB) } : null
 }
-/** 핸디 받는(상위 티어) 쪽 선수 옆 배지 문구 — 체력 %가 없으면 '핸디' */
+/** 핸디 받는(상위 티어) 쪽 선수 옆 배지 문구 — 예) "체력 75%", 체력 %가 없으면 "핸디" */
 function hpBadge(slotNum: number, side: 'A' | 'B'): string | null {
   const r = slotHandicapOf(slotNum)
   if (!r || r.h.stronger !== side) return null
-  return r.h.hp != null ? `${r.h.hp}%` : '핸디'
+  return r.h.hp != null ? `체력 ${r.h.hp}%` : '핸디'
 }
 /** 배지에 마우스를 올리면 보이는 전체 문구 (추가 텍스트 포함) */
 function hpTitle(slotNum: number): string {
