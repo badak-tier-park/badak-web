@@ -130,6 +130,17 @@
   white-space: nowrap;
 }
 
+// 승패 확정 후 치르지 않는 경기
+.slot-row--locked {
+  opacity: 0.4;
+}
+
+.complete-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
 .slot-handicap {
   font-size: 10px;
   font-weight: 700;
