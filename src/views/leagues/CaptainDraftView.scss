@@ -251,6 +251,7 @@
     opacity: 1;
   }
 
+  &--s { color: var(--tier-s-text, #fbbf24); &.active { background: var(--tier-s-bg); border-color: var(--tier-s-border); } }
   &--a { color: var(--tier-a-text, #f87171); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-border); } }
   &--a-plus { color: var(--tier-a-text, #f87171); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-plus-border); border-style: solid; } }
   &--a-minus { color: var(--tier-a-text, #f87171); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-minus-border); border-style: dashed; } }
@@ -288,6 +289,7 @@
 .tier-count  { font-size: 10px; font-weight: 500; opacity: 0.7; }
 
 // ── 티어 배경색 유틸 ──────────────────────────────────────
+.tier-bg--s { background: var(--tier-s-bg) !important; border-color: var(--tier-s-border) !important; }
 .tier-bg--a { background: var(--tier-a-bg) !important; border-color: var(--tier-a-border) !important; }
 .tier-bg--a-plus { background: var(--tier-a-bg) !important; border-color: var(--tier-a-plus-border) !important; border-style: solid !important; }
 .tier-bg--a-minus { background: var(--tier-a-bg) !important; border-color: var(--tier-a-minus-border) !important; border-style: dashed !important; }
