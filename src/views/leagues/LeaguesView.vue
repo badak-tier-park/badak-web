@@ -62,7 +62,7 @@
               </span>
               <div class="league-tiers">
                 <span
-                  v-for="tier in league.eligible_tiers"
+                  v-for="tier in sortTiers(league.eligible_tiers)"
                   :key="tier"
                   class="tier-chip"
                   :class="`tier-chip--${$tierClass(tier)}`"
@@ -328,7 +328,7 @@ import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import { getLeagues, createLeague, updateLeague, getLeagueStatus, type LeagueRow, type LeagueType, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
-import { TIER_ORDER } from '@/lib/constants'
+import { TIER_ORDER, sortTiers } from '@/lib/constants'
 
 const router = useRouter()
 
@@ -465,7 +465,7 @@ async function handleCreate() {
       name: form.name.trim(),
       start_date: form.start_date,
       end_date: form.end_date,
-      eligible_tiers: [...form.eligible_tiers].sort(),
+      eligible_tiers: sortTiers(form.eligible_tiers),
       eligibility_type: form.eligibility_type,
       has_draft: form.has_draft,
       draft_date: form.has_draft ? form.draft_date : null,
@@ -498,7 +498,7 @@ async function handleUpdate() {
       name: form.name.trim(),
       start_date: form.start_date,
       end_date: form.end_date,
-      eligible_tiers: [...form.eligible_tiers].sort(),
+      eligible_tiers: sortTiers(form.eligible_tiers),
       eligibility_type: form.eligibility_type,
       has_draft: form.has_draft,
       draft_date: form.has_draft ? form.draft_date : null,

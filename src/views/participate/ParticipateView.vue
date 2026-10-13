@@ -61,7 +61,7 @@
           <div class="league-meta">
             <span class="meta-item">
               <span
-                v-for="tier in league.eligible_tiers"
+                v-for="tier in sortTiers(league.eligible_tiers)"
                 :key="tier"
                 class="tier-chip"
                 :class="`tier-chip--${$tierClass(tier)}`"
@@ -678,7 +678,7 @@ import {
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS, MILITARY_DEDUCTION, calcEntryPoints, pointTiebreakWinner,
   type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
-import { TIER_ORDER, tierPoint } from '@/lib/constants'
+import { TIER_ORDER, tierPoint, sortTiers } from '@/lib/constants'
 import { revealEntries } from '@/lib/schedules'
 import { notifyEntrySubmitted } from '@/lib/notifications'
 import { useAuthStore } from '@/stores/auth'
