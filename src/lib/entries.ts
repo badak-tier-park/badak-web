@@ -64,6 +64,45 @@ export function isAceSkippedByPoints(ptA: number, ptB: number, gap: number | nul
   return gap != null && Math.abs(ptA - ptB) >= gap
 }
 
+export interface MatchDecision {
+  /** 승패가 확정됐는지 — 확정 전에는 경기 완료(저장)를 막는다 */
+  decided: boolean
+  winner: number | null
+}
+
+/**
+ * 정규 경기(1~6경기 + 에이스 결정전) 승패 확정 판정.
+ *
+ * - 양팀 엔트리 포인트 차이가 에결 생략 기준 **미만**: 먼저 4승한 팀. 3:3이면 에결 승자
+ * - 기준 **이상**: 포인트를 적게 쓴 팀은 **3승**으로 확정된다(남은 경기를 져도 3:3 → 포인트로 승리).
+ *   많이 쓴 팀은 4승해야 확정
+ *
+ * 확정된 뒤의 남은 경기는 치르지 않으므로 결과 화면에서 입력을 잠근다.
+ */
+export function decideMatch(p: {
+  capA: number
+  capB: number
+  winsA: number
+  winsB: number
+  ptA: number
+  ptB: number
+  gap: number | null | undefined
+  aceWinner: number | null | undefined
+}): MatchDecision {
+  if (isAceSkippedByPoints(p.ptA, p.ptB, p.gap)) {
+    const lowIsA = p.ptA < p.ptB
+    const [low, high] = lowIsA ? [p.capA, p.capB] : [p.capB, p.capA]
+    const [lowWins, highWins] = lowIsA ? [p.winsA, p.winsB] : [p.winsB, p.winsA]
+    if (lowWins >= 3) return { decided: true, winner: low }
+    if (highWins >= 4) return { decided: true, winner: high }
+    return { decided: false, winner: null }
+  }
+  if (p.winsA >= 4) return { decided: true, winner: p.capA }
+  if (p.winsB >= 4) return { decided: true, winner: p.capB }
+  if (p.winsA === 3 && p.winsB === 3 && p.aceWinner) return { decided: true, winner: p.aceWinner }
+  return { decided: false, winner: null }
+}
+
 /** 3:3 동률에서 에결이 생략된 경우의 승자 — 포인트를 적게 쓴 팀. 생략 대상이 아니면 null */
 export function pointTiebreakWinner(
   ptA: number, ptB: number, capA: number, capB: number, gap: number | null | undefined,
