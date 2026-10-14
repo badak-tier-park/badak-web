@@ -17,7 +17,7 @@
           <div class="match-info-title">경기 결과 입력</div>
           <div class="match-info-teams">
             <div class="match-team-col">
-              <span class="match-team-badge match-team-badge--a">
+              <span class="match-team-badge">
                 {{ teamA?.teamName || teamA?.nickname }}
               </span>
               <span v-if="entryPointsA > 0" class="match-team-pts">{{ entryPointsA }}pt</span>
@@ -29,7 +29,7 @@
               </div>
             </div>
             <div class="match-team-col match-team-col--right">
-              <span class="match-team-badge match-team-badge--b">
+              <span class="match-team-badge">
                 {{ teamB?.teamName || teamB?.nickname }}
               </span>
               <span v-if="entryPointsB > 0" class="match-team-pts">{{ entryPointsB }}pt</span>
