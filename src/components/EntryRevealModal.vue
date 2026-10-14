@@ -60,9 +60,9 @@
                           class="rse-player"
                         >
                           <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                          <span v-if="isRandomPlayer(teamACaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
-                          <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
-                          <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
+                          <span class="rse-name">{{ playerName(pid) }}</span>
+                          <RaceBadge :race="playerRace(pid)" :random="isRandomPlayer(teamACaptainId, slot.num, pid)" size="sm" />
+                          <TierBadge :tier="playerTier(pid)" size="sm" />
                           <span v-if="isSubstituted(teamACaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
                         </div>
                       </div>
@@ -80,9 +80,10 @@
                       class="rse-player"
                     >
                       <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                      <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
-                      <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
-                      <span v-if="pidIdx === 0 && hpBadge(slot.num, 'A')" class="rse-hp-badge" :title="hpTitle(slot.num)">{{ hpBadge(slot.num, 'A') }}</span>
+                      <span class="rse-name">{{ playerName(pid) }}</span>
+                      <RaceBadge :race="playerRace(pid)" size="sm" />
+                      <TierBadge :tier="playerTier(pid)" size="sm" />
+                      <HpBadge v-if="pidIdx === 0 && hpBadge(slot.num, 'A')" :label="hpBadge(slot.num, 'A')!" :tip="hpTitle(slot.num)" />
                       <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
                     </div>
                   </template>
@@ -117,9 +118,9 @@
                           class="rse-player"
                         >
                           <span v-if="isSubstituted(teamBCaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
-                          <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
-                          <span v-if="isRandomPlayer(teamBCaptainId, slot.num, pid)" class="rse-race rse-race--random">R</span>
-                          <span v-else class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                          <span class="rse-name">{{ playerName(pid) }}</span>
+                          <RaceBadge :race="playerRace(pid)" :random="isRandomPlayer(teamBCaptainId, slot.num, pid)" size="sm" />
+                          <TierBadge :tier="playerTier(pid)" size="sm" />
                           <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                         </div>
                       </div>
@@ -136,9 +137,10 @@
                       class="rse-player"
                     >
                       <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
-                      <span v-if="pidIdx === 0 && hpBadge(slot.num, 'B')" class="rse-hp-badge" :title="hpTitle(slot.num)">{{ hpBadge(slot.num, 'B') }}</span>
-                      <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(pid))}`">{{ playerName(pid) }}</span>
-                      <span class="rse-race" :class="`race-badge--${playerRace(pid).toLowerCase()}`">{{ playerRace(pid) }}</span>
+                      <span class="rse-name">{{ playerName(pid) }}</span>
+                      <RaceBadge :race="playerRace(pid)" size="sm" />
+                      <TierBadge :tier="playerTier(pid)" size="sm" />
+                      <HpBadge v-if="pidIdx === 0 && hpBadge(slot.num, 'B')" :label="hpBadge(slot.num, 'B')!" :tip="hpTitle(slot.num)" />
                       <span class="rse-pt">{{ playerPt(pid) }}pt</span>
                     </div>
                   </template>
@@ -245,8 +247,9 @@
                 >
                   <div v-if="aceSlotResult?.ace_player_a_id" class="rse-player">
                     <span class="rse-pt">{{ playerPt(aceSlotResult.ace_player_a_id) }}pt</span>
-                    <span class="rse-race" :class="`race-badge--${playerRace(aceSlotResult.ace_player_a_id).toLowerCase()}`">{{ playerRace(aceSlotResult.ace_player_a_id) }}</span>
-                    <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(aceSlotResult.ace_player_a_id))}`">{{ playerName(aceSlotResult.ace_player_a_id) }}</span>
+                    <span class="rse-name">{{ playerName(aceSlotResult.ace_player_a_id) }}</span>
+                    <RaceBadge :race="playerRace(aceSlotResult.ace_player_a_id)" size="sm" />
+                    <TierBadge :tier="playerTier(aceSlotResult.ace_player_a_id)" size="sm" />
                     <span v-if="showResults && slotWinner(7) === teamACaptainId" class="rse-win-badge">WIN</span>
                   </div>
                 </div>
@@ -275,8 +278,9 @@
                 >
                   <div v-if="aceSlotResult?.ace_player_b_id" class="rse-player">
                     <span v-if="showResults && slotWinner(7) === teamBCaptainId" class="rse-win-badge">WIN</span>
-                    <span class="rse-name-badge" :class="`tier-badge--${$tierClass(playerTier(aceSlotResult.ace_player_b_id))}`">{{ playerName(aceSlotResult.ace_player_b_id) }}</span>
-                    <span class="rse-race" :class="`race-badge--${playerRace(aceSlotResult.ace_player_b_id).toLowerCase()}`">{{ playerRace(aceSlotResult.ace_player_b_id) }}</span>
+                    <span class="rse-name">{{ playerName(aceSlotResult.ace_player_b_id) }}</span>
+                    <RaceBadge :race="playerRace(aceSlotResult.ace_player_b_id)" size="sm" />
+                    <TierBadge :tier="playerTier(aceSlotResult.ace_player_b_id)" size="sm" />
                     <span class="rse-pt">{{ playerPt(aceSlotResult.ace_player_b_id) }}pt</span>
                   </div>
                 </div>
@@ -318,7 +322,10 @@ import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getLeague, MATCH_SLOT_POINTS } from '@/lib/leagues'
-import { isHandicapMatch, slotHandicap, handicapText, type HandicapRow } from '@/lib/handicap'
+import { isHandicapMatch, slotHandicap, type HandicapRow } from '@/lib/handicap'
+import TierBadge from '@/components/TierBadge.vue'
+import RaceBadge from '@/components/RaceBadge.vue'
+import HpBadge from '@/components/HpBadge.vue'
 import { type PlayerRow } from '@/lib/players'
 import { getSlotResults, type SlotResult } from '@/lib/schedules'
 import { withTimeout } from '@/lib/supabase'
@@ -581,16 +588,17 @@ function slotHandicapOf(slotNum: number) {
   const h = slotHandicap(slotNum, playerTier(idA), playerTier(idB), handicapTable.value)
   return h ? { h, name: playerName(h.stronger === 'A' ? idA : idB) } : null
 }
-/** 핸디 받는(상위 티어) 쪽 선수 옆 배지 문구 — 예) "체력 75%", 체력 %가 없으면 "핸디" */
+/** 핸디 받는(상위 티어) 쪽 선수 옆 배지 문구 — 예) "75%", 체력 %가 없으면 "핸디" */
 function hpBadge(slotNum: number, side: 'A' | 'B'): string | null {
   const r = slotHandicapOf(slotNum)
   if (!r || r.h.stronger !== side) return null
-  return r.h.hp != null ? `체력 ${r.h.hp}%` : '핸디'
+  return r.h.hp != null ? `${r.h.hp}%` : '핸디'
 }
-/** 배지에 마우스를 올리면 보이는 전체 문구 (추가 텍스트 포함) */
+/** 배지 툴팁 — 예) "체력 75% · 일꾼 4기 시작" */
 function hpTitle(slotNum: number): string {
   const r = slotHandicapOf(slotNum)
-  return r ? `핸디 · ${handicapText(r.h, r.name)}` : ''
+  if (!r) return ''
+  return [r.h.hp != null ? `체력 ${r.h.hp}%` : '', r.h.note].filter(Boolean).join(' · ')
 }
 
 // 에이스 결정전이 실제로 진행됐는지 여부

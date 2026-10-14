@@ -17,7 +17,7 @@
           <div class="match-info-title">경기 결과 입력</div>
           <div class="match-info-teams">
             <div class="match-team-col">
-              <span class="match-team-badge" :class="`tier-badge--${$tierClass(teamA?.tier)}`">
+              <span class="match-team-badge match-team-badge--a">
                 {{ teamA?.teamName || teamA?.nickname }}
               </span>
               <span v-if="entryPointsA > 0" class="match-team-pts">{{ entryPointsA }}pt</span>
@@ -29,7 +29,7 @@
               </div>
             </div>
             <div class="match-team-col match-team-col--right">
-              <span class="match-team-badge" :class="`tier-badge--${$tierClass(teamB?.tier)}`">
+              <span class="match-team-badge match-team-badge--b">
                 {{ teamB?.teamName || teamB?.nickname }}
               </span>
               <span v-if="entryPointsB > 0" class="match-team-pts">{{ entryPointsB }}pt</span>
@@ -77,18 +77,18 @@
                 <div class="slot-players">
                   <template v-if="slotPlayerMap.get(slot.num)?.teamA?.length">
                     <div v-for="(p, idx) in getActivePlayers(slot.num, true)" :key="p.id" class="slot-player-row">
-                      <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
-                      <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
-                      <span class="slot-player-name" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.nickname }}</span>
-                      <span v-if="idx === 0 && hpBadge(slot.num, 'A')" class="hp-badge" :title="hpTitle(slot.num)">{{ hpBadge(slot.num, 'A') }}</span>
+                      <span class="slot-player-name">{{ p.nickname }}</span>
+                      <RaceBadge :race="p.race" :random="p.isRandom" />
+                      <TierBadge :tier="p.tier" />
+                      <HpBadge v-if="idx === 0 && hpBadge(slot.num, 'A')" :label="hpBadge(slot.num, 'A')!" :tip="hpTitle(slot.num)" />
                       <span v-if="isSubstituted(slot.num, true, idx)" class="sub-badge">대체</span>
                     </div>
                   </template>
-                  <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamA?.tier)}`">
+                  <span v-else class="slot-team-name">
                     {{ teamA?.teamName || teamA?.nickname }}
                   </span>
                 </div>
-                <span v-if="slotWinners.get(slot.num) === schedule!.team_a_captain_id" class="win-badge">WIN</span>
+                <span v-if="slotWinners.get(slot.num) === schedule!.team_a_captain_id" class="win-tag">WIN</span>
               </button>
 
               <!-- 중앙: 맵 정보 -->
@@ -106,7 +106,9 @@
                     class="slot-ladder-btn"
                     @click="openLadder(slot.num)"
                   >사다리타기</button>
+                  <span v-else class="slot-vs">vs</span>
                 </template>
+                <span v-else class="slot-vs">vs</span>
               </div>
 
               <button
@@ -119,21 +121,21 @@
                 :disabled="savingSlot === slot.num || isCompleted || isSlotLocked(slot.num)"
                 @click="toggleWinner(slot.num, schedule!.team_b_captain_id)"
               >
-                <span v-if="slotWinners.get(slot.num) === schedule!.team_b_captain_id" class="win-badge">WIN</span>
                 <div class="slot-players">
                   <template v-if="slotPlayerMap.get(slot.num)?.teamB?.length">
-                    <div v-for="(p, idx) in getActivePlayers(slot.num, false)" :key="p.id" class="slot-player-row slot-player-row--right">
+                    <div v-for="(p, idx) in getActivePlayers(slot.num, false)" :key="p.id" class="slot-player-row">
+                      <span class="slot-player-name">{{ p.nickname }}</span>
+                      <RaceBadge :race="p.race" :random="p.isRandom" />
+                      <TierBadge :tier="p.tier" />
+                      <HpBadge v-if="idx === 0 && hpBadge(slot.num, 'B')" :label="hpBadge(slot.num, 'B')!" :tip="hpTitle(slot.num)" />
                       <span v-if="isSubstituted(slot.num, false, idx)" class="sub-badge">대체</span>
-                      <span v-if="idx === 0 && hpBadge(slot.num, 'B')" class="hp-badge" :title="hpTitle(slot.num)">{{ hpBadge(slot.num, 'B') }}</span>
-                      <span class="slot-player-name" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.nickname }}</span>
-                      <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
-                      <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
                     </div>
                   </template>
-                  <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamB?.tier)}`">
+                  <span v-else class="slot-team-name">
                     {{ teamB?.teamName || teamB?.nickname }}
                   </span>
                 </div>
+                <span v-if="slotWinners.get(slot.num) === schedule!.team_b_captain_id" class="win-tag">WIN</span>
               </button>
 
               <!-- 팀B 변경 버튼 컬럼 (맨 오른쪽 벽) -->
@@ -260,14 +262,15 @@
                     >
                       <div class="slot-players">
                         <div v-if="acePlayerA" class="slot-player-row">
-                          <span v-if="acePlayerA.race" class="slot-race" :class="`race-badge--${acePlayerA.race.toLowerCase()}`">{{ acePlayerA.race }}</span>
-                          <span class="slot-player-name" :class="`tier-badge--${$tierClass(acePlayerA.tier!)}`">{{ acePlayerA.label }}</span>
+                          <span class="slot-player-name">{{ acePlayerA.label }}</span>
+                          <RaceBadge :race="acePlayerA.race" />
+                          <TierBadge :tier="acePlayerA.tier" />
                         </div>
-                        <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamA?.tier)}`">
+                        <span v-else class="slot-team-name">
                           {{ teamA?.teamName || teamA?.nickname }}
                         </span>
                       </div>
-                      <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_a_captain_id" class="win-badge">WIN</span>
+                      <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_a_captain_id" class="win-tag">WIN</span>
                     </button>
                   </div>
                   <span class="ace-vs">VS</span>
@@ -289,16 +292,17 @@
                       :disabled="savingSlot === ACE_SLOT.num || isCompleted || !aceData.playerBId"
                       @click="toggleWinner(ACE_SLOT.num, schedule!.team_b_captain_id)"
                     >
-                      <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_b_captain_id" class="win-badge">WIN</span>
                       <div class="slot-players">
-                        <div v-if="acePlayerB" class="slot-player-row slot-player-row--right">
-                          <span class="slot-player-name" :class="`tier-badge--${$tierClass(acePlayerB.tier!)}`">{{ acePlayerB.label }}</span>
-                          <span v-if="acePlayerB.race" class="slot-race" :class="`race-badge--${acePlayerB.race.toLowerCase()}`">{{ acePlayerB.race }}</span>
+                        <div v-if="acePlayerB" class="slot-player-row">
+                          <span class="slot-player-name">{{ acePlayerB.label }}</span>
+                          <RaceBadge :race="acePlayerB.race" />
+                          <TierBadge :tier="acePlayerB.tier" />
                         </div>
-                        <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamB?.tier)}`">
+                        <span v-else class="slot-team-name">
                           {{ teamB?.teamName || teamB?.nickname }}
                         </span>
                       </div>
+                      <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_b_captain_id" class="win-tag">WIN</span>
                     </button>
                   </div>
                 </div>
@@ -434,8 +438,9 @@
               :disabled="savingSub"
               @click="confirmSub(opt.value)"
             >
-              <span class="slot-player-name" :class="`tier-badge--${$tierClass(opt.tier!)}`">{{ opt.label }}</span>
-              <span v-if="opt.race" class="slot-race" :class="`race-badge--${opt.race.toLowerCase()}`">{{ opt.race.toUpperCase() }}</span>
+              <span class="slot-player-name">{{ opt.label }}</span>
+              <RaceBadge :race="opt.race" />
+              <TierBadge :tier="opt.tier" />
               <span class="sub-player-pts">{{ opt.points }}pt</span>
             </button>
           </div>
@@ -453,7 +458,10 @@ import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import PlayerSelect, { type SelectOption } from '@/components/PlayerSelect.vue'
 import { getLeague } from '@/lib/leagues'
-import { isHandicapMatch, slotHandicap, handicapText, type HandicapRow } from '@/lib/handicap'
+import { isHandicapMatch, slotHandicap, type HandicapRow } from '@/lib/handicap'
+import TierBadge from '@/components/TierBadge.vue'
+import RaceBadge from '@/components/RaceBadge.vue'
+import HpBadge from '@/components/HpBadge.vue'
 import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 
 import { getTeamNames } from '@/lib/teamNames'
@@ -599,16 +607,17 @@ function slotHandicapOf(slotNum: number) {
   const h = slotHandicap(slotNum, a.tier, b.tier, handicapTable.value)
   return h ? { h, name: (h.stronger === 'A' ? a : b).nickname } : null
 }
-/** 핸디 받는(상위 티어) 쪽 선수 옆 배지 문구 — 예) "체력 75%", 체력 %가 없으면 "핸디" */
+/** 핸디 받는(상위 티어) 쪽 선수 옆 배지 문구 — 예) "75%", 체력 %가 없으면 "핸디" */
 function hpBadge(slotNum: number, side: 'A' | 'B'): string | null {
   const r = slotHandicapOf(slotNum)
   if (!r || r.h.stronger !== side) return null
-  return r.h.hp != null ? `체력 ${r.h.hp}%` : '핸디'
+  return r.h.hp != null ? `${r.h.hp}%` : '핸디'
 }
-/** 배지에 마우스를 올리면 보이는 전체 문구 (추가 텍스트 포함) */
+/** 배지 툴팁 — 예) "체력 75% · 일꾼 4기 시작" */
 function hpTitle(slotNum: number): string {
   const r = slotHandicapOf(slotNum)
-  return r ? `핸디 · ${handicapText(r.h, r.name)}` : ''
+  if (!r) return ''
+  return [r.h.hp != null ? `체력 ${r.h.hp}%` : '', r.h.note].filter(Boolean).join(' · ')
 }
 
 // ── 승패 확정 ─────────────────────────────────────────────
