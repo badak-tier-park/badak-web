@@ -170,9 +170,9 @@
               class="player-chip"
               :class="{ 'player-chip--host': p.user_id === battle.host_user_id }"
             >
-              <span class="tier-badge" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
-              <span class="race-badge" :class="`race-badge--${p.race.toLowerCase()}`">{{ raceLabel(p.race) }}</span>
               {{ nicknameOf(p.user_id) }}
+              <span class="race-badge" :class="`race-badge--${p.race.toLowerCase()}`">{{ raceLabel(p.race) }}</span>
+              <span class="tier-badge" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
               <span v-if="p.is_offrace" class="offrace-mark">부종</span>
               <span v-if="p.user_id === battle.host_user_id" class="host-mark">주최</span>
             </span>
@@ -193,9 +193,9 @@
                 class="team-player-row"
                 :class="{ 'team-player-row--leader': p.is_leader }"
               >
-                <span class="tier-badge" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
-                <span class="race-badge" :class="`race-badge--${p.race.toLowerCase()}`">{{ raceLabel(p.race) }}</span>
                 <span class="team-player-name">{{ nicknameOf(p.user_id) }}</span>
+                <span class="race-badge" :class="`race-badge--${p.race.toLowerCase()}`">{{ raceLabel(p.race) }}</span>
+                <span class="tier-badge" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
                 <span v-if="p.is_offrace" class="offrace-mark">부종</span>
                 <span v-if="p.is_leader" class="leader-mark">팀장</span>
                 <button

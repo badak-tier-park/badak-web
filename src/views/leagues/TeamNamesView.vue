@@ -27,7 +27,8 @@
           <div v-for="row in rows" :key="row.captainId" class="team-row">
             <div class="team-captain-info">
               <span class="team-label">Team</span>
-              <span class="captain-chip" :class="`tier--${$tierClass(row.tier)}`">{{ row.nickname }}</span>
+              <span class="captain-chip">{{ row.nickname }}</span>
+              <TierBadge :tier="row.tier" size="sm" />
             </div>
 
             <div class="team-fields">
@@ -71,6 +72,7 @@
 </template>
 
 <script setup lang="ts">
+import TierBadge from '@/components/TierBadge.vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'

@@ -4,15 +4,15 @@
       class="ps-trigger"
       :class="[
         { 'ps-trigger--open': open, 'ps-trigger--empty': !modelValue, 'ps-trigger--disabled': disabled },
-        selectedOpt?.tier ? `tier-badge--${$tierClass(selectedOpt.tier)}` : '',
       ]"
       type="button"
       :disabled="disabled"
       @click="toggle"
     >
       <template v-if="selectedOpt?.tier">
-        <span class="ps-sel-race" v-if="selectedOpt.race" :class="`race-badge--${selectedOpt.race.toLowerCase()}`">{{ selectedOpt.race }}</span>
         <span class="ps-label">{{ selectedOpt.label }}</span>
+        <RaceBadge :race="selectedOpt.race" size="sm" />
+        <TierBadge :tier="selectedOpt.tier" size="sm" />
         <span v-if="selectedOpt.is_military" class="ps-opt-military">군</span>
         <span class="ps-sel-pts" v-if="selectedOpt.points !== undefined">{{ selectedOpt.points }}pt</span>
       </template>
@@ -37,17 +37,17 @@
           class="ps-option"
           :class="[
             { 'ps-option--selected': opt.value === modelValue, 'ps-option--disabled': opt.disabled },
-            opt.tier ? `ps-option--tier-${$tierClass(opt.tier)}` : '',
           ]"
           :disabled="opt.disabled"
           type="button"
           @click="select(opt)"
         >
           <template v-if="opt.tier">
-            <span class="ps-opt-race" v-if="opt.race" :class="`race-badge--${opt.race.toLowerCase()}`">{{ opt.race }}</span>
-            <span class="ps-opt-name" :class="`tier-color--${$tierClass(opt.tier)}`">{{ opt.label }}</span>
+            <span class="ps-opt-name">{{ opt.label }}</span>
+            <RaceBadge :race="opt.race" size="sm" />
+            <TierBadge :tier="opt.tier" size="sm" />
             <span v-if="opt.is_military" class="ps-opt-military">군</span>
-            <span class="ps-opt-pts" :class="`tier-color--${$tierClass(opt.tier)}`">{{ opt.points }}pt</span>
+            <span class="ps-opt-pts">{{ opt.points }}pt</span>
           </template>
           <template v-else>{{ opt.label }}</template>
         </button>
@@ -57,6 +57,8 @@
 </template>
 
 <script setup lang="ts">
+import TierBadge from '@/components/TierBadge.vue'
+import RaceBadge from '@/components/RaceBadge.vue'
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 
 export interface SelectOption {
