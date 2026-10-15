@@ -174,15 +174,15 @@
                 </div>
                 <div class="roster-member roster-member--captain">
                   <span class="roster-role">팀장</span>
-                  <span class="roster-tier" :class="`tier-badge--${$tierClass(team.captainTier)}`">{{ team.captainTier }}</span>
-                  <span class="roster-race" :class="`race-badge--${team.captainRace.toLowerCase()}`">{{ team.captainRace }}</span>
                   <span class="roster-nick">{{ team.captainNickname }}</span>
+                  <span class="roster-race" :class="`race-badge--${team.captainRace.toLowerCase()}`">{{ team.captainRace }}</span>
+                  <span class="roster-tier" :class="`tier-badge--${$tierClass(team.captainTier)}`">{{ team.captainTier }}</span>
                 </div>
                 <div v-if="team.viceCaptain" class="roster-member roster-member--vice">
                   <span class="roster-role">부팀장</span>
-                  <span class="roster-tier" :class="`tier-badge--${$tierClass(team.viceCaptain.tier)}`">{{ team.viceCaptain.tier }}</span>
-                  <span class="roster-race" :class="`race-badge--${team.viceCaptain.race.toLowerCase()}`">{{ team.viceCaptain.race }}</span>
                   <span class="roster-nick">{{ team.viceCaptain.nickname }}</span>
+                  <span class="roster-race" :class="`race-badge--${team.viceCaptain.race.toLowerCase()}`">{{ team.viceCaptain.race }}</span>
+                  <span class="roster-tier" :class="`tier-badge--${$tierClass(team.viceCaptain.tier)}`">{{ team.viceCaptain.tier }}</span>
                 </div>
                 <div
                   v-for="m in team.members"
@@ -190,9 +190,9 @@
                   class="roster-member"
                 >
                   <span class="roster-role roster-role--member">팀원</span>
-                  <span class="roster-tier" :class="`tier-badge--${$tierClass(m.tier)}`">{{ m.tier }}</span>
-                  <span class="roster-race" :class="`race-badge--${m.race.toLowerCase()}`">{{ m.race }}</span>
                   <span class="roster-nick">{{ m.nickname }}</span>
+                  <span class="roster-race" :class="`race-badge--${m.race.toLowerCase()}`">{{ m.race }}</span>
+                  <span class="roster-tier" :class="`tier-badge--${$tierClass(m.tier)}`">{{ m.tier }}</span>
                 </div>
               </div>
             </div>

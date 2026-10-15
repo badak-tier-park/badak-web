@@ -152,13 +152,13 @@
         <div class="captain-list">
           <div v-for="(playerId, i) in captains" :key="playerId" class="captain-row">
             <span class="captain-order-badge">{{ i + 1 }}</span>
-            <span class="captain-tier" :class="`tier--${$tierClass(playerById(playerId)?.tier)}`">
-              {{ playerById(playerId)?.tier }}
-            </span>
+            <span class="captain-name">{{ playerById(playerId)?.nickname }}</span>
             <span class="captain-race" :class="`race--${playerById(playerId)?.race.toLowerCase()}`">
               {{ playerById(playerId)?.race }}
             </span>
-            <span class="captain-name">{{ playerById(playerId)?.nickname }}</span>
+            <span class="captain-tier" :class="`tier--${$tierClass(playerById(playerId)?.tier)}`">
+              {{ playerById(playerId)?.tier }}
+            </span>
             <div v-if="!draftLocked" class="captain-reorder">
               <button class="reorder-btn" :disabled="i === 0" @click="moveCaptain(i, -1)">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -204,13 +204,13 @@
         <div class="captain-list">
           <div v-for="(playerId, i) in seedHolders" :key="playerId" class="captain-row">
             <span class="captain-order-badge">{{ i + 1 }}</span>
-            <span class="captain-tier" :class="`tier--${$tierClass(playerById(playerId)?.tier)}`">
-              {{ playerById(playerId)?.tier }}
-            </span>
+            <span class="captain-name">{{ playerById(playerId)?.nickname }}</span>
             <span class="captain-race" :class="`race--${playerById(playerId)?.race.toLowerCase()}`">
               {{ playerById(playerId)?.race }}
             </span>
-            <span class="captain-name">{{ playerById(playerId)?.nickname }}</span>
+            <span class="captain-tier" :class="`tier--${$tierClass(playerById(playerId)?.tier)}`">
+              {{ playerById(playerId)?.tier }}
+            </span>
             <div v-if="!draftLocked" class="captain-reorder">
               <button class="reorder-btn" :disabled="i === 0" @click="moveSeedHolder(i, -1)">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -425,9 +425,9 @@
               :disabled="captains.includes(player.id)"
               @click="assignCaptain(player.id)"
             >
-              <span class="picker-tier" :class="`tier--${$tierClass(player.tier)}`">{{ player.tier }}</span>
-              <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
               <span class="picker-name">{{ player.nickname }}</span>
+              <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
+              <span class="picker-tier" :class="`tier--${$tierClass(player.tier)}`">{{ player.tier }}</span>
               <svg v-if="captains.includes(player.id)" class="picker-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2.5 7l3.5 3.5 6-6" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -462,9 +462,9 @@
               :class="{ selected: seedHolders.includes(player.id) }"
               @click="assignSeedHolder(player.id)"
             >
-              <span class="picker-tier" :class="`tier--${$tierClass(player.tier)}`">{{ player.tier }}</span>
-              <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
               <span class="picker-name">{{ player.nickname }}</span>
+              <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
+              <span class="picker-tier" :class="`tier--${$tierClass(player.tier)}`">{{ player.tier }}</span>
               <svg v-if="seedHolders.includes(player.id)" class="picker-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2.5 7l3.5 3.5 6-6" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
