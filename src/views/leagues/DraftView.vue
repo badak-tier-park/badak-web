@@ -81,9 +81,10 @@
           <span class="topbar-sep" />
           <span v-if="!draftDone" class="topbar-turn">
             현재 순번
-            <span class="topbar-turn-name" :class="`tier--${$tierClass(playerById(currentCaptainId!)?.tier)}`">
+            <span class="topbar-turn-name">
               {{ playerById(currentCaptainId!)?.nickname }}
             </span>
+            <TierBadge :tier="playerById(currentCaptainId!)?.tier" size="sm" />
             <span class="topbar-round">{{ turnRound }}R {{ turnPositionLabel }}</span>
           </span>
           <span v-else-if="!seedSwapMode" class="topbar-done">
@@ -168,12 +169,11 @@
                     v-for="player in (playersByTierRace[tier]?.[race] ?? [])"
                     :key="player.id"
                     class="player-card"
-                    :class="[`tier-bg--${$tierClass(player.tier)}`, { 'is-dragging': draggingId === player.id }]"
+                    :class="[{ 'is-dragging': draggingId === player.id }]"
                     @pointerdown="onPointerDown($event, player.id, 'pool')"
                   >
-                    <span class="card-name">{{ player.nickname }}
-                      <span class="card-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
-                    </span>
+                    <span class="card-name">{{ player.nickname }}</span>
+                    <RaceBadge :race="player.race" size="sm" />
                     <span v-if="seedHolderIds.has(player.id)" class="card-seed">SEED</span>
                   </div>
                 </template>
@@ -275,7 +275,6 @@
                   :key="member.id"
                   class="player-card player-card--member"
                   :class="{
-                    [`tier-bg--${$tierClass(member.tier)}`]: true,
                     'is-dragging': !seedSwapMode && !isSaved && draggingId === member.id,
                     'swap-selected': seedSwapMode && swapSel?.member.id === member.id,
                     'swap-locked': seedSwapMode && lockedIds.has(member.id),
@@ -285,8 +284,9 @@
                   @click="seedSwapMode && onMemberClick(captainId, member, idx)"
                 >
                   <span class="card-pick-num">{{ idx + 1 }}</span>
-                  <span class="card-race" :class="`race--${member.race.toLowerCase()}`">{{ member.race }}</span>
                   <span class="card-name">{{ member.nickname }}</span>
+                  <RaceBadge :race="member.race" size="sm" />
+                  <TierBadge :tier="member.tier" size="sm" />
                   <span v-if="seedHolderIds.has(member.id)" class="card-seed">SEED</span>
                   <span v-if="swappedIds.has(member.id)" class="card-locked">교체됨</span>
                   <button v-if="!seedSwapMode && !isSaved && !draftStarted" class="card-remove" @click.stop="removeFromTeam(captainId, member.id)">×</button>
@@ -349,6 +349,8 @@
 </template>
 
 <script setup lang="ts">
+import TierBadge from '@/components/TierBadge.vue'
+import RaceBadge from '@/components/RaceBadge.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -661,7 +663,10 @@ const {
   openSeedOrderSetup, moveSeedOrder, confirmSeedOrder,
   resetSeedSwap: _resetSeedSwap,
   onMemberClick, passSeed,
-} = useSeedSwap(teams, captainIds, seedHolderIds, seedOrderIds, playerById, showToast)
+} = useSeedSwap(teams, captainIds, seedHolderIds, seedOrderIds, playerById, showToast, computed(() => ({
+  maxTierSteps: league.value?.seed_swap_max_tier_steps ?? null,
+  maxPickGap: league.value?.seed_swap_max_pick_gap ?? null,
+})))
 
 // ── 지목식 시작 ───────────────────────────────────────────
 async function startDraft() {

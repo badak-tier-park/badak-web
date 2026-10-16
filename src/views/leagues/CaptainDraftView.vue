@@ -32,9 +32,10 @@
               ✦ 내 차례
             </span>
             <span v-else class="topbar-turn">
-              <span class="topbar-turn-name" :class="`tier--${$tierClass(playerById(currentCaptainId!)?.tier)}`">
+              <span class="topbar-turn-name">
                 {{ playerById(currentCaptainId!)?.nickname }}
               </span>
+              <TierBadge :tier="playerById(currentCaptainId!)?.tier" size="sm" />
               님이 선택 중...
             </span>
             <span class="topbar-round">{{ turnRound }}R {{ turnPositionLabel }}</span>
@@ -100,15 +101,13 @@
                     :key="player.id"
                     class="player-card"
                     :class="[
-                      `tier-bg--${$tierClass(player.tier)}`,
                       { 'player-card--pickable': isMyTurn },
                       { 'is-dragging': draggingId === player.id },
                     ]"
                     @pointerdown="isMyTurn && onPointerDown($event, player.id, 'pool')"
                   >
-                    <span class="card-name">{{ player.nickname }}
-                      <span class="card-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
-                    </span>
+                    <span class="card-name">{{ player.nickname }}</span>
+                    <RaceBadge :race="player.race" size="sm" />
                     <span v-if="seedHolderIds.has(player.id)" class="card-seed">SEED</span>
                   </div>
                 </template>
@@ -187,14 +186,14 @@
                     :key="member.id"
                     class="player-card player-card--member"
                     :class="[
-                      `tier-bg--${$tierClass(member.tier)}`,
                       { 'is-dragging': draggingId === member.id },
                     ]"
                     @pointerdown="cid === myCaptainId && onPointerDown($event, member.id, cid)"
                   >
                     <span class="card-pick-num">{{ idx + 1 }}</span>
-                    <span class="card-race" :class="`race--${member.race.toLowerCase()}`">{{ member.race }}</span>
                     <span class="card-name">{{ member.nickname }}</span>
+                    <RaceBadge :race="member.race" size="sm" />
+                    <TierBadge :tier="member.tier" size="sm" />
                     <span v-if="seedHolderIds.has(member.id)" class="card-seed">SEED</span>
                   </div>
                   <div v-if="cid === currentCaptainId && !draftDone" class="team-drop-hint" :class="{ active: dragOverTeam === cid || (isMyTurn && cid === myCaptainId) }">
@@ -214,6 +213,8 @@
 </template>
 
 <script setup lang="ts">
+import TierBadge from '@/components/TierBadge.vue'
+import RaceBadge from '@/components/RaceBadge.vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import type { RealtimeChannel } from '@supabase/supabase-js'

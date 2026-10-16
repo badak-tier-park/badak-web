@@ -17,7 +17,7 @@
           <div class="match-info-title">경기 결과 입력</div>
           <div class="match-info-teams">
             <div class="match-team-col">
-              <span class="match-team-badge" :class="`tier-badge--${$tierClass(teamA?.tier)}`">
+              <span class="match-team-badge">
                 {{ teamA?.teamName || teamA?.nickname }}
               </span>
               <span v-if="entryPointsA > 0" class="match-team-pts">{{ entryPointsA }}pt</span>
@@ -29,7 +29,7 @@
               </div>
             </div>
             <div class="match-team-col match-team-col--right">
-              <span class="match-team-badge" :class="`tier-badge--${$tierClass(teamB?.tier)}`">
+              <span class="match-team-badge">
                 {{ teamB?.teamName || teamB?.nickname }}
               </span>
               <span v-if="entryPointsB > 0" class="match-team-pts">{{ entryPointsB }}pt</span>
@@ -43,7 +43,7 @@
             v-for="slot in (isSuperAce ? [] : REGULAR_SLOTS)"
             :key="slot.num"
             class="slot-row"
-            :class="{ 'slot-row--done': slotWinners.get(slot.num) != null }"
+            :class="{ 'slot-row--done': slotWinners.get(slot.num) != null, 'slot-row--locked': isSlotLocked(slot.num) }"
           >
             <div class="slot-label">
               <span class="slot-num">경기{{ slot.num }}</span>
@@ -71,23 +71,24 @@
                   'slot-team-btn--loser': slotWinners.get(slot.num) != null && slotWinners.get(slot.num) !== schedule!.team_a_captain_id,
                   'slot-team-btn--saving': savingSlot === slot.num,
                 }"
-                :disabled="savingSlot === slot.num || isCompleted"
+                :disabled="savingSlot === slot.num || isCompleted || isSlotLocked(slot.num)"
                 @click="toggleWinner(slot.num, schedule!.team_a_captain_id)"
               >
                 <div class="slot-players">
                   <template v-if="slotPlayerMap.get(slot.num)?.teamA?.length">
                     <div v-for="(p, idx) in getActivePlayers(slot.num, true)" :key="p.id" class="slot-player-row">
-                      <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
-                      <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
-                      <span class="slot-player-name" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.nickname }}</span>
+                      <span class="slot-player-name">{{ p.nickname }}</span>
+                      <RaceBadge :race="p.race" :random="p.isRandom" />
+                      <TierBadge :tier="p.tier" />
+                      <HpBadge v-if="idx === 0 && hpBadge(slot.num, 'A')" :label="hpBadge(slot.num, 'A')!" :tip="hpTitle(slot.num)" />
                       <span v-if="isSubstituted(slot.num, true, idx)" class="sub-badge">대체</span>
                     </div>
                   </template>
-                  <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamA?.tier)}`">
+                  <span v-else class="slot-team-name">
                     {{ teamA?.teamName || teamA?.nickname }}
                   </span>
                 </div>
-                <span v-if="slotWinners.get(slot.num) === schedule!.team_a_captain_id" class="win-badge">WIN</span>
+                <span v-if="slotWinners.get(slot.num) === schedule!.team_a_captain_id" class="win-tag">WIN</span>
               </button>
 
               <!-- 중앙: 맵 정보 -->
@@ -105,7 +106,9 @@
                     class="slot-ladder-btn"
                     @click="openLadder(slot.num)"
                   >사다리타기</button>
+                  <span v-else class="slot-vs">vs</span>
                 </template>
+                <span v-else class="slot-vs">vs</span>
               </div>
 
               <button
@@ -115,23 +118,24 @@
                   'slot-team-btn--loser': slotWinners.get(slot.num) != null && slotWinners.get(slot.num) !== schedule!.team_b_captain_id,
                   'slot-team-btn--saving': savingSlot === slot.num,
                 }"
-                :disabled="savingSlot === slot.num || isCompleted"
+                :disabled="savingSlot === slot.num || isCompleted || isSlotLocked(slot.num)"
                 @click="toggleWinner(slot.num, schedule!.team_b_captain_id)"
               >
-                <span v-if="slotWinners.get(slot.num) === schedule!.team_b_captain_id" class="win-badge">WIN</span>
                 <div class="slot-players">
                   <template v-if="slotPlayerMap.get(slot.num)?.teamB?.length">
-                    <div v-for="(p, idx) in getActivePlayers(slot.num, false)" :key="p.id" class="slot-player-row slot-player-row--right">
+                    <div v-for="(p, idx) in getActivePlayers(slot.num, false)" :key="p.id" class="slot-player-row">
+                      <span class="slot-player-name">{{ p.nickname }}</span>
+                      <RaceBadge :race="p.race" :random="p.isRandom" />
+                      <TierBadge :tier="p.tier" />
+                      <HpBadge v-if="idx === 0 && hpBadge(slot.num, 'B')" :label="hpBadge(slot.num, 'B')!" :tip="hpTitle(slot.num)" />
                       <span v-if="isSubstituted(slot.num, false, idx)" class="sub-badge">대체</span>
-                      <span class="slot-player-name" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.nickname }}</span>
-                      <span v-if="p.isRandom" class="slot-race slot-race--random">R</span>
-                      <span v-else-if="p.race" class="slot-race" :class="`race-badge--${p.race.toLowerCase()}`">{{ p.race.toUpperCase() }}</span>
                     </div>
                   </template>
-                  <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamB?.tier)}`">
+                  <span v-else class="slot-team-name">
                     {{ teamB?.teamName || teamB?.nickname }}
                   </span>
                 </div>
+                <span v-if="slotWinners.get(slot.num) === schedule!.team_b_captain_id" class="win-tag">WIN</span>
               </button>
 
               <!-- 팀B 변경 버튼 컬럼 (맨 오른쪽 벽) -->
@@ -258,14 +262,15 @@
                     >
                       <div class="slot-players">
                         <div v-if="acePlayerA" class="slot-player-row">
-                          <span v-if="acePlayerA.race" class="slot-race" :class="`race-badge--${acePlayerA.race.toLowerCase()}`">{{ acePlayerA.race }}</span>
-                          <span class="slot-player-name" :class="`tier-badge--${$tierClass(acePlayerA.tier!)}`">{{ acePlayerA.label }}</span>
+                          <span class="slot-player-name">{{ acePlayerA.label }}</span>
+                          <RaceBadge :race="acePlayerA.race" />
+                          <TierBadge :tier="acePlayerA.tier" />
                         </div>
-                        <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamA?.tier)}`">
+                        <span v-else class="slot-team-name">
                           {{ teamA?.teamName || teamA?.nickname }}
                         </span>
                       </div>
-                      <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_a_captain_id" class="win-badge">WIN</span>
+                      <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_a_captain_id" class="win-tag">WIN</span>
                     </button>
                   </div>
                   <span class="ace-vs">VS</span>
@@ -287,16 +292,17 @@
                       :disabled="savingSlot === ACE_SLOT.num || isCompleted || !aceData.playerBId"
                       @click="toggleWinner(ACE_SLOT.num, schedule!.team_b_captain_id)"
                     >
-                      <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_b_captain_id" class="win-badge">WIN</span>
                       <div class="slot-players">
-                        <div v-if="acePlayerB" class="slot-player-row slot-player-row--right">
-                          <span class="slot-player-name" :class="`tier-badge--${$tierClass(acePlayerB.tier!)}`">{{ acePlayerB.label }}</span>
-                          <span v-if="acePlayerB.race" class="slot-race" :class="`race-badge--${acePlayerB.race.toLowerCase()}`">{{ acePlayerB.race }}</span>
+                        <div v-if="acePlayerB" class="slot-player-row">
+                          <span class="slot-player-name">{{ acePlayerB.label }}</span>
+                          <RaceBadge :race="acePlayerB.race" />
+                          <TierBadge :tier="acePlayerB.tier" />
                         </div>
-                        <span v-else class="slot-team-name" :class="`tier-badge--${$tierClass(teamB?.tier)}`">
+                        <span v-else class="slot-team-name">
                           {{ teamB?.teamName || teamB?.nickname }}
                         </span>
                       </div>
+                      <span v-if="slotWinners.get(ACE_SLOT.num) === schedule!.team_b_captain_id" class="win-tag">WIN</span>
                     </button>
                   </div>
                 </div>
@@ -308,6 +314,8 @@
 
         <div class="match-result-footer">
           <p v-if="completeError" class="complete-error">{{ completeError }}</p>
+          <p v-else-if="!isCompleted && !decision.decided" class="complete-hint">승패가 아직 정해지지 않았습니다</p>
+          <p v-else-if="!isCompleted && hasLockedSlots" class="complete-hint">승패가 확정되어 남은 경기는 입력하지 않습니다</p>
           <span v-if="isCompleted" class="badge-completed">
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -317,7 +325,7 @@
           <button
             v-else
             class="btn-complete"
-            :disabled="completing || savingSlot != null"
+            :disabled="completing || savingSlot != null || !decision.decided"
             @click="handleComplete"
           >
             {{ completing ? '저장 중...' : '저장' }}
@@ -430,8 +438,9 @@
               :disabled="savingSub"
               @click="confirmSub(opt.value)"
             >
-              <span class="slot-player-name" :class="`tier-badge--${$tierClass(opt.tier!)}`">{{ opt.label }}</span>
-              <span v-if="opt.race" class="slot-race" :class="`race-badge--${opt.race.toLowerCase()}`">{{ opt.race.toUpperCase() }}</span>
+              <span class="slot-player-name">{{ opt.label }}</span>
+              <RaceBadge :race="opt.race" />
+              <TierBadge :tier="opt.tier" />
               <span class="sub-player-pts">{{ opt.points }}pt</span>
             </button>
           </div>
@@ -449,11 +458,15 @@ import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import PlayerSelect, { type SelectOption } from '@/components/PlayerSelect.vue'
 import { getLeague } from '@/lib/leagues'
+import { isHandicapMatch, slotHandicap, type HandicapRow } from '@/lib/handicap'
+import TierBadge from '@/components/TierBadge.vue'
+import RaceBadge from '@/components/RaceBadge.vue'
+import HpBadge from '@/components/HpBadge.vue'
 import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 
 import { getTeamNames } from '@/lib/teamNames'
 import { getSchedules, getPlayoffSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
-import { getScheduleEntries, computeFinalRosters, getAceTierBans } from '@/lib/entries'
+import { getScheduleEntries, computeFinalRosters, getAceTierBans, calcEntryPoints, isAceSkippedByPoints, decideMatch } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
@@ -505,6 +518,9 @@ const slotWinners = ref(new Map<number, number>())
 const slotPlayerMap = ref(new Map<number, SlotPlayers>())
 const entryPointsA = ref(0)
 const entryPointsB = ref(0)
+const aceSkipGap = ref<number | null>(null)
+const handicapGap = ref<number | null>(null)
+const handicapTable = ref<HandicapRow[] | null>(null)
 
 // 맵 관련 상태
 const allMapsById = ref(new Map<string, MapInfo>())
@@ -580,10 +596,54 @@ const scoreB = computed(() =>
   [...slotWinners.value.entries()].filter(([, w]) => w === schedule.value?.team_b_captain_id).length
 )
 
+// 핸디: 양팀 엔트리 포인트 차이가 리그 기준 이상일 때, 개인전마다 상위 티어 선수에게.
+// 포인트와 마찬가지로 대타가 아니라 제출한 엔트리 선수(slotPlayerMap) 기준이다
+const handicapActive = computed(() => isHandicapMatch(entryPointsA.value, entryPointsB.value, handicapGap.value))
+function slotHandicapOf(slotNum: number) {
+  if (!handicapActive.value) return null
+  const a = slotPlayerMap.value.get(slotNum)?.teamA?.[0]
+  const b = slotPlayerMap.value.get(slotNum)?.teamB?.[0]
+  if (!a || !b) return null
+  const h = slotHandicap(slotNum, a.tier, b.tier, handicapTable.value)
+  return h ? { h, name: (h.stronger === 'A' ? a : b).nickname } : null
+}
+/** 핸디 받는(상위 티어) 쪽 선수 옆 배지 문구 — 예) "75%", 체력 %가 없으면 "핸디" */
+function hpBadge(slotNum: number, side: 'A' | 'B'): string | null {
+  const r = slotHandicapOf(slotNum)
+  if (!r || r.h.stronger !== side) return null
+  return r.h.hp != null ? `${r.h.hp}%` : '핸디'
+}
+/** 배지 툴팁 — 예) "체력 75% · 일꾼 4기 시작" */
+function hpTitle(slotNum: number): string {
+  const r = slotHandicapOf(slotNum)
+  if (!r) return ''
+  return [r.h.hp != null ? `체력 ${r.h.hp}%` : '', r.h.note].filter(Boolean).join(' · ')
+}
+
+// ── 승패 확정 ─────────────────────────────────────────────
+// 슈퍼에이스는 에결 한 판으로 끝나고, 나머지는 decideMatch 규칙(4승 / 포인트 적게 쓴 팀 3승 / 3:3 에결)을 따른다
+const decision = computed(() => {
+  const s = schedule.value
+  if (!s) return { decided: false, winner: null as number | null }
+  const aceWinner = slotWinners.value.get(ACE_SLOT.num) ?? null
+  if (isSuperAce.value) return { decided: aceWinner != null, winner: aceWinner }
+  return decideMatch({
+    capA: s.team_a_captain_id, capB: s.team_b_captain_id,
+    winsA: score6A.value, winsB: score6B.value,
+    ptA: entryPointsA.value, ptB: entryPointsB.value,
+    gap: aceSkipGap.value, aceWinner,
+  })
+})
+// 승패가 확정되면 아직 결과가 없는 경기는 치르지 않으므로 입력을 잠근다 (입력한 경기는 수정 가능)
+function isSlotLocked(slotNum: number): boolean {
+  return decision.value.decided && slotWinners.value.get(slotNum) == null
+}
+const hasLockedSlots = computed(() => REGULAR_SLOTS.some(s => isSlotLocked(s.num)))
+
 const showAce = computed(() => {
   if (score6A.value !== 3 || score6B.value !== 3) return false
   if (entryPointsA.value === 0 && entryPointsB.value === 0) return true
-  return Math.abs(entryPointsA.value - entryPointsB.value) < 3
+  return !isAceSkippedByPoints(entryPointsA.value, entryPointsB.value, aceSkipGap.value)
 })
 
 // 에이스 티어 후보 (super_ace: 결승 세트 사용 티어 제외 / 일반: 양팀 밴 제외)
@@ -872,11 +932,14 @@ function openSubModal(slotNum: number, isTeamA: boolean, playerIndex: number) {
   const originalRank = tierPoint(originalPlayer.tier)
   const assigned = getAlreadyAssignedIds(captainId, slotNum)
 
+  // 대타 규정: 상위 티어 불가 / 같은 티어는 같은 종족만 / 하위 티어는 종족 무관.
+  // "같은 티어"는 정확히 같은 티어다(B+와 B-는 다른 티어 — B- 자리에 B+는 상위라 불가)
   const options: SelectOption[] = roster
     .filter(p => {
       if (assigned.has(p.id)) return false
       const rank = tierPoint(p.tier)
-      return rank <= originalRank
+      if (rank < originalRank) return true
+      return rank === originalRank && p.race === originalPlayer.race
     })
     .map(p => ({
       value: p.id,
@@ -1122,7 +1185,9 @@ onMounted(async () => {
       getSwapLog(leagueId),
     ]))
 
-    void leagueData
+    aceSkipGap.value = leagueData.ace_skip_point_gap ?? null
+    handicapGap.value = leagueData.handicap_point_gap ?? null
+    handicapTable.value = leagueData.handicap_table ?? null
 
     const match = schedules.find(s => s.id === matchId)
     if (!match) throw new Error('경기를 찾을 수 없습니다.')
@@ -1179,10 +1244,7 @@ onMounted(async () => {
 
     // 팀별 총 포인트
     const calcPoints = (captainId: number) =>
-      entries
-        .filter(e => e.captain_player_id === captainId)
-        .flatMap(e => e.player_ids)
-        .reduce((sum, pid) => sum + (tierPoint(playerMap.get(pid)?.tier ?? 'E')), 0)
+      calcEntryPoints(entries.filter(e => e.captain_player_id === captainId), id => playerMap.get(id)).total
     entryPointsA.value = calcPoints(match.team_a_captain_id)
     entryPointsB.value = calcPoints(match.team_b_captain_id)
 
@@ -1285,15 +1347,12 @@ onMounted(async () => {
 })
 
 async function handleComplete() {
+  // 승패가 확정되기 전에 저장하면 승자 없이(무승부로) 완료돼 순위에서 빠진다
+  if (!decision.value.decided) return
   completing.value = true
   completeError.value = null
   try {
-    const winner = scoreA.value > scoreB.value
-      ? schedule.value!.team_a_captain_id
-      : scoreB.value > scoreA.value
-        ? schedule.value!.team_b_captain_id
-        : null
-    await completeMatch(matchId, winner)
+    await completeMatch(matchId, decision.value.winner)
     isCompleted.value = true
   } catch (e: any) {
     completeError.value = e.message ?? '저장 중 오류가 발생했습니다.'

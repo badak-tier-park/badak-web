@@ -6,3 +6,20 @@
   font-size: 14px;
   font-family: system-ui, sans-serif;
 }
+
+// ── 이미지 원작자·출처 ──────────────────────────────────
+.image-credit {
+  margin: 8px 2px 0;
+  font-size: 11px;
+  color: var(--c-text-muted);
+  line-height: 1.6;
+
+  a {
+    color: #c084fc;
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+}
+
+.image-credit-via { color: var(--c-text-faint); }

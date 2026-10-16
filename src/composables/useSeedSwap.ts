@@ -13,6 +13,13 @@ export interface SwapLogEntry {
   toPlayerId: number
 }
 
+export interface SeedSwapLimits {
+  /** 허용 최대 티어 단계 차이 (0.5P = 1단계). null이면 제한 없음 */
+  maxTierSteps: number | null
+  /** 허용 최대 픽 순번 차이. null이면 제한 없음 */
+  maxPickGap: number | null
+}
+
 export function useSeedSwap(
   teams: Ref<Record<number, PlayerRow[]>>,
   captainIds: Ref<number[]>,
@@ -20,6 +27,7 @@ export function useSeedSwap(
   seedOrderIds: Ref<number[]>,
   playerById: (id: number) => PlayerRow | null,
   showToast: (msg: string) => void,
+  limits: Ref<SeedSwapLimits>,
 ) {
   const seedSwapMode = ref(false)
   const seedSwapDone = ref(false)
@@ -115,12 +123,18 @@ export function useSeedSwap(
     if (seedHolderIds.value.has(b.member.id)) return `${b.member.nickname}은 시드권 보유자로 교체 불가합니다`
     if (b.pickIdx === 0) return `1번 픽(${b.member.nickname})은 시드권 적용 불가합니다`
 
-    const tierDiff = Math.abs(tierPoint(a.member.tier) - tierPoint(b.member.tier))
-    if (tierDiff >= 2) return '두 티어 이상 차이나는 멤버는 시드권 적용 불가합니다'
+    // 기준은 시즌마다 바뀌는 규정이라 리그 설정값을 쓴다 (leagues.seed_swap_max_*)
+    const { maxTierSteps, maxPickGap } = limits.value
+    // 티어 포인트는 0.5 단위이므로 포인트 차이 × 2 = 단계 차이 (A+ ↔ B+ = 2단계)
+    const tierSteps = Math.abs(tierPoint(a.member.tier) - tierPoint(b.member.tier)) * 2
+    if (maxTierSteps !== null && tierSteps > maxTierSteps) {
+      return `티어가 ${maxTierSteps + 1}단계 이상 차이나는 멤버는 시드권 적용 불가합니다`
+    }
 
-    const aNum = a.pickIdx + 1
-    const bNum = b.pickIdx + 1
-    if (Math.abs(aNum - bNum) >= 3) return '세 픽 이상 차이나는 멤버는 시드권 적용 불가합니다'
+    const pickGap = Math.abs(a.pickIdx - b.pickIdx)
+    if (maxPickGap !== null && pickGap > maxPickGap) {
+      return `${maxPickGap + 1}픽 이상 차이나는 멤버는 시드권 적용 불가합니다`
+    }
 
     return null
   }

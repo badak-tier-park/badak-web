@@ -1,16 +1,17 @@
 // ── tier-- / race-- (LeagueDetailView 등 텍스트+배지 겸용) ──
+.tier--s { background: var(--tier-s-bg); color: var(--tier-s); }
 .tier--a { background: var(--tier-a-bg); color: var(--tier-a); }
-.tier--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); outline: 1.5px solid var(--tier-a-plus); outline-offset: -2px; }
-.tier--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); outline: 1.5px dashed var(--tier-a-minus); outline-offset: -2px; }
+.tier--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); }
+.tier--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); }
 .tier--b { background: var(--tier-b-bg); color: var(--tier-b); }
-.tier--b-plus { background: var(--tier-b-bg); color: var(--tier-b-plus); outline: 1.5px solid var(--tier-b-plus); outline-offset: -2px; }
-.tier--b-minus { background: var(--tier-b-bg); color: var(--tier-b-minus); outline: 1.5px dashed var(--tier-b-minus); outline-offset: -2px; }
+.tier--b-plus { background: var(--tier-b-bg); color: var(--tier-b-plus); }
+.tier--b-minus { background: var(--tier-b-bg); color: var(--tier-b-minus); }
 .tier--c { background: var(--tier-c-bg); color: var(--tier-c); }
-.tier--c-plus { background: var(--tier-c-bg); color: var(--tier-c-plus); outline: 1.5px solid var(--tier-c-plus); outline-offset: -2px; }
-.tier--c-minus { background: var(--tier-c-bg); color: var(--tier-c-minus); outline: 1.5px dashed var(--tier-c-minus); outline-offset: -2px; }
+.tier--c-plus { background: var(--tier-c-bg); color: var(--tier-c-plus); }
+.tier--c-minus { background: var(--tier-c-bg); color: var(--tier-c-minus); }
 .tier--d { background: var(--tier-d-bg); color: var(--tier-d); }
-.tier--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); outline: 1.5px solid var(--tier-d-plus); outline-offset: -2px; }
-.tier--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); outline: 1.5px dashed var(--tier-d-minus); outline-offset: -2px; }
+.tier--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); }
+.tier--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); }
 .tier--e { background: var(--tier-e-bg); color: var(--tier-e); }
 
 .race--t { color: var(--race-t); }
@@ -48,6 +49,7 @@
 
 // ── 티어 공통 클래스 ──────────────────────────────────────
 // color만 적용 (텍스트용)
+.tier-color--s { color: var(--tier-s); }
 .tier-color--a { color: var(--tier-a); }
 .tier-color--a-plus { color: var(--tier-a-plus); }
 .tier-color--a-minus { color: var(--tier-a-minus); }
@@ -63,21 +65,23 @@
 .tier-color--e { color: var(--tier-e); }
 
 // 배지용 (background + color)
+.tier-badge--s { background: var(--tier-s-bg); color: var(--tier-s); }
 .tier-badge--a { background: var(--tier-a-bg); color: var(--tier-a); }
-.tier-badge--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); outline: 1.5px solid var(--tier-a-plus); outline-offset: -2px; }
-.tier-badge--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); outline: 1.5px dashed var(--tier-a-minus); outline-offset: -2px; }
+.tier-badge--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); }
+.tier-badge--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); }
 .tier-badge--b { background: var(--tier-b-bg); color: var(--tier-b); }
-.tier-badge--b-plus { background: var(--tier-b-bg); color: var(--tier-b-plus); outline: 1.5px solid var(--tier-b-plus); outline-offset: -2px; }
-.tier-badge--b-minus { background: var(--tier-b-bg); color: var(--tier-b-minus); outline: 1.5px dashed var(--tier-b-minus); outline-offset: -2px; }
+.tier-badge--b-plus { background: var(--tier-b-bg); color: var(--tier-b-plus); }
+.tier-badge--b-minus { background: var(--tier-b-bg); color: var(--tier-b-minus); }
 .tier-badge--c { background: var(--tier-c-bg); color: var(--tier-c); }
-.tier-badge--c-plus { background: var(--tier-c-bg); color: var(--tier-c-plus); outline: 1.5px solid var(--tier-c-plus); outline-offset: -2px; }
-.tier-badge--c-minus { background: var(--tier-c-bg); color: var(--tier-c-minus); outline: 1.5px dashed var(--tier-c-minus); outline-offset: -2px; }
+.tier-badge--c-plus { background: var(--tier-c-bg); color: var(--tier-c-plus); }
+.tier-badge--c-minus { background: var(--tier-c-bg); color: var(--tier-c-minus); }
 .tier-badge--d { background: var(--tier-d-bg); color: var(--tier-d); }
-.tier-badge--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); outline: 1.5px solid var(--tier-d-plus); outline-offset: -2px; }
-.tier-badge--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); outline: 1.5px dashed var(--tier-d-minus); outline-offset: -2px; }
+.tier-badge--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); }
+.tier-badge--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); }
 .tier-badge--e { background: var(--tier-e-bg); color: var(--tier-e); }
 
 // 버튼 active 상태용 (border + background + color)
+.tier-active--s { border-color: var(--tier-s-border) !important; background: var(--tier-s-bg) !important; color: var(--tier-s) !important; }
 .tier-active--a { border-color: var(--tier-a-border) !important; background: var(--tier-a-bg) !important; color: var(--tier-a) !important; }
 .tier-active--b { border-color: var(--tier-b-border) !important; background: var(--tier-b-bg) !important; color: var(--tier-b) !important; }
 .tier-active--c { border-color: var(--tier-c-border) !important; background: var(--tier-c-bg) !important; color: var(--tier-c) !important; }
@@ -85,24 +89,139 @@
 .tier-active--e { border-color: var(--tier-e-border) !important; background: var(--tier-e-bg) !important; color: var(--tier-e) !important; }
 
 .tier-chip {
+  // 한 글자 티어(S, E)도 두 글자(A+)와 같은 크기로 보이게 최소 너비를 고정
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.6em;
+  box-sizing: border-box;
   font-size: 11px;
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
 
+  &--s { background: var(--tier-s-bg); color: var(--tier-s); }
   &--a { background: var(--tier-a-bg); color: var(--tier-a); }
-  &--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); outline: 1.5px solid var(--tier-a-plus); outline-offset: -1.5px; }
-  &--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); outline: 1.5px dashed var(--tier-a-minus); outline-offset: -1.5px; }
+  &--a-plus { background: var(--tier-a-bg); color: var(--tier-a-plus); }
+  &--a-minus { background: var(--tier-a-bg); color: var(--tier-a-minus); }
   &--b { background: var(--tier-b-bg); color: var(--tier-b); }
-  &--b-plus { background: var(--tier-b-bg); color: var(--tier-b-plus); outline: 1.5px solid var(--tier-b-plus); outline-offset: -1.5px; }
-  &--b-minus { background: var(--tier-b-bg); color: var(--tier-b-minus); outline: 1.5px dashed var(--tier-b-minus); outline-offset: -1.5px; }
+  &--b-plus { background: var(--tier-b-bg); color: var(--tier-b-plus); }
+  &--b-minus { background: var(--tier-b-bg); color: var(--tier-b-minus); }
   &--c { background: var(--tier-c-bg); color: var(--tier-c); }
-  &--c-plus { background: var(--tier-c-bg); color: var(--tier-c-plus); outline: 1.5px solid var(--tier-c-plus); outline-offset: -1.5px; }
-  &--c-minus { background: var(--tier-c-bg); color: var(--tier-c-minus); outline: 1.5px dashed var(--tier-c-minus); outline-offset: -1.5px; }
+  &--c-plus { background: var(--tier-c-bg); color: var(--tier-c-plus); }
+  &--c-minus { background: var(--tier-c-bg); color: var(--tier-c-minus); }
   &--d { background: var(--tier-d-bg); color: var(--tier-d); }
-  &--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); outline: 1.5px solid var(--tier-d-plus); outline-offset: -1.5px; }
-  &--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); outline: 1.5px dashed var(--tier-d-minus); outline-offset: -1.5px; }
+  &--d-plus { background: var(--tier-d-bg); color: var(--tier-d-plus); }
+  &--d-minus { background: var(--tier-d-bg); color: var(--tier-d-minus); }
   &--e { background: var(--tier-e-bg); color: var(--tier-e); }
+}
+
+// ── 선수 표시 칩 (TierBadge / RaceBadge / HpBadge 컴포넌트) ──
+// 한 선수는 "닉네임 · 종족 · 티어 · (핸디)" 순서. 닉네임은 색을 칠하지 않는다
+.tier-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  user-select: none;
+
+  &--sm { min-width: 26px; height: 18px; padding: 0 5px; border-radius: 5px; font-size: 10.5px; }
+
+  &--s { color: var(--tier-s); background: var(--tier-s-bg); }
+  &--a { color: var(--tier-a); background: var(--tier-a-bg); }
+  &--b { color: var(--tier-b); background: var(--tier-b-bg); }
+  &--c { color: var(--tier-c); background: var(--tier-c-bg); }
+  &--d { color: var(--tier-d); background: var(--tier-d-bg); }
+  &--e { color: var(--tier-e); background: var(--tier-e-bg); }
+}
+
+.race-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  user-select: none;
+  border: 1px solid transparent;
+
+  &--sm { width: 18px; height: 18px; border-radius: 4px; font-size: 10px; }
+
+  &--t { color: var(--race-t); background: var(--race-t-bg); border-color: var(--race-t-line); }
+  &--z { color: var(--race-z); background: var(--race-z-bg); border-color: var(--race-z-line); }
+  &--p { color: var(--race-p); background: var(--race-p-bg); border-color: var(--race-p-line); }
+  &--r { color: var(--c-brand-text); background: var(--c-brand-bg); border-color: var(--c-brand-border); }
+}
+
+.hp-pill {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 5px;
+  background: var(--hp-bg);
+  border: 1px solid var(--hp-line);
+  color: var(--hp);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  cursor: help;
+
+  &::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 7px);
+    left: 50%;
+    transform: translate(-50%, 4px);
+    padding: 4px 9px;
+    border-radius: 6px;
+    background: var(--hp-tip-bg);
+    color: var(--hp-tip-fg);
+    border: 1px solid var(--hp-line);
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 30;
+  }
+
+  &:hover::after,
+  &--open::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+  }
+}
+
+// 승리 표시 글자 (선수 칸 테두리와 함께)
+.win-tag {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--win);
+  letter-spacing: 0.04em;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--win-tag-bg);
 }
 
 // ── 팀배틀 상태 배지 (목록/상세 공용) ──────────────────────

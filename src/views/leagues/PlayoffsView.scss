@@ -235,6 +235,70 @@
     color: #94a3b8;
     border: 1px solid rgba(148, 163, 184, 0.25);
   }
+
+  &--tie {
+    background: rgba(248, 113, 113, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+  }
+}
+
+// ── 재대결 결과 반영 ──────────────────────────────────────────
+.tiebreak-box {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px dashed var(--c-border-dashed);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tiebreak-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-text-sub);
+}
+
+.tiebreak-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tiebreak-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border-faint);
+  background: var(--c-surface);
+}
+
+.reorder-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-input);
+  color: var(--c-text-2);
+  font-size: 9px;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.3; cursor: default; }
+}
+
+.tiebreak-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.tiebreak-error {
+  margin: 0;
+  font-size: 12px;
+  color: #f87171;
 }
 
 // ── 결승 세트 블록 ────────────────────────────────────────────

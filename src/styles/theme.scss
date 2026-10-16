@@ -13,46 +13,59 @@
   --race-p-border:  rgba(250, 204, 21, 0.45);
 
   // ── 티어 색상 ─────────────────────────────────────────
+  // 티어는 글자 칩(S, A+, C-)으로 보여준다. 색은 알파벳(S·A·B·C·D·E) 단위로만 쓰고
+  // +/-는 같은 색이다 — 구분은 글자가 한다(예전 실선/점선 테두리는 가독성이 나빠 폐기)
+  --tier-s:         #fbbf24;
+  --tier-s-bg:      rgba(251, 191, 36, 0.14);
+  --tier-s-border:  rgba(251, 191, 36, 0.4);
+
   --tier-a:         #f87171;
-  --tier-a-bg:      rgba(239, 68, 68, 0.12);
-  --tier-a-border:  rgba(239, 68, 68, 0.45);
+  --tier-a-bg:      rgba(248, 113, 113, 0.14);
+  --tier-a-border:  rgba(248, 113, 113, 0.4);
 
-  --tier-b:         #c084fc;
-  --tier-b-bg:      rgba(170, 59, 255, 0.12);
-  --tier-b-border:  rgba(170, 59, 255, 0.45);
+  --tier-b:         #a78bfa;
+  --tier-b-bg:      rgba(167, 139, 250, 0.15);
+  --tier-b-border:  rgba(167, 139, 250, 0.4);
 
-  --tier-c:         #58a6ff;
-  --tier-c-bg:      rgba(88, 166, 255, 0.12);
-  --tier-c-border:  rgba(88, 166, 255, 0.45);
+  --tier-c:         #60a5fa;
+  --tier-c-bg:      rgba(96, 165, 250, 0.14);
+  --tier-c-border:  rgba(96, 165, 250, 0.4);
 
   --tier-d:         #4ade80;
-  --tier-d-bg:      rgba(34, 197, 94, 0.12);
-  --tier-d-border:  rgba(34, 197, 94, 0.45);
+  --tier-d-bg:      rgba(74, 222, 128, 0.12);
+  --tier-d-border:  rgba(74, 222, 128, 0.4);
 
   --tier-e:         #9ca3af;
-  --tier-e-bg:      rgba(156, 163, 175, 0.08);
+  --tier-e-bg:      rgba(156, 163, 175, 0.13);
   --tier-e-border:  rgba(156, 163, 175, 0.35);
 
-  // 티어 +/- 명도 구분 (밝은 +, 진한 -). 배경(-bg)은 공유.
-  --tier-a-plus:         #f87171;
-  --tier-a-plus-border:  rgba(248, 113, 113, 0.55);
-  --tier-a-minus:        #dc2626;
-  --tier-a-minus-border: rgba(220, 38, 38, 0.55);
+  // +/- 별칭 — 기존 화면별 스타일이 참조하므로 남겨 두되 알파벳 색과 같다
+  --tier-a-plus: var(--tier-a); --tier-a-minus: var(--tier-a);
+  --tier-a-plus-border: var(--tier-a-border); --tier-a-minus-border: var(--tier-a-border);
+  --tier-b-plus: var(--tier-b); --tier-b-minus: var(--tier-b);
+  --tier-b-plus-border: var(--tier-b-border); --tier-b-minus-border: var(--tier-b-border);
+  --tier-c-plus: var(--tier-c); --tier-c-minus: var(--tier-c);
+  --tier-c-plus-border: var(--tier-c-border); --tier-c-minus-border: var(--tier-c-border);
+  --tier-d-plus: var(--tier-d); --tier-d-minus: var(--tier-d);
+  --tier-d-plus-border: var(--tier-d-border); --tier-d-minus-border: var(--tier-d-border);
 
-  --tier-b-plus:         #c084fc;
-  --tier-b-plus-border:  rgba(192, 132, 252, 0.55);
-  --tier-b-minus:        #9333ea;
-  --tier-b-minus-border: rgba(147, 51, 234, 0.55);
+  // 종족 배지 테두리
+  --race-t-line:    rgba(59, 130, 246, 0.28);
+  --race-z-line:    rgba(168, 85, 247, 0.28);
+  --race-p-line:    rgba(234, 179, 8, 0.28);
 
-  --tier-c-plus:         #58a6ff;
-  --tier-c-plus-border:  rgba(88, 166, 255, 0.55);
-  --tier-c-minus:        #2563eb;
-  --tier-c-minus-border: rgba(37, 99, 235, 0.55);
+  // 핸디(체력 %) 배지
+  --hp:             #fbbf24;
+  --hp-bg:          rgba(245, 158, 11, 0.12);
+  --hp-line:        rgba(245, 158, 11, 0.3);
+  --hp-tip-bg:      #090a0d;
+  --hp-tip-fg:      #fde68a;
 
-  --tier-d-plus:         #4ade80;
-  --tier-d-plus-border:  rgba(74, 222, 128, 0.55);
-  --tier-d-minus:        #16a34a;
-  --tier-d-minus-border: rgba(22, 163, 74, 0.55);
+  // 경기 승리 표시 (선수 칸 테두리 + WIN 글자)
+  --win:            #10b981;
+  --win-bg:         rgba(16, 185, 129, 0.07);
+  --win-line:       rgba(16, 185, 129, 0.42);
+  --win-tag-bg:     rgba(16, 185, 129, 0.14);
 }
 
 // ── 글로벌 폰트 ──────────────────────────────────────────
@@ -123,36 +136,39 @@ body {
   --race-p-bg:      rgba(202, 138, 4, 0.14);
   --race-p:         #a16207;
 
-  --tier-a-bg:      rgba(220, 38, 38, 0.12);
-  --tier-a:         #dc2626;
-  --tier-b-bg:      rgba(124, 58, 237, 0.12);
-  --tier-b:         #7c3aed;
-  --tier-c-bg:      rgba(37, 99, 235, 0.12);
+  --tier-s:         #a16207;
+  --tier-s-bg:      rgba(202, 138, 4, 0.14);
+  --tier-s-border:  rgba(161, 98, 7, 0.4);
+  --tier-a:         #c53030;
+  --tier-a-bg:      rgba(220, 38, 38, 0.1);
+  --tier-a-border:  rgba(197, 48, 48, 0.4);
+  --tier-b:         #6d4fd8;
+  --tier-b-bg:      rgba(124, 58, 237, 0.1);
+  --tier-b-border:  rgba(109, 79, 216, 0.4);
   --tier-c:         #2563eb;
-  --tier-d-bg:      rgba(22, 163, 74, 0.12);
-  --tier-d:         #16a34a;
+  --tier-c-bg:      rgba(37, 99, 235, 0.1);
+  --tier-c-border:  rgba(37, 99, 235, 0.4);
+  --tier-d:         #15803d;
+  --tier-d-bg:      rgba(22, 163, 74, 0.1);
+  --tier-d-border:  rgba(21, 128, 61, 0.4);
+  --tier-e:         #5b5f6b;
   --tier-e-bg:      rgba(107, 114, 128, 0.12);
-  --tier-e:         #6b7280;
+  --tier-e-border:  rgba(91, 95, 107, 0.35);
 
-  --tier-a-plus:         #dc2626;
-  --tier-a-plus-border:  rgba(220, 38, 38, 0.5);
-  --tier-a-minus:        #991b1b;
-  --tier-a-minus-border: rgba(153, 27, 27, 0.5);
+  --race-t-line:    rgba(37, 99, 235, 0.35);
+  --race-z-line:    rgba(139, 63, 217, 0.35);
+  --race-p-line:    rgba(161, 98, 7, 0.35);
 
-  --tier-b-plus:         #7c3aed;
-  --tier-b-plus-border:  rgba(124, 58, 237, 0.5);
-  --tier-b-minus:        #5b21b6;
-  --tier-b-minus-border: rgba(91, 33, 182, 0.5);
+  --hp:             #b45309;
+  --hp-bg:          rgba(245, 158, 11, 0.14);
+  --hp-line:        rgba(180, 83, 9, 0.35);
+  --hp-tip-bg:      #14161c;
+  --hp-tip-fg:      #fde68a;
 
-  --tier-c-plus:         #2563eb;
-  --tier-c-plus-border:  rgba(37, 99, 235, 0.5);
-  --tier-c-minus:        #1e40af;
-  --tier-c-minus-border: rgba(30, 64, 175, 0.5);
-
-  --tier-d-plus:         #16a34a;
-  --tier-d-plus-border:  rgba(22, 163, 74, 0.5);
-  --tier-d-minus:        #166534;
-  --tier-d-minus-border: rgba(22, 101, 52, 0.5);
+  --win:            #059669;
+  --win-bg:         rgba(16, 185, 129, 0.08);
+  --win-line:       rgba(5, 150, 105, 0.5);
+  --win-tag-bg:     rgba(16, 185, 129, 0.14);
 }
 
 // ── Light ─────────────────────────────────────────────────

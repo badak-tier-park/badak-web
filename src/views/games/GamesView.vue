@@ -84,9 +84,9 @@
               <td>
                 <div class="player-cell">
                   <div class="player-cell-name">
+                    <span class="player-name" :class="{ 'player-name--unmatched': !game.winner_tier }">{{ game.winner_name ?? '-' }}</span>
                     <span class="race-badge" :class="raceBadgeClass(game.winner_race)">{{ raceLabel(game.winner_race) }}</span>
                     <span v-if="game.winner_tier" class="tier-badge" :class="`tier-badge--${$tierClass(game.winner_tier)}`">{{ game.winner_tier }}</span>
-                    <span class="player-name" :class="{ 'player-name--unmatched': !game.winner_tier }">{{ game.winner_name ?? '-' }}</span>
                   </div>
                   <div v-if="game.winner_apm != null" class="player-cell-apm">APM {{ game.winner_apm }}</div>
                 </div>
@@ -95,9 +95,9 @@
               <td>
                 <div class="player-cell">
                   <div class="player-cell-name">
+                    <span class="player-name" :class="{ 'player-name--unmatched': !game.loser_tier }">{{ game.loser_name ?? '-' }}</span>
                     <span class="race-badge" :class="raceBadgeClass(game.loser_race)">{{ raceLabel(game.loser_race) }}</span>
                     <span v-if="game.loser_tier" class="tier-badge" :class="`tier-badge--${$tierClass(game.loser_tier)}`">{{ game.loser_tier }}</span>
-                    <span class="player-name" :class="{ 'player-name--unmatched': !game.loser_tier }">{{ game.loser_name ?? '-' }}</span>
                   </div>
                   <div v-if="game.loser_apm != null" class="player-cell-apm">APM {{ game.loser_apm }}</div>
                 </div>
@@ -155,9 +155,9 @@
                 @click="handleLink(p)"
                 :disabled="linking"
               >
+                <span class="player-option-name">{{ p.nickname }}</span>
                 <span class="race-badge" :class="raceBadgeClass(p.race)">{{ raceLabel(p.race) }}</span>
                 <span class="tier-badge" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
-                <span class="player-option-name">{{ p.nickname }}</span>
                 <span v-if="p.star_nicknames.length" class="player-option-sn">
                   {{ p.star_nicknames.slice(0, 2).join(', ') }}{{ p.star_nicknames.length > 2 ? ' ...' : '' }}
                 </span>

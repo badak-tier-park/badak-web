@@ -3,11 +3,11 @@
     <AppHeader />
 
     <div class="page-inner">
-      <button class="btn-back" @click="$router.push({ name: 'home' })">
+      <button class="btn-back" @click="$router.push({ name: 'maps' })">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
           <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        홈
+        맵 목록
       </button>
 
       <header class="page-header">
@@ -55,6 +55,13 @@
               </svg>
             </button>
           </div>
+          <p v-if="imageCredit" class="image-credit">
+            이미지 {{ imageCredit.author ?? '작가 미상' }}
+            · 출처
+            <a v-if="imageCredit.href" :href="imageCredit.href" target="_blank" rel="noopener noreferrer">{{ imageCredit.label }}</a>
+            <span v-else>{{ imageCredit.label }}</span>
+            <span class="image-credit-via">(리퀴피디아 동기화로 가져옴)</span>
+          </p>
         </section>
 
         <!-- 기본 정보 -->
@@ -182,10 +189,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { getMap, updateMap } from '@/lib/maps'
+import { safeSourceLink } from '@/lib/sourceLink'
 
 const router = useRouter()
 const route = useRoute()
@@ -195,6 +203,8 @@ const mapId = route.params.id as string
 const existingImageUrl = ref<string | null>(null)
 const existingThumbnailUrl = ref<string | null>(null)
 const loadError = ref<string | null>(null)
+const imageAuthor = ref<string | null>(null)
+const imageSource = ref<string | null>(null)
 
 // --- 폼 상태 ---
 const form = ref({
@@ -247,8 +257,17 @@ function removeImage() {
   form.value.imageFile = null
   previewUrl.value = null
   existingImageUrl.value = null
+  // 목록·피커는 원본이 아니라 썸네일을 보여주므로 같이 비워야 삭제가 화면에 반영된다
+  existingThumbnailUrl.value = null
   if (fileInput.value) fileInput.value.value = ''
 }
+
+// --- 이미지 원작자·출처 ---
+const imageCredit = computed(() => {
+  // 새 이미지를 고르거나 지우면 저장할 때 원작자 표기도 지워지므로 미리 숨긴다
+  if (form.value.imageFile || !existingImageUrl.value || !imageSource.value) return null
+  return { author: imageAuthor.value, ...safeSourceLink(imageSource.value) }
+})
 
 // --- 맵 크기 ---
 const sizePresets = [
@@ -299,6 +318,8 @@ onMounted(async () => {
     form.value.tileset = map.tileset
     existingImageUrl.value = map.image_url
     existingThumbnailUrl.value = map.thumbnail_url
+    imageAuthor.value = map.image_author
+    imageSource.value = map.image_source
 
     if (map.image_url) previewUrl.value = map.image_url
 
@@ -332,7 +353,7 @@ async function handleSubmit() {
       tileset: form.value.tileset,
       imageFile: form.value.imageFile,
     }, existingImageUrl.value, existingThumbnailUrl.value)
-    router.push({ name: 'home' })
+    router.push({ name: 'maps' })
   } catch (e: any) {
     submitError.value = e.message ?? '저장 중 오류가 발생했습니다.'
   } finally {
