@@ -4,6 +4,7 @@
 .captain-draft-page {
   position: relative;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -599,5 +600,78 @@
     background: rgba(124, 58, 237, 0.08);
     color: #7c3aed;
     border-color: rgba(124, 58, 237, 0.25);
+  }
+}
+
+// ── 탭 지목 확인 ───────────────────────────────────────────
+.pick-confirm-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pick-confirm-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+}
+
+.pick-confirm-desc {
+  font-size: 13px;
+  color: var(--c-text-sub);
+}
+
+// 마우스는 드래그, 터치는 탭 — 안내 문구도 입력 방식에 맞춘다
+.hint-touch { display: none; }
+
+@media (hover: none) and (pointer: coarse) {
+  .hint-pointer { display: none; }
+  .hint-touch { display: inline; }
+}
+
+// ── 휴대폰 ─────────────────────────────────────────────
+// 데스크톱은 한 화면 고정(풀 왼쪽 + 팀 칸 가로 나열). 휴대폰에서는 풀 위, 팀 칸 아래로 쌓고
+// 페이지 전체를 스크롤한다. 팀 칸은 옆으로 넘겨 본다
+@media (max-width: 640px) {
+  .captain-draft-page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .draft-nav { padding: 12px var(--page-gutter) 0; }
+  .draft-topbar { padding: 0 var(--page-gutter); }
+  .draft-topbar-inner {
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding: 8px 0;
+  }
+
+  .draft-layout {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .pool-panel {
+    width: 100%;
+    max-height: 50dvh;
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .teams-panel,
+  .teams-content-row { overflow: visible; }
+
+  .teams-body {
+    justify-content: flex-start;
+    padding: 16px var(--page-gutter) calc(24px + env(safe-area-inset-bottom));
+    scroll-snap-type: x mandatory;
+  }
+
+  .team-column {
+    width: min(78vw, 260px);
+    min-height: 320px;
+    scroll-snap-align: start;
   }
 }
