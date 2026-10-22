@@ -17,6 +17,11 @@ updates:
       # 자잘한 업데이트 PR이 수십 개 쌓이지 않게 minor/patch는 한 PR로 묶는다
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # TypeScript 7(Go 포팅)은 JS 컴파일러(lib/tsc)가 없어 vue-tsc가 실행되지 않는다(#150).
+      # vue-tsc가 TS 7을 지원하면 이 항목을 지운다
+      - dependency-name: typescript
+        versions: [">=7"]
 
   - package-ecosystem: github-actions
     directory: /
