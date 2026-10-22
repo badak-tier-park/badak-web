@@ -173,8 +173,12 @@ gh api repos/badak-tier-park/.github/contents/.github/PULL_REQUEST_TEMPLATE.md -
     `chore`, `hotfix`, dev→main은 `release`) + 바뀐 파일 경로의 `area:*`(4개 이상이면 생략)
     + 연결된 이슈의 `area:*`·`priority:*`
   - Development = 본문의 `Closes #n`. 없으면 브랜치 이름의 번호(`feat/96-entry-order`)로 넣어 준다
-  - Projects = 저장소 변수 `PROJECT_URL`이 있으면 추가(조직 프로젝트는 기본 토큰으로 접근 불가 —
-    project 권한이 있는 토큰을 `PROJECT_TOKEN` 시크릿으로 둔다)
+  - Projects = 조직 프로젝트 **`badak-web`(#6)**. 상태(Todo / In Progress / Done)는 프로젝트 내장
+    워크플로가 바꾼다(추가 → Todo, PR 병합·이슈 닫힘 → Done, 하위 이슈 자동 추가).
+    **새 항목 자동 추가만 꺼져 있어** 직접 넣는다: `gh project item-add 6 --owner badak-tier-park --url <PR/이슈 URL>`
+    후 열린 PR은 Status를 In Progress로. 이슈를 다시 열면 Done이 그대로 남으니 손으로 되돌린다.
+    워크플로의 프로젝트 단계는 저장소 변수 `PROJECT_URL` + project 권한 토큰(`PROJECT_TOKEN`)이 있을 때만 돈다
+    (기본 토큰으로는 조직 프로젝트에 접근 불가)
   - 이 워크플로는 `pull_request_target`이라 **base 브랜치에 있는 파일**로 돈다. 스택 PR처럼 base가
     dev가 아니면 돌지 않으므로, 그때와 Claude가 `gh`로 올릴 때는 직접 채운다:
     `gh pr create --assignee @me --reviewer <작성자 외 전원> --label <타입>,<area:*> --body-file …`
