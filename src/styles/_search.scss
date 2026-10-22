@@ -25,7 +25,7 @@
   box-sizing: border-box;
   transition: border-color 0.15s;
 
-  &:focus { border-color: rgba(170, 59, 255, 0.45); }
+  &:focus { border-color: rgba(var(--c-brand-rgb), 0.45); }
   &::placeholder { color: var(--c-text-faint); }
 }
 

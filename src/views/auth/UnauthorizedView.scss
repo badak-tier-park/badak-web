@@ -28,7 +28,7 @@
   padding: 36px;
   backdrop-filter: blur(20px);
   box-shadow:
-    0 0 0 1px rgba(170, 59, 255, 0.08),
+    0 0 0 1px rgba(var(--c-brand-rgb), 0.08),
     0 32px 80px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 var(--c-glass-border);
   animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -43,7 +43,7 @@
   position: absolute;
   inset: -1px;
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(170, 59, 255, 0.15), rgba(88, 101, 242, 0.1), transparent);
+  background: linear-gradient(135deg, rgba(var(--c-brand-rgb), 0.15), rgba(88, 101, 242, 0.1), transparent);
   z-index: -1;
   filter: blur(1px);
 }
@@ -57,7 +57,7 @@
 
 .brand-icon {
   flex-shrink: 0;
-  filter: drop-shadow(0 6px 18px rgba(170, 59, 255, 0.55));
+  filter: drop-shadow(0 6px 18px rgba(var(--c-brand-rgb), 0.55));
 }
 
 .brand-text { line-height: 1; }
@@ -71,7 +71,7 @@
 }
 
 .brand-em {
-  background: linear-gradient(135deg, #c084fc, #aa3bff);
+  background: linear-gradient(135deg, var(--c-brand-text), var(--c-brand));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -100,7 +100,7 @@
   border-radius: 16px;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  color: var(--c-danger);
   margin-bottom: 16px;
 }
 
@@ -135,6 +135,6 @@
 
   &:hover {
     background: var(--c-surface-3);
-    border-color: rgba(170, 59, 255, 0.4);
+    border-color: rgba(var(--c-brand-rgb), 0.4);
   }
 }

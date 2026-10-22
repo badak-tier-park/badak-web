@@ -134,7 +134,7 @@
   &--active {
     border-color: rgba(168, 85, 247, 0.5);
     background: rgba(168, 85, 247, 0.12);
-    color: #c084fc;
+    color: var(--c-brand-text);
   }
 }
 
@@ -216,7 +216,7 @@
   line-height: 1;
 
   &--win  { color: #34d399; }
-  &--loss { color: #f87171; }
+  &--loss { color: var(--c-danger); }
 }
 
 .summary-lbl {
@@ -315,7 +315,7 @@
   color: var(--c-text-2);
 
   &--win  { color: #34d399; }
-  &--loss { color: #f87171; }
+  &--loss { color: var(--c-danger); }
 }
 
 // ── 맵별 승률 ─────────────────────────────────────────────
@@ -386,7 +386,7 @@
 
   &.wr--high { background: #34d399; }
   &.wr--mid  { background: #fbbf24; }
-  &.wr--low  { background: #f87171; }
+  &.wr--low  { background: var(--c-danger); }
 }
 
 @keyframes bar-grow {
@@ -402,7 +402,7 @@
 
   &.wr--high { color: #34d399; }
   &.wr--mid  { color: #fbbf24; }
-  &.wr--low  { color: #f87171; }
+  &.wr--low  { color: var(--c-danger); }
 }
 
 .map-record {
@@ -464,7 +464,7 @@
 // ── 승률 색상 유틸 ────────────────────────────────────────
 .wr--high { color: #34d399; }
 .wr--mid  { color: #fbbf24; }
-.wr--low  { color: #f87171; }
+.wr--low  { color: var(--c-danger); }
 
 // ── 시즌 모달 ─────────────────────────────────────────────
 .modal-backdrop {

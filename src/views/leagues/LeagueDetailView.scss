@@ -125,13 +125,13 @@
   }
 
   &.active {
-    background: rgba(170, 59, 255, 0.12);
-    color: #c084fc;
+    background: rgba(var(--c-brand-rgb), 0.12);
+    color: var(--c-brand-text);
 
     .step-num {
-      background: rgba(170, 59, 255, 0.3);
-      border-color: rgba(170, 59, 255, 0.5);
-      color: #d8a4ff;
+      background: rgba(var(--c-brand-rgb), 0.3);
+      border-color: rgba(var(--c-brand-rgb), 0.5);
+      color: var(--c-brand-text-hover);
     }
   }
 
@@ -172,18 +172,18 @@
   gap: 5px;
   padding: 9px 18px;
   border-radius: 8px;
-  border: 1px solid rgba(170, 59, 255, 0.4);
-  background: rgba(170, 59, 255, 0.15);
-  color: #c084fc;
+  border: 1px solid rgba(var(--c-brand-rgb), 0.4);
+  background: rgba(var(--c-brand-rgb), 0.15);
+  color: var(--c-brand-text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 
   &:hover {
-    background: rgba(170, 59, 255, 0.25);
-    border-color: rgba(170, 59, 255, 0.65);
-    color: #d8a4ff;
+    background: rgba(var(--c-brand-rgb), 0.25);
+    border-color: rgba(var(--c-brand-rgb), 0.65);
+    color: var(--c-brand-text-hover);
   }
 }
 
@@ -255,9 +255,9 @@
   transition: all 0.15s;
 
   &.active {
-    border-color: rgba(170, 59, 255, 0.5);
-    background: rgba(170, 59, 255, 0.12);
-    color: #c084fc;
+    border-color: rgba(var(--c-brand-rgb), 0.5);
+    background: rgba(var(--c-brand-rgb), 0.12);
+    color: var(--c-brand-text);
   }
 
   &:not(.active):hover {
@@ -296,7 +296,7 @@
   font-size: 14px;
   line-height: 1.7;
   color: var(--c-text);
-  caret-color: #c084fc;
+  caret-color: var(--c-brand-text);
 
   p { margin: 0 0 0.6em; }
   p:last-child { margin-bottom: 0; }
@@ -378,9 +378,9 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(170, 59, 255, 0.15);
-  border: 1px solid rgba(170, 59, 255, 0.3);
-  color: #c084fc;
+  background: rgba(var(--c-brand-rgb), 0.15);
+  border: 1px solid rgba(var(--c-brand-rgb), 0.3);
+  color: var(--c-brand-text);
   font-size: 11px;
   font-weight: 800;
   display: flex;
@@ -464,7 +464,7 @@
   transition: all 0.12s;
   flex-shrink: 0;
 
-  &:hover { background: rgba(248, 113, 113, 0.12); color: #f87171; }
+  &:hover { background: rgba(var(--c-danger-rgb), 0.12); color: var(--c-danger); }
 }
 
 .captain-actions-row {
@@ -479,17 +479,17 @@
   gap: 6px;
   padding: 8px 16px;
   border-radius: 8px;
-  border: 1px dashed rgba(170, 59, 255, 0.4);
-  background: rgba(170, 59, 255, 0.06);
-  color: #c084fc;
+  border: 1px dashed rgba(var(--c-brand-rgb), 0.4);
+  background: rgba(var(--c-brand-rgb), 0.06);
+  color: var(--c-brand-text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 
   &:hover {
-    background: rgba(170, 59, 255, 0.12);
-    border-color: rgba(170, 59, 255, 0.6);
+    background: rgba(var(--c-brand-rgb), 0.12);
+    border-color: rgba(var(--c-brand-rgb), 0.6);
   }
 }
 
@@ -606,7 +606,7 @@
   padding: 0 0 0 2px;
   transition: color 0.1s;
 
-  &:hover { color: #f87171; }
+  &:hover { color: var(--c-danger); }
 }
 
 .btn-map-pick {
@@ -621,7 +621,7 @@
   transition: all 0.15s;
   flex-shrink: 0;
 
-  &:hover { border-color: rgba(170, 59, 255, 0.4); color: #c084fc; }
+  &:hover { border-color: rgba(var(--c-brand-rgb), 0.4); color: var(--c-brand-text); }
 }
 
 // ── 오버레이 / 피커 공통 ──────────────────────────────────
@@ -702,7 +702,7 @@
   transition: border-color 0.15s;
 
   &::placeholder { color: var(--c-text-faint); }
-  &:focus { border-color: rgba(170, 59, 255, 0.5); }
+  &:focus { border-color: rgba(var(--c-brand-rgb), 0.5); }
 }
 
 .picker-list {
@@ -734,8 +734,8 @@
   &:hover:not(:disabled):not(.selected) { background: var(--c-overlay); }
 
   &.selected {
-    background: rgba(170, 59, 255, 0.1);
-    color: #c084fc;
+    background: rgba(var(--c-brand-rgb), 0.1);
+    color: var(--c-brand-text);
   }
 
   &:disabled:not(.selected) {
@@ -810,8 +810,8 @@
   font-weight: 700;
   line-height: 16px;
   vertical-align: 1px;
-  color: #c084fc;
-  background: rgba(170, 59, 255, 0.14);
+  color: var(--c-brand-text);
+  background: rgba(var(--c-brand-rgb), 0.14);
 }
 
 .picker-map-meta {
@@ -859,18 +859,18 @@
 .picker-confirm {
   padding: 7px 20px;
   border-radius: 8px;
-  border: 1px solid rgba(170, 59, 255, 0.4);
-  background: rgba(170, 59, 255, 0.12);
-  color: #c084fc;
+  border: 1px solid rgba(var(--c-brand-rgb), 0.4);
+  background: rgba(var(--c-brand-rgb), 0.12);
+  color: var(--c-brand-text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 
   &:hover {
-    background: rgba(170, 59, 255, 0.22);
-    border-color: rgba(170, 59, 255, 0.65);
-    color: #d8a4ff;
+    background: rgba(var(--c-brand-rgb), 0.22);
+    border-color: rgba(var(--c-brand-rgb), 0.65);
+    color: var(--c-brand-text-hover);
   }
 }
 

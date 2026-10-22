@@ -40,7 +40,7 @@
 
   &:hover {
     color: var(--c-text-bright);
-    border-color: rgba(170, 59, 255, 0.4);
+    border-color: rgba(var(--c-brand-rgb), 0.4);
   }
 }
 
@@ -58,7 +58,7 @@
   font-size: 13px;
   color: var(--c-text-sub);
 
-  &--error { color: #f87171; }
+  &--error { color: var(--c-danger); }
 }
 
 .cal-body {
@@ -83,7 +83,7 @@
   color: var(--c-text-muted);
   text-transform: uppercase;
 
-  &.sun { color: rgba(248, 113, 113, 0.85); }
+  &.sun { color: rgba(var(--c-danger-rgb), 0.85); }
   &.sat { color: rgba(96, 165, 250, 0.85); }
 }
 
@@ -134,7 +134,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(170, 59, 255, 0.5);
+      box-shadow: 0 2px 8px rgba(var(--c-brand-rgb), 0.5);
     }
   }
 
@@ -294,7 +294,7 @@
 
   &:hover {
     background: var(--c-overlay);
-    border-color: rgba(170, 59, 255, 0.4);
+    border-color: rgba(var(--c-brand-rgb), 0.4);
   }
 }
 

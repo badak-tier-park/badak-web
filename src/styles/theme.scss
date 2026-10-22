@@ -113,6 +113,10 @@ body {
   --c-brand-bg:       rgba(170, 59, 255, 0.15);
   --c-brand-border:   rgba(170, 59, 255, 0.40);
   --c-brand-gradient: linear-gradient(135deg, #aa3bff, #5865f2);
+  // 투명도만 다른 브랜드색이 화면마다 수십 가지라 채널을 토큰으로 둔다: rgba(var(--c-brand-rgb), 0.12)
+  --c-brand-rgb:      170, 59, 255;
+  --c-brand-text-hover: #d8a4ff;
+  --c-danger-rgb:     248, 113, 113;
 
   --c-danger:         #f87171;
   --c-danger-bg:      rgba(239, 68, 68, 0.10);
@@ -210,6 +214,9 @@ body {
   --c-brand-bg:       rgba(124, 58, 237, 0.12);
   --c-brand-border:   rgba(124, 58, 237, 0.35);
   --c-brand-gradient: linear-gradient(135deg, #7c3aed, #4f46e5);
+  --c-brand-rgb:      124, 58, 237;
+  --c-brand-text-hover: #6d28d9;
+  --c-danger-rgb:     220, 38, 38;
 
   --c-danger:         #dc2626;
   --c-danger-bg:      rgba(220, 38, 38, 0.08);

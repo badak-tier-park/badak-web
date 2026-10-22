@@ -25,9 +25,9 @@
   &:hover { color: var(--c-text-bright); }
 
   &.active {
-    background: linear-gradient(135deg, #aa3bff, #5865f2);
+    background: linear-gradient(135deg, var(--c-brand), #5865f2);
     color: white;
-    box-shadow: 0 2px 10px rgba(170, 59, 255, 0.3);
+    box-shadow: 0 2px 10px rgba(var(--c-brand-rgb), 0.3);
   }
 }
 
@@ -134,7 +134,7 @@
   font-size: 12px;
   color: var(--c-text-muted);
 
-  &--tiers { color: #c084fc; }
+  &--tiers { color: var(--c-brand-text); }
 }
 
 .btn-guide {
@@ -153,9 +153,9 @@
   align-self: center;
 
   &:hover {
-    border-color: rgba(170, 59, 255, 0.4);
-    color: #c084fc;
-    background: rgba(170, 59, 255, 0.06);
+    border-color: rgba(var(--c-brand-rgb), 0.4);
+    color: var(--c-brand-text);
+    background: rgba(var(--c-brand-rgb), 0.06);
   }
 }
 
@@ -445,8 +445,8 @@
   flex: 1;
 
   &--over {
-    .epi-fill { background: #f87171 !important; }
-    .epi-val { color: #f87171; }
+    .epi-fill { background: var(--c-danger) !important; }
+    .epi-val { color: var(--c-danger); }
   }
 
   &--total .epi-val { font-weight: 800; }
@@ -644,13 +644,13 @@
 
   &:hover {
     border-color: rgba(239, 68, 68, 0.45);
-    color: #f87171;
+    color: var(--c-danger);
     background: rgba(239, 68, 68, 0.07);
   }
 
   &--active {
     border-color: rgba(239, 68, 68, 0.5);
-    color: #f87171;
+    color: var(--c-danger);
     background: rgba(239, 68, 68, 0.1);
 
     &:hover {
@@ -705,7 +705,7 @@
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  color: #f87171;
+  color: var(--c-danger);
 }
 
 // ── 모달 푸터 (공통 오버라이드) ──────────────────────────
@@ -839,8 +839,8 @@
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 4px;
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.1);
+  color: var(--c-danger);
+  background: rgba(var(--c-danger-rgb), 0.1);
 }
 
 .standing-pts {
@@ -902,7 +902,7 @@
   flex-shrink: 0;
 
   &--win  { color: #4ade80; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25); }
-  &--loss { color: #f87171; background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.22); }
+  &--loss { color: var(--c-danger); background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.22); }
 }
 
 .standing-match-date {
@@ -924,8 +924,8 @@
 .ace-ban-section {
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid rgba(170, 59, 255, 0.25);
-  background: rgba(170, 59, 255, 0.04);
+  border: 1px solid rgba(var(--c-brand-rgb), 0.25);
+  background: rgba(var(--c-brand-rgb), 0.04);
 }
 
 .ace-ban-header {
@@ -938,7 +938,7 @@
 .ace-ban-title {
   font-size: 12px;
   font-weight: 700;
-  color: #c084fc;
+  color: var(--c-brand-text);
 }
 
 .ace-ban-hint {
@@ -1049,7 +1049,7 @@
   &:last-child { border-bottom: none; }
 
   &--captain {
-    background: rgba(170, 59, 255, 0.05);
+    background: rgba(var(--c-brand-rgb), 0.05);
     .roster-role { background: var(--c-brand-bg); color: var(--c-brand-text); border-color: var(--c-brand-border); }
   }
 

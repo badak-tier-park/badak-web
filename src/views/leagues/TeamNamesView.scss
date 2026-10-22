@@ -96,7 +96,7 @@
   cursor: pointer;
   transition: border-color 0.14s;
 
-  &:focus { border-color: rgba(170, 59, 255, 0.5); }
+  &:focus { border-color: rgba(var(--c-brand-rgb), 0.5); }
 }
 
 .page-desc {
@@ -145,7 +145,7 @@
   transition: border-color 0.14s;
 
   &::placeholder { color: var(--c-text-faint); }
-  &:focus { border-color: rgba(170, 59, 255, 0.5); }
+  &:focus { border-color: rgba(var(--c-brand-rgb), 0.5); }
 }
 
 // ── 하단 액션 ─────────────────────────────────────────────
@@ -160,11 +160,11 @@
 .btn-save {
   padding: 9px 24px;
   border: none;
-  background: rgba(170, 59, 255, 0.18);
+  background: rgba(var(--c-brand-rgb), 0.18);
   font-weight: 700;
 
   &:hover:not(:disabled) {
-    background: rgba(170, 59, 255, 0.3);
+    background: rgba(var(--c-brand-rgb), 0.3);
   }
   &:disabled { opacity: 0.5; }
 }
