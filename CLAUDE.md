@@ -151,6 +151,9 @@
 
 ### 이슈
 - 템플릿을 쓰고 종류 라벨 + 영역 라벨(`area:*`) + 필요하면 `priority:*`를 붙인다
+- **이슈 타입과 종류 라벨은 짝이 고정**이다: Feature↔`enhancement`, Bug↔`bug`, Hotfix↔`hotfix`,
+  Style↔`style`, Refactor↔`refactor`, Docs↔`documentation`, Task↔(종류 라벨 없음).
+  제목 접두사(`feat:`/`fix:`…)와도 맞춘다. 이슈 폼이 둘을 함께 붙이지만 손으로 바꿀 땐 양쪽을 같이 바꾼다
 - 큰 작업은 하위 이슈(sub-issue)로 나눈다. 상위 이슈는 **하위가 모두 닫힌 뒤에** 닫는다
   (`gh api repos/{owner}/{repo}/issues/{n}/sub_issues`)
 - 해결 근거를 코드·커밋에서 확인하지 못한 이슈는 닫지 말고 묻는다. 하지 않기로 한 이슈는
