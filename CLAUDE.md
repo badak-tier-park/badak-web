@@ -13,6 +13,21 @@
 | 리그(지목식·엔트리·승패·순위·핸디) | `src/views/leagues/CLAUDE.md` |
 | 맵(삭제 금지·별칭·래더 동기화·이미지 라이선스) | `src/views/maps/CLAUDE.md` |
 
+## 조직 저장소 지도
+바닥티어는 저장소 여러 개가 **같은 Supabase 프로젝트를 함께 쓴다**(운영 `badak`, 개발 `badak-dev`).
+한 저장소에서 테이블·정책을 바꾸면 다른 저장소가 깨질 수 있으니, DB를 건드릴 땐 아래 사용처를 먼저 본다.
+공개 저장소이므로 project ID는 문서에 쓰지 않고 Supabase MCP의 `list_projects`로 조회한다.
+
+| 저장소 | 역할 | 배포 | DB와의 관계 |
+|--------|------|------|-------------|
+| `badak-web` | 웹앱(리그·팀배틀·토너먼트·대시보드·관리) | Vercel (`main`=운영) | 대부분의 테이블을 읽고 쓴다 |
+| `badak-bot` | 디스코드 봇(`/유저등록` 등) | EC2 (`main` 푸시 시) | `users` 등록 — 웹은 여기 등록된 사용자만 로그인 가능 |
+| `gg-tracker` | 리플레이 감시 데스크톱 앱(Go) | GitHub Release (`main` 푸시 시) | `record-game` 함수로 `games`에 전적 기록 |
+| `badak-tier-park-api` | Supabase Edge Functions | `supabase functions deploy` | `record-game`·`get-games`(gg-tracker), `notify-entry`(웹의 엔트리 제출 → 디스코드) |
+| `.github` | 조직 프로필·공통 이슈/PR 템플릿 | — | — |
+
+로컬에서는 `~/dev/badak-tier-park/<저장소>`에 나란히 둔다.
+
 ## 작업 완료 기준
 **"적용됐다"와 "동작한다"는 다르다.** 마이그레이션이 `success`를 반환하거나 코드가 컴파일되는 것은
 완료 근거가 아니다. 의도한 동작이 실제로 일어나는지 확인한 뒤에 완료라고 말한다.
