@@ -169,7 +169,7 @@ jobs:
       # 프로젝트 설정의 내장 "Auto-add to project" 워크플로를 켜면 이 단계 없이도 된다
       - name: 프로젝트에 추가
         if: vars.PROJECT_URL != '' && github.event.action == 'opened'
-        uses: actions/add-to-project@v1.0.2
+        uses: actions/add-to-project@v2.0.0
         with:
           project-url: ${{ vars.PROJECT_URL }}
           github-token: ${{ secrets.PROJECT_TOKEN }}
