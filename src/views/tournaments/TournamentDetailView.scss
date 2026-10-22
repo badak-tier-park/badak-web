@@ -5,6 +5,7 @@
 .tournament-detail-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
@@ -14,10 +15,10 @@
   position: relative;
   flex: 1;
   // 진행(왼쪽) + 맵·설정(오른쪽) 2단을 담기 위해 기존 900px에서 넓힌다
-  max-width: 1060px;
+  max-width: var(--page-w-wide);
   width: 100%;
   margin: 0 auto;
-  padding: 40px 28px 80px;
+  padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
   box-sizing: border-box;
   // #app에 text-align:center가 걸려 있어 명시하지 않으면 본문이 가운데로 몰린다.
   // 가운데 정렬이 필요한 요소(.state-msg, .winner-banner 등)는 각자 선언한다.
@@ -36,7 +37,7 @@
   &.status--recruiting { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
   &.status--playing    { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
   &.status--finished   { background: var(--c-badge-bg, rgba(255, 255, 255, 0.06)); color: var(--c-text-sub); }
-  &.status--cancelled  { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+  &.status--cancelled  { background: rgba(var(--c-danger-rgb), 0.1); color: var(--c-danger); }
 }
 
 .tournament-header {
@@ -115,12 +116,12 @@
 }
 
 .step--done {
-  .step-dot { background: rgba(170, 59, 255, 0.14); border-color: rgba(170, 59, 255, 0.35); color: #c084fc; }
+  .step-dot { background: rgba(var(--c-brand-rgb), 0.14); border-color: rgba(var(--c-brand-rgb), 0.35); color: var(--c-brand-text); }
   .step-name { color: var(--c-text-sub); }
 }
 
 .step--now {
-  .step-dot { background: #aa3bff; border-color: #aa3bff; color: #fff; }
+  .step-dot { background: var(--c-brand); border-color: var(--c-brand); color: #fff; }
   .step-name { color: var(--c-text-bright); font-weight: 700; }
 }
 
@@ -131,8 +132,8 @@
   padding: 14px 16px;
   margin-bottom: 20px;
   border-radius: 12px;
-  border: 1px solid rgba(170, 59, 255, 0.28);
-  background: rgba(170, 59, 255, 0.05);
+  border: 1px solid rgba(var(--c-brand-rgb), 0.28);
+  background: rgba(var(--c-brand-rgb), 0.05);
 }
 
 .todo-label {
@@ -140,7 +141,7 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: #c084fc;
+  color: var(--c-brand-text);
 }
 
 .todo-row {
@@ -178,7 +179,7 @@
 .todo-blocked {
   margin: 0;
   font-size: 13px;
-  color: #f87171;
+  color: var(--c-danger);
 }
 
 // ── 2단 레이아웃 ────────────────────────────────────────
@@ -423,8 +424,8 @@
   margin-top: 28px;
   padding: 14px 18px;
   border-radius: 12px;
-  border: 1px solid rgba(248, 113, 113, 0.2);
-  background: rgba(248, 113, 113, 0.04);
+  border: 1px solid rgba(var(--c-danger-rgb), 0.2);
+  background: rgba(var(--c-danger-rgb), 0.04);
 }
 
 .danger-text { min-width: 0; }
@@ -433,7 +434,7 @@
   margin: 0 0 3px;
   font-size: 13px;
   font-weight: 700;
-  color: #f87171;
+  color: var(--c-danger);
 }
 
 .danger-desc {

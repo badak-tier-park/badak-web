@@ -40,7 +40,7 @@
 
   &:hover {
     color: var(--c-text-bright);
-    border-color: rgba(170, 59, 255, 0.4);
+    border-color: rgba(var(--c-brand-rgb), 0.4);
   }
 }
 
@@ -58,7 +58,7 @@
   font-size: 13px;
   color: var(--c-text-sub);
 
-  &--error { color: #f87171; }
+  &--error { color: var(--c-danger); }
 }
 
 .cal-body {
@@ -83,7 +83,7 @@
   color: var(--c-text-muted);
   text-transform: uppercase;
 
-  &.sun { color: rgba(248, 113, 113, 0.85); }
+  &.sun { color: rgba(var(--c-danger-rgb), 0.85); }
   &.sat { color: rgba(96, 165, 250, 0.85); }
 }
 
@@ -134,7 +134,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(170, 59, 255, 0.5);
+      box-shadow: 0 2px 8px rgba(var(--c-brand-rgb), 0.5);
     }
   }
 
@@ -225,7 +225,9 @@
   width: 560px;
   max-width: 100%;
   max-height: calc(100vh - 32px);
-  background: var(--c-surface-raised);
+  max-height: calc(100dvh - 32px);
+  // surface-raised는 다크에서 거의 투명(2.5%)이라 뒤 달력이 비쳐 보였다 — 공통 모달과 같은 면색
+  background: var(--c-surface);
   border: 1px solid var(--c-border-strong);
   border-radius: 14px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
@@ -238,6 +240,26 @@
 @keyframes modalIn {
   from { opacity: 0; transform: translateY(10px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// 휴대폰: 공통 모달(_modal.scss)과 같은 하단 시트
+@media (max-width: 640px) {
+  // 칸 폭이 45px 안팎이라 일정 칩에는 제목만 남기고 시간은 상세 모달에서 본다
+  .home-cal { margin-top: 0; padding: 14px 12px 16px; }
+  .cal-weekdays, .cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .cal-grid { grid-auto-rows: minmax(64px, auto); }
+  .cal-cell { min-height: 64px; padding: 4px 3px 5px; }
+  .cal-chip { padding: 1px 3px; font-size: 9.5px; }
+  .cal-chip-time { display: none; }
+
+  .cal-modal-backdrop { align-items: flex-end; padding: 0; }
+  .cal-modal {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 .cal-modal-header {
@@ -294,7 +316,7 @@
 
   &:hover {
     background: var(--c-overlay);
-    border-color: rgba(170, 59, 255, 0.4);
+    border-color: rgba(var(--c-brand-rgb), 0.4);
   }
 }
 

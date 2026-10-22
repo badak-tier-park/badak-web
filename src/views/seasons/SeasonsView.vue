@@ -3,7 +3,7 @@
     <AppHeader />
 
     <div class="seasons-content">
-      <button class="btn-back" @click="$router.back()">
+      <button class="btn-back" @click="$router.push({ name: 'home' })">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
           <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>

@@ -4,6 +4,7 @@
 .captain-draft-page {
   position: relative;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -70,7 +71,7 @@
   &--my {
     font-size: 13px;
     font-weight: 800;
-    color: #c084fc;
+    color: var(--c-brand-text);
     letter-spacing: 0.02em;
     animation: pulse-my-turn 1.4s ease-in-out infinite;
   }
@@ -216,7 +217,7 @@
 
 .pool-pick-hint {
   font-size: 10px;
-  color: #c084fc;
+  color: var(--c-brand-text);
   font-weight: 600;
   padding: 1px 8px;
   border-radius: 20px;
@@ -252,9 +253,9 @@
   }
 
   &--s { color: var(--tier-s-text, #fbbf24); &.active { background: var(--tier-s-bg); border-color: var(--tier-s-border); } }
-  &--a { color: var(--tier-a-text, #f87171); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-border); } }
-  &--a-plus { color: var(--tier-a-text, #f87171); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-plus-border); border-style: solid; } }
-  &--a-minus { color: var(--tier-a-text, #f87171); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-minus-border); border-style: solid; } }
+  &--a { color: var(--tier-a-text, var(--c-danger)); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-border); } }
+  &--a-plus { color: var(--tier-a-text, var(--c-danger)); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-plus-border); border-style: solid; } }
+  &--a-minus { color: var(--tier-a-text, var(--c-danger)); &.active { background: var(--tier-a-bg); border-color: var(--tier-a-minus-border); border-style: solid; } }
   &--b { color: var(--tier-b-text, #fb923c); &.active { background: var(--tier-b-bg); border-color: var(--tier-b-border); } }
   &--b-plus { color: var(--tier-b-text, #fb923c); &.active { background: var(--tier-b-bg); border-color: var(--tier-b-plus-border); border-style: solid; } }
   &--b-minus { color: var(--tier-b-text, #fb923c); &.active { background: var(--tier-b-bg); border-color: var(--tier-b-minus-border); border-style: solid; } }
@@ -419,14 +420,14 @@
   transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
 
   &.is-active {
-    border-color: rgba(170, 59, 255, 0.5);
-    box-shadow: 0 0 0 2px rgba(170, 59, 255, 0.12);
+    border-color: rgba(var(--c-brand-rgb), 0.5);
+    box-shadow: 0 0 0 2px rgba(var(--c-brand-rgb), 0.12);
   }
   &.is-inactive { opacity: 0.4; }
 
   &.is-mine.is-active {
     border-color: rgba(192, 132, 252, 0.7);
-    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.18), 0 4px 20px rgba(170, 59, 255, 0.12);
+    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.18), 0 4px 20px rgba(var(--c-brand-rgb), 0.12);
   }
 }
 
@@ -491,7 +492,7 @@
   padding: 1px 5px;
   border-radius: 4px;
   background: rgba(192, 132, 252, 0.15);
-  color: #c084fc;
+  color: var(--c-brand-text);
   border: 1px solid rgba(192, 132, 252, 0.35);
   flex-shrink: 0;
   letter-spacing: 0.02em;
@@ -545,8 +546,8 @@
 
   &.active {
     border-color: rgba(192, 132, 252, 0.5);
-    color: #c084fc;
-    background: rgba(170, 59, 255, 0.07);
+    color: var(--c-brand-text);
+    background: rgba(var(--c-brand-rgb), 0.07);
     animation: pulse-hint 1.2s ease-in-out infinite;
   }
 }
@@ -599,5 +600,78 @@
     background: rgba(124, 58, 237, 0.08);
     color: #7c3aed;
     border-color: rgba(124, 58, 237, 0.25);
+  }
+}
+
+// ── 탭 지목 확인 ───────────────────────────────────────────
+.pick-confirm-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pick-confirm-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+}
+
+.pick-confirm-desc {
+  font-size: 13px;
+  color: var(--c-text-sub);
+}
+
+// 마우스는 드래그, 터치는 탭 — 안내 문구도 입력 방식에 맞춘다
+.hint-touch { display: none; }
+
+@media (hover: none) and (pointer: coarse) {
+  .hint-pointer { display: none; }
+  .hint-touch { display: inline; }
+}
+
+// ── 휴대폰 ─────────────────────────────────────────────
+// 데스크톱은 한 화면 고정(풀 왼쪽 + 팀 칸 가로 나열). 휴대폰에서는 풀 위, 팀 칸 아래로 쌓고
+// 페이지 전체를 스크롤한다. 팀 칸은 옆으로 넘겨 본다
+@media (max-width: 640px) {
+  .captain-draft-page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .draft-nav { padding: 12px var(--page-gutter) 0; }
+  .draft-topbar { padding: 0 var(--page-gutter); }
+  .draft-topbar-inner {
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding: 8px 0;
+  }
+
+  .draft-layout {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .pool-panel {
+    width: 100%;
+    max-height: 50dvh;
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .teams-panel,
+  .teams-content-row { overflow: visible; }
+
+  .teams-body {
+    justify-content: flex-start;
+    padding: 16px var(--page-gutter) calc(24px + env(safe-area-inset-bottom));
+    scroll-snap-type: x mandatory;
+  }
+
+  .team-column {
+    width: min(78vw, 260px);
+    min-height: 320px;
+    scroll-snap-align: start;
   }
 }

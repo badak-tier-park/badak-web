@@ -4,7 +4,7 @@
 .ladder-modal { max-width: 640px; }
 
 .source-link {
-  color: #c084fc;
+  color: var(--c-brand-text);
   text-decoration: none;
 
   &:hover { text-decoration: underline; }
@@ -17,7 +17,7 @@
   font-size: 13px;
   color: var(--c-text-faint);
 
-  &--error { color: #f87171; line-height: 1.6; }
+  &--error { color: var(--c-danger); line-height: 1.6; }
 }
 
 // ── 그룹 ────────────────────────────────────────────────
@@ -40,8 +40,8 @@
 .sync-count {
   font-size: 11px;
   font-weight: 700;
-  color: #c084fc;
-  background: rgba(170, 59, 255, 0.14);
+  color: var(--c-brand-text);
+  background: rgba(var(--c-brand-rgb), 0.14);
   padding: 1px 7px;
   border-radius: 20px;
 }
@@ -95,7 +95,7 @@
 .sync-version {
   font-size: 11px;
   font-weight: 700;
-  color: #c084fc;
+  color: var(--c-brand-text);
 }
 
 .sync-meta {
@@ -116,7 +116,7 @@
   outline: none;
   cursor: pointer;
 
-  &:focus { border-color: rgba(170, 59, 255, 0.5); }
+  &:focus { border-color: rgba(var(--c-brand-rgb), 0.5); }
   &:disabled { opacity: 0.6; cursor: default; }
 
   // 펼친 목록은 브라우저가 select 색을 그대로 써서, 반투명 배경이면 흰 바탕에 흰 글씨가 된다
@@ -198,14 +198,14 @@
   &--dropped {
     color: var(--c-text-muted);
     text-decoration: line-through;
-    text-decoration-color: rgba(248, 113, 113, 0.6);
+    text-decoration-color: rgba(var(--c-danger-rgb), 0.6);
   }
 }
 
 .sync-chip-sub {
   font-size: 10px;
   font-weight: 700;
-  color: #c084fc;
+  color: var(--c-brand-text);
 }
 
 // ── 이미지 옵션 / 경고 ──────────────────────────────────
@@ -225,11 +225,11 @@
   gap: 10px;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(170, 59, 255, 0.28);
-  background: rgba(170, 59, 255, 0.05);
+  border: 1px solid rgba(var(--c-brand-rgb), 0.28);
+  background: rgba(var(--c-brand-rgb), 0.05);
   cursor: pointer;
 
-  input { margin-top: 2px; accent-color: #aa3bff; cursor: pointer; }
+  input { margin-top: 2px; accent-color: var(--c-brand); cursor: pointer; }
 
   .sync-image-text {
     display: flex;
@@ -240,7 +240,7 @@
     color: var(--c-text-2);
   }
 
-  b { color: #c084fc; }
+  b { color: var(--c-brand-text); }
 
   small {
     font-size: 11px;

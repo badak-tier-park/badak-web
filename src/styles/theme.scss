@@ -68,6 +68,25 @@
   --win-tag-bg:     rgba(16, 185, 129, 0.14);
 }
 
+// ── 레이아웃 (테마 무관) ────────────────────────────────────
+// 페이지 본문 여백은 화면마다 따로 쓰지 말고 이 값을 쓴다. 모바일에서 한 번에 줄이기 위함
+:root {
+  // 본문 최대폭은 세 단계만 쓴다. 화면마다 640/680/720/760/800/880... 제각각이라
+  // 페이지를 옮겨 다닐 때 본문 폭이 들쭉날쭉했다
+  --page-w-narrow:    760px;   // 폼, 단일 목록
+  --page-w:           900px;   // 기본
+  --page-w-wide:      1100px;  // 표, 2단 레이아웃
+  --page-gutter:      28px;
+  --page-pad-top:     40px;
+  --page-pad-bottom:  calc(80px + env(safe-area-inset-bottom));
+
+  @media (max-width: 640px) {
+    --page-gutter:      16px;
+    --page-pad-top:     24px;
+    --page-pad-bottom:  calc(56px + env(safe-area-inset-bottom));
+  }
+}
+
 // ── 글로벌 폰트 ──────────────────────────────────────────
 body {
   font-family: system-ui, sans-serif;
@@ -113,6 +132,10 @@ body {
   --c-brand-bg:       rgba(170, 59, 255, 0.15);
   --c-brand-border:   rgba(170, 59, 255, 0.40);
   --c-brand-gradient: linear-gradient(135deg, #aa3bff, #5865f2);
+  // 투명도만 다른 브랜드색이 화면마다 수십 가지라 채널을 토큰으로 둔다: rgba(var(--c-brand-rgb), 0.12)
+  --c-brand-rgb:      170, 59, 255;
+  --c-brand-text-hover: #d8a4ff;
+  --c-danger-rgb:     248, 113, 113;
 
   --c-danger:         #f87171;
   --c-danger-bg:      rgba(239, 68, 68, 0.10);
@@ -210,6 +233,9 @@ body {
   --c-brand-bg:       rgba(124, 58, 237, 0.12);
   --c-brand-border:   rgba(124, 58, 237, 0.35);
   --c-brand-gradient: linear-gradient(135deg, #7c3aed, #4f46e5);
+  --c-brand-rgb:      124, 58, 237;
+  --c-brand-text-hover: #6d28d9;
+  --c-danger-rgb:     220, 38, 38;
 
   --c-danger:         #dc2626;
   --c-danger-bg:      rgba(220, 38, 38, 0.08);

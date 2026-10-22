@@ -57,67 +57,69 @@
 
       <template v-else>
         <div class="result-count">{{ filteredGames.length }}건</div>
-        <table class="game-table">
-          <thead>
-            <tr>
-              <th class="th-center">날짜</th>
-              <th class="th-center">맵</th>
-              <th class="th-center">승자</th>
-              <th class="th-center">패자</th>
-              <th>시간</th>
-              <th>시즌</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="game in filteredGames" :key="game.id">
-              <td class="td-date">{{ formatDate(game.played_at) }}</td>
+        <div class="table-scroll">
+          <table class="game-table">
+            <thead>
+              <tr>
+                <th class="th-center">날짜</th>
+                <th class="th-center">맵</th>
+                <th class="th-center">승자</th>
+                <th class="th-center">패자</th>
+                <th>시간</th>
+                <th>시즌</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="game in filteredGames" :key="game.id">
+                <td class="td-date">{{ formatDate(game.played_at) }}</td>
 
-              <td class="td-map">
-                <div class="map-cell">
-                  <img v-if="game.map_thumbnail_url" :src="game.map_thumbnail_url" class="map-thumb" />
-                  <div v-else class="map-thumb-empty" />
-                  <span class="map-name">{{ game.map_name ?? '-' }}</span>
-                </div>
-              </td>
-
-              <td>
-                <div class="player-cell">
-                  <div class="player-cell-name">
-                    <span class="player-name" :class="{ 'player-name--unmatched': !game.winner_tier }">{{ game.winner_name ?? '-' }}</span>
-                    <span class="race-badge" :class="raceBadgeClass(game.winner_race)">{{ raceLabel(game.winner_race) }}</span>
-                    <span v-if="game.winner_tier" class="tier-badge" :class="`tier-badge--${$tierClass(game.winner_tier)}`">{{ game.winner_tier }}</span>
+                <td class="td-map">
+                  <div class="map-cell">
+                    <img v-if="game.map_thumbnail_url" :src="game.map_thumbnail_url" class="map-thumb" />
+                    <div v-else class="map-thumb-empty" />
+                    <span class="map-name">{{ game.map_name ?? '-' }}</span>
                   </div>
-                  <div v-if="game.winner_apm != null" class="player-cell-apm">APM {{ game.winner_apm }}</div>
-                </div>
-              </td>
+                </td>
 
-              <td>
-                <div class="player-cell">
-                  <div class="player-cell-name">
-                    <span class="player-name" :class="{ 'player-name--unmatched': !game.loser_tier }">{{ game.loser_name ?? '-' }}</span>
-                    <span class="race-badge" :class="raceBadgeClass(game.loser_race)">{{ raceLabel(game.loser_race) }}</span>
-                    <span v-if="game.loser_tier" class="tier-badge" :class="`tier-badge--${$tierClass(game.loser_tier)}`">{{ game.loser_tier }}</span>
+                <td>
+                  <div class="player-cell">
+                    <div class="player-cell-name">
+                      <span class="player-name" :class="{ 'player-name--unmatched': !game.winner_tier }">{{ game.winner_name ?? '-' }}</span>
+                      <span class="race-badge" :class="raceBadgeClass(game.winner_race)">{{ raceLabel(game.winner_race) }}</span>
+                      <span v-if="game.winner_tier" class="tier-badge" :class="`tier-badge--${$tierClass(game.winner_tier)}`">{{ game.winner_tier }}</span>
+                    </div>
+                    <div v-if="game.winner_apm != null" class="player-cell-apm">APM {{ game.winner_apm }}</div>
                   </div>
-                  <div v-if="game.loser_apm != null" class="player-cell-apm">APM {{ game.loser_apm }}</div>
-                </div>
-              </td>
+                </td>
 
-              <td class="td-duration">{{ formatDuration(game.game_duration_seconds) }}</td>
-              <td class="td-season">{{ game.season_id != null ? `S${game.season_id}` : '-' }}</td>
+                <td>
+                  <div class="player-cell">
+                    <div class="player-cell-name">
+                      <span class="player-name" :class="{ 'player-name--unmatched': !game.loser_tier }">{{ game.loser_name ?? '-' }}</span>
+                      <span class="race-badge" :class="raceBadgeClass(game.loser_race)">{{ raceLabel(game.loser_race) }}</span>
+                      <span v-if="game.loser_tier" class="tier-badge" :class="`tier-badge--${$tierClass(game.loser_tier)}`">{{ game.loser_tier }}</span>
+                    </div>
+                    <div v-if="game.loser_apm != null" class="player-cell-apm">APM {{ game.loser_apm }}</div>
+                  </div>
+                </td>
 
-              <td class="td-action">
-                <div class="action-wrap">
-                  <template v-if="deleteConfirmId === game.id">
-                    <button class="btn-confirm-delete" @click="confirmDelete(game.id)" :disabled="deleting">확인</button>
-                    <button class="btn-cancel-delete" @click="deleteConfirmId = null" :disabled="deleting">취소</button>
-                  </template>
-                  <button v-else class="btn-delete" @click="deleteConfirmId = game.id">삭제</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <td class="td-duration">{{ formatDuration(game.game_duration_seconds) }}</td>
+                <td class="td-season">{{ game.season_id != null ? `S${game.season_id}` : '-' }}</td>
+
+                <td class="td-action">
+                  <div class="action-wrap">
+                    <template v-if="deleteConfirmId === game.id">
+                      <button class="btn-confirm-delete" @click="confirmDelete(game.id)" :disabled="deleting">확인</button>
+                      <button class="btn-cancel-delete" @click="deleteConfirmId = null" :disabled="deleting">취소</button>
+                    </template>
+                    <button v-else class="btn-delete" @click="deleteConfirmId = game.id">삭제</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </template>
     </div>
 

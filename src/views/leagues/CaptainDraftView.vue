@@ -71,7 +71,7 @@
             <div class="pool-title-row">
               <h2 class="pool-title">참여 선수</h2>
               <span class="pool-count">{{ availablePlayers.length }}명</span>
-              <span v-if="isMyTurn" class="pool-pick-hint">드래그해서 선택</span>
+              <span v-if="isMyTurn" class="pool-pick-hint"><span class="hint-pointer">드래그해서 선택</span><span class="hint-touch">눌러서 선택</span></span>
             </div>
             <div class="pool-tier-filter">
               <button
@@ -209,6 +209,32 @@
         </main>
       </div>
     </template>
+
+    <!-- 터치 화면: 탭한 선수를 바로 넣지 않고 한 번 확인한다(지목은 되돌릴 수 없는 실시간 진행) -->
+    <Teleport to="body">
+      <div v-if="pendingPick" class="modal-backdrop" @click.self="pendingPick = null">
+        <div class="modal modal--sm">
+          <div class="modal-header">
+            <p class="modal-title">선수 지목</p>
+            <button class="modal-close" aria-label="닫기" @click="pendingPick = null">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="pick-confirm-player">
+              <span class="pick-confirm-name">{{ pendingPick.nickname }}</span>
+              <RaceBadge :race="pendingPick.race" />
+              <TierBadge :tier="pendingPick.tier" />
+            </div>
+            <p class="pick-confirm-desc">우리 팀으로 지목합니다.</p>
+          </div>
+          <div class="modal-footer">
+            <div class="modal-actions">
+              <button class="btn-cancel" @click="pendingPick = null">취소</button>
+              <button class="btn-submit" :disabled="!isMyTurn" @click="confirmPick">지목</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -342,7 +368,7 @@ function playerById(id: number) {
 
 const {
   dragOverTeam, dragOverPool, draggingId,
-  onPointerDown,
+  onPointerDown, assignToTeam,
 } = useDraftDnD(
   allPlayers, teams, currentCaptainId,
   (captainId, player, pickOrder) => {
@@ -352,7 +378,22 @@ const {
     deleteSinglePick(leagueId, memberId).catch(e => console.error('회수 저장 실패:', e))
     channel?.send({ type: 'broadcast', event: 'pick_removed', payload: { memberId } })
   },
+  (playerId, source) => {
+    if (source !== 'pool' || !isMyTurn.value) return
+    pendingPick.value = playerById(playerId)
+  },
 )
+
+const pendingPick = ref<PlayerRow | null>(null)
+
+function confirmPick() {
+  const player = pendingPick.value
+  pendingPick.value = null
+  // 확인 창이 떠 있는 사이 차례가 넘어갔거나 다른 팀이 먼저 데려갔으면 assignToTeam이 무시한다
+  if (player && myCaptainId.value !== null && availablePlayers.value.some(p => p.id === player.id)) {
+    assignToTeam(myCaptainId.value, player.id)
+  }
+}
 
 function applyNewPick(captainPlayerId: number, memberPlayerId: number) {
   const player = allPlayers.value.find(p => p.id === memberPlayerId)
