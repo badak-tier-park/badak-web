@@ -4,6 +4,7 @@
 .map-register-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
@@ -12,10 +13,10 @@
 // ── 레이아웃 ──────────────────────────────────────────────
 .page-inner {
   position: relative;
-  max-width: 720px;
+  max-width: var(--page-w-narrow);
   width: 100%;
   margin: 0 auto;
-  padding: 40px 24px 80px;
+  padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
   box-sizing: border-box;
   text-align: left;
   display: flex;

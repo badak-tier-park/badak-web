@@ -1,5 +1,7 @@
 @use 'buttons';
 @use 'modal';
+@use 'layout';
+@use 'table';
 
 // ── 공통 페이지 유틸 ──────────────────────────────────────
 // orb / grid-overlay 는 App.vue 전역 관리로 이동
@@ -48,6 +50,14 @@
 
 .page-title--sm {
   font-size: 26px;
+}
+
+@include layout.mobile {
+  // 제목 옆 버튼(생성/저장 등)이 제목을 밀어내지 않게 줄바꿈을 허용
+  .page-title-row { flex-wrap: wrap; margin-bottom: 20px; }
+  .page-title { font-size: 24px; }
+  .page-title--sm { font-size: 22px; }
+  .btn-back { margin-bottom: 14px; }
 }
 
 .page-subtitle {

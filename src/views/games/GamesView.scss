@@ -4,6 +4,7 @@
 .games-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
@@ -12,10 +13,10 @@
 .games-content {
   position: relative;
   flex: 1;
-  max-width: 1100px;
+  max-width: var(--page-w-wide);
   width: 100%;
   margin: 0 auto;
-  padding: 40px 28px 80px;
+  padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
   box-sizing: border-box;
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -381,4 +382,8 @@
 
   &:hover { border-color: var(--c-border-strong); color: var(--c-text); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+@media (max-width: 640px) {
+  .game-table { min-width: 640px; }
 }

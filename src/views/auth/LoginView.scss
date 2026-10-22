@@ -1,6 +1,7 @@
 .login-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -23,7 +24,8 @@
 .login-card {
   position: relative;
   width: 420px;
-  max-width: calc(100vw - 32px);
+  // content-box라 padding(36px)·테두리가 폭 밖에 붙는다. 휴대폰에서 화면 가장자리에 붙지 않게 그만큼 뺀다
+  max-width: calc(100vw - 32px - 74px);
   background: var(--c-glass);
   border: 1px solid var(--c-glass-border);
   border-radius: 24px;

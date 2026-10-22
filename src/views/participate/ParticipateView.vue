@@ -2,8 +2,8 @@
   <div class="participate-page">
     <AppHeader>
       <template #actions>
-        <button class="btn-hof" @click="$router.push({ name: 'hall-of-fame' })">
-          🏆 명예의 전당
+        <button class="btn-hof" title="명예의 전당" @click="$router.push({ name: 'hall-of-fame' })">
+          🏆 <span class="btn-hof-label">명예의 전당</span>
         </button>
       </template>
     </AppHeader>

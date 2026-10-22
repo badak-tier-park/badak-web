@@ -50,83 +50,85 @@
       <div v-if="loading" class="state-msg">불러오는 중...</div>
       <div v-else-if="loadError" class="state-msg state-msg--error">{{ loadError }}</div>
 
-      <table v-else class="player-table">
-        <thead>
-          <tr>
-            <th class="th-sortable" @click="toggleSort('nickname')">
-              닉네임
-              <span v-if="sortKey === 'nickname'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
-            </th>
-            <th>Alias</th>
-            <th>스타 닉네임</th>
-            <th class="th-sortable" @click="toggleSort('race')">
-              종족
-              <span v-if="sortKey === 'race'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
-            </th>
-            <th class="th-sortable" @click="toggleSort('tier')">
-              티어
-              <span v-if="sortKey === 'tier'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
-            </th>
-            <th>상태</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="player in displayedPlayers" :key="player.id">
-            <td class="td-nickname" :class="{ 'td-nickname--admin': player.is_admin }">{{ player.nickname }}</td>
-            <td class="td-aliases">
-              <span v-if="player.aliases.length" class="alias-list">
-                <span v-for="(a, i) in player.aliases.slice(0, 2)" :key="i" class="alias-chip">{{ a }}</span>
-                <span
-                  v-if="player.aliases.length > 2"
-                  class="alias-chip alias-chip--more"
-                  @click.stop="togglePopover(player.id, 'aliases')"
-                >+{{ player.aliases.length - 2 }}</span>
-                <div
-                  v-if="openPopover?.id === player.id && openPopover.field === 'aliases'"
-                  class="alias-popover"
-                >
-                  <span v-for="(a, i) in player.aliases" :key="i" class="alias-chip">{{ a }}</span>
-                </div>
-              </span>
-              <span v-else class="alias-list">-</span>
-            </td>
-            <td class="td-aliases">
-              <span v-if="player.star_nicknames.length" class="alias-list">
-                <span v-for="(sn, i) in player.star_nicknames.slice(0, 2)" :key="i" class="alias-chip alias-chip--star">{{ sn }}</span>
-                <span
-                  v-if="player.star_nicknames.length > 2"
-                  class="alias-chip alias-chip--more"
-                  @click.stop="togglePopover(player.id, 'star')"
-                >+{{ player.star_nicknames.length - 2 }}</span>
-                <div
-                  v-if="openPopover?.id === player.id && openPopover.field === 'star'"
-                  class="alias-popover"
-                >
-                  <span v-for="(sn, i) in player.star_nicknames" :key="i" class="alias-chip alias-chip--star">{{ sn }}</span>
-                </div>
-              </span>
-              <span v-else class="alias-list">-</span>
-            </td>
-            <td>
-              <span class="race-badge" :class="`race-badge--${player.race.toLowerCase()}`">
-                {{ raceLabel(player.race) }}
-              </span>
-            </td>
-            <td>
-              <span class="tier-badge" :class="`tier-badge--${$tierClass(player.tier)}`">{{ player.tier }}</span>
-            </td>
-            <td class="td-status">
-              <span v-if="player.is_military" class="status-badge status-badge--military">군인</span>
-              <span v-if="!player.is_active" class="status-badge status-badge--suspended">정지</span>
-              <span v-if="!player.is_military && player.is_active" class="status-badge status-badge--none">-</span>
-            </td>
-            <td class="td-action">
-              <button class="edit-btn" @click="openEdit(player)">수정</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="table-scroll">
+        <table class="player-table">
+          <thead>
+            <tr>
+              <th class="th-sortable" @click="toggleSort('nickname')">
+                닉네임
+                <span v-if="sortKey === 'nickname'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
+              </th>
+              <th>Alias</th>
+              <th>스타 닉네임</th>
+              <th class="th-sortable" @click="toggleSort('race')">
+                종족
+                <span v-if="sortKey === 'race'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
+              </th>
+              <th class="th-sortable" @click="toggleSort('tier')">
+                티어
+                <span v-if="sortKey === 'tier'" class="sort-arrow" :class="{ 'sort-arrow--desc': sortDir === 'desc' }">▲</span>
+              </th>
+              <th>상태</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="player in displayedPlayers" :key="player.id">
+              <td class="td-nickname" :class="{ 'td-nickname--admin': player.is_admin }">{{ player.nickname }}</td>
+              <td class="td-aliases">
+                <span v-if="player.aliases.length" class="alias-list">
+                  <span v-for="(a, i) in player.aliases.slice(0, 2)" :key="i" class="alias-chip">{{ a }}</span>
+                  <span
+                    v-if="player.aliases.length > 2"
+                    class="alias-chip alias-chip--more"
+                    @click.stop="togglePopover(player.id, 'aliases')"
+                  >+{{ player.aliases.length - 2 }}</span>
+                  <div
+                    v-if="openPopover?.id === player.id && openPopover.field === 'aliases'"
+                    class="alias-popover"
+                  >
+                    <span v-for="(a, i) in player.aliases" :key="i" class="alias-chip">{{ a }}</span>
+                  </div>
+                </span>
+                <span v-else class="alias-list">-</span>
+              </td>
+              <td class="td-aliases">
+                <span v-if="player.star_nicknames.length" class="alias-list">
+                  <span v-for="(sn, i) in player.star_nicknames.slice(0, 2)" :key="i" class="alias-chip alias-chip--star">{{ sn }}</span>
+                  <span
+                    v-if="player.star_nicknames.length > 2"
+                    class="alias-chip alias-chip--more"
+                    @click.stop="togglePopover(player.id, 'star')"
+                  >+{{ player.star_nicknames.length - 2 }}</span>
+                  <div
+                    v-if="openPopover?.id === player.id && openPopover.field === 'star'"
+                    class="alias-popover"
+                  >
+                    <span v-for="(sn, i) in player.star_nicknames" :key="i" class="alias-chip alias-chip--star">{{ sn }}</span>
+                  </div>
+                </span>
+                <span v-else class="alias-list">-</span>
+              </td>
+              <td>
+                <span class="race-badge" :class="`race-badge--${player.race.toLowerCase()}`">
+                  {{ raceLabel(player.race) }}
+                </span>
+              </td>
+              <td>
+                <span class="tier-badge" :class="`tier-badge--${$tierClass(player.tier)}`">{{ player.tier }}</span>
+              </td>
+              <td class="td-status">
+                <span v-if="player.is_military" class="status-badge status-badge--military">군인</span>
+                <span v-if="!player.is_active" class="status-badge status-badge--suspended">정지</span>
+                <span v-if="!player.is_military && player.is_active" class="status-badge status-badge--none">-</span>
+              </td>
+              <td class="td-action">
+                <button class="edit-btn" @click="openEdit(player)">수정</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- 수정 모달 -->

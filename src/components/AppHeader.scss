@@ -419,3 +419,47 @@
   font-weight: 600;
   padding-left: 6px;
 }
+
+// ── 휴대폰 ─────────────────────────────────────────────
+// 375px 폭에 브랜드 + 출석 + 알림 + 테마 + 로그아웃 + 페이지 액션이 한 줄에 들어가야 한다.
+// 닉네임·아바타(본인 확인용일 뿐)와 출석 글자를 숨겨 자리를 만든다
+@media (max-width: 640px) {
+  .app-header {
+    gap: 10px;
+    padding-left: var(--page-gutter);
+    padding-right: var(--page-gutter);
+    height: calc(54px + env(safe-area-inset-top));
+  }
+
+  .header-brand svg { width: 24px; height: 24px; }
+  .brand-word { font-size: 15px; }
+
+  .header-nav { display: none; }
+  .header-right { gap: 6px; margin-left: auto; }
+
+  .user-info { display: none; }
+  .attendance-label { display: none; }
+  .attendance-btn { padding: 5px 8px; }
+
+  .header-btn { padding: 6px 10px; font-size: 12px; }
+
+  // 버튼 아래 340px 팝오버는 화면 밖으로 나간다 — 화면 폭에 맞춰 헤더 바로 아래에 붙인다
+  .notif-wrap { position: static; }
+  .notif-pop {
+    position: fixed;
+    top: calc(54px + env(safe-area-inset-top) + 6px);
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 70vh;
+    max-height: 70dvh;
+  }
+
+  .attendance-toast {
+    white-space: normal;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    text-align: center;
+  }
+}

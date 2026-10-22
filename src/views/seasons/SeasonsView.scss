@@ -3,6 +3,7 @@
 
 .seasons-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--c-bg);
@@ -10,10 +11,10 @@
 
 .seasons-content {
   flex: 1;
-  max-width: 640px;
+  max-width: var(--page-w-narrow);
   width: 100%;
   margin: 0 auto;
-  padding: 40px 28px 80px;
+  padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

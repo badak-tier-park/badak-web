@@ -1,5 +1,4 @@
 // ── 검색+선택 오버레이 피커 공용 (LeagueDetailView의 맵/시드권자 피커에서 발췌) ──
-// LeagueDetailView.scss는 아직 이 파샬을 쓰지 않고 자체 정의를 유지한다(무영향 우선).
 // 새로 만드는 화면은 이 파샬을 @use 하면 된다.
 
 .overlay-backdrop {
@@ -11,12 +10,14 @@
   align-items: center;
   justify-content: center;
   z-index: 200;
+  padding: 16px;
 }
 
 .picker-panel {
   width: 100%;
   max-width: 480px;
   max-height: 80vh;
+  max-height: 80dvh;
   display: flex;
   flex-direction: column;
   background: var(--c-surface);

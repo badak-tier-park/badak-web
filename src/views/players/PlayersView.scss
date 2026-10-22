@@ -6,6 +6,7 @@
 .players-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
@@ -14,10 +15,10 @@
 .players-content {
   position: relative;
   flex: 1;
-  max-width: 900px;
+  max-width: var(--page-w);
   width: 100%;
   margin: 0 auto;
-  padding: 40px 28px 80px;
+  padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
   box-sizing: border-box;
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -435,4 +436,8 @@
   font-size: 12px;
   color: var(--c-text-muted);
   margin: 0 0 8px;
+}
+
+@media (max-width: 640px) {
+  .player-table { min-width: 560px; }
 }

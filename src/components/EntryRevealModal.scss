@@ -682,3 +682,25 @@
   font-weight: 800;
   letter-spacing: 0.02em;
 }
+
+// ── 휴대폰 ─────────────────────────────────────────────
+// 가운데 맵 열(130~160px)이 고정이라 휴대폰에서는 양쪽 선수 열이 90px 안팎으로 눌린다.
+// 맵 열을 줄이고, 창은 공통 모달과 같은 하단 시트로 띄운다
+@media (max-width: 640px) {
+  .reveal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .reveal-modal {
+    max-height: 92dvh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .reveal-teams-header { grid-template-columns: minmax(0, 1fr) 84px minmax(0, 1fr); gap: 6px; }
+  .reveal-row { grid-template-columns: minmax(0, 1fr) 84px minmax(0, 1fr); gap: 6px; }
+  .rse-map-thumb-wrap { width: 80px; height: 60px; }
+  .rse-banned-maps .rse-map-item { width: 96px; }
+}
