@@ -30,6 +30,8 @@
     "sass": "^1.98.0",
     "typescript": "~5.9.3",
     "vite": "^8.0.1",
-    "vue-tsc": "^3.2.5"
+    "vite-plugin-pwa": "^2.0.0",
+    "vue-tsc": "^3.2.5",
+    "workbox-window": "^7.4.1"
   }
 }

@@ -6,10 +6,12 @@
     <div v-if="route.name !== 'login'" class="grid-overlay"></div>
   </template>
   <RouterView />
+  <PwaUpdatePrompt />
 </template>
 
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router'
+import PwaUpdatePrompt from '@/components/PwaUpdatePrompt.vue'
 
 const route = useRoute()
 </script>
