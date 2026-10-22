@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # 작업 브랜치와 같은 흐름(dev → main)으로 들어오게 dev를 대상으로 한다
+  - package-ecosystem: npm
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Seoul
+    open-pull-requests-limit: 5
+    labels: ["area:infra"]
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # 자잘한 업데이트 PR이 수십 개 쌓이지 않게 minor/patch는 한 PR로 묶는다
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: monthly
+    labels: ["area:infra"]
+    commit-message:
+      prefix: chore

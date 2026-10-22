@@ -13,6 +13,21 @@
 | 리그(지목식·엔트리·승패·순위·핸디) | `src/views/leagues/CLAUDE.md` |
 | 맵(삭제 금지·별칭·래더 동기화·이미지 라이선스) | `src/views/maps/CLAUDE.md` |
 
+## 조직 저장소 지도
+바닥티어는 저장소 여러 개가 **같은 Supabase 프로젝트를 함께 쓴다**(운영 `badak`, 개발 `badak-dev`).
+한 저장소에서 테이블·정책을 바꾸면 다른 저장소가 깨질 수 있으니, DB를 건드릴 땐 아래 사용처를 먼저 본다.
+공개 저장소이므로 project ID는 문서에 쓰지 않고 Supabase MCP의 `list_projects`로 조회한다.
+
+| 저장소 | 역할 | 배포 | DB와의 관계 |
+|--------|------|------|-------------|
+| `badak-web` | 웹앱(리그·팀배틀·토너먼트·대시보드·관리) | Vercel (`main`=운영) | 대부분의 테이블을 읽고 쓴다 |
+| `badak-bot` | 디스코드 봇(`/유저등록` 등) | EC2 (`main` 푸시 시) | `users` 등록 — 웹은 여기 등록된 사용자만 로그인 가능 |
+| `gg-tracker` | 리플레이 감시 데스크톱 앱(Go) | GitHub Release (`main` 푸시 시) | `record-game` 함수로 `games`에 전적 기록 |
+| `badak-tier-park-api` | Supabase Edge Functions | `supabase functions deploy` | `record-game`·`get-games`(gg-tracker), `notify-entry`(웹의 엔트리 제출 → 디스코드) |
+| `.github` | 조직 프로필·공통 이슈/PR 템플릿 | — | — |
+
+로컬에서는 `~/dev/badak-tier-park/<저장소>`에 나란히 둔다.
+
 ## 작업 완료 기준
 **"적용됐다"와 "동작한다"는 다르다.** 마이그레이션이 `success`를 반환하거나 코드가 컴파일되는 것은
 완료 근거가 아니다. 의도한 동작이 실제로 일어나는지 확인한 뒤에 완료라고 말한다.
@@ -126,10 +141,23 @@
 - 지목은 드래그든 탭이든 `useDraftDnD`의 `assignToTeam()` 한 경로로만 넣는다
 
 ## Git
-- `feat/`, `fix/`, `refactor/`, `style/`, `docs/` 접두사로 작은 단위 브랜치 → `dev` 병합
-- 브랜치는 일회용. 병합된 브랜치는 로컬/원격 모두 즉시 삭제 (재사용 금지)
-- 이슈를 닫을 때는 **하위 이슈가 모두 닫혔는지** 먼저 본다
-  (`gh api repos/{owner}/{repo}/issues/{n}/sub_issues`). 하위가 열려 있으면 상위는 닫지 않는다
+- `feat/`, `fix/`, `refactor/`, `style/`, `docs/`, `chore/` 접두사로 작은 단위 브랜치 → `dev` 병합
+- 브랜치는 일회용. 병합된 브랜치는 로컬/원격 모두 즉시 삭제 (재사용 금지, 원격은 자동 삭제 설정됨)
+- **기본 브랜치는 `dev`**다. `Closes #n`은 기본 브랜치에 병합될 때만 이슈를 닫기 때문 —
+  기본이 `main`이던 때는 PR이 이슈를 하나도 닫지 못했다. Vercel 운영 배포는 여전히 `main`
+- 보호 규칙(ruleset): `dev`·`main` 모두 승인 1명, **푸시하면 기존 승인 무효**, **리뷰 코멘트를
+  해결해야 병합**. `main` 규칙의 대상은 `refs/heads/main`으로 고정돼 있다(`~DEFAULT_BRANCH`로 두면
+  기본 브랜치를 바꿀 때 main 보호가 풀린다)
+
+### 이슈
+- 템플릿을 쓰고 종류 라벨 + 영역 라벨(`area:*`) + 필요하면 `priority:*`를 붙인다
+- **이슈 타입과 종류 라벨은 짝이 고정**이다: Feature↔`enhancement`, Bug↔`bug`, Hotfix↔`hotfix`,
+  Style↔`style`, Refactor↔`refactor`, Docs↔`documentation`, Task↔(종류 라벨 없음).
+  제목 접두사(`feat:`/`fix:`…)와도 맞춘다. 이슈 폼이 둘을 함께 붙이지만 손으로 바꿀 땐 양쪽을 같이 바꾼다
+- 큰 작업은 하위 이슈(sub-issue)로 나눈다. 상위 이슈는 **하위가 모두 닫힌 뒤에** 닫는다
+  (`gh api repos/{owner}/{repo}/issues/{n}/sub_issues`)
+- 해결 근거를 코드·커밋에서 확인하지 못한 이슈는 닫지 말고 묻는다. 하지 않기로 한 이슈는
+  "not planned"로 닫는다(완료 통계가 흐려지지 않게)
 
 ### 커밋 메시지
 **무엇을 바꿨는지는 diff에 있다. 커밋 메시지에는 "왜"를 쓴다.**
@@ -143,6 +171,7 @@ AI가 작성하는 커밋일수록 이 맥락이 유실되기 쉬우므로 의�
 
 ### 커밋 전 검증
 lint·test 스크립트는 없다. **`npm run build`(vue-tsc 타입 검사 + 빌드)가 통과해야 커밋한다.**
+PR에서는 CI(`.github/workflows/ci.yml`)가 같은 명령을 돌린다.
 
 ### PR 생성
 조직 공통 PR 템플릿을 따른다. 템플릿은 이 저장소가 아니라 **`badak-tier-park/.github`** 에 있고,
@@ -153,10 +182,48 @@ PR을 만들기 전에 현재 템플릿을 가져와 그 섹션 구성을 그대
 gh api repos/badak-tier-park/.github/contents/.github/PULL_REQUEST_TEMPLATE.md --jq '.content' | base64 -d
 ```
 
+- **제목은 커밋과 같은 형식**(`feat: …`). 브랜치 이름("Feat/handicap")을 그대로 두지 않는다 —
+  병합 커밋 메시지가 되어 이력에 남는다
+- 본문 '관련 이슈'에 `Closes #n`을 쓴다. 이슈가 없는 작업이면 "없음"
+- **담당자·리뷰어·라벨·관련 이슈·프로젝트는 PR을 열면 자동으로 채워진다**(`.github/workflows/pr-setup.yml`)
+  - Assignees = 작성자 / Reviewers = 작성자를 뺀 쓰기 권한자 전원(Draft는 Ready 전환 때 요청)
+  - Labels = 제목 타입(`feat`→enhancement, `fix`→bug, `style`, `refactor`, `docs`→documentation,
+    `chore`, `hotfix`, dev→main은 `release`) + 바뀐 파일 경로의 `area:*`(4개 이상이면 생략)
+    + 연결된 이슈의 `area:*`·`priority:*`
+  - Development = 본문의 `Closes #n`. 없으면 브랜치 이름의 번호(`feat/96-entry-order`)로 넣어 준다
+  - Projects = 조직 프로젝트 **`badak-web`(#6)**. 상태(Todo / In Progress / Done)는 프로젝트 내장
+    워크플로가 바꾼다(추가 → Todo, PR 병합·이슈 닫힘 → Done, 하위 이슈 자동 추가).
+    **새 항목 자동 추가만 꺼져 있어** 직접 넣는다: `gh project item-add 6 --owner badak-tier-park --url <PR/이슈 URL>`
+    후 열린 PR은 Status를 In Progress로. 이슈를 다시 열면 Done이 그대로 남으니 손으로 되돌린다.
+    워크플로의 프로젝트 단계는 저장소 변수 `PROJECT_URL` + project 권한 토큰(`PROJECT_TOKEN`)이 있을 때만 돈다
+    (기본 토큰으로는 조직 프로젝트에 접근 불가)
+  - 이 워크플로는 `pull_request_target`이라 **base 브랜치에 있는 파일**로 돈다. 스택 PR처럼 base가
+    dev가 아니면 돌지 않으므로, 그때와 Claude가 `gh`로 올릴 때는 직접 채운다:
+    `gh pr create --assignee @me --reviewer <작성자 외 전원> --label <타입>,<area:*> --body-file …`
+    (전원 목록: `gh api repos/{owner}/{repo}/collaborators --jq '.[].login'`)
+  - **auto-merge** = `dev`로 가는 일반 PR은 열 때 예약된다(병합 커밋 방식). 승인·필수 검사·코멘트 해결이
+    끝나는 순간 병합된다. 배포 PR(→ main)·스택 PR·Draft는 예약하지 않고, **대상 브랜치에 필수 검사가
+    없으면 예약하지 않는다**(승인 하나로 CI 실패 코드가 들어가는 것을 막기 위해). 원치 않으면
+    `no-auto-merge` 라벨(붙이면 이미 켜진 예약도 해제). Claude가 `gh`로 올릴 때도 같은 조건이면
+    `gh pr merge <n> --auto --merge`
+  - auto-merge 병합은 기본 토큰으로 이뤄져 dev의 push CI가 다시 돌지 않는다(PR에서 이미 통과한 검사).
+    Vercel 배포는 웹훅이라 영향 없음
+  - PR 코드를 체크아웃·실행하는 단계를 이 워크플로에 넣지 않는다 — 외부 PR이 쓰기 토큰을 얻게 된다
+- 작업 중인 PR은 Draft로 연다. 앞 PR에 의존하는 PR은 앞 브랜치를 base로 쌓고 병합 순서를 본문에 적는다
+  (앞 PR이 병합돼 브랜치가 지워지면 GitHub이 다음 PR의 base를 자동으로 dev로 바꾼다)
 - 체크박스는 실제로 해당하는 항목만 채운다. 하지 않은 테스트를 체크하지 않는다
 - PR 타입에 맞는 항목이 없으면(예: 문서 작업) 가장 가까운 것을 고르고 작업 내용에 명시한다
 - **DB 변경은 코드 diff에 나타나지 않는다.** Supabase MCP로 적용한 스키마·정책 변경이 있으면
-  영향 범위에 반드시 적는다 — PR만 봐서는 알 수 없기 때문
+  템플릿의 DB 변경 칸에 dev·prod 적용 여부와 함께 반드시 적는다 — PR만 봐서는 알 수 없기 때문
+- 배포 PR(`dev` → `main`)은 제목 `release: YYYY-MM-DD 요약`. 병합 후 `vYYYY.MM.DD` 태그로
+  GitHub Release를 만든다(노트는 자동 생성) — 언제 무엇이 운영에 나갔는지 추적하기 위해
+
+### 리뷰
+- 승인은 "확인 버튼"이 아니다. 리뷰어는 최소한 ① 본문의 리뷰 포인트 ② Vercel 프리뷰 직접 열기
+  (UI 변경은 휴대폰으로) ③ 권한·판정 로직(`auth`, `entries.ts`, RLS)은 라인 단위로 읽기
+- 질문·제안은 라인 코멘트로 남긴다. 해결되지 않은 코멘트가 있으면 병합되지 않는다
+- 리뷰어는 CODEOWNERS로 자동 지정된다. AI가 쓴 PR은 양이 많아 더 꼼꼼히 — 작성자가 먼저 스스로
+  읽고, 확인하지 못한 것을 본문에 적는다
 
 ---
 
@@ -178,6 +245,12 @@ CLAUDE.md·package.json scripts·CI에서 확인한다(이 프로젝트는 `npm 
 ### 이슈 정리
 이슈를 닫기 전에 하위 이슈(sub-issue) 상태를 확인한다. 하위가 하나라도 열려 있으면
 상위는 닫지 않는다. 해결 근거를 코드·커밋에서 확인하지 못한 이슈는 닫지 말고 사용자에게 묻는다.
+
+### PR 작성
+- Assignees에 작성자, Reviewers에 작성자를 뺀 팀원 전원, 종류·영역 Labels, 관련 이슈는 본문 `Closes #n`으로
+  Development에 연결, 프로젝트를 쓰면 Projects에도 넣는다. 저장소에 자동화가 있어도 `gh pr create`로
+  직접 올릴 때는 `--assignee @me --reviewer … --label …`로 채운다(자동화가 안 도는 경우가 있다)
+- 제목은 커밋과 같은 Conventional Commits 형식. 하지 않은 테스트는 체크하지 않고, 확인하지 못한 것은 적는다
 
 ### 문서 계층
 - 루트 CLAUDE.md는 매 세션 로드되므로 전역 규칙과 "놓치면 버그가 되는" 요약만 둔다
