@@ -1,0 +1,29 @@
+name: CI
+
+# PR마다 타입 검사 + 빌드를 돌린다. 리뷰어는 "컴파일되나"가 아니라 동작과 설계만 보면 되게 하기 위함.
+# 보호 규칙(ruleset)에서 이 잡(build)을 필수 검사로 지정한다
+on:
+  # 대상 브랜치를 제한하지 않는다 — 앞 PR 브랜치를 base로 쌓은 PR에서도 돌아야 한다
+  pull_request:
+  push:
+    branches: [dev, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # 로컬 개발 환경과 같은 버전(npm 11). lock 파일을 만든 npm과 CI의 npm이 다르면
+          # 플랫폼 전용 선택 의존성 처리 차이로 npm ci가 실패할 수 있다
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # vue-tsc 타입 검사 + vite 빌드. Supabase 키는 런타임에만 읽으므로 빌드에는 필요 없다
+      - run: npm run build
