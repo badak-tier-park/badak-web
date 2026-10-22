@@ -1,3 +1,4 @@
 # PR이 열리면 아래 사람에게 리뷰 요청이 자동으로 간다(작성자 본인은 제외).
-# 영역별 담당이 정해지면 경로별로 나눈다. 예: /src/views/leagues/ @담당자
-* @museloper @poes0147
+# 리뷰어 자동 지정의 기본은 .github/workflows/pr-setup.yml(작성자 외 쓰기 권한자 전원)이고,
+# 이 파일은 Actions가 멈췄을 때의 대비다. 멤버가 바뀌면 둘 다 맞춘다
+* @museloper @poes0147 @StarGilz @KimChopl

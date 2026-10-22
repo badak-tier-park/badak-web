@@ -167,6 +167,19 @@ gh api repos/badak-tier-park/.github/contents/.github/PULL_REQUEST_TEMPLATE.md -
 - **제목은 커밋과 같은 형식**(`feat: …`). 브랜치 이름("Feat/handicap")을 그대로 두지 않는다 —
   병합 커밋 메시지가 되어 이력에 남는다
 - 본문 '관련 이슈'에 `Closes #n`을 쓴다. 이슈가 없는 작업이면 "없음"
+- **담당자·리뷰어·라벨·관련 이슈·프로젝트는 PR을 열면 자동으로 채워진다**(`.github/workflows/pr-setup.yml`)
+  - Assignees = 작성자 / Reviewers = 작성자를 뺀 쓰기 권한자 전원(Draft는 Ready 전환 때 요청)
+  - Labels = 제목 타입(`feat`→enhancement, `fix`→bug, `style`, `refactor`, `docs`→documentation,
+    `chore`, `hotfix`, dev→main은 `release`) + 바뀐 파일 경로의 `area:*`(4개 이상이면 생략)
+    + 연결된 이슈의 `area:*`·`priority:*`
+  - Development = 본문의 `Closes #n`. 없으면 브랜치 이름의 번호(`feat/96-entry-order`)로 넣어 준다
+  - Projects = 저장소 변수 `PROJECT_URL`이 있으면 추가(조직 프로젝트는 기본 토큰으로 접근 불가 —
+    project 권한이 있는 토큰을 `PROJECT_TOKEN` 시크릿으로 둔다)
+  - 이 워크플로는 `pull_request_target`이라 **base 브랜치에 있는 파일**로 돈다. 스택 PR처럼 base가
+    dev가 아니면 돌지 않으므로, 그때와 Claude가 `gh`로 올릴 때는 직접 채운다:
+    `gh pr create --assignee @me --reviewer <작성자 외 전원> --label <타입>,<area:*> --body-file …`
+    (전원 목록: `gh api repos/{owner}/{repo}/collaborators --jq '.[].login'`)
+  - PR 코드를 체크아웃·실행하는 단계를 이 워크플로에 넣지 않는다 — 외부 PR이 쓰기 토큰을 얻게 된다
 - 작업 중인 PR은 Draft로 연다. 앞 PR에 의존하는 PR은 앞 브랜치를 base로 쌓고 병합 순서를 본문에 적는다
   (앞 PR이 병합돼 브랜치가 지워지면 GitHub이 다음 PR의 base를 자동으로 dev로 바꾼다)
 - 체크박스는 실제로 해당하는 항목만 채운다. 하지 않은 테스트를 체크하지 않는다
@@ -203,6 +216,12 @@ CLAUDE.md·package.json scripts·CI에서 확인한다(이 프로젝트는 `npm 
 ### 이슈 정리
 이슈를 닫기 전에 하위 이슈(sub-issue) 상태를 확인한다. 하위가 하나라도 열려 있으면
 상위는 닫지 않는다. 해결 근거를 코드·커밋에서 확인하지 못한 이슈는 닫지 말고 사용자에게 묻는다.
+
+### PR 작성
+- Assignees에 작성자, Reviewers에 작성자를 뺀 팀원 전원, 종류·영역 Labels, 관련 이슈는 본문 `Closes #n`으로
+  Development에 연결, 프로젝트를 쓰면 Projects에도 넣는다. 저장소에 자동화가 있어도 `gh pr create`로
+  직접 올릴 때는 `--assignee @me --reviewer … --label …`로 채운다(자동화가 안 도는 경우가 있다)
+- 제목은 커밋과 같은 Conventional Commits 형식. 하지 않은 테스트는 체크하지 않고, 확인하지 못한 것은 적는다
 
 ### 문서 계층
 - 루트 CLAUDE.md는 매 세션 로드되므로 전역 규칙과 "놓치면 버그가 되는" 요약만 둔다
