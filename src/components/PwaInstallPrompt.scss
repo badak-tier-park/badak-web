@@ -1,0 +1,94 @@
+@use '@/styles/buttons';
+
+// 휴대폰 하단 카드. 아이폰 Safari는 공유 버튼이 화면 아래 툴바에 있어 그 근처에 둔다
+// (아이패드·iOS Chrome은 위에 있어 문구에서 '아래'라고 하지 않는다)
+.pwa-install {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 9998; // 새 버전 안내(PwaUpdatePrompt, 9999)가 겹치면 그쪽이 위
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 10px 14px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  text-align: left;
+  animation: pwaInstallIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pwaInstallIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pwa-install-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  flex-shrink: 0;
+}
+
+.pwa-install-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pwa-install-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+}
+
+.pwa-install-desc {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--c-text-sub);
+
+  b { color: var(--c-text); font-weight: 700; }
+}
+
+.pwa-install-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: var(--c-overlay);
+  color: var(--c-info);
+  font-weight: 700;
+  vertical-align: -1px;
+}
+
+.pwa-install-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.pwa-install-close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--c-icon-sub);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover { background: var(--c-overlay); color: var(--c-text-2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwa-install { animation: none; }
+}
