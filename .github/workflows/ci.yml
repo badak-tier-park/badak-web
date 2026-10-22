@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # 로컬 개발 환경과 같은 버전(npm 11). lock 파일을 만든 npm과 CI의 npm이 다르면
           # 플랫폼 전용 선택 의존성 처리 차이로 npm ci가 실패할 수 있다
