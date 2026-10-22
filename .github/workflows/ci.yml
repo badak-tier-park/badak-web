@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           # 로컬 개발 환경과 같은 버전(npm 11). lock 파일을 만든 npm과 CI의 npm이 다르면
