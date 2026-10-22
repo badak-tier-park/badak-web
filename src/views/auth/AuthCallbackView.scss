@@ -1,0 +1,43 @@
+@use '../../styles/buttons';
+
+.callback-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  box-sizing: border-box;
+  background: var(--c-bg);
+}
+
+.callback-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--c-text-bright);
+}
+
+.callback-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-text-sub);
+  text-align: center;
+}
+
+.callback-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--c-border-strong);
+  border-top-color: var(--c-brand-text);
+  animation: callbackSpin 0.8s linear infinite;
+}
+
+@keyframes callbackSpin {
+  to { transform: rotate(360deg); }
+}
