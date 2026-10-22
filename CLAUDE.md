@@ -183,6 +183,13 @@ gh api repos/badak-tier-park/.github/contents/.github/PULL_REQUEST_TEMPLATE.md -
     dev가 아니면 돌지 않으므로, 그때와 Claude가 `gh`로 올릴 때는 직접 채운다:
     `gh pr create --assignee @me --reviewer <작성자 외 전원> --label <타입>,<area:*> --body-file …`
     (전원 목록: `gh api repos/{owner}/{repo}/collaborators --jq '.[].login'`)
+  - **auto-merge** = `dev`로 가는 일반 PR은 열 때 예약된다(병합 커밋 방식). 승인·필수 검사·코멘트 해결이
+    끝나는 순간 병합된다. 배포 PR(→ main)·스택 PR·Draft는 예약하지 않고, **대상 브랜치에 필수 검사가
+    없으면 예약하지 않는다**(승인 하나로 CI 실패 코드가 들어가는 것을 막기 위해). 원치 않으면
+    `no-auto-merge` 라벨(붙이면 이미 켜진 예약도 해제). Claude가 `gh`로 올릴 때도 같은 조건이면
+    `gh pr merge <n> --auto --merge`
+  - auto-merge 병합은 기본 토큰으로 이뤄져 dev의 push CI가 다시 돌지 않는다(PR에서 이미 통과한 검사).
+    Vercel 배포는 웹훅이라 영향 없음
   - PR 코드를 체크아웃·실행하는 단계를 이 워크플로에 넣지 않는다 — 외부 PR이 쓰기 토큰을 얻게 된다
 - 작업 중인 PR은 Draft로 연다. 앞 PR에 의존하는 PR은 앞 브랜치를 base로 쌓고 병합 순서를 본문에 적는다
   (앞 PR이 병합돼 브랜치가 지워지면 GitHub이 다음 PR의 base를 자동으로 dev로 바꾼다)
