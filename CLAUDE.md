@@ -93,6 +93,9 @@
 - `current_user_is_admin()`은 `SECURITY DEFINER`다. 정책 안에서 `users`를 직접 서브쿼리하면
   재귀가 나므로 반드시 이 함수를 쓴다
 - 권한 필드는 사용자가 스스로 바꿀 수 없어야 한다 (`users.is_admin`은 트리거로 보호 중)
+- `users` INSERT는 관리자만(선수 관리의 선수 등록). 봇(`/유저등록`)은 DB에 직접 붙어 RLS와 무관하다
+- **dev와 prod의 `users` 스키마가 다르다** — prod는 `discord_id`·닉네임·종족·티어가 NOT NULL이고
+  티어 CHECK 제약이 있다. dev에서 통과해도 prod에서 막힐 수 있으니 제약은 prod 기준으로 맞춘다
 - 새 테이블은 RLS 활성화 + 정책을 같이 만든다. 정책 없이 RLS만 켜면 전면 차단, 끄면 전면 노출
 
 ## 화면(UI) 공통 — 상세는 `src/styles/CLAUDE.md`
