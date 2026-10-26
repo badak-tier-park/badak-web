@@ -71,11 +71,19 @@
   gap: 12px;
 }
 
+// RouterLink(<a>)로도 쓰인다. <a>는 루트의 line-height(145%)를 물려받아 <button>보다 커지고
+// 밑줄이 생기므로 높이·줄간격·밑줄을 직접 정한다
 .btn-create {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  box-sizing: border-box;
+  height: var(--control-h);
+  padding: 0 16px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
   border-radius: 8px;
   border: 1px solid rgba(var(--c-brand-rgb), 0.4);
   background: rgba(var(--c-brand-rgb), 0.12);

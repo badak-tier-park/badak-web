@@ -15,7 +15,8 @@
 
 .search-input {
   width: 100%;
-  padding: 10px 36px;
+  height: var(--control-h);
+  padding: 0 36px;
   background: var(--c-overlay);
   border: 1px solid var(--c-border-strong);
   border-radius: 9px;
