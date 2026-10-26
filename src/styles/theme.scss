@@ -79,6 +79,9 @@
   --page-gutter:      28px;
   --page-pad-top:     40px;
   --page-pad-bottom:  calc(80px + env(safe-area-inset-bottom));
+  // 한 줄에 나란히 놓이는 검색창·툴바 버튼·필터 버튼의 높이. 각자 padding으로 키를 정하던
+  // 때는 검색창(38px) 옆 버튼이 27px로 붙어 어긋나 보였다
+  --control-h:        36px;
 
   @media (max-width: 640px) {
     --page-gutter:      16px;

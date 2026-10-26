@@ -50,11 +50,13 @@
 
 .player-search-input {
   width: 180px;
-  padding: 7px 12px 7px 30px;
+  height: var(--control-h);
+  box-sizing: border-box;
+  padding: 0 12px 0 30px;
   background: var(--c-surface);
   border: 1px solid var(--c-border-strong);
   border-radius: 8px;
-  color: var(--c-text-1);
+  color: var(--c-text);
   font-size: 13px;
   outline: none;
   transition: border-color 0.15s;
@@ -122,8 +124,10 @@
 }
 
 .season-btn {
-  padding: 5px 12px;
-  border-radius: 6px;
+  height: var(--control-h);
+  box-sizing: border-box;
+  padding: 0 14px;
+  border-radius: 8px;
   border: 1px solid var(--c-border-strong);
   background: var(--c-overlay);
   color: var(--c-text-sub);

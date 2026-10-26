@@ -101,6 +101,7 @@
 - 색은 테마 토큰(`--c-*`)만 쓴다. `#c084fc`·`rgba(170, 59, 255, …)` 같은 값을 직접 쓰면
   라이트 테마에서 그 부분만 다크 색으로 남는다 — 투명도 변형은 `rgba(var(--c-brand-rgb), a)`
 - 본문 폭·여백은 `--page-w-narrow / --page-w / --page-w-wide`, `--page-*` 토큰만 쓴다
+- 나란히 놓이는 검색창·버튼은 높이 `--control-h`. 검색창 `.search-input`, 버튼 `.btn-create`/`.btn-tool`
 - 휴대폰 기준은 640px. 모달은 공통 `_modal.scss`(휴대폰에서 하단 시트), 표는 `.table-scroll`
 
 ## 코드 컨벤션

@@ -113,6 +113,26 @@
   }
 }
 
+// ── 툴바 버튼 (ghost) ────────────────────────────────────
+// 검색창·제목 줄에 나란히 놓이는 보조 액션(엑셀 다운로드 등). 높이를 검색창·.btn-create와 맞춘다
+.btn-tool {
+  @extend %btn-base;
+  box-sizing: border-box;
+  height: var(--control-h);
+  padding: 0 14px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-overlay);
+  color: var(--c-text-sub);
+  font-size: 13px;
+  line-height: 1;
+  text-decoration: none;
+
+  &:hover:not(:disabled) {
+    border-color: var(--c-border-dashed);
+    color: var(--c-text-2);
+  }
+}
+
 // ── 알약 버튼 (small/medium 액션) ────────────────────────
 // 사용: <button class="btn-pill btn-pill--{color} [btn-pill--md] [btn-pill--filled]">
 // 컬러: green / blue / amber / orange / purple / red / yellow / ghost

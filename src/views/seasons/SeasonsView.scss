@@ -81,11 +81,14 @@
 
 // ── 인풋 ─────────────────────────────────────────────────
 .season-input {
-  padding: 7px 10px;
+  height: var(--control-h);
+  min-height: var(--control-h); // 세로 폼에서는 --wide의 flex: 1(basis 0)이 height를 덮어써 납작해진다
+  box-sizing: border-box;
+  padding: 0 10px;
   background: var(--c-bg);
   border: 1px solid var(--c-border-strong);
   border-radius: 7px;
-  color: var(--c-text-1);
+  color: var(--c-text);
   font-size: 13px;
   outline: none;
   transition: border-color 0.15s;
@@ -124,7 +127,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  height: var(--control-h);
+  box-sizing: border-box;
+  padding: 0 12px;
   background: var(--c-bg);
   border: 1px solid var(--c-border-strong);
   border-radius: 8px;

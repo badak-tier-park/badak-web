@@ -34,8 +34,8 @@
           </button>
         </div>
         <div class="csv-actions">
-          <button class="btn-pill btn-pill--md btn-pill--ghost" @click="handleExportXlsx">엑셀 다운로드</button>
-          <button class="btn-pill btn-pill--md btn-pill--ghost" @click="triggerImportFile">엑셀 업로드</button>
+          <button class="btn-tool" @click="handleExportXlsx">엑셀 다운로드</button>
+          <button class="btn-tool" @click="triggerImportFile">엑셀 업로드</button>
           <input
             ref="importFileInput"
             type="file"
