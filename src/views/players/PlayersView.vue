@@ -11,8 +11,16 @@
       </button>
 
       <div class="page-title-row">
-        <h1 class="page-title">선수 관리</h1>
-        <span class="player-count" v-if="!loading">{{ players.length }}명</span>
+        <div class="page-title-left">
+          <h1 class="page-title">선수 관리</h1>
+          <span class="player-count" v-if="!loading">{{ players.length }}명</span>
+        </div>
+        <button class="btn-create" :disabled="loading" @click="openCreate">
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+            <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          선수 등록
+        </button>
       </div>
 
       <div class="players-toolbar">
@@ -131,12 +139,12 @@
       </div>
     </div>
 
-    <!-- 수정 모달 -->
+    <!-- 등록 / 수정 모달 -->
     <Teleport to="body">
-      <div v-if="editTarget" class="modal-backdrop">
+      <div v-if="modalMode" class="modal-backdrop">
         <div class="modal edit-modal">
           <div class="modal-header">
-            <span class="modal-title">선수 정보 수정</span>
+            <span class="modal-title">{{ modalMode === 'create' ? '선수 등록' : '선수 정보 수정' }}</span>
             <button class="modal-close" @click="closeEdit">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -145,6 +153,23 @@
           </div>
 
           <div class="modal-body">
+            <!-- 디스코드 ID — 로그인 계정과 연결되는 값 -->
+            <div class="field">
+              <label class="field-label">디스코드 ID</label>
+              <input
+                v-model="form.discord_id"
+                class="field-input"
+                type="text"
+                inputmode="numeric"
+                maxlength="20"
+                placeholder="예) 123456789012345678"
+              />
+              <p class="field-hint">디스코드 → 사용자 우클릭 → ID 복사 (개발자 모드 필요). 이 ID로 웹에 로그인합니다.</p>
+              <p v-if="discordIdChanged" class="field-hint field-hint--warn">
+                ID를 바꾸면 기존 디스코드 계정으로는 더 이상 로그인할 수 없습니다.
+              </p>
+            </div>
+
             <!-- 닉네임 -->
             <div class="field">
               <label class="field-label">닉네임</label>
@@ -273,7 +298,7 @@
             <div class="modal-actions">
               <button class="btn-cancel" @click="closeEdit" :disabled="saving">취소</button>
               <button class="btn-save" @click="handleSave" :disabled="saving">
-                {{ saving ? '저장 중...' : '저장' }}
+                {{ saving ? '저장 중...' : modalMode === 'create' ? '등록' : '저장' }}
               </button>
             </div>
           </div>
@@ -351,7 +376,7 @@ function togglePopover(id: number, field: PopoverField) {
 
 function closePopover() { openPopover.value = null }
 import AppHeader from '@/components/AppHeader.vue'
-import { getPlayers, updatePlayer, type PlayerRow } from '@/lib/players'
+import { getPlayers, createPlayer, updatePlayer, type PlayerRow } from '@/lib/players'
 import { TIER_ORDER, RACE_ORDER, tierPoint, normalizeTier } from '@/lib/constants'
 import type { ColumnValidation } from '@/lib/xlsx'
 
@@ -617,9 +642,10 @@ onUnmounted(() => {
   document.removeEventListener('click', closePopover)
 })
 
-// ── 수정 모달 ─────────────────────────────────────────────
+// ── 등록 / 수정 모달 ──────────────────────────────────────
+const modalMode = ref<'create' | 'edit' | null>(null)
 const editTarget = ref<PlayerRow | null>(null)
-const form = reactive({ nickname: '', aliases: [] as string[], star_nicknames: [] as string[], race: 'T' as 'T' | 'Z' | 'P', tier: '', is_military: false, is_active: true })
+const form = reactive({ discord_id: '', nickname: '', aliases: [] as string[], star_nicknames: [] as string[], race: '' as 'T' | 'Z' | 'P' | '', tier: '', is_military: false, is_active: true })
 const aliasInput = ref('')
 const starNicknameInput = ref('')
 const saving = ref(false)
@@ -645,8 +671,26 @@ function removeStarNickname(i: number) {
   form.star_nicknames.splice(i, 1)
 }
 
+function openCreate() {
+  modalMode.value = 'create'
+  editTarget.value = null
+  form.discord_id = ''
+  form.nickname = ''
+  form.aliases = []
+  form.star_nicknames = []
+  form.race = ''
+  form.tier = ''
+  form.is_military = false
+  form.is_active = true
+  aliasInput.value = ''
+  starNicknameInput.value = ''
+  saveError.value = null
+}
+
 function openEdit(player: PlayerRow) {
+  modalMode.value = 'edit'
   editTarget.value = player
+  form.discord_id = player.discord_id ?? ''
   form.nickname = player.nickname
   form.aliases = [...player.aliases]
   form.star_nicknames = [...player.star_nicknames]
@@ -661,29 +705,59 @@ function openEdit(player: PlayerRow) {
 
 function closeEdit() {
   if (saving.value) return
+  modalMode.value = null
   editTarget.value = null
 }
 
+// 디스코드 ID(snowflake)는 17~20자리 숫자
+const DISCORD_ID_RE = /^\d{17,20}$/
+
+const discordIdChanged = computed(() =>
+  modalMode.value === 'edit' && form.discord_id.trim() !== (editTarget.value?.discord_id ?? ''),
+)
+
 async function handleSave() {
-  if (!editTarget.value) return
-  if (!form.nickname.trim()) { saveError.value = '닉네임을 입력해주세요.'; return }
-  if (!form.tier.trim()) { saveError.value = '티어를 입력해주세요.'; return }
+  if (!modalMode.value) return
+  const nickname = form.nickname.trim()
+  const discordId = form.discord_id.trim()
+  if (!DISCORD_ID_RE.test(discordId)) {
+    saveError.value = '디스코드 ID는 17~20자리 숫자입니다.'
+    return
+  }
+  if (!nickname) { saveError.value = '닉네임을 입력해주세요.'; return }
+  // 전적·지목식이 닉네임 텍스트로 선수를 찾으므로 같은 닉네임이 둘이면 엉뚱한 선수에 붙는다
+  const lower = nickname.toLowerCase()
+  if (players.value.some(p => p.id !== editTarget.value?.id && p.nickname.toLowerCase() === lower)) {
+    saveError.value = '이미 같은 닉네임의 선수가 있습니다.'
+    return
+  }
+  if (!form.race) { saveError.value = '종족을 선택해주세요.'; return }
+  if (!form.tier.trim()) { saveError.value = '티어를 선택해주세요.'; return }
 
   saving.value = true
   saveError.value = null
 
+  const fields = {
+    nickname,
+    aliases: form.aliases,
+    star_nicknames: form.star_nicknames,
+    race: form.race,
+    tier: form.tier.trim(),
+    is_military: form.is_military,
+    is_active: form.is_active,
+  }
+
   try {
-    const updated = await updatePlayer(editTarget.value.id, {
-      nickname: form.nickname.trim(),
-      aliases: form.aliases,
-      star_nicknames: form.star_nicknames,
-      race: form.race,
-      tier: form.tier.trim(),
-      is_military: form.is_military,
-      is_active: form.is_active,
-    })
-    const idx = players.value.findIndex(p => p.id === updated.id)
-    if (idx !== -1) players.value[idx] = updated
+    if (modalMode.value === 'create') {
+      const created = await createPlayer({ ...fields, discord_id: discordId })
+      players.value.push(created)
+    } else if (editTarget.value) {
+      // 바뀐 경우에만 보낸다 — 안 바꾼 저장이 ID를 건드리지 않게
+      const updated = await updatePlayer(editTarget.value.id, discordIdChanged.value ? { ...fields, discord_id: discordId } : fields)
+      const idx = players.value.findIndex(p => p.id === updated.id)
+      if (idx !== -1) players.value[idx] = updated
+    }
+    modalMode.value = null
     editTarget.value = null
   } catch (e: any) {
     saveError.value = e.message ?? '저장 중 오류가 발생했습니다.'
