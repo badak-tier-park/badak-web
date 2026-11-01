@@ -347,6 +347,44 @@
   }
 }
 
+// 기기별 푸시 켜기/끄기
+.notif-push {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-overlay);
+  text-align: left;
+}
+
+.notif-push-text {
+  font-size: 12px;
+  color: var(--c-text-sub);
+  line-height: 1.4;
+}
+
+.notif-push-toggle {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--c-border-strong);
+  background: transparent;
+  color: var(--c-text-sub);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &--on {
+    border-color: var(--c-brand-border);
+    background: var(--c-brand-bg);
+    color: var(--c-brand-text);
+  }
+
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
 .notif-state {
   padding: 28px 16px;
   text-align: center;
