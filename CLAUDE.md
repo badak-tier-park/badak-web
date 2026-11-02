@@ -125,6 +125,8 @@
 10단계 (2026 윈터리그부터 S 추가). 정의는 `src/lib/constants.ts`의 `TIER_POINTS` **한 곳뿐**이며,
 비교·정렬은 `tierPoint()`, CSS 클래스는 `tierClass()`(전역 `$tierClass`)를 쓴다.
 티어별 스타일은 `_tokens.scss` 외에 화면별 scss에도 있으니 티어를 추가할 땐 `--tier-e`로 검색해 전부 맞춘다.
+**prod `users`에는 티어 CHECK 제약(`users_tier_check`)이 있다**(dev엔 없음) — 티어를 추가하면 이것도 바꾼다.
+S를 추가할 때 빠져 있어 운영에서 S 저장·등록이 거부됐다.
 
 | 티어 | S | A+ | A- | B+ | B- | C+ | C- | D+ | D- | E |
 |------|---|----|----|----|----|----|----|----|----|---|
