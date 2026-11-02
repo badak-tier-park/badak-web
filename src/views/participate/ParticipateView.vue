@@ -660,7 +660,16 @@ import EntryRevealModal from '@/components/EntryRevealModal.vue'
 import PredictionsTab from './PredictionsTab.vue'
 import RankingsTab from './RankingsTab.vue'
 
-const activeTab = ref<'leagues' | 'predictions' | 'rankings'>('leagues')
+type ParticipateTab = 'leagues' | 'predictions' | 'rankings'
+const route = useRoute()
+// 푸시 알림(승부예측 결과)은 ?tab=predictions로 연다
+const activeTab = ref<ParticipateTab>(
+  (['leagues', 'predictions', 'rankings'] as const).find(t => t === route.query.tab) ?? 'leagues',
+)
+watch(() => route.query.tab, (tab) => {
+  const t = (['leagues', 'predictions', 'rankings'] as const).find(x => x === tab)
+  if (t) activeTab.value = t
+})
 import {
   getLeagues, getLeagueStatus, calculateStandings, matchPointsOf,
   type LeagueRow, type LeagueStatus, type EligibilityType, type StandingMatch,
@@ -682,6 +691,7 @@ import { TIER_ORDER, tierPoint, sortTiers } from '@/lib/constants'
 import { revealEntries } from '@/lib/schedules'
 import { notifyEntrySubmitted } from '@/lib/notifications'
 import { useAuthStore } from '@/stores/auth'
+import { useRoute } from 'vue-router'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { Color } from '@tiptap/extension-color'

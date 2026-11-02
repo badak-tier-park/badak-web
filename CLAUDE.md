@@ -73,6 +73,14 @@
 - 휴대폰 첫 방문 시 설치 안내(`PwaInstallPrompt.vue`): Android는 `beforeinstallprompt`로 설치 버튼,
   **iOS는 설치 API가 없어** 공유 → 홈 화면에 추가 안내, 카카오톡 등 앱 내 브라우저는 외부 브라우저로
   열라고 안내한다. "나중에"는 14일간 다시 띄우지 않는다(매번 뜨면 그냥 닫는 버튼이 된다)
+- **웹 푸시**: `notifications`에 행이 들어가면 트리거(`notify_push`) → `pg_net` → Edge Function `send-push`
+  (badak-tier-park-api)가 그 사용자의 구독 기기(`push_subscriptions`)로 보낸다. 새 알림 종류는
+  `notifications`에 넣기만 하면 푸시도 나간다. 수신은 `public/push-sw.js`(workbox `importScripts`)
+  - iOS는 **홈 화면에 설치한 앱에서만** 되고, 권한 요청은 사용자 탭 안에서만 된다(`src/lib/push.ts`)
+  - VAPID 키·웹훅 비밀값은 함수 시크릿이 아니라 **DB Vault**에 있다(개인키가 밖으로 나가지 않게
+    `send-push`가 첫 실행 때 만든다). 프로젝트마다 따로라 dev와 prod의 구독은 서로 호환되지 않는다
+  - `notifications`는 본인 것만 읽기·읽음 처리. **브라우저에서 insert할 수 없다** — 알림은 서버
+    함수(`SECURITY DEFINER`)가 만든다. 열어 두면 남의 휴대폰에 임의 문구로 푸시를 보낼 수 있다
 - **홈 화면 앱에는 브라우저 뒤로가기가 없다.** 화면 이동 버튼에 `router.back()`을 쓰지 말고
   상위 화면으로 직접 이동한다
 

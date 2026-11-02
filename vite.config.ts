@@ -37,6 +37,8 @@ export default defineConfig({
         navigateFallback: '/index.html',
         // api/는 Vercel 서버리스 함수라 SPA 폴백으로 가로채면 안 된다
         navigateFallbackDenylist: [/^\/api\//],
+        // 웹 푸시 수신 처리(public/push-sw.js). 자동 생성 서비스워커에 끼워 넣는다
+        importScripts: ['push-sw.js'],
         cleanupOutdatedCaches: true,
       },
     }),

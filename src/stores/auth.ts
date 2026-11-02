@@ -113,6 +113,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
+    // 로그아웃한 기기로 그 사용자의 푸시가 계속 오지 않게. 세션이 있어야 지울 수 있어 signOut보다 먼저
+    await import('@/lib/push').then(m => m.forgetPushSubscription()).catch(() => {})
     await supabase.auth.signOut()
     writeCachedProfile(null)
   }
