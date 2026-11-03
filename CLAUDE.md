@@ -76,11 +76,17 @@
 - **웹 푸시**: `notifications`에 행이 들어가면 트리거(`notify_push`) → `pg_net` → Edge Function `send-push`
   (badak-tier-park-api)가 그 사용자의 구독 기기(`push_subscriptions`)로 보낸다. 새 알림 종류는
   `notifications`에 넣기만 하면 푸시도 나간다. 수신은 `public/push-sw.js`(workbox `importScripts`)
+  - 함수는 **트랜잭션당 한 번**만 불리고 안 보낸 알림(`push_sent_at` null)을 모두 가져가 보낸다. 알림마다
+    부르면 전원 알림(53건)에서 호출 한도(429)·시간 초과로 절반 넘게 유실됐다. 실패분은 매분 재시도(`push-dispatch-retry`)
   - iOS는 **홈 화면에 설치한 앱에서만** 되고, 권한 요청은 사용자 탭 안에서만 된다(`src/lib/push.ts`)
   - VAPID 키·웹훅 비밀값은 함수 시크릿이 아니라 **DB Vault**에 있다(개인키가 밖으로 나가지 않게
     `send-push`가 첫 실행 때 만든다). 프로젝트마다 따로라 dev와 prod의 구독은 서로 호환되지 않는다
   - `notifications`는 본인 것만 읽기·읽음 처리. **브라우저에서 insert할 수 없다** — 알림은 서버
     함수(`SECURITY DEFINER`)가 만든다. 열어 두면 남의 휴대폰에 임의 문구로 푸시를 보낼 수 있다
+  - 알림을 눌렀을 때 갈 화면은 종류(`type`) 접두사로 정한다 — 웹 `notificationPath()`와 send-push `urlFor()`를 같이 바꾼다
+  - 캘린더 일정(`events` + 미완료 `league_schedules`)은 `pg_cron`이 10분마다 `send_calendar_reminders()`를 돌려
+    **전날 20시·당일 10시(KST)에 활성 회원 전원**에게 하루치를 한 알림으로 묶어 보낸다(운영진 결정).
+    창(20~23시, 10~13시) 밖에서는 보내지 않고, 보낸 일정은 `calendar_push_log`에 날짜와 함께 남겨 중복을 막는다
 - **홈 화면 앱에는 브라우저 뒤로가기가 없다.** 화면 이동 버튼에 `router.back()`을 쓰지 말고
   상위 화면으로 직접 이동한다
 
