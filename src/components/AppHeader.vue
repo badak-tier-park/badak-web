@@ -148,6 +148,7 @@ import {
   getUnreadCount,
   markNotificationRead,
   markAllRead,
+  notificationPath,
   type NotificationRow,
 } from '@/lib/notifications'
 import { getAttendanceStatus, checkIn, type AttendanceStatus } from '@/lib/attendance'
@@ -273,6 +274,11 @@ async function handleNotifClick(n: NotificationRow) {
       n.is_read = true
       unreadCount.value = Math.max(0, unreadCount.value - 1)
     } catch {}
+  }
+  const path = notificationPath(n.type)
+  if (path) {
+    notifOpen.value = false
+    router.push(path)
   }
 }
 

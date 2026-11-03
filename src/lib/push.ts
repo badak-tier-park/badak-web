@@ -102,6 +102,34 @@ export async function syncPushSubscription(): Promise<void> {
   } catch {}
 }
 
+// ── 알림을 눌렀을 때 이동 ────────────────────────────────
+// 서비스워커(public/push-sw.js)가 남겨 둔 경로. 같은 값을 그쪽에도 쓴다
+const PUSH_NAV_CACHE = 'push-nav'
+const PUSH_NAV_KEY = '/__push-nav'
+// 알림을 누르고 이보다 늦게 앱을 열면 그 알림 때문에 연 것이 아니라고 본다
+const PUSH_NAV_TTL_MS = 2 * 60 * 1000
+
+// 앱 안의 경로만 받는다('//host'는 다른 사이트로 해석될 수 있다)
+export function isAppPath(path: unknown): path is string {
+  return typeof path === 'string' && path.startsWith('/') && !path.startsWith('//')
+}
+
+// 알림을 눌러 앱이 열리거나 다시 보일 때 부른다. 이동할 경로가 있으면 돌려주고 지운다
+export async function consumePendingPushNavigation(): Promise<string | null> {
+  if (!('caches' in window)) return null
+  try {
+    const cache = await caches.open(PUSH_NAV_CACHE)
+    const res = await cache.match(PUSH_NAV_KEY)
+    if (!res) return null
+    await cache.delete(PUSH_NAV_KEY)
+    const { path, at } = await res.json() as { path?: unknown; at?: number }
+    if (!isAppPath(path) || !at || Date.now() - at > PUSH_NAV_TTL_MS) return null
+    return path
+  } catch {
+    return null
+  }
+}
+
 // 로그아웃 시: 이 기기로 더는 그 사용자의 푸시가 오지 않게 한다. 세션이 살아 있을 때 불러야 한다
 export async function forgetPushSubscription(): Promise<void> {
   try {
