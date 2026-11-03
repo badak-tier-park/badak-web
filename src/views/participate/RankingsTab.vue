@@ -4,41 +4,43 @@
     <div v-else-if="loadError" class="state-msg state-msg--error">{{ loadError }}</div>
     <div v-else-if="!rankings.length" class="state-msg">아직 예측 기록이 없습니다.</div>
 
-    <table v-else class="rank-table">
-      <thead>
-        <tr>
-          <th class="col-rank">#</th>
-          <th class="col-user">사용자</th>
-          <th class="col-points">점수</th>
-          <th class="col-correct">맞힘</th>
-          <th class="col-acc">정확도</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="(r, i) in rankings"
-          :key="r.user_id"
-          :class="{ 'rank-row--me': r.user_id === myUserId }"
-        >
-          <td class="col-rank">
-            <span class="rank-num" :class="rankClass(i)">{{ i + 1 }}</span>
-          </td>
-          <td class="col-user">
-            <span class="rank-race" :class="`race--${r.race.toLowerCase()}`">{{ r.race }}</span>
-            <span class="rank-nick">{{ r.nickname }}</span>
-            <span class="rank-tier" :class="`tier-badge--${$tierClass(r.tier)}`">{{ r.tier }}</span>
-          </td>
-          <td class="col-points">{{ r.total_points }}</td>
-          <td class="col-correct">{{ r.correct_count }} / {{ r.resolved_count }}</td>
-          <td class="col-acc">
-            <div class="acc-bar">
-              <div class="acc-bar-fill" :style="{ width: r.accuracy + '%' }" />
-            </div>
-            <span class="acc-val">{{ r.accuracy.toFixed(1) }}%</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-else class="table-scroll">
+      <table class="rank-table">
+        <thead>
+          <tr>
+            <th class="col-rank">#</th>
+            <th class="col-user">사용자</th>
+            <th class="col-points">점수</th>
+            <th class="col-correct">맞힘</th>
+            <th class="col-acc">정확도</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(r, i) in rankings"
+            :key="r.user_id"
+            :class="{ 'rank-row--me': r.user_id === myUserId }"
+          >
+            <td class="col-rank">
+              <span class="rank-num" :class="rankClass(i)">{{ i + 1 }}</span>
+            </td>
+            <td class="col-user">
+              <span class="rank-race" :class="`race--${r.race.toLowerCase()}`">{{ r.race }}</span>
+              <span class="rank-nick">{{ r.nickname }}</span>
+              <span class="rank-tier" :class="`tier-badge--${$tierClass(r.tier)}`">{{ r.tier }}</span>
+            </td>
+            <td class="col-points">{{ r.total_points }}</td>
+            <td class="col-correct">{{ r.correct_count }} / {{ r.resolved_count }}</td>
+            <td class="col-acc">
+              <div class="acc-bar">
+                <div class="acc-bar-fill" :style="{ width: r.accuracy + '%' }" />
+              </div>
+              <span class="acc-val">{{ r.accuracy.toFixed(1) }}%</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 

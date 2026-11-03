@@ -3,6 +3,7 @@
 .tournaments-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
@@ -11,10 +12,10 @@
 .tournaments-content {
   position: relative;
   flex: 1;
-  max-width: 900px;
+  max-width: var(--page-w);
   width: 100%;
   margin: 0 auto;
-  padding: 40px 28px 80px;
+  padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
   box-sizing: border-box;
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -30,7 +31,7 @@
   &.status--recruiting { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
   &.status--playing    { background: rgba(251, 146, 60, 0.12); color: #fb923c; }
   &.status--finished   { background: var(--c-badge-bg, rgba(255, 255, 255, 0.06)); color: var(--c-text-sub); }
-  &.status--cancelled  { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+  &.status--cancelled  { background: rgba(var(--c-danger-rgb), 0.1); color: var(--c-danger); }
 }
 
 // ── 목록 ────────────────────────────────────────────────

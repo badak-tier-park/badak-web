@@ -76,6 +76,23 @@
             <span class="notif-title">알림</span>
             <button v-if="unreadCount > 0" class="notif-mark-all" @click="handleMarkAll">모두 읽음</button>
           </div>
+          <div v-if="pushState !== 'unsupported'" class="notif-push">
+            <template v-if="pushState === 'needs-install'">
+              <span class="notif-push-text">홈 화면에 추가한 앱에서 푸시 알림을 받을 수 있어요</span>
+            </template>
+            <template v-else-if="pushState === 'denied'">
+              <span class="notif-push-text">알림 권한이 차단돼 있어요. 브라우저·기기 설정에서 허용해 주세요</span>
+            </template>
+            <template v-else>
+              <span class="notif-push-text">이 기기에서 푸시 알림 받기</span>
+              <button
+                class="notif-push-toggle"
+                :class="{ 'notif-push-toggle--on': pushState === 'on' }"
+                :disabled="pushBusy"
+                @click="togglePush"
+              >{{ pushState === 'on' ? '켜짐' : '꺼짐' }}</button>
+            </template>
+          </div>
           <div v-if="notifLoading" class="notif-state">불러오는 중...</div>
           <div v-else-if="!notifs.length" class="notif-state">알림이 없습니다.</div>
           <div v-else class="notif-list">
@@ -131,9 +148,11 @@ import {
   getUnreadCount,
   markNotificationRead,
   markAllRead,
+  notificationPath,
   type NotificationRow,
 } from '@/lib/notifications'
 import { getAttendanceStatus, checkIn, type AttendanceStatus } from '@/lib/attendance'
+import { getPushState, enablePush, disablePush, syncPushSubscription, type PushState } from '@/lib/push'
 import { useToast } from '@/composables/useToast'
 
 const auth = useAuthStore()
@@ -227,7 +246,25 @@ async function toggleNotif() {
     return
   }
   notifOpen.value = true
+  getPushState().then(s => { pushState.value = s })
   await loadNotifs()
+}
+
+// ── 푸시 (기기별) ────────────────────────────────────────
+const pushState = ref<PushState>('unsupported')
+const pushBusy = ref(false)
+
+async function togglePush() {
+  pushBusy.value = true
+  try {
+    pushState.value = pushState.value === 'on' ? await disablePush() : await enablePush()
+    if (pushState.value === 'on') showToast('이 기기에서 푸시 알림을 받습니다.')
+  } catch (e: any) {
+    showToast(e.message ?? '푸시 알림 설정 중 오류가 발생했습니다.')
+    pushState.value = await getPushState()
+  } finally {
+    pushBusy.value = false
+  }
 }
 
 async function handleNotifClick(n: NotificationRow) {
@@ -237,6 +274,11 @@ async function handleNotifClick(n: NotificationRow) {
       n.is_read = true
       unreadCount.value = Math.max(0, unreadCount.value - 1)
     } catch {}
+  }
+  const path = notificationPath(n.type)
+  if (path) {
+    notifOpen.value = false
+    router.push(path)
   }
 }
 
@@ -272,6 +314,7 @@ onMounted(() => {
   resolveMyUserId().then(() => {
     refreshUnread()
     pollTimer = setInterval(refreshUnread, 30000)
+    if (myUserId.value !== null) syncPushSubscription()
   })
   document.addEventListener('click', onDocClick)
 })

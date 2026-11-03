@@ -16,3 +16,7 @@ app.use(createPinia())
 app.use(router)
 
 app.mount('#app')
+
+// 저장 공간이 부족할 때 브라우저가 localStorage(로그인 세션)를 지우지 않도록 요청한다.
+// 설치된 홈 화면 앱에서는 대부분 묻지 않고 허용된다
+navigator.storage?.persist?.().catch(() => {})

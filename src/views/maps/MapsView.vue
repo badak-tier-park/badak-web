@@ -16,7 +16,7 @@
           <span v-if="!loading" class="map-count">{{ maps.length }}개</span>
         </div>
         <div class="title-actions">
-          <button type="button" class="btn-pill btn-pill--md btn-pill--purple" :disabled="loading" @click="showSync = true">
+          <button type="button" class="btn-tool" :disabled="loading" @click="showSync = true">
             래더 맵 동기화
           </button>
           <RouterLink to="/maps/register" class="btn-create">

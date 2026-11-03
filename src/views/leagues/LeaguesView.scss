@@ -4,6 +4,7 @@
 .leagues-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
@@ -12,10 +13,10 @@
 .leagues-content {
   position: relative;
   flex: 1;
-  max-width: 900px;
+  max-width: var(--page-w);
   width: 100%;
   margin: 0 auto;
-  padding: 40px 28px 80px;
+  padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
   box-sizing: border-box;
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -246,10 +247,10 @@
   transition: all 0.15s;
 
   &.active {
-    border-color: rgba(170, 59, 255, 0.5);
-    background: rgba(170, 59, 255, 0.1);
+    border-color: rgba(var(--c-brand-rgb), 0.5);
+    background: rgba(var(--c-brand-rgb), 0.1);
 
-    .type-btn-main { color: #c084fc; }
+    .type-btn-main { color: var(--c-brand-text); }
     .type-btn-sub  { color: rgba(192, 132, 252, 0.6); }
   }
 
@@ -286,7 +287,7 @@
   transition: border-color 0.15s;
   box-sizing: border-box;
 
-  &:hover { border-color: rgba(170, 59, 255, 0.45); }
+  &:hover { border-color: rgba(var(--c-brand-rgb), 0.45); }
 }
 
 .dp-custom-icon { color: var(--c-icon); flex-shrink: 0; }
@@ -305,18 +306,18 @@
 :deep(.dp__theme_dark) {
   --dp-background-color: #13141d;
   --dp-text-color: rgba(255, 255, 255, 0.82);
-  --dp-hover-color: rgba(170, 59, 255, 0.12);
-  --dp-hover-text-color: #c084fc;
-  --dp-hover-icon-color: #c084fc;
-  --dp-primary-color: #aa3bff;
+  --dp-hover-color: rgba(var(--c-brand-rgb), 0.12);
+  --dp-hover-text-color: var(--c-brand-text);
+  --dp-hover-icon-color: var(--c-brand-text);
+  --dp-primary-color: var(--c-brand);
   --dp-primary-text-color: #fff;
   --dp-secondary-color: rgba(255, 255, 255, 0.07);
   --dp-border-color: rgba(255, 255, 255, 0.1);
   --dp-menu-border-color: rgba(255, 255, 255, 0.1);
-  --dp-border-color-hover: rgba(170, 59, 255, 0.5);
+  --dp-border-color-hover: rgba(var(--c-brand-rgb), 0.5);
   --dp-disabled-color: rgba(255, 255, 255, 0.15);
   --dp-icon-color: rgba(255, 255, 255, 0.35);
-  --dp-range-between-dates-background-color: rgba(170, 59, 255, 0.08);
+  --dp-range-between-dates-background-color: rgba(var(--c-brand-rgb), 0.08);
   --dp-range-between-border-color: transparent;
   --dp-range-between-dates-text-color: rgba(255, 255, 255, 0.75);
   --dp-font-family: system-ui, sans-serif;
@@ -344,7 +345,7 @@
 .count-btn {
   @extend %toggle-btn;
 
-  &.active { border-color: rgba(170, 59, 255, 0.5); background: rgba(170, 59, 255, 0.12); color: #c084fc; }
+  &.active { border-color: rgba(var(--c-brand-rgb), 0.5); background: rgba(var(--c-brand-rgb), 0.12); color: var(--c-brand-text); }
 }
 
 // ── 팀원 지목식 선택 ──────────────────────────────────────

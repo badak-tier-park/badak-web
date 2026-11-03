@@ -1,0 +1,7 @@
+// ── 표 가로 스크롤 ───────────────────────────────────────
+// 표는 <div class="table-scroll">로 감싼다. 휴대폰에서 열이 찌그러지는 대신 표만 옆으로 밀린다
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}

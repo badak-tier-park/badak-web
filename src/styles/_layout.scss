@@ -1,0 +1,36 @@
+// ── 페이지 레이아웃 ───────────────────────────────────────
+// 새 화면은 아래 믹스인을 쓴다. 기존 화면은 같은 토큰(--page-*)을 직접 쓰고 있다.
+//   .foo-page    { @include layout.page-shell; }
+//   .foo-content { @include layout.page-content(var(--page-w-narrow)); }
+// 여백·폭 값은 theme.scss의 --page-* 토큰 한 곳에서 정한다(모바일에서 자동으로 줄어든다)
+
+@mixin page-shell {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin page-content($max-width: var(--page-w)) {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
+  box-sizing: border-box;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+// 브레이크포인트 — 화면별 scss에서 숫자를 직접 쓰지 말고 이걸 쓴다
+$bp-mobile: 640px;   // 휴대폰
+$bp-tablet: 900px;   // 2단 레이아웃이 1단으로 접히는 지점
+
+@mixin mobile {
+  @media (max-width: $bp-mobile) { @content; }
+}
+
+@mixin tablet {
+  @media (max-width: $bp-tablet) { @content; }
+}

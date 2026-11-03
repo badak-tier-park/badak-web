@@ -1,5 +1,4 @@
 // ── 검색+선택 오버레이 피커 공용 (LeagueDetailView의 맵/시드권자 피커에서 발췌) ──
-// LeagueDetailView.scss는 아직 이 파샬을 쓰지 않고 자체 정의를 유지한다(무영향 우선).
 // 새로 만드는 화면은 이 파샬을 @use 하면 된다.
 
 .overlay-backdrop {
@@ -11,12 +10,14 @@
   align-items: center;
   justify-content: center;
   z-index: 200;
+  padding: 16px;
 }
 
 .picker-panel {
   width: 100%;
   max-width: 480px;
   max-height: 80vh;
+  max-height: 80dvh;
   display: flex;
   flex-direction: column;
   background: var(--c-surface);
@@ -79,7 +80,7 @@
   transition: border-color 0.15s;
 
   &::placeholder { color: var(--c-text-faint); }
-  &:focus { border-color: rgba(170, 59, 255, 0.5); }
+  &:focus { border-color: rgba(var(--c-brand-rgb), 0.5); }
 }
 
 .picker-list {
@@ -111,8 +112,8 @@
   &:hover:not(:disabled):not(.selected) { background: var(--c-overlay); }
 
   &.selected {
-    background: rgba(170, 59, 255, 0.1);
-    color: #c084fc;
+    background: rgba(var(--c-brand-rgb), 0.1);
+    color: var(--c-brand-text);
   }
 
   &:disabled:not(.selected) {
@@ -168,8 +169,8 @@
   font-weight: 700;
   line-height: 16px;
   vertical-align: 1px;
-  color: #c084fc;
-  background: rgba(170, 59, 255, 0.14);
+  color: var(--c-brand-text);
+  background: rgba(var(--c-brand-rgb), 0.14);
 }
 
 // 같은 항목을 여러 번 담을 수 있는 피커에서, 체크마크 대신 담은 횟수를 보여준다
@@ -177,8 +178,8 @@
   flex-shrink: 0;
   font-size: 11px;
   font-weight: 700;
-  color: #c084fc;
-  background: rgba(170, 59, 255, 0.14);
+  color: var(--c-brand-text);
+  background: rgba(var(--c-brand-rgb), 0.14);
   padding: 3px 8px;
   border-radius: 20px;
 }
@@ -207,7 +208,7 @@
   color: var(--c-text-2);
 }
 
-.picker-tray-count { color: #c084fc; }
+.picker-tray-count { color: var(--c-brand-text); }
 
 .picker-tray-hint {
   font-size: 11px;
@@ -249,7 +250,7 @@
 
   &:active { cursor: grabbing; }
   &--dragging { opacity: 0.35; }
-  &--over { border-color: rgba(170, 59, 255, 0.55); }
+  &--over { border-color: rgba(var(--c-brand-rgb), 0.55); }
 }
 
 @keyframes picker-chip-pop {
@@ -267,8 +268,8 @@
 .picker-chip-order {
   font-size: 10px;
   font-weight: 700;
-  color: #c084fc;
-  background: rgba(170, 59, 255, 0.14);
+  color: var(--c-brand-text);
+  background: rgba(var(--c-brand-rgb), 0.14);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -288,7 +289,7 @@
   align-items: center;
   justify-content: center;
 
-  &:hover { background: rgba(248, 113, 113, 0.14); color: #f87171; }
+  &:hover { background: rgba(var(--c-danger-rgb), 0.14); color: var(--c-danger); }
 }
 
 .picker-chip-thumb {
@@ -318,7 +319,7 @@
   pointer-events: none;
   border-radius: 5px;
   background: var(--c-overlay);
-  border: 1px solid rgba(170, 59, 255, 0.5);
+  border: 1px solid rgba(var(--c-brand-rgb), 0.5);
   transition: left 0.34s cubic-bezier(0.4, 0, 0.2, 1), top 0.34s cubic-bezier(0.4, 0, 0.2, 1),
     width 0.34s cubic-bezier(0.4, 0, 0.2, 1), height 0.34s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.34s;
 }
@@ -345,17 +346,17 @@
 .picker-confirm {
   padding: 7px 20px;
   border-radius: 8px;
-  border: 1px solid rgba(170, 59, 255, 0.4);
-  background: rgba(170, 59, 255, 0.12);
-  color: #c084fc;
+  border: 1px solid rgba(var(--c-brand-rgb), 0.4);
+  background: rgba(var(--c-brand-rgb), 0.12);
+  color: var(--c-brand-text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 
   &:hover {
-    background: rgba(170, 59, 255, 0.22);
-    border-color: rgba(170, 59, 255, 0.65);
-    color: #d8a4ff;
+    background: rgba(var(--c-brand-rgb), 0.22);
+    border-color: rgba(var(--c-brand-rgb), 0.65);
+    color: var(--c-brand-text-hover);
   }
 }

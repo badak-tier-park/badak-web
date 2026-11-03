@@ -3,11 +3,11 @@
     <AppHeader />
 
     <div class="hof-content">
-      <button class="btn-back" @click="$router.back()">
+      <button class="btn-back" @click="$router.push({ name: 'participate' })">
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
           <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        이전
+        리그 참여
       </button>
       <div class="hof-hero">
         <h1 class="hof-title">명예의 전당</h1>

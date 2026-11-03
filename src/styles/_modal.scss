@@ -34,6 +34,7 @@
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   background: var(--c-surface);
@@ -47,6 +48,37 @@
   &--md { max-width: 480px; }
   &--lg { max-width: 640px; }
   &--xl { max-width: 800px; }
+}
+
+// 휴대폰: 아래에서 올라오는 시트 형태. 가운데 뜬 작은 창은 키보드가 올라오면 가려지고
+// 엄지가 닿지 않는 위치에 닫기/저장 버튼이 놓인다.
+// 화면별 scss가 .modal 등을 덮어쓰는 곳(ParticipateView 등)이 있어 한 단계 더 구체적으로 건다
+@media (max-width: 640px) {
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-backdrop .modal {
+    max-width: none;
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation-name: modalSheetIn;
+  }
+
+  .modal .modal-header { padding-left: 18px; padding-right: 18px; }
+  .modal .modal-body { padding-left: 18px; padding-right: 18px; }
+  .modal .modal-footer { padding-left: 18px; padding-right: 18px; }
+
+  .field-row { flex-direction: column; }
+}
+
+@keyframes modalSheetIn {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 @keyframes modalIn {

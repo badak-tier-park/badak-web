@@ -5,6 +5,7 @@
 .battle-detail-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
@@ -14,10 +15,10 @@
   position: relative;
   flex: 1;
   // 진행(왼쪽) + 맵·설정(오른쪽) 2단을 담기 위해 기존 900px에서 넓힌다
-  max-width: 1060px;
+  max-width: var(--page-w-wide);
   width: 100%;
   margin: 0 auto;
-  padding: 40px 28px 80px;
+  padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
   box-sizing: border-box;
   // #app에 text-align:center가 걸려 있어 명시하지 않으면 본문이 가운데로 몰린다.
   // 가운데 정렬이 필요한 요소(.state-msg, .winner-banner 등)는 각자 선언한다.
@@ -101,12 +102,12 @@
 }
 
 .step--done {
-  .step-dot { background: rgba(170, 59, 255, 0.14); border-color: rgba(170, 59, 255, 0.35); color: #c084fc; }
+  .step-dot { background: rgba(var(--c-brand-rgb), 0.14); border-color: rgba(var(--c-brand-rgb), 0.35); color: var(--c-brand-text); }
   .step-name { color: var(--c-text-sub); }
 }
 
 .step--now {
-  .step-dot { background: #aa3bff; border-color: #aa3bff; color: #fff; }
+  .step-dot { background: var(--c-brand); border-color: var(--c-brand); color: #fff; }
   .step-name { color: var(--c-text-bright); font-weight: 700; }
 }
 
@@ -117,8 +118,8 @@
   padding: 14px 16px;
   margin-bottom: 20px;
   border-radius: 12px;
-  border: 1px solid rgba(170, 59, 255, 0.28);
-  background: rgba(170, 59, 255, 0.05);
+  border: 1px solid rgba(var(--c-brand-rgb), 0.28);
+  background: rgba(var(--c-brand-rgb), 0.05);
 }
 
 .todo-label {
@@ -126,7 +127,7 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: #c084fc;
+  color: var(--c-brand-text);
 }
 
 .todo-row {
@@ -164,7 +165,7 @@
 .todo-blocked {
   margin: 0;
   font-size: 13px;
-  color: #f87171;
+  color: var(--c-danger);
 }
 
 // ── 2단 레이아웃 ────────────────────────────────────────
@@ -344,7 +345,7 @@
 .team-panel-score {
   font-size: 12px;
   font-weight: 700;
-  color: #c084fc;
+  color: var(--c-brand-text);
 }
 
 .team-player-list {
@@ -482,7 +483,7 @@
   transition: border-color 0.15s;
 
   &:disabled { opacity: 0.6; cursor: default; }
-  &:not(:disabled):focus { border-color: rgba(170, 59, 255, 0.5); }
+  &:not(:disabled):focus { border-color: rgba(var(--c-brand-rgb), 0.5); }
 
   // 펼쳐진 목록은 브라우저가 select의 색을 그대로 쓴다. --c-input/--c-text가
   // 둘 다 반투명 흰색이라 흰 배경에 흰 글씨가 되어 안 보이므로 불투명 값으로 고정.
@@ -597,9 +598,9 @@
   @extend %toggle-btn;
 
   &.active {
-    border-color: rgba(170, 59, 255, 0.5);
-    background: rgba(170, 59, 255, 0.1);
-    color: #c084fc;
+    border-color: rgba(var(--c-brand-rgb), 0.5);
+    background: rgba(var(--c-brand-rgb), 0.1);
+    color: var(--c-brand-text);
   }
 }
 
@@ -673,7 +674,7 @@
 
   // 드래그 중인 원본은 흐리게 두고, 복제본이 커서를 따라다닌다
   &--dragging { opacity: 0.35; }
-  &--over { border-color: rgba(170, 59, 255, 0.55); }
+  &--over { border-color: rgba(var(--c-brand-rgb), 0.55); }
 }
 
 .map-drag-handle {
@@ -759,7 +760,7 @@
   cursor: pointer;
   transition: all 0.15s;
 
-  &:hover { background: rgba(248, 113, 113, 0.12); color: #f87171; }
+  &:hover { background: rgba(var(--c-danger-rgb), 0.12); color: var(--c-danger); }
 }
 
 .map-save-hint {
@@ -783,8 +784,8 @@
   margin-top: 28px;
   padding: 14px 18px;
   border-radius: 12px;
-  border: 1px solid rgba(248, 113, 113, 0.2);
-  background: rgba(248, 113, 113, 0.04);
+  border: 1px solid rgba(var(--c-danger-rgb), 0.2);
+  background: rgba(var(--c-danger-rgb), 0.04);
 }
 
 .danger-text { min-width: 0; }
@@ -793,7 +794,7 @@
   margin: 0 0 3px;
   font-size: 13px;
   font-weight: 700;
-  color: #f87171;
+  color: var(--c-danger);
 }
 
 .danger-desc {

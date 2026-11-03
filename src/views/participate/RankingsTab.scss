@@ -1,4 +1,5 @@
 @use '@/styles/tokens';
+@use '@/styles/table';
 
 .rankings-tab { width: 100%; }
 
@@ -8,7 +9,7 @@
   color: var(--c-text-muted);
   font-size: 13px;
 
-  &--error { color: #f87171; }
+  &--error { color: var(--c-danger); }
 }
 
 .rank-table {
@@ -47,8 +48,8 @@
 }
 
 .rank-row--me {
-  background: rgba(170, 59, 255, 0.08) !important;
-  td:first-child { box-shadow: inset 3px 0 0 #aa3bff; }
+  background: rgba(var(--c-brand-rgb), 0.08) !important;
+  td:first-child { box-shadow: inset 3px 0 0 var(--c-brand); }
 }
 
 .col-rank { width: 60px; text-align: center; }
@@ -117,7 +118,7 @@
 
 .acc-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #aa3bff, #5865f2);
+  background: linear-gradient(90deg, var(--c-brand), #5865f2);
   transition: width 0.3s;
 }
 
