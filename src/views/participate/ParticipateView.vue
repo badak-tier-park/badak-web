@@ -660,15 +660,20 @@ import EntryRevealModal from '@/components/EntryRevealModal.vue'
 import PredictionsTab from './PredictionsTab.vue'
 import RankingsTab from './RankingsTab.vue'
 
-type ParticipateTab = 'leagues' | 'predictions' | 'rankings'
+const PARTICIPATE_TABS = ['leagues', 'predictions', 'rankings'] as const
+type ParticipateTab = (typeof PARTICIPATE_TABS)[number]
 const route = useRoute()
-// 푸시 알림(승부예측 결과)은 ?tab=predictions로 연다
-const activeTab = ref<ParticipateTab>(
-  (['leagues', 'predictions', 'rankings'] as const).find(t => t === route.query.tab) ?? 'leagues',
-)
+const router = useRouter()
+const tabFromQuery = (tab: unknown) => PARTICIPATE_TABS.find(t => t === tab)
+// 탭은 주소의 ?tab=과 함께 움직인다. 푸시 알림(승부예측 결과)이 ?tab=predictions로 여는데,
+// 탭만 화면에서 바꾸고 주소를 두면 그 주소로 다시 이동해도 바뀐 게 없어 탭이 안 넘어간다
+const activeTab = ref<ParticipateTab>(tabFromQuery(route.query.tab) ?? 'leagues')
 watch(() => route.query.tab, (tab) => {
-  const t = (['leagues', 'predictions', 'rankings'] as const).find(x => x === tab)
+  const t = tabFromQuery(tab)
   if (t) activeTab.value = t
+})
+watch(activeTab, (t) => {
+  if (route.query.tab !== t) router.replace({ query: { ...route.query, tab: t } })
 })
 import {
   getLeagues, getLeagueStatus, calculateStandings, matchPointsOf,
@@ -691,7 +696,7 @@ import { TIER_ORDER, tierPoint, sortTiers } from '@/lib/constants'
 import { revealEntries } from '@/lib/schedules'
 import { notifyEntrySubmitted } from '@/lib/notifications'
 import { useAuthStore } from '@/stores/auth'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { Color } from '@tiptap/extension-color'

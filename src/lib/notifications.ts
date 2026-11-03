@@ -39,6 +39,13 @@ export interface NotificationRow {
   created_at: string
 }
 
+// 알림을 눌렀을 때 열 화면. 푸시는 Edge Function send-push(badak-tier-park-api)의 urlFor가
+// 같은 규칙으로 정하므로 종류를 추가하면 양쪽을 맞춘다. 갈 곳이 없으면 null
+export function notificationPath(type: NotificationType): string | null {
+  if (type.startsWith('prediction_')) return '/participate?tab=predictions'
+  return null
+}
+
 export async function getNotifications(userId: number, limit = 20): Promise<NotificationRow[]> {
   const { data, error } = await supabase
     .from('notifications')
