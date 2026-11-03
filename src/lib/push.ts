@@ -106,6 +106,7 @@ export async function syncPushSubscription(): Promise<void> {
 // 서비스워커(public/push-sw.js)가 남겨 둔 경로. 같은 값을 그쪽에도 쓴다
 const PUSH_NAV_CACHE = 'push-nav'
 const PUSH_NAV_KEY = '/__push-nav'
+export const PUSH_NAV_CHANNEL = 'push-nav'
 // 알림을 누르고 이보다 늦게 앱을 열면 그 알림 때문에 연 것이 아니라고 본다
 const PUSH_NAV_TTL_MS = 2 * 60 * 1000
 

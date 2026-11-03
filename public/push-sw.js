@@ -4,6 +4,7 @@
 // 알림을 눌렀을 때 이동할 경로를 앱이 읽어 가도록 남겨 두는 곳(src/lib/push.ts와 같은 값)
 const PUSH_NAV_CACHE = 'push-nav'
 const PUSH_NAV_KEY = '/__push-nav'
+const PUSH_NAV_CHANNEL = 'push-nav'
 
 self.addEventListener('push', (event) => {
   let data = {}
@@ -41,8 +42,17 @@ self.addEventListener('notificationclick', (event) => {
     const open = windows.find((w) => new URL(w.url).origin === url.origin)
     if (open) {
       // 열린 창은 주소를 바꾸지 않고 앱에 이동을 맡긴다(App.vue). navigate()는 페이지를 새로 불러
-      // 지목식·엔트리 입력 중이던 내용이 날아간다. focus()가 실패해도 메시지는 보내야 해서 순서를 이렇게 둔다
-      open.postMessage({ type: 'push-navigate', path })
+      // 지목식·엔트리 입력 중이던 내용이 날아간다. focus()가 실패해도 메시지는 보내야 해서 순서를 이렇게 둔다.
+      // iOS에서 앱이 켜진 채 알림을 누르면 postMessage만으로는 이동하지 않았다. 홈 화면에 막 설치한 앱의
+      // 첫 화면처럼 서비스워커가 제어하지 않는 화면에는 닿지 않는 것으로 보여, 제어 여부와 무관한
+      // BroadcastChannel로도 보낸다
+      const message = { type: 'push-navigate', path }
+      open.postMessage(message)
+      try {
+        const channel = new BroadcastChannel(PUSH_NAV_CHANNEL)
+        channel.postMessage(message)
+        channel.close()
+      } catch {}
       try { await open.focus() } catch {}
       return
     }
