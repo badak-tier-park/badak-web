@@ -81,6 +81,10 @@
     `send-push`가 첫 실행 때 만든다). 프로젝트마다 따로라 dev와 prod의 구독은 서로 호환되지 않는다
   - `notifications`는 본인 것만 읽기·읽음 처리. **브라우저에서 insert할 수 없다** — 알림은 서버
     함수(`SECURITY DEFINER`)가 만든다. 열어 두면 남의 휴대폰에 임의 문구로 푸시를 보낼 수 있다
+  - 알림을 눌렀을 때 갈 화면은 종류(`type`) 접두사로 정한다 — 웹 `notificationPath()`와 send-push `urlFor()`를 같이 바꾼다
+  - 캘린더 일정(`events` + 미완료 `league_schedules`)은 `pg_cron`이 10분마다 `send_calendar_reminders()`를 돌려
+    **전날 20시·당일 10시(KST)에 활성 회원 전원**에게 하루치를 한 알림으로 묶어 보낸다(운영진 결정).
+    창(20~23시, 10~13시) 밖에서는 보내지 않고, 보낸 일정은 `calendar_push_log`에 날짜와 함께 남겨 중복을 막는다
 - **홈 화면 앱에는 브라우저 뒤로가기가 없다.** 화면 이동 버튼에 `router.back()`을 쓰지 말고
   상위 화면으로 직접 이동한다
 
