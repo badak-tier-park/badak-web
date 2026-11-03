@@ -76,6 +76,8 @@
 - **웹 푸시**: `notifications`에 행이 들어가면 트리거(`notify_push`) → `pg_net` → Edge Function `send-push`
   (badak-tier-park-api)가 그 사용자의 구독 기기(`push_subscriptions`)로 보낸다. 새 알림 종류는
   `notifications`에 넣기만 하면 푸시도 나간다. 수신은 `public/push-sw.js`(workbox `importScripts`)
+  - 함수는 **트랜잭션당 한 번**만 불리고 안 보낸 알림(`push_sent_at` null)을 모두 가져가 보낸다. 알림마다
+    부르면 전원 알림(53건)에서 호출 한도(429)·시간 초과로 절반 넘게 유실됐다. 실패분은 매분 재시도(`push-dispatch-retry`)
   - iOS는 **홈 화면에 설치한 앱에서만** 되고, 권한 요청은 사용자 탭 안에서만 된다(`src/lib/push.ts`)
   - VAPID 키·웹훅 비밀값은 함수 시크릿이 아니라 **DB Vault**에 있다(개인키가 밖으로 나가지 않게
     `send-push`가 첫 실행 때 만든다). 프로젝트마다 따로라 dev와 prod의 구독은 서로 호환되지 않는다
