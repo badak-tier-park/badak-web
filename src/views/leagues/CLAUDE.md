@@ -107,7 +107,7 @@
 - 베팅·취소·정산은 DB 함수 `place_prediction` / `cancel_prediction` / `apply_prediction_result`
   (`league_schedules` 수정 시 트리거로 정산). 저장소에 SQL이 없으니 바꿀 땐 DB에서 정의를 꺼내 본다
 - **포인트는 리그마다 따로다**(운영진 결정, 2026 윈터리그부터). 지갑은 `league_point_wallets`(리그×사용자)이고,
-  처음 베팅·출석할 때 서버가 `leagues.prediction_start_points`(기본 1000, 리그 상세 › 승부예측 탭)로 만든다.
+  처음 베팅·출석할 때 서버가 `leagues.prediction_start_points`(리그 생성 때 지정, 기본 1000. 리그 수정·리그 상세 › 승부예측 탭에서 변경)로 만든다.
   지갑이 아직 없으면 화면은 시작 포인트를 그대로 보여준다
   - 출석 보상은 오늘(KST)이 기간 안에 있는 리그(여러 개면 가장 늦게 시작한 리그) 지갑으로 간다.
     그런 리그가 없으면 연속 기록만 이어지고 포인트·마일스톤은 없다. 처리는 서버 함수 `check_in_attendance()`

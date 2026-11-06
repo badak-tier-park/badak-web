@@ -204,6 +204,8 @@ export interface LeagueInsert {
   has_draft: boolean
   draft_date: string | null
   captain_count: number
+  /** 생성할 때만 넣는다. 수정은 updateLeaguePredictionStartPoints (기존 지갑에 차액 반영) */
+  prediction_start_points?: number
 }
 
 export function getLeagueStatus(league: LeagueRow): LeagueStatus {
@@ -238,9 +240,11 @@ export async function getLeagues(): Promise<LeagueRow[]> {
 }
 
 export async function updateLeague(id: string, payload: LeagueInsert): Promise<LeagueRow> {
+  // 시작 포인트는 여기서 바꾸지 않는다(기존 지갑과 어긋남) → updateLeaguePredictionStartPoints
+  const { prediction_start_points: _ignored, ...fields } = payload
   const { data, error } = await supabase
     .from('leagues')
-    .update({ ...payload, updated_at: new Date().toISOString() })
+    .update({ ...fields, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single()
