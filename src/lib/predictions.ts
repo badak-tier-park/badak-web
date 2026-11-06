@@ -79,10 +79,13 @@ export function getNextMonday(now: Date = new Date()): Date {
   return m
 }
 
+// 예측 마감: 경기 당일 20:00 (한국 시간).
+// 서버(place_prediction / cancel_prediction)는 DB 함수 prediction_deadline()으로 같은 시각을 검사한다.
+// 바꿀 때는 두 곳을 함께 바꾼다. 브라우저 시간대와 무관하게 +09:00으로 계산
+export const PREDICTION_DEADLINE_KST = '20:00'
+
 export function getPredictionDeadline(matchDate: string): Date {
-  const d = new Date(`${matchDate}T00:00:00`)
-  d.setDate(d.getDate() - 1)
-  return d
+  return new Date(`${matchDate}T${PREDICTION_DEADLINE_KST}:00+09:00`)
 }
 
 export function isPredictionOpen(matchDate: string, now: Date = new Date()): boolean {
