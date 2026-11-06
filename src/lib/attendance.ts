@@ -1,14 +1,5 @@
 import { supabase } from './supabase'
 
-const DAILY_POINTS = 50
-
-// 첫 달성 시에만 지급되는 마일스톤 보너스
-const MILESTONES: Record<number, number> = {
-  7: 500,
-  14: 1000,
-  30: 3000,
-}
-
 export interface AttendanceStatus {
   attendedToday: boolean
   streak: number
@@ -19,16 +10,12 @@ export interface CheckInResult {
   streak: number
   isMilestone: boolean
   milestoneBonus: number
+  /** 포인트가 들어간 리그. 진행 중인 리그가 없으면 null (포인트 없음) */
+  leagueName: string | null
 }
 
 function getTodayKST(): string {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0]
-}
-
-function getYesterdayKST(): string {
-  const d = new Date(Date.now() + 9 * 60 * 60 * 1000)
-  d.setDate(d.getDate() - 1)
-  return d.toISOString().split('T')[0]
 }
 
 export async function getAttendanceStatus(userId: number): Promise<AttendanceStatus> {
@@ -46,63 +33,19 @@ export async function getAttendanceStatus(userId: number): Promise<AttendanceSta
   }
 }
 
-export async function checkIn(userId: number): Promise<CheckInResult> {
-  const today = getTodayKST()
-  const yesterday = getYesterdayKST()
-
-  const { data: user, error: userErr } = await supabase
-    .from('users')
-    .select('attendance_streak, last_attended_at, points')
-    .eq('id', userId)
-    .single()
-  if (userErr) throw userErr
-
-  if (user.last_attended_at === today) {
-    throw new Error('오늘 이미 출석했습니다.')
+// 출석 처리는 서버 함수(check_in_attendance)가 한다 — 연속 계산, 기록, 포인트 지급까지.
+// 포인트는 오늘(KST)이 기간 안에 있는 리그의 승부예측 지갑으로 들어가고, 그런 리그가 없으면
+// 연속 기록만 이어진다. 예전엔 브라우저가 users.points를 직접 고쳐 누구나 포인트를 바꿀 수 있었다.
+// 보상 금액(하루 50, 7·14·30일 첫 달성 보너스)도 서버 함수 안에 있다
+export async function checkIn(): Promise<CheckInResult> {
+  const { data, error } = await supabase.rpc('check_in_attendance')
+  if (error) throw error
+  const r = data as { points_earned: number; streak: number; is_milestone: boolean; milestone_bonus: number; league_name: string | null }
+  return {
+    pointsEarned: r.points_earned,
+    streak: r.streak,
+    isMilestone: r.is_milestone,
+    milestoneBonus: r.milestone_bonus,
+    leagueName: r.league_name,
   }
-
-  const newStreak = user.last_attended_at === yesterday
-    ? (user.attendance_streak ?? 0) + 1
-    : 1
-
-  // 마일스톤 해당 여부 — 이미 받은 적 없어야 지급
-  let milestoneBonus = 0
-  let isMilestone = false
-  const milestoneReward = MILESTONES[newStreak]
-  if (milestoneReward !== undefined) {
-    const { count } = await supabase
-      .from('attendance_logs')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('is_milestone', true)
-      .eq('milestone_days', newStreak)
-    if ((count ?? 0) === 0) {
-      milestoneBonus = milestoneReward
-      isMilestone = true
-    }
-  }
-
-  const totalPoints = DAILY_POINTS + milestoneBonus
-
-  const { error: logErr } = await supabase.from('attendance_logs').insert({
-    user_id: userId,
-    attended_at: today,
-    streak: newStreak,
-    points_earned: totalPoints,
-    is_milestone: isMilestone,
-    milestone_days: isMilestone ? newStreak : null,
-  })
-  if (logErr) throw logErr
-
-  const { error: updateErr } = await supabase
-    .from('users')
-    .update({
-      attendance_streak: newStreak,
-      last_attended_at: today,
-      points: (user.points ?? 0) + totalPoints,
-    })
-    .eq('id', userId)
-  if (updateErr) throw updateErr
-
-  return { pointsEarned: totalPoints, streak: newStreak, isMilestone, milestoneBonus }
 }

@@ -201,7 +201,7 @@ import {
   getMatchForPrediction,
   placePrediction,
   cancelPrediction,
-  getUserPoints,
+  getMyLeagueWallets,
   type PredictableMatch,
 } from '@/lib/predictions'
 import { useAuthStore } from '@/stores/auth'
@@ -213,7 +213,14 @@ const events = ref<CalendarItem[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const myUserId = ref<number | null>(null)
+// 그 경기 리그의 내 승부예측 포인트 (포인트는 리그마다 따로)
 const userPoints = ref<number | null>(null)
+
+async function loadLeaguePoints() {
+  if (!predMatch.value || !myUserId.value) { userPoints.value = null; return }
+  const [w] = await getMyLeagueWallets(myUserId.value, [predMatch.value.league_id])
+  userPoints.value = w?.points ?? null
+}
 
 const today = new Date()
 const viewYear = ref(today.getFullYear())
@@ -299,6 +306,7 @@ async function openDetail(ev: CalendarItem) {
     predLoading.value = true
     try {
       predMatch.value = await getMatchForPrediction(ev.schedule_id, myUserId.value)
+      await loadLeaguePoints()
     } finally {
       predLoading.value = false
     }
@@ -399,7 +407,7 @@ async function confirmBet(amount: number) {
   betModal.saving = true
   betModal.error = null
   try {
-    const res = await placePrediction(predMatch.value.schedule_id, myUserId.value, betModal.captainId, amount)
+    const res = await placePrediction(predMatch.value.schedule_id, betModal.captainId, amount)
     userPoints.value = res.remaining_points
     predMatch.value = await getMatchForPrediction(predMatch.value.schedule_id, myUserId.value)
     betModal.open = false
@@ -414,9 +422,9 @@ async function handleCancel() {
   if (!predMatch.value || !myUserId.value) return
   if (!confirm('예측을 취소하시겠습니까? (베팅 포인트는 환불됩니다)')) return
   try {
-    await cancelPrediction(predMatch.value.schedule_id, myUserId.value)
+    const res = await cancelPrediction(predMatch.value.schedule_id)
     predMatch.value = await getMatchForPrediction(predMatch.value.schedule_id, myUserId.value)
-    userPoints.value = await getUserPoints(myUserId.value)
+    userPoints.value = res.remaining_points
   } catch (e: any) {
     alert(e.message ?? '예측 취소 실패')
   }
@@ -442,7 +450,6 @@ onMounted(async () => {
       const me = await getPlayerByDiscordId(discordId)
       if (me) {
         myUserId.value = me.id
-        userPoints.value = await getUserPoints(me.id)
       }
     }
     events.value = await getCalendarItems()

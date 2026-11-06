@@ -3,6 +3,35 @@
 
 .rankings-tab { width: 100%; }
 
+.rank-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.league-select {
+  height: var(--control-h);
+  min-width: 200px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+
+  &:focus { border-color: rgba(var(--c-brand-rgb), 0.5); }
+}
+
+.rank-hint {
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
 .state-msg {
   text-align: center;
   padding: 50px 20px;
@@ -53,7 +82,7 @@
 }
 
 .col-rank { width: 60px; text-align: center; }
-.col-points { width: 80px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.col-points { width: 90px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 .col-correct { width: 100px; text-align: center; color: var(--c-text-2); font-variant-numeric: tabular-nums; }
 .col-acc { width: 200px; }
 
@@ -81,28 +110,9 @@
   gap: 8px;
 }
 
-.rank-race {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 800;
-  background: var(--c-overlay);
-}
-
 .rank-nick {
   font-weight: 600;
   color: var(--c-text-bright);
-}
-
-.rank-tier {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
 }
 
 .acc-bar {

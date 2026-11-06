@@ -398,6 +398,32 @@
           </button>
         </div>
       </section>
+
+      <!-- ── 탭 7: 승부예측 ────────────────────────────── -->
+      <section v-if="activeTab === 'prediction'" class="detail-section">
+        <div class="section-header">
+          <p class="section-desc">
+            승부예측 포인트는 리그마다 따로입니다. 사용자가 이 리그 경기에 처음 베팅하거나, 리그 기간 중 처음 출석할 때
+            시작 포인트를 받습니다. 리그 기간 중 출석 보상도 이 리그 포인트로 들어갑니다.
+            시즌 중에 바꾸면 이미 포인트를 받은 사용자에게도 차액이 반영됩니다.
+          </p>
+        </div>
+
+        <div class="entry-points-grid">
+          <label class="entry-points-field">
+            <span class="entry-points-label">시작 포인트</span>
+            <span class="entry-points-desc">이 리그에서 각 사용자가 처음 받는 승부예측 포인트</span>
+            <input v-model.number="predictionForm.startPoints" type="number" min="0" step="100" class="entry-points-input" />
+          </label>
+        </div>
+
+        <div class="section-footer">
+          <p v-if="predictionError" class="save-error">{{ predictionError }}</p>
+          <button class="btn-save" :disabled="predictionSaving" @click="savePredictionData">
+            {{ predictionSaving ? '저장 중...' : '저장' }}
+          </button>
+        </div>
+      </section>
     </div>
 
     <!-- ── 선수 선택 오버레이 ──────────────────────────── -->
@@ -544,7 +570,7 @@ import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, updateLeagueSeedSwapLimits, updateLeagueHandicap, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
+import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, updateLeagueSeedSwapLimits, updateLeagueHandicap, updateLeaguePredictionStartPoints, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
 import { MAX_TIER_STEPS, type HandicapRow } from '@/lib/handicap'
 import { type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
@@ -557,7 +583,7 @@ import { useToast } from '@/composables/useToast'
 const { toast, showToast, clearToast } = useToast()
 
 // ── 탭 ───────────────────────────────────────────────────
-type TabKey = 'description' | 'captains' | 'seed_holders' | 'maps' | 'entry_points' | 'handicap'
+type TabKey = 'description' | 'captains' | 'seed_holders' | 'maps' | 'entry_points' | 'handicap' | 'prediction'
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: 'description',  label: '리그 설명' },
@@ -566,6 +592,7 @@ const tabs: { key: TabKey; label: string }[] = [
   { key: 'maps',         label: '경기별 맵 선택' },
   { key: 'entry_points', label: '엔트리 포인트' },
   { key: 'handicap',     label: '핸디' },
+  { key: 'prediction',   label: '승부예측' },
 ]
 
 const activeTab = ref<TabKey>('description')
@@ -578,6 +605,8 @@ function isTabDone(key: TabKey): boolean {
   if (key === 'maps') return matchConfigs.every((m) => (matchMaps.value[m.number]?.length ?? 0) > 0)
   // 핸디는 선택 사항 — 기준을 넣었을 때만 완료로 표시
   if (key === 'handicap') return league.value?.handicap_point_gap != null
+  // 승부예측은 시작 포인트 기본값(1000)이 있어 항상 완료
+  if (key === 'prediction') return league.value?.prediction_start_points != null
   if (key === 'entry_points') return !!league.value && league.value.entry_solo_max > 0 && league.value.entry_team_max > 0 && league.value.entry_total_max > 0
   return false
 }
@@ -1023,6 +1052,35 @@ watch(league, (lg) => {
     row.note = saved?.note ?? ''
   }
 }, { immediate: true })
+
+// ── 승부예측 ─────────────────────────────────────────────
+const predictionForm = reactive({ startPoints: '' as number | '' })
+const predictionSaving = ref(false)
+const predictionError = ref<string | null>(null)
+
+watch(league, (lg) => {
+  if (!lg) return
+  predictionForm.startPoints = lg.prediction_start_points ?? ''
+}, { immediate: true })
+
+async function savePredictionData() {
+  predictionError.value = null
+  const pts = predictionForm.startPoints
+  if (pts === '' || !Number.isInteger(pts) || pts < 0) {
+    predictionError.value = '시작 포인트는 0 이상의 정수여야 합니다.'
+    return
+  }
+  predictionSaving.value = true
+  try {
+    await updateLeaguePredictionStartPoints(leagueId, pts)
+    if (league.value) league.value.prediction_start_points = pts
+    showToast('승부예측 시작 포인트가 저장되었습니다.')
+  } catch (e: any) {
+    predictionError.value = e.message ?? '저장 중 오류가 발생했습니다.'
+  } finally {
+    predictionSaving.value = false
+  }
+}
 
 async function saveHandicapData() {
   handicapError.value = null
