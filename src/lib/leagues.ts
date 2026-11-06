@@ -126,6 +126,15 @@ export async function updateLeagueHandicap(
   if (error) throw error
 }
 
+/**
+ * 승부예측 시작 포인트 변경. 서버 함수가 관리자인지 확인하고, 이미 만들어진 지갑에도 차액을 반영한다
+ * (leagues를 직접 update하면 기존 지갑과 어긋나므로 쓰지 않는다)
+ */
+export async function updateLeaguePredictionStartPoints(id: string, points: number): Promise<void> {
+  const { error } = await supabase.rpc('update_league_prediction_start_points', { p_league_id: id, p_points: points })
+  if (error) throw error
+}
+
 /** 재대결 결과(동률 팀 순서)를 저장한다. null이면 초기화 */
 export async function updateStandingsTiebreakOrder(id: string, order: number[] | null): Promise<void> {
   const { error } = await supabase
@@ -173,6 +182,8 @@ export interface LeagueRow {
   handicap_point_gap: number | null
   /** 티어 단계 차이별 핸디 (체력 % + 추가 텍스트). 빈 단계는 핸디 없음 */
   handicap_table: HandicapRow[] | null
+  /** 승부예측 시작 포인트. 리그마다 지갑이 따로이며, 지갑은 처음 베팅·출석할 때 이 값으로 만들어진다 */
+  prediction_start_points: number
   is_ready: boolean
   picks_completed: boolean
   draft_completed: boolean
