@@ -159,6 +159,9 @@ S를 추가할 때 빠져 있어 운영에서 S 저장·등록이 거부됐다.
   그 리그의 판정이 흔들리지 않아야 하기 때문
 - 티어 비교는 반드시 `tierPoint()` (문자열 대소 비교 금지)
 - 지목은 드래그든 탭이든 `useDraftDnD`의 `assignToTeam()` 한 경로로만 넣는다
+- **승부예측·출석 포인트는 리그별 지갑(`league_point_wallets`)이다.** `users.points`는 더 쓰지 않는다.
+  포인트를 움직이는 쓰기는 서버 함수로만(브라우저 직접 쓰기 금지). 마감은 경기 당일 20:00 KST —
+  화면 `PREDICTION_DEADLINE_KST`와 DB `prediction_deadline()`을 함께 바꾼다
 
 ## Git
 - `feat/`, `fix/`, `refactor/`, `style/`, `docs/`, `chore/` 접두사로 작은 단위 브랜치 → `dev` 병합
