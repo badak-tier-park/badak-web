@@ -6,7 +6,7 @@
         <span class="balance-value">{{ userPoints?.toLocaleString() ?? '-' }}<span class="balance-unit">pt</span></span>
       </div>
       <div class="info-bar-right">
-        <span>{{ windowLabel }} 범위 예측 · 마감은 경기 하루 전 00:00 · 정산은 적중 베팅 비율로 분배</span>
+        <span>{{ windowLabel }} 범위 예측 · 마감은 경기 당일 {{ PREDICTION_DEADLINE_KST }} · 정산은 적중 베팅 비율로 분배</span>
       </div>
     </div>
 
@@ -114,6 +114,7 @@ import {
   getCurrentMonday,
   getNextMonday,
   matchTypeLabel,
+  PREDICTION_DEADLINE_KST,
   type PredictableMatch,
 } from '@/lib/predictions'
 import { useAuthStore } from '@/stores/auth'
