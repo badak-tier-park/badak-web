@@ -49,8 +49,8 @@ export interface RankingRow {
   nickname: string
   race: string
   tier: string
-  total_points: number
-  current_points: number
+  /** 그 리그 지갑 잔액 */
+  points: number
   correct_count: number
   resolved_count: number
   pending_count: number
@@ -293,10 +293,10 @@ export async function getMatchForPrediction(scheduleId: number, userId: number):
   return m
 }
 
-export async function placePrediction(scheduleId: number, userId: number, captainId: number, betAmount: number): Promise<{ remaining_points: number }> {
+// 베팅·취소는 로그인한 본인 기준이다(서버가 current_user_id()로 판단). 사용자 id를 넘기지 않는다
+export async function placePrediction(scheduleId: number, captainId: number, betAmount: number): Promise<{ remaining_points: number }> {
   const { data, error } = await supabase.rpc('place_prediction', {
     p_schedule_id: scheduleId,
-    p_user_id: userId,
     p_captain_id: captainId,
     p_bet_amount: betAmount,
   })
@@ -304,62 +304,110 @@ export async function placePrediction(scheduleId: number, userId: number, captai
   return data as { remaining_points: number }
 }
 
-export async function cancelPrediction(scheduleId: number, userId: number): Promise<{ cancelled: boolean; refunded?: number }> {
-  const { data, error } = await supabase.rpc('cancel_prediction', {
-    p_schedule_id: scheduleId,
-    p_user_id: userId,
-  })
+export async function cancelPrediction(scheduleId: number): Promise<{ cancelled: boolean; refunded?: number; remaining_points: number }> {
+  const { data, error } = await supabase.rpc('cancel_prediction', { p_schedule_id: scheduleId })
   if (error) throw error
-  return data as { cancelled: boolean; refunded?: number }
+  return data as { cancelled: boolean; refunded?: number; remaining_points: number }
 }
 
-export async function getUserPoints(userId: number): Promise<number> {
-  const { data, error } = await supabase.from('users').select('points').eq('id', userId).single()
-  if (error) throw error
-  return data?.points ?? 0
+// ── 리그별 포인트 지갑 ─────────────────────────────────────
+// 승부예측 포인트는 리그마다 따로다. 지갑(league_point_wallets)은 처음 베팅·출석할 때
+// 서버가 그 리그의 시작 포인트(leagues.prediction_start_points)로 만든다.
+// 아직 지갑이 없으면 시작 포인트를 그대로 보여준다(만들어지면 그 값에서 시작하므로 같다)
+export interface LeagueWallet {
+  league_id: string
+  league_name: string
+  points: number
 }
 
-export async function getRankings(): Promise<RankingRow[]> {
-  const [{ data: predictions }, { data: schedules }, { data: users }] = await Promise.all([
-    supabase.from('match_predictions').select('user_id, points_earned, schedule_id, bet_amount'),
-    supabase.from('league_schedules').select('id, is_completed, winner_captain_id'),
-    supabase.from('users').select('id, nickname, race, tier, points'),
+export async function getMyLeagueWallets(userId: number, leagueIds: string[]): Promise<LeagueWallet[]> {
+  const ids = [...new Set(leagueIds)]
+  if (!ids.length) return []
+  const [{ data: leagues, error: lErr }, { data: wallets, error: wErr }] = await Promise.all([
+    supabase.from('leagues').select('id, name, prediction_start_points, start_date').in('id', ids),
+    supabase.from('league_point_wallets').select('league_id, points').eq('user_id', userId).in('league_id', ids),
   ])
+  if (lErr) throw lErr
+  if (wErr) throw wErr
+  const walletBy = new Map<string, number>((wallets ?? []).map(w => [w.league_id, w.points]))
+  return (leagues ?? [])
+    .sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)))
+    .map(l => ({ league_id: l.id, league_name: l.name, points: walletBy.get(l.id) ?? l.prediction_start_points ?? 0 }))
+}
 
-  const schedMap = new Map<number, { completed: boolean; winner: number | null }>(
-    (schedules ?? []).map(s => [s.id, { completed: s.is_completed, winner: s.winner_captain_id }])
-  )
+export interface PredictionLeague {
+  id: string
+  name: string
+  start_date: string
+  end_date: string
+}
 
-  const agg = new Map<number, { points: number; correct: number; resolved: number; pending: number }>()
+/** 랭킹에서 고를 수 있는 리그(최근 시작 순)와 기본 선택(진행 중인 리그, 없으면 가장 최근 리그) */
+export async function getPredictionLeagues(now: Date = new Date()): Promise<{ leagues: PredictionLeague[]; defaultId: string | null }> {
+  const { data, error } = await supabase
+    .from('leagues')
+    .select('id, name, start_date, end_date')
+    .order('start_date', { ascending: false })
+  if (error) throw error
+  const leagues = (data ?? []) as PredictionLeague[]
+  const today = isoDateOnly(new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60000))
+  const active = leagues.find(l => l.start_date <= today && today <= l.end_date)
+  return { leagues, defaultId: active?.id ?? leagues[0]?.id ?? null }
+}
+
+// ── 랭킹 (리그별) ─────────────────────────────────────────
+// 순위 = 그 리그 지갑 잔액(출석 보상 포함). 그 리그에 한 번이라도 예측한 사용자만 나온다.
+// 맞힘/정확도는 정산된 예측 중 환불(적중자 없음)을 뺀 것 기준 — 예전엔 환불도 받은 금액이 있어 맞힘으로 셌다
+export async function getRankings(leagueId: string): Promise<RankingRow[]> {
+  const { data: schedules, error: sErr } = await supabase
+    .from('league_schedules')
+    .select('id')
+    .eq('league_id', leagueId)
+  if (sErr) throw sErr
+  const scheduleIds = (schedules ?? []).map(s => s.id)
+  if (!scheduleIds.length) return []
+
+  const [{ data: predictions, error: pErr }, { data: wallets, error: wErr }, { data: league, error: lErr }] = await Promise.all([
+    supabase.from('match_predictions').select('user_id, bet_amount, points_earned, locked_multiplier, settled_at').in('schedule_id', scheduleIds),
+    supabase.from('league_point_wallets').select('user_id, points').eq('league_id', leagueId),
+    supabase.from('leagues').select('prediction_start_points').eq('id', leagueId).single(),
+  ])
+  if (pErr) throw pErr
+  if (wErr) throw wErr
+  if (lErr) throw lErr
+
+  const agg = new Map<number, { correct: number; resolved: number; pending: number }>()
   for (const p of predictions ?? []) {
-    const sched = schedMap.get(p.schedule_id)
-    const cur = agg.get(p.user_id) ?? { points: 0, correct: 0, resolved: 0, pending: 0 }
-    if (sched && sched.completed && sched.winner !== null) {
-      cur.resolved++
-      cur.points += p.points_earned
-      if (p.points_earned > 0) cur.correct++
-    } else {
-      cur.pending++
-    }
+    const cur = agg.get(p.user_id) ?? { correct: 0, resolved: 0, pending: 0 }
+    if (!p.settled_at) cur.pending++
+    else if (Number(p.locked_multiplier) > 0) { cur.resolved++; cur.correct++ }
+    else if (p.points_earned === p.bet_amount) { /* 적중자 없어 환불 — 맞힘/틀림에 넣지 않는다 */ }
+    else cur.resolved++
     agg.set(p.user_id, cur)
   }
+  if (!agg.size) return []
 
-  const rows: RankingRow[] = []
-  for (const u of users ?? []) {
-    const a = agg.get(u.id)
-    if (!a || a.resolved === 0) continue
-    rows.push({
+  const { data: users, error: uErr } = await supabase
+    .from('users')
+    .select('id, nickname, race, tier')
+    .in('id', [...agg.keys()])
+  if (uErr) throw uErr
+
+  const walletBy = new Map<number, number>((wallets ?? []).map(w => [w.user_id, w.points]))
+  const startPoints = league?.prediction_start_points ?? 0
+  const rows: RankingRow[] = (users ?? []).map(u => {
+    const a = agg.get(u.id)!
+    return {
       user_id: u.id,
       nickname: u.nickname,
       race: u.race,
       tier: u.tier,
-      total_points: a.points,
-      current_points: u.points ?? 0,
+      points: walletBy.get(u.id) ?? startPoints,
       correct_count: a.correct,
       resolved_count: a.resolved,
       pending_count: a.pending,
       accuracy: a.resolved > 0 ? (a.correct / a.resolved) * 100 : 0,
-    })
-  }
-  return rows.sort((a, b) => b.total_points - a.total_points || b.accuracy - a.accuracy || a.nickname.localeCompare(b.nickname))
+    }
+  })
+  return rows.sort((a, b) => b.points - a.points || b.accuracy - a.accuracy || a.nickname.localeCompare(b.nickname))
 }
