@@ -97,7 +97,8 @@
             </span>
           </span>
 
-          <div class="topbar-actions">
+          <span v-if="!canManage" class="topbar-readonly">보기 전용 · 지목식 관리는 리그를 만든 운영진만</span>
+          <div v-if="canManage" class="topbar-actions">
             <!-- 지목식 시작/종료 -->
             <template v-if="!draftDone && !isSaved">
               <button
@@ -170,7 +171,7 @@
                     :key="player.id"
                     class="player-card"
                     :class="[{ 'is-dragging': draggingId === player.id }]"
-                    @pointerdown="onPointerDown($event, player.id, 'pool')"
+                    @pointerdown="canManage && onPointerDown($event, player.id, 'pool')"
                   >
                     <span class="card-name">{{ player.nickname }}</span>
                     <RaceBadge :race="player.race" size="sm" />
@@ -280,8 +281,8 @@
                     'swap-locked': seedSwapMode && lockedIds.has(member.id),
                     'swap-clickable': seedSwapMode && !lockedIds.has(member.id),
                   }"
-                  @pointerdown="!seedSwapMode && !isSaved && onPointerDown($event, member.id, captainId)"
-                  @click="seedSwapMode && onMemberClick(captainId, member, idx)"
+                  @pointerdown="canManage && !seedSwapMode && !isSaved && onPointerDown($event, member.id, captainId)"
+                  @click="canManage && seedSwapMode && onMemberClick(captainId, member, idx)"
                 >
                   <span class="card-pick-num">{{ idx + 1 }}</span>
                   <span class="card-name">{{ member.nickname }}</span>
@@ -289,7 +290,7 @@
                   <TierBadge :tier="member.tier" size="sm" />
                   <span v-if="seedHolderIds.has(member.id)" class="card-seed">SEED</span>
                   <span v-if="swappedIds.has(member.id)" class="card-locked">교체됨</span>
-                  <button v-if="!seedSwapMode && !isSaved && !draftStarted" class="card-remove" @click.stop="removeFromTeam(captainId, member.id)">×</button>
+                  <button v-if="canManage && !seedSwapMode && !isSaved && !draftStarted" class="card-remove" @click.stop="removeFromTeam(captainId, member.id)">×</button>
                 </div>
 
                 <!-- 드롭 힌트 -->
@@ -356,12 +357,13 @@ import { useRoute, useRouter } from 'vue-router'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import AppHeader from '@/components/AppHeader.vue'
 import { supabase } from '@/lib/supabase'
-import { getLeague, getLeagueCreatorPlayerId, setPicksCompleted, setDraftCompleted, setDraftStarted, type LeagueRow } from '@/lib/leagues'
+import { getLeague, setPicksCompleted, setDraftCompleted, setDraftStarted, type LeagueRow } from '@/lib/leagues'
 import { type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders, savePlayerSnapshots, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getDraftPicks, saveDraftPicks, addSinglePick, deleteSinglePick, getSwapLog, saveSwapLog } from '@/lib/draft'
 import { RACE_ORDER, tierPoint } from '@/lib/constants'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 import { useDraftDnD } from '@/composables/useDraftDnD'
 import { useSeedSwap } from '@/composables/useSeedSwap'
 
@@ -374,7 +376,13 @@ const loading = ref(true)
 const loadError = ref<string | null>(null)
 const league = ref<LeagueRow | null>(null)
 const allPlayers = ref<PlayerRow[]>([])
-const creatorPlayerId = ref<number | null>(null)
+const authStore = useAuthStore()
+
+// 지목식 관리(시작·배정·시드권 교체·저장)는 생성자만. 다른 운영진은 보기만 한다.
+// 생성자 기록이 없는 옛 리그는 운영진 누구나
+const canManage = computed(() =>
+  !league.value?.created_by || authStore.user?.id === league.value.created_by,
+)
 const captainIds = ref<number[]>([])
 const seedHolderIds = ref(new Set<number>())
 const seedOrderIds = ref<number[]>([])
@@ -388,16 +396,14 @@ let realtimeChannel: RealtimeChannel | null = null
 
 onMounted(async () => {
   try {
-    const [leagueData, playersData, captainsData, draftPicksData, seedHoldersData, swapLogData, creatorId] = await Promise.all([
+    const [leagueData, playersData, captainsData, draftPicksData, seedHoldersData, swapLogData] = await Promise.all([
       getLeague(leagueId),
       getLeaguePlayers(leagueId),
       getCaptains(leagueId),
       getDraftPicks(leagueId),
       getSeedHolders(leagueId),
       getSwapLog(leagueId),
-      getLeagueCreatorPlayerId(leagueId),
     ])
-    creatorPlayerId.value = creatorId
     if (!leagueData.is_ready || captainsData.length === 0) {
       router.replace({ name: 'league-detail', params: { id: leagueId } })
       return
@@ -550,7 +556,7 @@ const availablePlayers = computed(() => {
   return allPlayers.value.filter(
     p => eligible.has(p.tier)
       && p.is_active
-      && p.id !== creatorPlayerId.value
+      && p.id !== league.value?.organizer_player_id
       && !captainIds.value.includes(p.id)
       && !assignedIds.value.has(p.id),
   )

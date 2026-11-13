@@ -189,6 +189,12 @@ export interface LeagueRow {
   draft_completed: boolean
   draft_started: boolean
   team_names_completed: boolean
+  /**
+   * 진행자(users.id). 선수로 참가하지 않는 사람 — 팀장·시드권자·지목식 후보에서 빠진다.
+   * 생성자와 다를 수 있다(사이트에 서툰 진행자 대신 다른 운영진이 리그를 만들고 지목식을 조작). null이면 아무도 빠지지 않음
+   */
+  organizer_player_id: number | null
+  /** 생성자(auth 사용자 id). 지목식 관리(시작·시드권 교체·최종 저장)는 생성자만 한다 */
   created_by: string | null
   created_at: string
   updated_at: string
@@ -316,11 +322,12 @@ export async function createLeague(payload: LeagueInsert): Promise<LeagueRow> {
   return data
 }
 
-// 리그 생성자의 player_id (users.id) — 팀장/시드권자/지목식에서 제외 대상
-export async function getLeagueCreatorPlayerId(leagueId: string): Promise<number | null> {
-  const { data, error } = await supabase.rpc('get_league_creator_player_id', { p_league_id: leagueId })
+export async function updateLeagueOrganizer(id: string, playerId: number | null): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ organizer_player_id: playerId, updated_at: new Date().toISOString() })
+    .eq('id', id)
   if (error) throw error
-  return data ?? null
 }
 
 export async function updateLeagueSeedSwapLimits(

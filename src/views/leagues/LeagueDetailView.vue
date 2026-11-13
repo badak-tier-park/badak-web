@@ -149,6 +149,33 @@
           </p>
         </div>
 
+        <!-- 진행자: 선수로 참가하지 않는 사람. 팀장보다 먼저 정해야 후보에서 빠진다 -->
+        <div class="organizer-block">
+          <p class="organizer-title">
+            진행자
+            <span class="organizer-desc">선수로 참가하지 않는 사람 · 팀장·시드권자·지목식 후보에서 빠집니다</span>
+          </p>
+          <div class="captain-row" :class="{ 'captain-row--empty': !organizerId }">
+            <template v-if="organizerId">
+              <span class="captain-name">{{ playerById(organizerId)?.nickname ?? '알 수 없는 선수' }}</span>
+              <span v-if="playerById(organizerId)" class="captain-race" :class="`race--${playerById(organizerId)?.race.toLowerCase()}`">
+                {{ playerById(organizerId)?.race }}
+              </span>
+              <span v-if="playerById(organizerId)" class="captain-tier" :class="`tier--${$tierClass(playerById(organizerId)?.tier)}`">
+                {{ playerById(organizerId)?.tier }}
+              </span>
+            </template>
+            <span v-else class="slot-empty">없음 (모두 참가)</span>
+            <template v-if="!draftLocked">
+              <button class="btn-tier-sort organizer-pick" :disabled="organizerSaving" @click="openOrganizerPicker">
+                {{ organizerId ? '변경' : '지정' }}
+              </button>
+              <button v-if="organizerId" class="captain-remove" :disabled="organizerSaving" @click="setOrganizer(null)">×</button>
+            </template>
+          </div>
+          <p v-if="organizerError" class="save-error">{{ organizerError }}</p>
+        </div>
+
         <div class="captain-list">
           <div v-for="(playerId, i) in captains" :key="playerId" class="captain-row">
             <span class="captain-order-badge">{{ i + 1 }}</span>
@@ -426,6 +453,41 @@
       </section>
     </div>
 
+    <!-- ── 진행자 선택 오버레이 ──────────────────────── -->
+    <Teleport to="body">
+      <div v-if="showOrganizerPicker" class="overlay-backdrop">
+        <div class="picker-panel">
+          <div class="picker-header">
+            <span class="picker-title">
+              진행자 선택
+              <span class="picker-subtitle">팀장·시드권자는 고를 수 없음</span>
+            </span>
+            <button class="picker-close" @click="showOrganizerPicker = false">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <input v-model="organizerSearch" class="picker-search" placeholder="닉네임 검색..." type="text" />
+          <div class="picker-list">
+            <button
+              v-for="player in filteredOrganizerPlayers"
+              :key="player.id"
+              class="picker-item"
+              :class="{ selected: organizerId === player.id }"
+              :disabled="organizerSaving || organizerId === player.id"
+              @click="setOrganizer(player.id)"
+            >
+              <span class="picker-name">{{ player.nickname }}</span>
+              <span class="picker-race" :class="`race--${player.race.toLowerCase()}`">{{ player.race }}</span>
+              <span class="picker-tier" :class="`tier--${$tierClass(player.tier)}`">{{ player.tier }}</span>
+            </button>
+            <div v-if="filteredOrganizerPlayers.length === 0" class="picker-empty">검색 결과 없음</div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- ── 선수 선택 오버레이 ──────────────────────────── -->
     <Teleport to="body">
       <div v-if="showPlayerPicker" class="overlay-backdrop">
@@ -570,7 +632,7 @@ import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
 import AppHeader from '@/components/AppHeader.vue'
-import { getLeague, getLeagueCreatorPlayerId, updateLeagueDescription, updateLeagueEntryLimits, updateLeagueSeedSwapLimits, updateLeagueHandicap, updateLeaguePredictionStartPoints, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
+import { getLeague, updateLeagueOrganizer, updateLeagueDescription, updateLeagueEntryLimits, updateLeagueSeedSwapLimits, updateLeagueHandicap, updateLeaguePredictionStartPoints, checkAndUpdateReady, type LeagueRow } from '@/lib/leagues'
 import { MAX_TIER_STEPS, type HandicapRow } from '@/lib/handicap'
 import { type PlayerRow } from '@/lib/players'
 import { getMaps, type MapRow } from '@/lib/maps'
@@ -627,7 +689,6 @@ const pageError = ref<string | null>(null)
 const league = ref<LeagueRow | null>(null)
 const players = ref<PlayerRow[]>([])
 const maps = ref<MapRow[]>([])
-const creatorPlayerId = ref<number | null>(null)
 
 const captains = ref<number[]>([])
 const seedHolders = ref<number[]>([])
@@ -635,23 +696,23 @@ const matchMaps = ref<Record<number, string[]>>({})
 
 const captainCount = computed(() => league.value?.captain_count ?? 4)
 const draftLocked = computed(() => league.value?.draft_completed === true)
+// 진행자는 선수로 참가하지 않는다 — 팀장·시드권자 후보에서 뺀다 (생성자는 참가할 수 있다)
+const organizerId = computed(() => league.value?.organizer_player_id ?? null)
 
 onMounted(async () => {
   try {
-    const [leagueData, playersData, mapsData, captainsData, matchMapsData, seedHoldersData, creatorId] = await Promise.all([
+    const [leagueData, playersData, mapsData, captainsData, matchMapsData, seedHoldersData] = await Promise.all([
       getLeague(leagueId),
       getLeaguePlayers(leagueId),
       getMaps(),
       getCaptains(leagueId),
       getMatchMaps(leagueId),
       getSeedHolders(leagueId),
-      getLeagueCreatorPlayerId(leagueId),
     ])
 
     league.value = leagueData
     players.value = playersData
     maps.value = mapsData
-    creatorPlayerId.value = creatorId
 
     captains.value = captainsData
       .sort((a, b) => a.order_num - b.order_num)
@@ -829,12 +890,52 @@ function sortPlayers(list: PlayerRow[]) {
 const filteredPlayers = computed(() => {
   const q = playerSearch.value.trim().toLowerCase()
   const list = players.value.filter((p) =>
-    p.id !== creatorPlayerId.value &&
+    p.id !== organizerId.value &&
     p.is_active &&
     (!q || p.nickname.toLowerCase().includes(q)),
   )
   return sortPlayers(list)
 })
+
+// ── 진행자 ────────────────────────────────────────────────
+const showOrganizerPicker = ref(false)
+const organizerSearch = ref('')
+const organizerSaving = ref(false)
+const organizerError = ref<string | null>(null)
+
+// 이미 팀장·시드권자인 사람은 진행자가 될 수 없다 (참가자이므로)
+const filteredOrganizerPlayers = computed(() => {
+  const q = organizerSearch.value.trim().toLowerCase()
+  const taken = new Set([...captains.value, ...seedHolders.value])
+  const list = players.value.filter((p) =>
+    p.is_active &&
+    !taken.has(p.id) &&
+    (!q || p.nickname.toLowerCase().includes(q)),
+  )
+  return sortPlayers(list)
+})
+
+function openOrganizerPicker() {
+  organizerSearch.value = ''
+  organizerError.value = null
+  showOrganizerPicker.value = true
+}
+
+async function setOrganizer(playerId: number | null) {
+  if (!league.value || organizerSaving.value) return
+  organizerSaving.value = true
+  organizerError.value = null
+  try {
+    await updateLeagueOrganizer(leagueId, playerId)
+    league.value = { ...league.value, organizer_player_id: playerId }
+    showOrganizerPicker.value = false
+    showToast(playerId ? '진행자가 지정되었습니다.' : '진행자를 해제했습니다.')
+  } catch (e: any) {
+    organizerError.value = e.message ?? '저장 중 오류가 발생했습니다.'
+  } finally {
+    organizerSaving.value = false
+  }
+}
 
 function openPlayerPicker() {
   playerSearch.value = ''
@@ -924,7 +1025,7 @@ const seedError = ref<string | null>(null)
 const filteredSeedPlayers = computed(() => {
   const q = seedSearch.value.trim().toLowerCase()
   const list = players.value.filter((p) =>
-    p.id !== creatorPlayerId.value &&
+    p.id !== organizerId.value &&
     p.is_active &&
     (!q || p.nickname.toLowerCase().includes(q)),
   )
