@@ -129,7 +129,7 @@
                     공개됨
                   </button>
                   <button
-                    v-else-if="row.id && bothSubmittedIds.has(row.id) && authStore.user?.id === league?.created_by"
+                    v-else-if="row.id && bothSubmittedIds.has(row.id)"
                     class="btn-pill btn-pill--green"
                     :disabled="revealingId === row.id"
                     @click="revealMatch(row)"
@@ -205,7 +205,6 @@ import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { ko } from 'date-fns/locale'
 import { getLeague, type LeagueRow } from '@/lib/leagues'
-import { useAuthStore } from '@/stores/auth'
 import { getCaptains } from '@/lib/leagueDetail'
 import { getPlayers } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
@@ -216,7 +215,6 @@ import { withTimeout } from '@/lib/supabase'
 const route = useRoute()
 const router = useRouter()
 const leagueId = route.params.id as string
-const authStore = useAuthStore()
 
 const loading = ref(true)
 const pageError = ref<string | null>(null)
