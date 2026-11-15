@@ -340,18 +340,34 @@ export interface PredictionLeague {
   name: string
   start_date: string
   end_date: string
+  type: string
+  is_ready: boolean
+  draft_completed: boolean
 }
 
-/** 랭킹에서 고를 수 있는 리그(최근 시작 순)와 기본 선택(진행 중인 리그, 없으면 가장 최근 리그) */
+// 준비 완료 + (정규리그면) 지목식 완료 — 리그 목록의 "진행 중" 배지와 같은 기준
+function isSetUp(l: PredictionLeague): boolean {
+  const isRegular = l.type === 'regular_summer' || l.type === 'regular_winter'
+  return l.is_ready && (!isRegular || l.draft_completed)
+}
+
+/**
+ * 랭킹에서 고를 수 있는 리그(최근 시작 순)와 기본 선택.
+ * 기본 = 기간 안의 진행 중 리그 → 기간 안의 준비 중 리그 → 가장 최근 리그.
+ * 출석 포인트가 가는 리그(DB check_in_attendance)와 같은 순서다 — 기간만 보면 다음 시즌 리그를
+ * 미리 만들어 둔 동안 준비 중인 새 리그가 먼저 잡혔다. 바꿀 땐 두 곳을 같이 바꾼다
+ */
 export async function getPredictionLeagues(now: Date = new Date()): Promise<{ leagues: PredictionLeague[]; defaultId: string | null }> {
   const { data, error } = await supabase
     .from('leagues')
-    .select('id, name, start_date, end_date')
+    .select('id, name, start_date, end_date, type, is_ready, draft_completed')
     .order('start_date', { ascending: false })
+    .order('created_at', { ascending: false })
   if (error) throw error
   const leagues = (data ?? []) as PredictionLeague[]
   const today = isoDateOnly(new Date(now.getTime() + (now.getTimezoneOffset() + 540) * 60000))
-  const active = leagues.find(l => l.start_date <= today && today <= l.end_date)
+  const inRange = leagues.filter(l => l.start_date <= today && today <= l.end_date)
+  const active = inRange.find(isSetUp) ?? inRange[0]
   return { leagues, defaultId: active?.id ?? leagues[0]?.id ?? null }
 }
 

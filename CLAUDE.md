@@ -164,6 +164,9 @@ S를 추가할 때 빠져 있어 운영에서 S 저장·등록이 거부됐다.
 - **승부예측·출석 포인트는 리그별 지갑(`league_point_wallets`)이다.** `users.points`는 더 쓰지 않는다.
   포인트를 움직이는 쓰기는 서버 함수로만(브라우저 직접 쓰기 금지). 마감은 경기 당일 20:00 KST —
   화면 `PREDICTION_DEADLINE_KST`와 DB `prediction_deadline()`을 함께 바꾼다
+- **출석 포인트가 가는 리그는 기간만으로 고르지 않는다** — 기간 안의 진행 중(준비 완료 + 지목식 완료) 리그 먼저,
+  없으면 기간 안의 준비 중 리그. 다음 시즌 리그를 미리 만들면 기간이 겹쳐 새 리그로 포인트가 갔다.
+  DB `check_in_attendance()`와 랭킹 기본 리그(`getPredictionLeagues`)를 같이 바꾼다
 
 ## Git
 - `feat/`, `fix/`, `refactor/`, `style/`, `docs/`, `chore/` 접두사로 작은 단위 브랜치 → `dev` 병합
