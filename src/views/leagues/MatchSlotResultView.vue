@@ -429,7 +429,7 @@
               </svg>
             </button>
           </div>
-          <p class="sub-modal-hint">원래 선수의 티어 이하 · 이 경기 미출전 선수만 표시됩니다</p>
+          <p class="sub-modal-hint">원래 선수의 티어 이하 · 이 경기 미출전 선수만 표시됩니다<template v-if="[...pollVotesByCaptain.values()].some(v => v.length)"> · ✋ 팀 투표 지원자가 먼저 나옵니다(참고용)</template></p>
           <div v-if="subModal.options.length" class="sub-player-list">
             <button
               v-for="opt in subModal.options"
@@ -439,6 +439,7 @@
               @click="confirmSub(opt.value)"
             >
               <span class="slot-player-name">{{ opt.label }}</span>
+              <span v-if="opt.badge" class="sub-voter-badge">{{ opt.badge }}</span>
               <RaceBadge :race="opt.race" />
               <TierBadge :tier="opt.tier" />
               <span class="sub-player-pts">{{ opt.points }}pt</span>
@@ -470,6 +471,7 @@ import { getScheduleEntries, computeFinalRosters, getAceTierBans, calcEntryPoint
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getDraftPicks, getSwapLog } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
+import { getTeamPolls, getTeamPollVotes, type TeamPollVote } from '@/lib/teamPolls'
 import { withTimeout } from '@/lib/supabase'
 
 const route = useRoute()
@@ -578,6 +580,19 @@ interface SubModal {
   options: SelectOption[]
 }
 const subModal = ref<SubModal | null>(null)
+
+// 팀 투표 지원자 — 대타를 고를 때 참고용으로 표시한다(규정에 맞는 후보 중에서만 보인다).
+// 투표는 엔트리 공개 후에만 운영진이 읽을 수 있고(DB 정책), 못 읽어도 대타 선택에는 영향이 없다
+const pollVotesByCaptain = ref(new Map<number, TeamPollVote[]>())
+async function loadPollVotes() {
+  try {
+    const polls = await getTeamPolls([matchId])
+    const votes = await getTeamPollVotes(polls.map(p => p.id))
+    pollVotesByCaptain.value = new Map(polls.map(p => [p.captain_player_id, votes.filter(v => v.poll_id === p.id)]))
+  } catch { /* 투표 없이 진행 */ }
+}
+const isVoter = (captainId: number, slotNum: number, userId: number) =>
+  (pollVotesByCaptain.value.get(captainId) ?? []).some(v => v.slot === slotNum && v.user_id === userId)
 const savingSub = ref(false)
 
 // 1~6경기 스코어
@@ -947,7 +962,9 @@ function openSubModal(slotNum: number, isTeamA: boolean, playerIndex: number) {
       tier: p.tier,
       race: p.race || undefined,
       points: tierPoint(p.tier),
+      badge: isVoter(captainId, slotNum, p.id) ? '✋ 지원' : undefined,
     }))
+    .sort((a, b) => (b.badge ? 1 : 0) - (a.badge ? 1 : 0))
 
   subModal.value = { slotNum, isTeamA, playerIndex, originalPlayerId: originalPlayer.id, options }
 }
@@ -1193,6 +1210,7 @@ onMounted(async () => {
     if (!match) throw new Error('경기를 찾을 수 없습니다.')
     schedule.value = match
     isCompleted.value = match.is_completed
+    loadPollVotes()
 
     const playerMap = new Map(players.map(p => [p.id, p]))
     const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
