@@ -591,6 +591,28 @@
                         </div>
                       </div>
 
+                      <p v-if="entryModal.autoBanPick[slot.num]" class="slot-auto-note">
+                        ✋ {{ votedPlayer(entryModal.autoBanPick[slot.num])?.nickname }}님이 투표에서 고른 밴·픽으로 채웠어요 (직접 바꿀 수 있어요)
+                      </p>
+
+                      <!-- 팀 투표 지원자 — 눌러서 이 칸에 넣는다(참고용, 드롭다운에서 다른 선수를 골라도 된다) -->
+                      <div v-if="!entryModal.readonly && slotVoters(slot.num).length" class="slot-voters">
+                        <span class="slot-voters-label">✋ 지원<span v-if="entryModal.poll?.status === 'open'" class="slot-voters-live"> · 투표 진행 중</span></span>
+                        <button
+                          v-for="v in slotVoters(slot.num)"
+                          :key="v.user_id"
+                          type="button"
+                          class="slot-voter"
+                          :class="{ 'slot-voter--used': !voterAssignable(slot.num, v.user_id) }"
+                          :disabled="!voterAssignable(slot.num, v.user_id)"
+                          :title="voterAssignable(slot.num, v.user_id) ? '이 칸에 넣기' : (slot.num === TEAM_SLOT ? '이미 이 칸에 있음' : `${assignedIndividualSlot(slot.num, v.user_id)}경기에 배정됨`)"
+                          @click="pickVoter(slot.num, v.user_id)"
+                        >
+                          {{ votedPlayer(v.user_id)?.nickname ?? `선수 ${v.user_id}` }}
+                          <span v-if="!voterAssignable(slot.num, v.user_id) && slot.num !== TEAM_SLOT" class="slot-voter-note">{{ assignedIndividualSlot(slot.num, v.user_id) }}경기</span>
+                        </button>
+                      </div>
+
                       <!-- 선수 선택 -->
                       <div class="slot-selects">
                         <div
@@ -716,7 +738,7 @@ import {
 import { TIER_ORDER, tierPoint, sortTiers } from '@/lib/constants'
 import { revealEntries } from '@/lib/schedules'
 import { notifyEntrySubmitted } from '@/lib/notifications'
-import { getMyOpenPollLeagueIds } from '@/lib/teamPolls'
+import { getMyOpenPollLeagueIds, getTeamPolls, getTeamPollVotes, votersBySlot, type TeamPoll, type TeamPollVote } from '@/lib/teamPolls'
 import TeamPollModal from '@/components/TeamPollModal.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute, useRouter } from 'vue-router'
@@ -1215,6 +1237,11 @@ interface EntryModalState {
   totalMax: number
   /** 팀전 최소 포인트. null이면 제한 없음 */
   teamMin: number | null
+  /** 이 경기의 우리 팀 투표(없으면 null) — 엔트리를 짤 때 참고용 */
+  poll: TeamPoll | null
+  pollVotes: TeamPollVote[]
+  /** 2·3경기: 밴·픽을 선수의 투표로 자동 채운 경기 번호 → 채워 준 선수 id (손으로 고치면 지운다) */
+  autoBanPick: Record<number, number>
 }
 const entryModal = reactive<EntryModalState>({
   open: false,
@@ -1234,6 +1261,9 @@ const entryModal = reactive<EntryModalState>({
   teamMax: 7,
   totalMax: 23,
   teamMin: null,
+  poll: null,
+  pollVotes: [],
+  autoBanPick: {},
 })
 
 // ── 데이터 로드 ──────────────────────────────────────────────
@@ -1361,8 +1391,61 @@ function getSlotPlayer(slotNum: number, idx: number): number {
 
 function setSlotPlayer(slotNum: number, idx: number, playerId: number) {
   if (!entryModal.selections[slotNum]) return
+  const prev = entryModal.selections[slotNum][idx]
   entryModal.selections[slotNum][idx] = playerId
+  if (prev !== playerId) applyVotedBanPick(slotNum, playerId)
 }
+
+/** 슬롯의 지원자 투표 (슬롯 번호 → 지원자 목록은 팀 투표 화면과 같은 함수) */
+function slotVoters(slotNum: number): TeamPollVote[] {
+  return votersBySlot(entryModal.pollVotes).get(slotNum) ?? []
+}
+
+/**
+ * 2·3경기에 선수를 넣으면 그 선수가 투표에서 고른 밴·픽을 채운다(그 선수가 나가면 자기가 고른 밴·픽으로 간다는 약속).
+ * 투표하지 않은 선수로 바꾸면 자동으로 채웠던 값만 비운다 — 팀장이 손으로 고른 값은 건드리지 않는다.
+ * 저장된 엔트리를 열 때는 setSlotPlayer를 거치지 않으므로 저장된 밴·픽을 덮어쓰지 않는다
+ */
+function applyVotedBanPick(slotNum: number, playerId: number) {
+  if (!(BAN_SLOTS as readonly number[]).includes(slotNum) || entryModal.readonly) return
+  const vote = playerId ? slotVoters(slotNum).find(v => v.user_id === playerId) : undefined
+  const mapIds = (entryModal.slotMaps[slotNum] ?? []).map(m => m.id)
+  if (vote?.ban_map_id && vote.pick_map_id && mapIds.includes(vote.ban_map_id) && mapIds.includes(vote.pick_map_id)) {
+    entryModal.banSelections[slotNum] = vote.ban_map_id
+    entryModal.pickSelections[slotNum] = vote.pick_map_id
+    entryModal.autoBanPick[slotNum] = playerId
+  } else if (entryModal.autoBanPick[slotNum]) {
+    entryModal.banSelections[slotNum] = null
+    entryModal.pickSelections[slotNum] = null
+    delete entryModal.autoBanPick[slotNum]
+  }
+}
+
+/** 지원자 이름을 눌러 그 칸에 넣는다 — 이미 다른 개인전에 배정됐거나 같은 칸에 있으면 못 넣는다 */
+function voterAssignable(slotNum: number, userId: number): boolean {
+  if (slotNum === TEAM_SLOT) return !(entryModal.selections[TEAM_SLOT] ?? []).includes(userId)
+  return !assignedIndividualSlot(slotNum, userId)
+}
+/** 개인전에서 이 선수가 이미 들어간 다른 경기 번호(없으면 0) */
+function assignedIndividualSlot(exceptSlot: number, userId: number): number {
+  for (const s of INDIVIDUAL_SLOTS as readonly number[]) {
+    if (s !== exceptSlot && (entryModal.selections[s]?.[0] ?? 0) === userId) return s
+  }
+  return 0
+}
+function pickVoter(slotNum: number, userId: number) {
+  if (entryModal.readonly || !voterAssignable(slotNum, userId)) return
+  if (slotNum === TEAM_SLOT) {
+    const ids = entryModal.selections[TEAM_SLOT]
+    const empty = ids.findIndex(id => !id)
+    if (empty >= 0) setSlotPlayer(TEAM_SLOT, empty, userId)
+    return
+  }
+  setSlotPlayer(slotNum, 0, userId)
+}
+const votedPlayer = (id: number) => teamMemberMap.value.get(id)
+
+const votedFor = (slotNum: number, userId: number) => slotVoters(slotNum).some(v => v.user_id === userId)
 
 function buildOptions(slotNum: number, idx: number): SelectOption[] {
   const isTeam = slotNum === TEAM_SLOT
@@ -1379,12 +1462,15 @@ function buildOptions(slotNum: number, idx: number): SelectOption[] {
         return true
       }
     })
-    .sort((a, b) => (TIER_POINTS[b.tier] ?? 0) - (TIER_POINTS[a.tier] ?? 0))
+    .sort((a, b) =>
+      (votedFor(slotNum, b.id) ? 1 : 0) - (votedFor(slotNum, a.id) ? 1 : 0)
+      || (TIER_POINTS[b.tier] ?? 0) - (TIER_POINTS[a.tier] ?? 0))
     .map(m => {
       const base = TIER_POINTS[m.tier] ?? 0
       return {
         value: m.id,
         label: m.nickname,
+        badge: votedFor(slotNum, m.id) ? '✋ 지원' : undefined,
         tier: m.tier,
         race: m.race,
         points: m.is_military ? Math.max(0, base - MILITARY_DEDUCTION) : base,
@@ -1424,6 +1510,9 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.banSelections = {}
   entryModal.pickSelections = {}
   entryModal.aceTierBan = null
+  entryModal.poll = null
+  entryModal.pollVotes = []
+  entryModal.autoBanPick = {}
   entryModal.randomIds = new Set<number>()
   entryModal.soloMax = item.soloMax
   entryModal.teamMax = item.teamMax
@@ -1487,6 +1576,13 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
       }
     }
     entryModal.aceTierBan = existingAceBan
+
+    // 팀 투표(참고용) — 못 불러와도 엔트리 작성에는 영향이 없다
+    try {
+      const polls = await getTeamPolls([item.schedule.id])
+      entryModal.poll = polls.find(p => p.captain_player_id === item.myTeamCaptainId) ?? null
+      entryModal.pollVotes = entryModal.poll ? await getTeamPollVotes([entryModal.poll.id]) : []
+    } catch { /* 투표 없이 진행 */ }
   } catch (e: any) {
     entryError.value = e.message ?? '데이터를 불러올 수 없습니다.'
   } finally {
@@ -1499,12 +1595,14 @@ function closeEntryModal() {
 }
 
 function toggleBan(slotNum: number, mapId: string) {
+  delete entryModal.autoBanPick[slotNum]
   entryModal.banSelections[slotNum] = entryModal.banSelections[slotNum] === mapId ? null : mapId
   if (entryModal.pickSelections[slotNum] === mapId) entryModal.pickSelections[slotNum] = null
 }
 
 function togglePick(slotNum: number, mapId: string) {
   if (entryModal.banSelections[slotNum] === mapId) return
+  delete entryModal.autoBanPick[slotNum]
   entryModal.pickSelections[slotNum] = entryModal.pickSelections[slotNum] === mapId ? null : mapId
 }
 

@@ -100,6 +100,17 @@
   white-space: nowrap;
 }
 
+.ps-opt-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: var(--c-brand-text);
+  background: var(--c-brand-bg);
+  border: 1px solid var(--c-brand-border);
+  white-space: nowrap;
+}
+
 .ps-opt-pts {
   flex-shrink: 0;
   font-size: 11px;
