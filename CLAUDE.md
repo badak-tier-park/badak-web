@@ -168,7 +168,8 @@ S를 추가할 때 빠져 있어 운영에서 S 저장·등록이 거부됐다.
   없으면 기간 안의 준비 중 리그. 다음 시즌 리그를 미리 만들면 기간이 겹쳐 새 리그로 포인트가 갔다.
   DB `check_in_attendance()`와 랭킹 기본 리그(`getPredictionLeagues`)를 같이 바꾼다
 - **엔트리 마감은 경기 당일 20:00 KST** — 이후엔 제출 취소 불가. 화면 `ENTRY_DEADLINE_KST`와 DB `entry_deadline()`을
-  함께 바꾼다(승부예측 마감과 같은 시각이지만 별개 설정). 제출 취소는 서버 함수 `cancel_entry_submission()`으로만
+  함께 바꾼다(승부예측 마감과 같은 시각이지만 별개 설정). 제출 취소는 서버 함수 `cancel_entry_submission()`으로만.
+  20:00에 양팀 제출 경기를 자동 공개하고 미제출 알림을 보내는 건 DB 예약 작업(`entry-deadline-jobs`) — 상세는 `src/views/leagues/CLAUDE.md`
 
 ## Git
 - `feat/`, `fix/`, `refactor/`, `style/`, `docs/`, `chore/` 접두사로 작은 단위 브랜치 → `dev` 병합
