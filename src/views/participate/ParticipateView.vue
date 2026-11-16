@@ -245,6 +245,12 @@
                       제출됨
                     </span>
                     <button class="btn-pill btn-pill--md btn-pill--purple" @click="openEntryModal(item, true)">확인</button>
+                    <button
+                      v-if="canCancelSubmission(item.schedule)"
+                      class="btn-pill btn-pill--md btn-pill--red btn-pill--silent"
+                      :disabled="cancelingId === item.schedule.id"
+                      @click="handleCancelSubmit(item)"
+                    >{{ cancelingId === item.schedule.id ? '...' : '제출 취소' }}</button>
                     <template v-if="!item.schedule.is_entry_revealed">
                       <span v-if="consentedSet.has(item.schedule.id)" class="entry-consent-badge">
                         공개 동의됨
@@ -686,7 +692,7 @@ import { getSchedules, getRevealedSchedules, getCompletedSchedules, getSlotResul
 import { getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
 import {
-  getEntries, saveEntries, submitEntry, getEntryStatusMap, computeFinalRosters,
+  getEntries, saveEntries, submitEntry, cancelEntrySubmission, canCancelSubmission, getEntryStatusMap, computeFinalRosters,
   consentReveal, checkBothConsented, getConsentedSet,
   getAceTierBan, saveAceTierBan, getEntriesForSchedules,
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS, MILITARY_DEDUCTION, calcEntryPoints, pointTiebreakWinner,
@@ -753,6 +759,7 @@ const myCaptainLeagueIds = ref(new Set<string>())
 const myViceCaptainOfByLeague = ref(new Map<string, number>())
 const entryStatusMap = ref(new Map<number, EntryStatus>())
 const submittingId = ref<number | null>(null)
+const cancelingId = ref<number | null>(null)
 const consentedSet = ref(new Set<number>())
 const consentingId = ref<number | null>(null)
 
@@ -1598,6 +1605,23 @@ async function handleSubmitEntry(item: MyMatchItem) {
     alert(e.message ?? '제출 중 오류가 발생했습니다.')
   } finally {
     submittingId.value = null
+  }
+}
+
+async function handleCancelSubmit(item: MyMatchItem) {
+  const scheduleId = item.schedule.id
+  if (!confirm('엔트리 제출을 취소하시겠습니까?\n수정 후 다시 제출해야 하며, 공개 동의도 함께 취소됩니다.')) return
+  cancelingId.value = scheduleId
+  try {
+    await cancelEntrySubmission(scheduleId, item.myTeamCaptainId)
+    entryStatusMap.value = new Map(entryStatusMap.value).set(scheduleId, 'saved')
+    const consented = new Set(consentedSet.value)
+    consented.delete(scheduleId)
+    consentedSet.value = consented
+  } catch (e: any) {
+    alert(e.message ?? '제출 취소 중 오류가 발생했습니다.')
+  } finally {
+    cancelingId.value = null
   }
 }
 
