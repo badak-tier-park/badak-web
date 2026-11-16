@@ -45,6 +45,7 @@ export function notificationPath(type: NotificationType): string | null {
   if (type.startsWith('prediction_')) return '/participate?tab=predictions'
   if (type.startsWith('calendar_')) return '/' // 홈의 캘린더
   if (type.startsWith('entry_')) return '/participate' // 엔트리 미제출 알림 → 리그참여(엔트리 제출)
+  if (type.startsWith('team_poll_')) return '/participate' // 팀 투표 알림 → 리그참여의 "팀 투표" 버튼
   return null
 }
 

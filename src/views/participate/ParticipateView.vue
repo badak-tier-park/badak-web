@@ -112,6 +112,13 @@
               </button>
             </div>
             <button
+              v-if="league.draft_completed && (myCaptainLeagueIds.has(league.id) || pollLeagueIds.has(league.id))"
+              class="btn-entry-submit btn-poll-open"
+              @click="pollModal.league = league"
+            >
+              팀 투표
+            </button>
+            <button
               v-if="league.draft_started && !league.draft_completed && myCaptainLeagueIds.has(league.id)"
               class="btn-entry-submit btn-draft-enter"
               @click="$router.push({ name: 'captain-draft', params: { id: league.id } })"
@@ -130,6 +137,14 @@
       </div>
       </template>
     </div>
+
+    <!-- ── 팀 투표 모달 ────────────────────────────────────── -->
+    <TeamPollModal
+      v-if="pollModal.league && myPlayerId"
+      :league="pollModal.league"
+      :my-player-id="myPlayerId"
+      @close="closePollModal"
+    />
 
     <!-- ── 리그 안내 모달 ──────────────────────────────────── -->
     <Teleport to="body">
@@ -701,6 +716,8 @@ import {
 import { TIER_ORDER, tierPoint, sortTiers } from '@/lib/constants'
 import { revealEntries } from '@/lib/schedules'
 import { notifyEntrySubmitted } from '@/lib/notifications'
+import { getMyOpenPollLeagueIds } from '@/lib/teamPolls'
+import TeamPollModal from '@/components/TeamPollModal.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute, useRouter } from 'vue-router'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
@@ -760,6 +777,17 @@ const myViceCaptainOfByLeague = ref(new Map<string, number>())
 const entryStatusMap = ref(new Map<number, EntryStatus>())
 const submittingId = ref<number | null>(null)
 const cancelingId = ref<number | null>(null)
+// 팀 투표: 내가 팀원으로 들어 있는 열린 투표가 있는 리그(팀장·부팀장은 투표가 없어도 버튼이 보인다)
+const pollLeagueIds = ref(new Set<string>())
+const pollModal = reactive({ league: null as LeagueRow | null })
+async function refreshPollLeagues() {
+  if (!myPlayerId.value) return
+  try { pollLeagueIds.value = await getMyOpenPollLeagueIds(myPlayerId.value) } catch { /* 버튼만 안 보인다 */ }
+}
+function closePollModal() {
+  pollModal.league = null
+  refreshPollLeagues()
+}
 const consentedSet = ref(new Set<number>())
 const consentingId = ref<number | null>(null)
 
@@ -1220,6 +1248,7 @@ onMounted(async () => {
   const me = await getPlayerByDiscordId(discordId)
   if (!me) return
   myPlayerId.value = me.id
+  refreshPollLeagues()
 
   // 팀장 / 부팀장 권한 파악 (draft_completed 또는 draft_started 리그)
   const captainCheckLeagues = allLeagues.filter(l => l.draft_completed || l.draft_started)
