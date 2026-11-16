@@ -5,7 +5,7 @@
         <span class="balance-label">내 포인트</span>
         <span v-if="!wallets.length" class="balance-value">-</span>
         <span v-for="w in wallets" :key="w.league_id" class="balance-item">
-          <span v-if="wallets.length > 1" class="balance-league">{{ w.league_name }}</span>
+          <span v-if="wallets.length > 1 || !matches.length" class="balance-league">{{ w.league_name }}</span>
           <span class="balance-value">{{ w.points.toLocaleString() }}<span class="balance-unit">pt</span></span>
         </span>
       </div>
@@ -115,6 +115,7 @@ import {
   placePrediction,
   cancelPrediction,
   getMyLeagueWallets,
+  getPredictionLeagues,
   getCurrentMonday,
   getNextMonday,
   matchTypeLabel,
@@ -249,7 +250,14 @@ async function confirmBet(amount: number) {
 async function reload() {
   if (!userId.value) return
   matches.value = await getPredictableMatches(userId.value)
-  wallets.value = await getMyLeagueWallets(userId.value, matches.value.map(m => m.league_id))
+  // 잔액은 이번 주 경기들의 리그 기준. 경기가 없는 주에도 출석으로 쌓인 포인트가 보이게,
+  // 그땐 출석 포인트가 가는 리그(랭킹 기본 리그와 같은 기준)의 잔액을 보여 준다 — 예전엔 "-"였다
+  let leagueIds = matches.value.map(m => m.league_id)
+  if (!leagueIds.length) {
+    const { defaultId } = await getPredictionLeagues()
+    if (defaultId) leagueIds = [defaultId]
+  }
+  wallets.value = await getMyLeagueWallets(userId.value, leagueIds)
 }
 
 async function handleCancel(m: PredictableMatch) {

@@ -218,7 +218,9 @@ export function getLeagueStatus(league: LeagueRow): LeagueStatus {
   if (!league.is_ready) return 'preparing'
   const isRegular = league.type === 'regular_summer' || league.type === 'regular_winter'
   if (isRegular && !league.draft_completed) return 'preparing'
-  const today = new Date().toISOString().slice(0, 10)
+  // 한국 날짜로 비교한다. UTC 날짜를 쓰면 시작일·종료일 00~09시에 하루 늦게 바뀌어
+  // KST로 판단하는 DB(출석 등)와 어긋났다
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10)
   if (today < league.start_date) return 'upcoming'
   if (today > league.end_date) return 'finished'
   return 'ongoing'

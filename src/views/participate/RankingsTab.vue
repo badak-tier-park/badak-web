@@ -40,10 +40,11 @@
             <td class="col-points">{{ r.points.toLocaleString() }}</td>
             <td class="col-correct">{{ r.correct_count }} / {{ r.resolved_count }}</td>
             <td class="col-acc">
+              <!-- 정산된 예측이 없으면(아직 결과 전·전부 환불) 0%가 아니라 "-" — 다 틀린 것처럼 보였다 -->
               <div class="acc-bar">
-                <div class="acc-bar-fill" :style="{ width: r.accuracy + '%' }" />
+                <div v-if="r.resolved_count > 0" class="acc-bar-fill" :style="{ width: r.accuracy + '%' }" />
               </div>
-              <span class="acc-val">{{ r.accuracy.toFixed(1) }}%</span>
+              <span class="acc-val">{{ r.resolved_count > 0 ? `${r.accuracy.toFixed(1)}%` : '-' }}</span>
             </td>
           </tr>
         </tbody>
