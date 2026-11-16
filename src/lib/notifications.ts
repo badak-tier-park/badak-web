@@ -44,6 +44,7 @@ export interface NotificationRow {
 export function notificationPath(type: NotificationType): string | null {
   if (type.startsWith('prediction_')) return '/participate?tab=predictions'
   if (type.startsWith('calendar_')) return '/' // 홈의 캘린더
+  if (type.startsWith('entry_')) return '/participate' // 엔트리 미제출 알림 → 리그참여(엔트리 제출)
   return null
 }
 
