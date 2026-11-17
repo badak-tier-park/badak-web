@@ -901,3 +901,15 @@
   }
 }
 
+
+// 대타 선택: 팀 투표 지원자 표시 (참고용)
+.sub-voter-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: var(--c-brand-text);
+  background: var(--c-brand-bg);
+  border: 1px solid var(--c-brand-border);
+  white-space: nowrap;
+}
