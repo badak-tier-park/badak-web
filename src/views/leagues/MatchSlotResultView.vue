@@ -429,7 +429,7 @@
               </svg>
             </button>
           </div>
-          <p class="sub-modal-hint">원래 선수의 티어 이하 · 이 경기 미출전 선수만 표시됩니다<template v-if="[...pollVotesByCaptain.values()].some(v => v.length)"> · ✋ 팀 투표 지원자가 먼저 나옵니다(참고용)</template></p>
+          <p class="sub-modal-hint">원래 선수의 티어 이하 · 이 경기 미출전 선수만 표시됩니다<template v-if="[...pollVotesByCaptain.values()].some(v => v.length)"> · ✓ 팀 투표 지원자가 먼저 나옵니다(참고용)</template></p>
           <div v-if="subModal.options.length" class="sub-player-list">
             <button
               v-for="opt in subModal.options"
@@ -962,7 +962,7 @@ function openSubModal(slotNum: number, isTeamA: boolean, playerIndex: number) {
       tier: p.tier,
       race: p.race || undefined,
       points: tierPoint(p.tier),
-      badge: isVoter(captainId, slotNum, p.id) ? '✋ 지원' : undefined,
+      badge: isVoter(captainId, slotNum, p.id) ? '✓ 지원' : undefined,
     }))
     .sort((a, b) => (b.badge ? 1 : 0) - (a.badge ? 1 : 0))
 

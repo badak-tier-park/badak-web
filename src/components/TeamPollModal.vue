@@ -25,7 +25,7 @@
           <!-- ── 경기 목록 ───────────────────────────────────── -->
           <template v-else-if="!detail">
             <p class="poll-hint">
-              나가고 싶은 경기에 손을 들면 팀장·부팀장이 엔트리를 짤 때 참고합니다. 결정이 아니라 참고용이며,
+              나가고 싶은 경기에 ✓ 체크하면 팀장·부팀장이 엔트리를 짤 때 참고합니다. 결정이 아니라 참고용이며,
               엔트리를 제출하면 그 경기 투표는 자동으로 마감됩니다.
             </p>
             <div v-if="!matches.length" class="state-msg">투표할 수 있는 경기가 없습니다.</div>
@@ -89,23 +89,40 @@
                   <span class="slot-type-badge" :class="{ 'slot-type-badge--team': slot === 4 }">
                     {{ slot === 4 ? '팀전' : '개인전' }}
                   </span>
-                  <span v-if="slotMapIds(slot).length" class="poll-slot-maps">
-                    <span v-for="id in slotMapIds(slot)" :key="id" class="map-chip">{{ mapName(id) }}</span>
-                  </span>
                   <button
                     v-if="detail.poll.status === 'open'"
                     type="button"
-                    class="poll-hand"
-                    :class="{ 'poll-hand--on': draft[slot]?.on }"
+                    class="poll-check"
+                    :class="{ 'poll-check--on': draft[slot]?.on }"
+                    :aria-pressed="!!draft[slot]?.on"
+                    :aria-label="`${slot}경기 나가고 싶음`"
+                    title="나가고 싶음"
                     @click="toggleSlot(slot)"
-                  >{{ draft[slot]?.on ? '✋ 나가고 싶음' : '손들기' }}</button>
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path d="M2.5 7.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- 맵 (썸네일 + 이름) -->
+                <div v-if="slotMapIds(slot).length" class="poll-slot-maps">
+                  <span v-for="id in slotMapIds(slot)" :key="id" class="map-chip">
+                    <img v-if="mapThumb(id)" :src="mapThumb(id)!" class="map-chip-img" alt="" />
+                    <span v-else class="map-chip-img map-chip-img--empty" />
+                    <span class="map-chip-name">{{ mapName(id) }}</span>
+                  </span>
                 </div>
 
                 <!-- 2·3경기: 내가 나가면 밴·픽 (필수) -->
                 <div v-if="detail.poll.status === 'open' && draft[slot]?.on && needsBanPick(slot)" class="poll-banpick">
                   <p class="poll-banpick-hint">내가 이 경기에 나갈 때의 밴·픽 (둘 다 필수)</p>
                   <div v-for="id in slotMapIds(slot)" :key="id" class="poll-banpick-row">
-                    <span class="map-chip">{{ mapName(id) }}</span>
+                    <span class="map-chip">
+                      <img v-if="mapThumb(id)" :src="mapThumb(id)!" class="map-chip-img" alt="" />
+                      <span v-else class="map-chip-img map-chip-img--empty" />
+                      <span class="map-chip-name">{{ mapName(id) }}</span>
+                    </span>
                     <button
                       type="button" class="poll-bp-btn poll-bp-btn--ban"
                       :class="{ 'poll-bp-btn--active': draft[slot].ban === id }"
@@ -212,6 +229,7 @@ const playerName = (id: number) => players.value.get(id)?.nickname ?? `선수 ${
 const playerRace = (id: number) => players.value.get(id)?.race ?? ''
 const playerTier = (id: number) => players.value.get(id)?.tier ?? ''
 const mapName = (id: string) => mapsById.value.get(id)?.name ?? '(알 수 없는 맵)'
+const mapThumb = (id: string) => mapsById.value.get(id)?.thumbnail_url ?? null
 const slotMapIds = (slot: number) => matchMapIds.value.get(slot) ?? []
 // 엔트리 창의 밴·픽 조건과 같다 — 2·3경기이고 맵이 2개 이상
 const needsBanPick = (slot: number) =>
