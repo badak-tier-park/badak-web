@@ -400,9 +400,10 @@
 
   &:hover { border-color: var(--c-border-strong); }
 
+  // 비어 있는 칸 — 흐리게 하면 안의 "지정" 버튼까지 안 보여서 점선 테두리로만 구분한다
   &--empty {
-    opacity: 0.45;
     border-style: dashed;
+    border-color: var(--c-border-strong);
   }
 }
 
@@ -658,7 +659,7 @@
 
 // ── 피커: 공통(styles/_picker.scss) 외에 이 화면에서만 쓰는 것 ──
 .picker-item.map-used {
-  opacity: 0.45;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 

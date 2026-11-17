@@ -114,9 +114,8 @@
   }
 
   &--loser {
-    color: var(--c-text-faint);
+    color: var(--c-text-muted);
     font-weight: 500;
-    opacity: 0.5;
   }
 }
 
@@ -214,7 +213,7 @@
   }
 
   &--loser {
-    opacity: 0.35;
+    opacity: 0.6;
     .rse-name-badge {
       font-size: 11px;
       padding: 1px 6px;
