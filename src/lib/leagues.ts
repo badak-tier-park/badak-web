@@ -104,11 +104,21 @@ export function calculateStandings(
 }
 
 /**
- * 미해결 동률이 플레이오프 진출을 가르는 경계(1위|2위 = 결승 직행, 3위|4위 = 준결승 진출)에 걸렸는지.
- * 2위·3위 동률은 둘 다 준결승이라 대진에 영향이 없다.
+ * 본선에 준결승이 있는지. 팀장 4명 이상이면 1위 결승 직행 + 2위 vs 3위 준결승이고,
+ * 3명이면 준결승 없이 1위 vs 2위가 바로 결승이다(3위 탈락). 팀장 수가 곧 규칙이라 따로 설정하지 않는다
+ */
+export function hasSemifinal(teamCount: number): boolean {
+  return teamCount >= 4
+}
+
+/**
+ * 미해결 동률이 본선 진출을 가르는 경계에 걸렸는지.
+ * 준결승이 있으면 1위|2위(결승 직행)·3위|4위(준결승 진출), 없으면(3팀장) 2위|3위(결승 진출)가 경계다.
+ * 준결승이 있을 때 2위·3위 동률은 둘 다 준결승이라 대진에 영향이 없다.
  */
 export function tieBlocksPlayoffs(standings: StandingEntry[]): boolean {
-  return [1, 3].some(upper => {
+  const boundaries = hasSemifinal(standings.length) ? [1, 3] : [2]
+  return boundaries.some(upper => {
     const a = standings.find(s => s.rank === upper)
     const b = standings.find(s => s.rank === upper + 1)
     return !!a && !!b && a.tied && b.tied && a.wins === b.wins && a.matchPoints === b.matchPoints
