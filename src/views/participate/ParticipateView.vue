@@ -592,12 +592,12 @@
                       </div>
 
                       <p v-if="entryModal.autoBanPick[slot.num]" class="slot-auto-note">
-                        ✋ {{ votedPlayer(entryModal.autoBanPick[slot.num])?.nickname }}님이 투표에서 고른 밴·픽으로 채웠어요 (직접 바꿀 수 있어요)
+                        ✓ {{ votedPlayer(entryModal.autoBanPick[slot.num])?.nickname }}님이 투표에서 고른 밴·픽으로 채웠어요 (직접 바꿀 수 있어요)
                       </p>
 
                       <!-- 팀 투표 지원자 — 눌러서 이 칸에 넣는다(참고용, 드롭다운에서 다른 선수를 골라도 된다) -->
                       <div v-if="!entryModal.readonly && slotVoters(slot.num).length" class="slot-voters">
-                        <span class="slot-voters-label">✋ 지원<span v-if="entryModal.poll?.status === 'open'" class="slot-voters-live"> · 투표 진행 중</span></span>
+                        <span class="slot-voters-label">✓ 지원<span v-if="entryModal.poll?.status === 'open'" class="slot-voters-live"> · 투표 진행 중</span></span>
                         <button
                           v-for="v in slotVoters(slot.num)"
                           :key="v.user_id"
@@ -1470,7 +1470,7 @@ function buildOptions(slotNum: number, idx: number): SelectOption[] {
       return {
         value: m.id,
         label: m.nickname,
-        badge: votedFor(slotNum, m.id) ? '✋ 지원' : undefined,
+        badge: votedFor(slotNum, m.id) ? '✓ 지원' : undefined,
         tier: m.tier,
         race: m.race,
         points: m.is_military ? Math.max(0, base - MILITARY_DEDUCTION) : base,
