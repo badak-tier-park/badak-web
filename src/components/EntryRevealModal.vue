@@ -49,7 +49,7 @@
               <!-- 3컬럼: 팀A | 맵 | 팀B -->
               <div class="reveal-row">
                 <!-- 팀A 선수 -->
-                <div class="rse-col" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamACaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamACaptainId }">
+                <div class="rse-col" :data-team="teamAName" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamACaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamACaptainId }">
                   <!-- 팀전: 선수들 + WIN 배지를 한 row로 -->
                   <template v-if="slot.type === 'team'">
                     <div class="rse-team-group">
@@ -106,7 +106,7 @@
                 </div>
 
                 <!-- 팀B 선수 -->
-                <div class="rse-col rse-col--right" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamBCaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamBCaptainId }">
+                <div class="rse-col rse-col--right" :data-team="teamBName" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamBCaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamBCaptainId }">
                   <!-- 팀전: WIN 배지 + 선수들을 한 row로 -->
                   <template v-if="slot.type === 'team'">
                     <div class="rse-team-group rse-team-group--right">
