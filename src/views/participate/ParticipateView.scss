@@ -48,6 +48,55 @@
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+// ── 휴대폰 하단 탭바 ─────────────────────────────────────
+// 데스크톱은 위쪽 탭을 그대로 쓰고, 휴대폰(640px 이하)에서만 위쪽 탭·뒤로 버튼을 숨기고 아래에 고정한다
+$tabbar-h: 60px;
+
+.mobile-tabbar { display: none; }
+
+@media (max-width: 640px) {
+  .participate-content {
+    // 고정 탭바에 마지막 카드가 가리지 않게
+    padding-bottom: calc(var(--page-pad-bottom) + #{$tabbar-h} + env(safe-area-inset-bottom));
+  }
+
+  .participate-content > .btn-back,
+  .participate-tabs { display: none; }
+
+  .mobile-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    height: calc(#{$tabbar-h} + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
+    background: var(--c-surface);
+    border-top: 1px solid var(--c-border);
+  }
+
+  .mobile-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: none;
+    background: none;
+    color: var(--c-text-muted);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    &.active { color: var(--c-brand-text); font-weight: 700; }
+  }
+}
+
 
 .btn-hof {
   display: flex;
