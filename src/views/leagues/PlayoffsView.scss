@@ -237,6 +237,13 @@
     border: 1px solid rgba(148, 163, 184, 0.25);
   }
 
+  // 3팀장 본선에서 3위 — 결승에 못 올라간 팀
+  &--out {
+    background: var(--c-badge-bg);
+    color: var(--c-text-muted);
+    border: 1px solid var(--c-badge-border);
+  }
+
   &--tie {
     background: rgba(var(--c-danger-rgb), 0.1);
     color: var(--c-danger);
