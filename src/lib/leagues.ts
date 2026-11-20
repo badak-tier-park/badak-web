@@ -104,11 +104,21 @@ export function calculateStandings(
 }
 
 /**
- * 미해결 동률이 플레이오프 진출을 가르는 경계(1위|2위 = 결승 직행, 3위|4위 = 준결승 진출)에 걸렸는지.
- * 2위·3위 동률은 둘 다 준결승이라 대진에 영향이 없다.
+ * 본선에 준결승이 있는지. 팀장 4명 이상이면 1위 결승 직행 + 2위 vs 3위 준결승이고,
+ * 3명이면 준결승 없이 1위 vs 2위가 바로 결승이다(3위 탈락). 팀장 수가 곧 규칙이라 따로 설정하지 않는다
+ */
+export function hasSemifinal(teamCount: number): boolean {
+  return teamCount >= 4
+}
+
+/**
+ * 미해결 동률이 본선 진출을 가르는 경계에 걸렸는지.
+ * 준결승이 있으면 1위|2위(결승 직행)·3위|4위(준결승 진출), 없으면(3팀장) 2위|3위(결승 진출)가 경계다.
+ * 준결승이 있을 때 2위·3위 동률은 둘 다 준결승이라 대진에 영향이 없다.
  */
 export function tieBlocksPlayoffs(standings: StandingEntry[]): boolean {
-  return [1, 3].some(upper => {
+  const boundaries = hasSemifinal(standings.length) ? [1, 3] : [2]
+  return boundaries.some(upper => {
     const a = standings.find(s => s.rank === upper)
     const b = standings.find(s => s.rank === upper + 1)
     return !!a && !!b && a.tied && b.tied && a.wins === b.wins && a.matchPoints === b.matchPoints
@@ -123,6 +133,15 @@ export async function updateLeagueHandicap(
     .from('leagues')
     .update({ ...fields, updated_at: new Date().toISOString() })
     .eq('id', id)
+  if (error) throw error
+}
+
+/**
+ * 승부예측 시작 포인트 변경. 서버 함수가 관리자인지 확인하고, 이미 만들어진 지갑에도 차액을 반영한다
+ * (leagues를 직접 update하면 기존 지갑과 어긋나므로 쓰지 않는다)
+ */
+export async function updateLeaguePredictionStartPoints(id: string, points: number): Promise<void> {
+  const { error } = await supabase.rpc('update_league_prediction_start_points', { p_league_id: id, p_points: points })
   if (error) throw error
 }
 
@@ -173,11 +192,19 @@ export interface LeagueRow {
   handicap_point_gap: number | null
   /** 티어 단계 차이별 핸디 (체력 % + 추가 텍스트). 빈 단계는 핸디 없음 */
   handicap_table: HandicapRow[] | null
+  /** 승부예측 시작 포인트. 리그마다 지갑이 따로이며, 지갑은 처음 베팅·출석할 때 이 값으로 만들어진다 */
+  prediction_start_points: number
   is_ready: boolean
   picks_completed: boolean
   draft_completed: boolean
   draft_started: boolean
   team_names_completed: boolean
+  /**
+   * 진행자(users.id). 선수로 참가하지 않는 사람 — 팀장·시드권자·지목식 후보에서 빠진다.
+   * 생성자와 다를 수 있다(사이트에 서툰 진행자 대신 다른 운영진이 리그를 만들고 지목식을 조작). null이면 아무도 빠지지 않음
+   */
+  organizer_player_id: number | null
+  /** 생성자(auth 사용자 id). 지목식 관리(시작·시드권 교체·최종 저장)는 생성자만 한다 */
   created_by: string | null
   created_at: string
   updated_at: string
@@ -193,13 +220,17 @@ export interface LeagueInsert {
   has_draft: boolean
   draft_date: string | null
   captain_count: number
+  /** 생성할 때만 넣는다. 수정은 updateLeaguePredictionStartPoints (기존 지갑에 차액 반영) */
+  prediction_start_points?: number
 }
 
 export function getLeagueStatus(league: LeagueRow): LeagueStatus {
   if (!league.is_ready) return 'preparing'
   const isRegular = league.type === 'regular_summer' || league.type === 'regular_winter'
   if (isRegular && !league.draft_completed) return 'preparing'
-  const today = new Date().toISOString().slice(0, 10)
+  // 한국 날짜로 비교한다. UTC 날짜를 쓰면 시작일·종료일 00~09시에 하루 늦게 바뀌어
+  // KST로 판단하는 DB(출석 등)와 어긋났다
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10)
   if (today < league.start_date) return 'upcoming'
   if (today > league.end_date) return 'finished'
   return 'ongoing'
@@ -227,9 +258,11 @@ export async function getLeagues(): Promise<LeagueRow[]> {
 }
 
 export async function updateLeague(id: string, payload: LeagueInsert): Promise<LeagueRow> {
+  // 시작 포인트는 여기서 바꾸지 않는다(기존 지갑과 어긋남) → updateLeaguePredictionStartPoints
+  const { prediction_start_points: _ignored, ...fields } = payload
   const { data, error } = await supabase
     .from('leagues')
-    .update({ ...payload, updated_at: new Date().toISOString() })
+    .update({ ...fields, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single()
@@ -301,11 +334,12 @@ export async function createLeague(payload: LeagueInsert): Promise<LeagueRow> {
   return data
 }
 
-// 리그 생성자의 player_id (users.id) — 팀장/시드권자/지목식에서 제외 대상
-export async function getLeagueCreatorPlayerId(leagueId: string): Promise<number | null> {
-  const { data, error } = await supabase.rpc('get_league_creator_player_id', { p_league_id: leagueId })
+export async function updateLeagueOrganizer(id: string, playerId: number | null): Promise<void> {
+  const { error } = await supabase
+    .from('leagues')
+    .update({ organizer_player_id: playerId, updated_at: new Date().toISOString() })
+    .eq('id', id)
   if (error) throw error
-  return data ?? null
 }
 
 export async function updateLeagueSeedSwapLimits(

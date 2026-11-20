@@ -188,12 +188,14 @@ async function handleCheckIn() {
   if (myUserId.value === null || checkingIn.value) return
   checkingIn.value = true
   try {
-    const result = await checkIn(myUserId.value)
+    const result = await checkIn()
     attendanceStatus.value = { attendedToday: true, streak: result.streak }
-    if (result.isMilestone) {
-      showToast(`🔥 ${result.streak}일 연속 출석! +${result.pointsEarned.toLocaleString()}pt (마일스톤 보너스 +${result.milestoneBonus.toLocaleString()}pt 포함)`)
+    if (!result.leagueName) {
+      showToast(`출석 완료! (${result.streak}일 연속) · 진행 중인 리그가 없어 포인트는 없어요`)
+    } else if (result.isMilestone) {
+      showToast(`🔥 ${result.streak}일 연속 출석! ${result.leagueName} +${result.pointsEarned.toLocaleString()}pt (마일스톤 보너스 +${result.milestoneBonus.toLocaleString()}pt 포함)`)
     } else {
-      showToast(`출석 완료! +${result.pointsEarned.toLocaleString()}pt (${result.streak}일 연속)`)
+      showToast(`출석 완료! ${result.leagueName} +${result.pointsEarned.toLocaleString()}pt (${result.streak}일 연속)`)
     }
   } catch (e: any) {
     showToast(e.message ?? '출석 처리 중 오류가 발생했습니다.')

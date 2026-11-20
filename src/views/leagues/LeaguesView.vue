@@ -229,6 +229,19 @@
               </div>
             </div>
 
+            <!-- 승부예측 시작 포인트 -->
+            <div class="field">
+              <label class="field-label">승부예측 시작 포인트 <span class="field-hint">리그마다 따로 시작</span></label>
+              <input
+                v-model.number="form.prediction_start_points"
+                class="field-input"
+                type="number"
+                min="0"
+                step="100"
+                placeholder="1000"
+              />
+            </div>
+
             <!-- 참가 자격 -->
             <div class="field">
               <label class="field-label">참가 자격</label>
@@ -327,7 +340,7 @@ import '@vuepic/vue-datepicker/dist/main.css'
 import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
-import { getLeagues, createLeague, updateLeague, getLeagueStatus, type LeagueRow, type LeagueType, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
+import { getLeagues, createLeague, updateLeague, updateLeaguePredictionStartPoints, getLeagueStatus, type LeagueRow, type LeagueType, type LeagueStatus, type EligibilityType } from '@/lib/leagues'
 import { TIER_ORDER, sortTiers } from '@/lib/constants'
 
 const router = useRouter()
@@ -386,6 +399,7 @@ const form = reactive({
   has_draft: true,
   draft_date: '' as string,
   captain_count: 4,
+  prediction_start_points: 1000 as number | '',
 })
 
 const pickerDates = ref<Date[] | null>(null)
@@ -434,6 +448,7 @@ function openEdit(league: LeagueRow) {
   form.has_draft = league.has_draft
   form.draft_date = league.draft_date ?? ''
   form.captain_count = league.captain_count ?? 4
+  form.prediction_start_points = league.prediction_start_points ?? 1000
   pickerDates.value = [new Date(league.start_date), new Date(league.end_date)]
   dateDisplayText.value = `${league.start_date.replaceAll('-', '/')} ~ ${league.end_date.replaceAll('-', '/')}`
   draftPickerDate.value = league.draft_date ? new Date(league.draft_date) : null
@@ -448,6 +463,10 @@ function closeForm() {
   editTarget.value = null
 }
 
+function isValidStartPoints(v: number | ''): boolean {
+  return v !== '' && Number.isInteger(v) && v >= 0
+}
+
 async function handleCreate() {
   if (!form.name.trim()) { saveError.value = '리그명을 입력해주세요.'; return }
   if (!form.start_date)  { saveError.value = '시작일을 선택해주세요.'; return }
@@ -455,6 +474,7 @@ async function handleCreate() {
   if (form.end_date < form.start_date) { saveError.value = '종료일이 시작일보다 빠릅니다.'; return }
   if (form.eligible_tiers.length === 0) { saveError.value = '참여 가능 티어를 하나 이상 선택해주세요.'; return }
   if (form.has_draft && !form.draft_date) { saveError.value = '팀원 지목식 날짜를 선택해주세요.'; return }
+  if (!isValidStartPoints(form.prediction_start_points)) { saveError.value = '승부예측 시작 포인트는 0 이상의 정수여야 합니다.'; return }
 
   saving.value = true
   saveError.value = null
@@ -470,6 +490,7 @@ async function handleCreate() {
       has_draft: form.has_draft,
       draft_date: form.has_draft ? form.draft_date : null,
       captain_count: form.captain_count,
+      prediction_start_points: form.prediction_start_points as number,
     })
     leagues.value.unshift(created)
     resetForm()
@@ -488,11 +509,17 @@ async function handleUpdate() {
   if (form.end_date < form.start_date) { saveError.value = '종료일이 시작일보다 빠릅니다.'; return }
   if (form.eligible_tiers.length === 0) { saveError.value = '참여 가능 티어를 하나 이상 선택해주세요.'; return }
   if (form.has_draft && !form.draft_date) { saveError.value = '팀원 지목식 날짜를 선택해주세요.'; return }
+  if (!isValidStartPoints(form.prediction_start_points)) { saveError.value = '승부예측 시작 포인트는 0 이상의 정수여야 합니다.'; return }
 
   saving.value = true
   saveError.value = null
 
   try {
+    // 시작 포인트는 서버 함수로 바꾼다 — 이미 포인트를 받은 사용자 지갑에도 차액이 반영돼야 해서
+    const pts = form.prediction_start_points as number
+    if (pts !== editTarget.value.prediction_start_points) {
+      await updateLeaguePredictionStartPoints(editTarget.value.id, pts)
+    }
     const updated = await updateLeague(editTarget.value.id, {
       type: form.type,
       name: form.name.trim(),
@@ -526,6 +553,7 @@ function resetForm() {
   form.has_draft = true
   form.draft_date = ''
   form.captain_count = 4
+  form.prediction_start_points = 1000
   form.eligible_tiers = [...TIER_ORDER]
   pickerDates.value = null
   dateDisplayText.value = ''

@@ -969,10 +969,10 @@
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.15s;
-  opacity: 0.45;
+  opacity: 0.7;
 
   &:hover {
-    opacity: 0.75;
+    opacity: 0.9;
     transform: translateY(-1px);
   }
 
@@ -1179,4 +1179,61 @@
   font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+// ── 팀 투표 지원자 (엔트리 작성 창) ─────────────────────────
+// 눌러서 그 칸에 선수를 넣는 바로가기. 참고용이라 드롭다운은 그대로 쓸 수 있다
+.slot-voters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.slot-voters-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-brand-text);
+}
+
+.slot-voters-live {
+  font-weight: 500;
+  color: var(--c-text-muted);
+}
+
+.slot-voter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--c-brand-border);
+  background: var(--c-brand-bg);
+  color: var(--c-brand-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover:not(:disabled) { filter: brightness(1.1); }
+
+  // 이미 다른 경기에 배정됐거나 이 칸에 있는 선수
+  &--used {
+    border-color: var(--c-border-faint);
+    background: transparent;
+    color: var(--c-text-faint);
+    cursor: not-allowed;
+  }
+}
+
+.slot-voter-note {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.slot-auto-note {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: var(--c-brand-text);
 }

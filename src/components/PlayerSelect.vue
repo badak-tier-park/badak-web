@@ -44,6 +44,7 @@
         >
           <template v-if="opt.tier">
             <span class="ps-opt-name">{{ opt.label }}</span>
+            <span v-if="opt.badge" class="ps-opt-badge">{{ opt.badge }}</span>
             <RaceBadge :race="opt.race" size="sm" />
             <TierBadge :tier="opt.tier" size="sm" />
             <span v-if="opt.is_military" class="ps-opt-military">군</span>
@@ -69,6 +70,8 @@ export interface SelectOption {
   points?: number
   disabled?: boolean
   is_military?: boolean
+  /** 이름 옆 보조 표시 (예: 팀 투표 지원자) */
+  badge?: string
 }
 
 const props = defineProps<{

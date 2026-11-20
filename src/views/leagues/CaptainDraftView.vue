@@ -246,7 +246,7 @@ import { useRoute } from 'vue-router'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import AppHeader from '@/components/AppHeader.vue'
 import { supabase } from '@/lib/supabase'
-import { getLeague, getLeagueCreatorPlayerId, type LeagueRow } from '@/lib/leagues'
+import { getLeague, type LeagueRow } from '@/lib/leagues'
 import { getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getCaptains, getSeedHolders, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getDraftPicks, addSinglePick, deleteSinglePick } from '@/lib/draft'
@@ -263,7 +263,6 @@ const loading = ref(true)
 const loadError = ref<string | null>(null)
 const league = ref<LeagueRow | null>(null)
 const allPlayers = ref<PlayerRow[]>([])
-const creatorPlayerId = ref<number | null>(null)
 const captainIds = ref<number[]>([])
 const seedHolderIds = ref(new Set<number>())
 const teams = ref<Record<number, PlayerRow[]>>({})
@@ -287,7 +286,7 @@ const availablePlayers = computed(() => {
   return allPlayers.value.filter(
     p => eligible.has(p.tier)
       && p.is_active
-      && p.id !== creatorPlayerId.value
+      && p.id !== league.value?.organizer_player_id
       && !captainIds.value.includes(p.id)
       && !assignedIds.value.has(p.id),
   )
@@ -408,16 +407,14 @@ function applyNewPick(captainPlayerId: number, memberPlayerId: number) {
 onMounted(async () => {
   try {
     const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
-    const [leagueData, playersData, captainsData, picksData, seedHoldersData, me, creatorId] = await Promise.all([
+    const [leagueData, playersData, captainsData, picksData, seedHoldersData, me] = await Promise.all([
       getLeague(leagueId),
       getLeaguePlayers(leagueId),
       getCaptains(leagueId),
       getDraftPicks(leagueId),
       getSeedHolders(leagueId),
       discordId ? getPlayerByDiscordId(discordId) : Promise.resolve(null),
-      getLeagueCreatorPlayerId(leagueId),
     ])
-    creatorPlayerId.value = creatorId
 
     league.value = leagueData
     draftStarted.value = leagueData.draft_started

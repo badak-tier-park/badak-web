@@ -21,7 +21,21 @@
 .info-bar-left {
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+// 화면에 나온 경기가 여러 리그일 때만 리그 이름을 붙인다 (포인트는 리그마다 따로)
+.balance-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.balance-league {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-sub);
 }
 
 .balance-label {

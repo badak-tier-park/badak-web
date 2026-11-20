@@ -46,13 +46,20 @@
               <span class="standing-team">{{ teamLabel(entry.captainId) }}</span>
               <span class="standing-record">{{ entry.wins }}승 {{ entry.losses }}패 · 승점 {{ entry.matchPoints }}</span>
               <span v-if="entry.tied" class="standing-badge standing-badge--tie">동률 · 재대결 필요</span>
-              <span v-if="entry.rank === 1" class="standing-badge standing-badge--gold">결승 직행</span>
-              <span v-else-if="entry.rank === 2 || entry.rank === 3" class="standing-badge standing-badge--silver">준결승</span>
+              <template v-if="withSemifinal">
+                <span v-if="entry.rank === 1" class="standing-badge standing-badge--gold">결승 직행</span>
+                <span v-else-if="entry.rank === 2 || entry.rank === 3" class="standing-badge standing-badge--silver">준결승</span>
+              </template>
+              <template v-else>
+                <span v-if="entry.rank === 1" class="standing-badge standing-badge--gold">결승</span>
+                <span v-else-if="entry.rank === 2" class="standing-badge standing-badge--silver">결승</span>
+                <span v-else class="standing-badge standing-badge--out">탈락</span>
+              </template>
             </div>
           </div>
 
           <!-- 재대결 결과 반영: 승리 수·승점이 같은 팀끼리만 순서를 바꿀 수 있다 -->
-          <div v-if="regularAllDone && !semifinal && (hasTie || tiebreakOrder)" class="tiebreak-box">
+          <div v-if="regularAllDone && !playoffStarted && (hasTie || tiebreakOrder)" class="tiebreak-box">
             <template v-if="!tiebreakEditing">
               <p v-if="hasTie" class="tiebreak-desc">
                 승리 수와 승점이 같은 팀이 있습니다. 재대결을 진행한 뒤 결과 순서를 반영해 주세요.
@@ -94,7 +101,7 @@
         </div>
 
         <!-- ── STEP 2: 준결승 ── -->
-        <section class="bracket-stage" :class="{ 'bracket-stage--locked': !regularAllDone }">
+        <section v-if="withSemifinal" class="bracket-stage" :class="{ 'bracket-stage--locked': !regularAllDone }">
           <div class="stage-header">
             <span class="stage-num" :class="regularAllDone ? (semifinal?.is_completed ? 'stage-num--done' : 'stage-num--active') : 'stage-num--locked'">2</span>
             <span class="stage-title">준결승 <span class="stage-subtitle">2위 vs 3위</span></span>
@@ -171,7 +178,7 @@
         </section>
 
         <!-- 연결선 -->
-        <div class="stage-flow" :class="{ 'stage-flow--active': semifinal?.is_completed }">
+        <div v-if="withSemifinal" class="stage-flow" :class="{ 'stage-flow--active': semifinal?.is_completed }">
           <div class="stage-flow-line" />
           <svg width="10" height="6" viewBox="0 0 10 6" fill="none" class="stage-flow-arrow">
             <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -179,21 +186,23 @@
         </div>
 
         <!-- ── STEP 3: 결승전 ── -->
-        <section class="bracket-stage" :class="{ 'bracket-stage--locked': !semifinal?.is_completed }">
+        <section class="bracket-stage" :class="{ 'bracket-stage--locked': !finalUnlocked }">
           <div class="stage-header">
-            <span class="stage-num" :class="semifinal?.is_completed ? (finalWinner || (superAce?.is_completed) ? 'stage-num--done' : 'stage-num--active') : 'stage-num--locked'">3</span>
-            <span class="stage-title">결승전</span>
-            <span v-if="!semifinal?.is_completed" class="stage-badge stage-badge--locked">대기 중</span>
+            <span class="stage-num" :class="finalUnlocked ? (finalWinner || (superAce?.is_completed) ? 'stage-num--done' : 'stage-num--active') : 'stage-num--locked'">{{ withSemifinal ? 3 : 2 }}</span>
+            <span class="stage-title">결승전 <span v-if="!withSemifinal" class="stage-subtitle">1위 vs 2위</span></span>
+            <span v-if="!finalUnlocked" class="stage-badge stage-badge--locked">대기 중</span>
             <span v-else-if="finalWinner || superAce?.is_completed" class="stage-badge stage-badge--done">완료</span>
           </div>
 
           <!-- 잠금 상태 -->
-          <div v-if="!semifinal?.is_completed" class="stage-locked">
+          <div v-if="!finalUnlocked" class="stage-locked">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="stage-lock-icon">
               <rect x="2.5" y="6" width="9" height="7" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
               <path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
             </svg>
-            준결승이 완료되면 설정할 수 있습니다.
+            <template v-if="withSemifinal">준결승이 완료되면 설정할 수 있습니다.</template>
+            <template v-else-if="regularAllDone">진출 순위에 동률이 있습니다. 재대결 결과를 반영하면 경기를 만들 수 있습니다.</template>
+            <template v-else>정규경기가 모두 완료되면 설정할 수 있습니다.</template>
           </div>
 
           <template v-else>
@@ -226,7 +235,7 @@
                     </div>
                     <span class="bracket-vs">VS</span>
                     <div class="bracket-team-block bracket-team-block--right" :class="{ 'bracket-team-block--winner': finalSet1.winner_captain_id === finalSet1.team_b_captain_id }">
-                      <span class="bracket-seed">준결승 승자</span>
+                      <span class="bracket-seed">{{ finalOpponentSeed }}</span>
                       <span class="bracket-team-name">{{ teamLabel(finalSet1.team_b_captain_id) }}</span>
                     </div>
                   </div>
@@ -272,7 +281,7 @@
                     </div>
                     <span class="bracket-vs">VS</span>
                     <div class="bracket-team-block bracket-team-block--right" :class="{ 'bracket-team-block--winner': finalSet2.winner_captain_id === finalSet2.team_b_captain_id }">
-                      <span class="bracket-seed">준결승 승자</span>
+                      <span class="bracket-seed">{{ finalOpponentSeed }}</span>
                       <span class="bracket-team-name">{{ teamLabel(finalSet2.team_b_captain_id) }}</span>
                     </div>
                   </div>
@@ -379,7 +388,7 @@ import { ko } from 'date-fns/locale'
 import AppHeader from '@/components/AppHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import {
-  getLeague, calculateStandings, toStandingMatches, tieBlocksPlayoffs, updateStandingsTiebreakOrder,
+  getLeague, calculateStandings, toStandingMatches, tieBlocksPlayoffs, hasSemifinal, updateStandingsTiebreakOrder,
   allRegularMatchesDone, type LeagueRow,
 } from '@/lib/leagues'
 import { getCaptains } from '@/lib/leagueDetail'
@@ -428,7 +437,9 @@ const tiebreakOrder = ref<number[] | null>(null)
 const standings = computed(() =>
   calculateStandings(captainIds.value, toStandingMatches(regularSchedules.value, regularSlots.value), tiebreakOrder.value))
 const hasTie = computed(() => standings.value.some(s => s.tied))
-// 결승 직행(1|2위)·준결승 진출(3|4위) 경계에 동률이 걸리면 대진을 만들 수 없다
+// 팀장 4명 이상이면 준결승이 있고, 3명이면 1위 vs 2위가 바로 결승이다
+const withSemifinal = computed(() => hasSemifinal(captainIds.value.length))
+// 대진을 가르는 경계(준결승 있음: 1|2위·3|4위, 없음: 2|3위)에 동률이 걸리면 대진을 만들 수 없다
 const playoffBlockedByTie = computed(() => tieBlocksPlayoffs(standings.value))
 
 // ── 재대결 결과 반영 ──────────────────────────────────────────
@@ -495,6 +506,13 @@ const finalSet2 = computed(() => playoffSchedules.value.find(s => s.match_type =
 const superAce = computed(() => playoffSchedules.value.find(s => s.match_type === 'super_ace') ?? null)
 
 const semifinalWinner = computed(() => semifinal.value?.winner_captain_id ?? null)
+
+// 결승을 만들 수 있는 상태: 준결승이 있으면 그 완료 후, 없으면 정규경기가 끝나고 동률이 풀린 뒤
+const finalUnlocked = computed(() =>
+  withSemifinal.value ? !!semifinal.value?.is_completed : regularAllDone.value && !playoffBlockedByTie.value)
+const finalOpponentSeed = computed(() => (withSemifinal.value ? '준결승 승자' : '2위'))
+// 순위를 바꾸는 재대결 반영은 본선 경기가 만들어지기 전까지만
+const playoffStarted = computed(() => !!semifinal.value || !!finalSet1.value)
 
 // 결승 각 세트 승자
 const set1Winner = computed(() => finalSet1.value?.winner_captain_id ?? null)
@@ -624,15 +642,19 @@ async function revealSemifinal() {
 }
 
 // ── 결승 ────────────────────────────────────────────────────
-function getFinalTeams(): [number, number] {
-  const rank1 = standings.value.find(s => s.rank === 1)!
-  const winner = semifinalWinner.value!
-  return [rank1.captainId, winner]
+function getFinalTeams(): [number, number] | null {
+  const rank1 = standings.value.find(s => s.rank === 1)
+  const opponent = withSemifinal.value
+    ? semifinalWinner.value
+    : (standings.value.find(s => s.rank === 2)?.captainId ?? null)
+  if (!rank1 || opponent == null) return null
+  return [rank1.captainId, opponent]
 }
 
 async function createFinalSet(set: 1 | 2) {
-  if (!semifinalWinner.value) return
-  const [teamA, teamB] = getFinalTeams()
+  const teams = getFinalTeams()
+  if (!finalUnlocked.value || !teams) return
+  const [teamA, teamB] = teams
   const dateStr = set === 1 ? toDateStr(finalDate.value) : toDateStr(finalDate2.value)
   creating.value = true
   try {
@@ -660,8 +682,9 @@ async function revealFinalSet(set: 1 | 2) {
 
 // ── 슈퍼 에이스 ─────────────────────────────────────────────
 async function createSuperAce() {
-  if (!finalSet1.value || !finalSet2.value) return
-  const [teamA, teamB] = getFinalTeams()
+  const teams = getFinalTeams()
+  if (!finalSet1.value || !finalSet2.value || !teams) return
+  const [teamA, teamB] = teams
   creating.value = true
   try {
     const row = await createPlayoffMatch(leagueId, 'super_ace', teamA, teamB, finalSet2.value.match_date)

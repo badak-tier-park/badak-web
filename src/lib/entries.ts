@@ -220,6 +220,36 @@ export async function submitEntry(
   if (error) throw error
 }
 
+// 엔트리 마감: 경기 당일 20:00 (한국 시간). 이후엔 제출 취소 불가(제출이 확정된다).
+// 서버(cancel_entry_submission)는 DB 함수 entry_deadline()으로 같은 시각을 검사한다 — 바꿀 때 함께 바꾼다.
+// 승부예측 마감과 지금은 같은 시각이지만 규정이 따로라 상수도 따로 둔다
+export const ENTRY_DEADLINE_KST = '20:00'
+
+export function getEntryDeadline(matchDate: string): Date {
+  return new Date(`${matchDate}T${ENTRY_DEADLINE_KST}:00+09:00`)
+}
+
+/** 제출 취소 가능 여부 — 공개 전 + 마감 전. 날짜 미정 경기는 마감이 없다 */
+export function canCancelSubmission(
+  schedule: { is_entry_revealed: boolean; match_date: string | null },
+  now: Date = new Date(),
+): boolean {
+  if (schedule.is_entry_revealed) return false
+  return !schedule.match_date || now < getEntryDeadline(schedule.match_date)
+}
+
+/**
+ * 엔트리 제출 취소 → 저장 상태로 되돌린다. 우리 쪽 공개 동의도 함께 풀린다.
+ * 공개·마감 검사를 서버가 한 번에 해야 상대가 동의를 누르는 순간과 겹쳐도 공개 후 취소가 안 된다
+ */
+export async function cancelEntrySubmission(scheduleId: number, captainPlayerId: number): Promise<void> {
+  const { error } = await supabase.rpc('cancel_entry_submission', {
+    p_schedule_id: scheduleId,
+    p_captain_player_id: captainPlayerId,
+  })
+  if (error) throw error
+}
+
 /** 공개 동의 처리 */
 export async function consentReveal(scheduleId: number, captainPlayerId: number): Promise<void> {
   const { error } = await supabase

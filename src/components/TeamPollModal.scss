@@ -1,0 +1,305 @@
+// 팀 투표 모달. 색은 테마 토큰만 쓴다(라이트 테마에서도 보이게)
+
+.poll-modal { max-width: 640px; }
+
+.poll-body { gap: 12px; }
+
+.state-msg {
+  padding: 28px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--c-text-muted);
+
+  &--error { color: var(--c-danger); }
+}
+
+.poll-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--c-text-muted);
+}
+
+// ── 경기 목록 ───────────────────────────────────────────────
+.poll-match {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px solid var(--c-border-faint);
+  border-radius: 10px;
+  background: var(--c-surface-raised);
+}
+
+.poll-match-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.poll-match-vs {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.poll-match-date {
+  font-size: 11px;
+  color: var(--c-text-muted);
+}
+
+.poll-match-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.round-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  background: var(--c-badge-bg);
+  border: 1px solid var(--c-badge-border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
+.poll-state {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+
+  &--open { color: var(--c-success); }
+  &--closed { color: var(--c-text-faint); }
+}
+
+// ── 투표 화면 ───────────────────────────────────────────────
+.poll-detail-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.poll-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.poll-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--c-border-faint);
+  border-radius: 10px;
+  background: var(--c-surface-raised);
+
+  // 체크한 경기는 테두리와 배경으로 한눈에 구분
+  &--on {
+    border-color: var(--c-brand-border);
+    background: rgba(var(--c-brand-rgb), 0.07);
+  }
+}
+
+.poll-slot-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.slot-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--c-text-bright);
+  line-height: 1;
+  min-width: 14px;
+}
+
+.slot-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+  color: var(--c-text-muted);
+  background: var(--c-badge-bg);
+  border: 1px solid var(--c-badge-border);
+
+  &--team {
+    color: var(--c-brand-text);
+    background: var(--c-brand-bg);
+    border-color: var(--c-brand-border);
+  }
+}
+
+.poll-slot-maps {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+// 맵 칩 — 썸네일 + 이름 (엔트리 창의 맵 칩과 같은 모양)
+.map-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 3px 10px 3px 3px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-faint);
+  background: var(--c-surface);
+  color: var(--c-text-2);
+}
+
+.map-chip-img {
+  width: 44px;
+  height: 33px;
+  border-radius: 4px;
+  object-fit: cover;
+  display: block;
+  flex-shrink: 0;
+
+  &--empty { background: var(--c-overlay); }
+}
+
+.map-chip-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ✓ 체크 — 안 눌렀을 땐 테두리만, 누르면 브랜드색으로 채워진다
+.poll-check {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-border-strong);
+  background: transparent;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &:hover { border-color: var(--c-brand-border); color: var(--c-brand-text); }
+  &--on {
+    border-color: transparent;
+    background: var(--c-brand-gradient);
+    color: #fff;
+    &:hover { color: #fff; }
+  }
+}
+
+// 2·3경기 밴·픽
+.poll-banpick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--c-surface);
+}
+
+.poll-banpick-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.poll-banpick-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .map-chip { flex: 1; }
+}
+
+.poll-bp-btn {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 56px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border-strong);
+  background: transparent;
+  color: var(--c-text-sub);
+  cursor: pointer;
+
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  &--ban.poll-bp-btn--active {
+    border-color: var(--c-danger-border);
+    background: var(--c-danger-bg);
+    color: var(--c-danger);
+  }
+  &--pick.poll-bp-btn--active {
+    border-color: var(--c-success);
+    background: var(--c-success-bg);
+    color: var(--c-success);
+  }
+}
+
+// 지원자 이름 (누가 골랐는지)
+.poll-voters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.poll-voters-empty {
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.poll-voter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--c-border-faint);
+  background: var(--c-surface);
+  font-size: 12px;
+
+  &--me { border-color: var(--c-brand-border); }
+}
+
+.poll-voter-nick {
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.poll-voter-bp {
+  font-size: 11px;
+  color: var(--c-text-muted);
+  padding-left: 4px;
+  border-left: 1px solid var(--c-border-faint);
+}
+
+.poll-novote {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.poll-problem {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-danger);
+  text-align: right;
+}

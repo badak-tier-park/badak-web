@@ -3,10 +3,14 @@
     <div class="info-bar">
       <div class="info-bar-left">
         <span class="balance-label">내 포인트</span>
-        <span class="balance-value">{{ userPoints?.toLocaleString() ?? '-' }}<span class="balance-unit">pt</span></span>
+        <span v-if="!wallets.length" class="balance-value">-</span>
+        <span v-for="w in wallets" :key="w.league_id" class="balance-item">
+          <span v-if="wallets.length > 1 || !matches.length" class="balance-league">{{ w.league_name }}</span>
+          <span class="balance-value">{{ w.points.toLocaleString() }}<span class="balance-unit">pt</span></span>
+        </span>
       </div>
       <div class="info-bar-right">
-        <span>{{ windowLabel }} 범위 예측 · 마감은 경기 하루 전 00:00 · 정산은 적중 베팅 비율로 분배</span>
+        <span>{{ windowLabel }} 범위 예측 · 마감은 경기 당일 {{ PREDICTION_DEADLINE_KST }} · 정산은 적중 베팅 비율로 분배 · 포인트는 리그마다 따로</span>
       </div>
     </div>
 
@@ -110,11 +114,14 @@ import {
   getPredictableMatches,
   placePrediction,
   cancelPrediction,
-  getUserPoints,
+  getMyLeagueWallets,
+  getPredictionLeagues,
   getCurrentMonday,
   getNextMonday,
   matchTypeLabel,
+  PREDICTION_DEADLINE_KST,
   type PredictableMatch,
+  type LeagueWallet,
 } from '@/lib/predictions'
 import { useAuthStore } from '@/stores/auth'
 import { getPlayerByDiscordId } from '@/lib/players'
@@ -125,7 +132,11 @@ const matches = ref<PredictableMatch[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const userId = ref<number | null>(null)
-const userPoints = ref<number | null>(null)
+const wallets = ref<LeagueWallet[]>([])
+
+function pointsOf(leagueId: string | undefined): number {
+  return wallets.value.find(w => w.league_id === leagueId)?.points ?? 0
+}
 
 const windowLabel = (() => {
   const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`
@@ -174,7 +185,7 @@ const betModal = reactive({
 })
 
 const availableBalance = computed(() => {
-  const owned = userPoints.value ?? 0
+  const owned = pointsOf(betModal.match?.league_id)
   const refundable = betModal.match?.user_bet_amount ?? 0
   return owned + refundable
 })
@@ -225,8 +236,7 @@ async function confirmBet(amount: number) {
   betModal.saving = true
   betModal.error = null
   try {
-    const res = await placePrediction(betModal.match.schedule_id, userId.value, betModal.captainId, amount)
-    userPoints.value = res.remaining_points
+    await placePrediction(betModal.match.schedule_id, betModal.captainId, amount)
     await reload()
     betModal.open = false
     betModal.match = null
@@ -240,14 +250,21 @@ async function confirmBet(amount: number) {
 async function reload() {
   if (!userId.value) return
   matches.value = await getPredictableMatches(userId.value)
-  userPoints.value = await getUserPoints(userId.value)
+  // 잔액은 이번 주 경기들의 리그 기준. 경기가 없는 주에도 출석으로 쌓인 포인트가 보이게,
+  // 그땐 출석 포인트가 가는 리그(랭킹 기본 리그와 같은 기준)의 잔액을 보여 준다 — 예전엔 "-"였다
+  let leagueIds = matches.value.map(m => m.league_id)
+  if (!leagueIds.length) {
+    const { defaultId } = await getPredictionLeagues()
+    if (defaultId) leagueIds = [defaultId]
+  }
+  wallets.value = await getMyLeagueWallets(userId.value, leagueIds)
 }
 
 async function handleCancel(m: PredictableMatch) {
   if (!userId.value || !m.is_open) return
   if (!confirm('예측을 취소하시겠습니까? (베팅 포인트는 환불됩니다)')) return
   try {
-    await cancelPrediction(m.schedule_id, userId.value)
+    await cancelPrediction(m.schedule_id)
     await reload()
   } catch (e: any) {
     loadError.value = e.message ?? '예측 취소 실패'
