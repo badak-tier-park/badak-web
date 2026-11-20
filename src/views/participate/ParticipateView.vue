@@ -724,7 +724,7 @@ import {
 } from '@/lib/leagues'
 import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
-import { getDraftPicks, getSwapLog } from '@/lib/draft'
+import { getDraftPicks } from '@/lib/draft'
 import { getSchedules, getRevealedSchedules, getCompletedSchedules, getSlotResultsForSchedules, type ScheduleRow } from '@/lib/schedules'
 import { getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
@@ -856,16 +856,15 @@ async function openRosterList(league: LeagueRow) {
   rosterModal.teams = []
   rosterModal.loading = true
   try {
-    const [captains, players, teamNames, draftPicks, swapLog] = await Promise.all([
+    const [captains, players, teamNames, draftPicks] = await Promise.all([
       getCaptains(league.id),
       getLeaguePlayers(league.id),
       getTeamNames(league.id),
       getDraftPicks(league.id),
-      getSwapLog(league.id),
     ])
     const playerMap = new Map(players.map(p => [p.id, p]))
     const tnMap = new Map(teamNames.map(t => [t.captain_player_id, t]))
-    const rosters = computeFinalRosters(captains, draftPicks, swapLog)
+    const rosters = computeFinalRosters(captains, draftPicks)
 
     rosterModal.teams = captains
       .slice()
@@ -1523,10 +1522,9 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   loadingEntry.value = true
 
   try {
-    const [captains, draftPicks, swapLog, players, existing, matchMaps, allMaps, existingAceBan] = await Promise.all([
+    const [captains, draftPicks, players, existing, matchMaps, allMaps, existingAceBan] = await Promise.all([
       getCaptains(item.leagueId),
       getDraftPicks(item.leagueId),
-      getSwapLog(item.leagueId),
       getLeaguePlayers(item.leagueId),
       getEntries(item.schedule.id, item.myTeamCaptainId),
       getMatchMaps(item.leagueId),
@@ -1551,7 +1549,7 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
     entryModal.banSelections = bans
     entryModal.pickSelections = picks
 
-    const rosters = computeFinalRosters(captains, draftPicks, swapLog)
+    const rosters = computeFinalRosters(captains, draftPicks)
     const myRoster = rosters.get(item.myTeamCaptainId) ?? []
     const playerMap = new Map(players.map(p => [p.id, p]))
     entryModal.teamMembers = myRoster.map(id => playerMap.get(id)).filter(Boolean) as PlayerRow[]

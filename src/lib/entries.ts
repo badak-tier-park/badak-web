@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 import type { CaptainRow } from './leagueDetail'
-import type { DraftPickRow, SwapLogRow } from './draft'
+import type { DraftPickRow } from './draft'
 import { tierPoint } from './constants'
 
 // ── 상수 ────────────────────────────────────────────────────
@@ -338,11 +338,16 @@ export async function getBothSubmittedSet(
 }
 
 // ── 로스터 계산 ──────────────────────────────────────────────
-/** 지목식 픽 + 시드권 교체를 반영한 최종 팀 로스터 계산 */
+/**
+ * 최종 팀 로스터(팀장이 맨 앞). 저장된 지목식 픽(`league_draft_picks`)이 곧 최종 팀이다.
+ *
+ * 시드권 교체(`league_swap_log`)를 여기서 다시 적용하면 안 된다 — 지목식 최종 저장은 교체가 이미
+ * 반영된 팀 구성을 픽으로 저장하므로(DraftView `saveDraft`), 한 번 더 적용하면 교체가 뒤집혀
+ * 교체 전 팀이 나온다. 교체 기록은 지목식 화면의 "시드권 적용 기록" 표시용이다.
+ */
 export function computeFinalRosters(
   captains: CaptainRow[],
   picks: DraftPickRow[],
-  swapLog: SwapLogRow[],
 ): Map<number, number[]> {
   const rosters = new Map<number, number[]>()
   for (const c of captains) {
@@ -351,25 +356,6 @@ export function computeFinalRosters(
       .sort((a, b) => a.pick_order - b.pick_order)
       .map(p => p.member_player_id)
     rosters.set(c.player_id, [c.player_id, ...members])
-  }
-
-  for (const swap of swapLog) {
-    let fromCaptain: number | null = null
-    let toCaptain: number | null = null
-    for (const [captId, members] of rosters) {
-      if (members.includes(swap.from_player_id)) fromCaptain = captId
-      if (members.includes(swap.to_player_id)) toCaptain = captId
-    }
-    if (fromCaptain !== null && toCaptain !== null) {
-      rosters.set(
-        fromCaptain,
-        rosters.get(fromCaptain)!.map(id => (id === swap.from_player_id ? swap.to_player_id : id)),
-      )
-      rosters.set(
-        toCaptain,
-        rosters.get(toCaptain)!.map(id => (id === swap.to_player_id ? swap.from_player_id : id)),
-      )
-    }
   }
 
   return rosters

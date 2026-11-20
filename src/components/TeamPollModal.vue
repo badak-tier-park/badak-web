@@ -176,7 +176,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
-import { getDraftPicks, getSwapLog } from '@/lib/draft'
+import { getDraftPicks } from '@/lib/draft'
 import { getSchedules, type ScheduleRow } from '@/lib/schedules'
 import { getTeamNames } from '@/lib/teamNames'
 import { getMaps, type MapRow } from '@/lib/maps'
@@ -239,12 +239,11 @@ async function load() {
   loading.value = true
   loadError.value = null
   try {
-    const [captains, pl, teamNames, picks, swaps, schedules, mm, maps] = await Promise.all([
+    const [captains, pl, teamNames, picks, schedules, mm, maps] = await Promise.all([
       getCaptains(props.league.id),
       getLeaguePlayers(props.league.id),
       getTeamNames(props.league.id),
       getDraftPicks(props.league.id),
-      getSwapLog(props.league.id),
       getSchedules(props.league.id),
       getMatchMaps(props.league.id),
       getMaps(),
@@ -253,7 +252,7 @@ async function load() {
     mapsById.value = new Map(maps.map(m => [m.id, m]))
     matchMapIds.value = new Map(mm.map(r => [r.match_number, r.map_ids]))
 
-    const rosters = computeFinalRosters(captains, picks, swaps)
+    const rosters = computeFinalRosters(captains, picks)
     let mine: number | null = null
     for (const [captainId, ids] of rosters) {
       if (ids.includes(props.myPlayerId)) mine = captainId
