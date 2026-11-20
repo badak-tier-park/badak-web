@@ -145,3 +145,14 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
   line-height: 1.4;
 }
+
+
+// 휴대폰: 엔트리 작성에서 칸마다 한 줄 전체 폭으로 쓰므로 손가락 크기로 키운다
+@media (max-width: 640px) {
+  .ps-trigger { min-height: 48px; padding: 0 12px; border-radius: 10px; font-size: 15px; }
+  .ps-sel-race, .ps-opt-race { font-size: 11px; padding: 1px 5px; }
+  .ps-sel-pts, .ps-opt-pts { font-size: 12px; }
+  .ps-dropdown { max-height: 320px; }
+  .ps-option { min-height: 44px; padding: 8px 10px; font-size: 14px; }
+  .ps-opt-badge, .ps-opt-military { font-size: 12px; }
+}
