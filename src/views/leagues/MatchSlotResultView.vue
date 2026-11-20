@@ -469,7 +469,7 @@ import { getTeamNames } from '@/lib/teamNames'
 import { getSchedules, getPlayoffSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
 import { getScheduleEntries, computeFinalRosters, getAceTierBans, calcEntryPoints, isAceSkippedByPoints, decideMatch } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
-import { getDraftPicks, getSwapLog } from '@/lib/draft'
+import { getDraftPicks } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
 import { getTeamPolls, getTeamPollVotes, type TeamPollVote } from '@/lib/teamPolls'
 import { withTimeout } from '@/lib/supabase'
@@ -1188,7 +1188,7 @@ async function setAcePlayer(side: 'A' | 'B', value: number) {
 
 onMounted(async () => {
   try {
-    const [leagueData, captains, players, teamNames, schedules, slotResults, entries, matchMapsData, allMapsData, draftPicks, swapLog] = await withTimeout(Promise.all([
+    const [leagueData, captains, players, teamNames, schedules, slotResults, entries, matchMapsData, allMapsData, draftPicks] = await withTimeout(Promise.all([
       getLeague(leagueId),
       getCaptains(leagueId),
       getLeaguePlayers(leagueId),
@@ -1199,7 +1199,6 @@ onMounted(async () => {
       getMatchMaps(leagueId),
       getMaps(),
       getDraftPicks(leagueId),
-      getSwapLog(leagueId),
     ]))
 
     aceSkipGap.value = leagueData.ace_skip_point_gap ?? null
@@ -1349,7 +1348,7 @@ onMounted(async () => {
     }
 
     // 팀 로스터 계산 (에이스 선수 드롭다운)
-    const finalRosters = computeFinalRosters(captains, draftPicks, swapLog)
+    const finalRosters = computeFinalRosters(captains, draftPicks)
     const makeRoster = (captainId: number): SlotPlayerInfo[] => {
       const memberIds = finalRosters.get(captainId) ?? []
       return memberIds.map(id => toInfo(id, undefined))

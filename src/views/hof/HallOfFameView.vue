@@ -175,7 +175,7 @@ import { getPlayers } from '@/lib/players'
 import { getAllCompletedSchedules, getSlotResultsForSchedules } from '@/lib/schedules'
 import { getAllTeamNames } from '@/lib/teamNames'
 import { getEntriesForSchedules } from '@/lib/entries'
-import { getDraftPicks, getSwapLog } from '@/lib/draft'
+import { getDraftPicks } from '@/lib/draft'
 import { getCaptains, getPlayerSnapshotsForLeagues } from '@/lib/leagueDetail'
 import { computeFinalRosters } from '@/lib/entries'
 import { tierPoint } from '@/lib/constants'
@@ -340,13 +340,12 @@ onMounted(async () => {
       const league = leagueMap.get(leagueId)
       if (!league) continue
 
-      const [captains, draftPicks, swapLog] = await Promise.all([
+      const [captains, draftPicks] = await Promise.all([
         getCaptains(leagueId),
         getDraftPicks(leagueId),
-        getSwapLog(leagueId),
       ])
 
-      const finalRosters = computeFinalRosters(captains, draftPicks, swapLog)
+      const finalRosters = computeFinalRosters(captains, draftPicks)
 
       const makeTeamAward = (captainId: number): TeamAward => {
         const rawIds = finalRosters.get(captainId) ?? [captainId]

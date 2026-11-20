@@ -80,7 +80,7 @@ import { getLeague, setTeamNamesCompleted, type LeagueRow } from '@/lib/leagues'
 import { getCaptains, getLeaguePlayers } from '@/lib/leagueDetail'
 import { type PlayerRow } from '@/lib/players'
 import { getTeamNames, saveTeamNames } from '@/lib/teamNames'
-import { getDraftPicks, getSwapLog } from '@/lib/draft'
+import { getDraftPicks } from '@/lib/draft'
 import { computeFinalRosters } from '@/lib/entries'
 import { withTimeout } from '@/lib/supabase'
 
@@ -109,13 +109,12 @@ const rows = ref<TeamRow[]>([])
 
 onMounted(async () => {
   try {
-    const [leagueData, captains, players, teamNames, draftPicks, swapLog] = await withTimeout(Promise.all([
+    const [leagueData, captains, players, teamNames, draftPicks] = await withTimeout(Promise.all([
       getLeague(leagueId),
       getCaptains(leagueId),
       getLeaguePlayers(leagueId),
       getTeamNames(leagueId),
       getDraftPicks(leagueId),
-      getSwapLog(leagueId),
     ]))
 
     if (!leagueData.draft_completed) {
@@ -128,7 +127,7 @@ onMounted(async () => {
 
     const playerMap = new Map<number, PlayerRow>(players.map(p => [p.id, p]))
     const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t]))
-    const rosters = computeFinalRosters(captains, draftPicks, swapLog)
+    const rosters = computeFinalRosters(captains, draftPicks)
 
     rows.value = captains.map(c => {
       const p = playerMap.get(c.player_id)
