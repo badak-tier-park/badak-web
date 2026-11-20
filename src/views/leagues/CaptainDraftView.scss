@@ -675,3 +675,58 @@
     scroll-snap-align: start;
   }
 }
+
+
+// ══ 휴대폰: 팀장 지목식 (와이어프레임 8번) ═══════════════════════
+// 차례 표시줄은 위에 붙여 두고, 선수 풀과 팀 현황은 탭으로 나눈다.
+// 선수 카드·필터·확인 창 버튼은 손가락 크기로
+.draft-mobile-tabs { display: none; }
+
+@media (max-width: 640px) {
+  .draft-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--c-surface);
+  }
+
+  .draft-mobile-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    margin: 12px var(--page-gutter) 0;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--c-overlay);
+    border: 1px solid var(--c-border);
+  }
+
+  .draft-mobile-tab {
+    min-height: 40px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--c-text-muted);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &.active { background: var(--c-surface-raised); color: var(--c-text); }
+  }
+
+  .draft-mobile-tab-count { font-size: 12px; color: var(--c-text-muted); }
+
+  .mobile-hidden { display: none !important; }
+
+  // 풀만 보일 때는 높이 제한을 푼다 (페이지가 스크롤)
+  .pool-panel { max-height: none; border-bottom: none; }
+
+  .tier-filter-btn { min-height: 36px; padding: 0 12px; font-size: 13px; }
+  .player-card { min-height: 48px; }
+  .card-name { font-size: 15px; }
+
+  .pick-confirm-name { font-size: 17px; }
+  .modal-actions { display: grid; grid-template-columns: 1fr 2fr; }
+  .modal-actions .btn-cancel, .modal-actions .btn-submit { min-height: 50px; border-radius: 12px; font-size: 15px; }
+}

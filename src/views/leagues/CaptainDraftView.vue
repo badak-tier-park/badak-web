@@ -58,13 +58,23 @@
         </div>
       </div>
 
+      <!-- 휴대폰: 선수 풀 / 팀 현황을 탭으로 나눈다 (한 화면에 둘을 쌓으면 둘 다 좁다) -->
+      <div v-if="!draftDone" class="draft-mobile-tabs" role="tablist" aria-label="지목식 보기">
+        <button type="button" role="tab" class="draft-mobile-tab" :class="{ active: mobileView === 'pool' }" :aria-selected="mobileView === 'pool'" @click="mobileView = 'pool'">
+          선수 풀 <span class="draft-mobile-tab-count">{{ availablePlayers.length }}</span>
+        </button>
+        <button type="button" role="tab" class="draft-mobile-tab" :class="{ active: mobileView === 'teams' }" :aria-selected="mobileView === 'teams'" @click="mobileView = 'teams'">
+          팀 현황
+        </button>
+      </div>
+
       <!-- 메인 레이아웃 -->
       <div class="draft-layout">
         <!-- 좌측: 선수 풀 -->
         <aside
           v-if="!draftDone"
           class="pool-panel"
-          :class="{ 'drop-target': dragOverPool }"
+          :class="{ 'drop-target': dragOverPool, 'mobile-hidden': mobileView !== 'pool' }"
           data-drop-pool
         >
           <div class="pool-header">
@@ -117,7 +127,7 @@
         </aside>
 
         <!-- 우측: 팀 현황 -->
-        <main class="teams-panel" :class="{ 'teams-panel--full': draftDone }">
+        <main class="teams-panel" :class="{ 'teams-panel--full': draftDone, 'mobile-hidden': !draftDone && mobileView !== 'teams' }">
           <div class="teams-content-row">
             <div class="teams-body">
               <div
@@ -383,6 +393,8 @@ const {
   },
 )
 
+// 휴대폰에서만 쓰는 보기 전환 (데스크톱은 두 패널을 함께 보여 준다)
+const mobileView = ref<'pool' | 'teams'>('pool')
 const pendingPick = ref<PlayerRow | null>(null)
 
 function confirmPick() {
