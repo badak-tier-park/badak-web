@@ -1286,3 +1286,139 @@ $tabbar-h: 60px;
   font-size: 11px;
   color: var(--c-brand-text);
 }
+
+
+// ══ 휴대폰: 엔트리 제출 경기 목록 · 엔트리 작성 ══════════════════════
+// 데스크톱 배치(한 줄에 정보+버튼, 슬롯 라벨 좌측 고정)는 그대로 두고, 휴대폰에서만
+// 경기·슬롯을 세로 카드로 쌓고 누르는 것을 44px 이상, 글자를 12px 이상으로 키운다.
+// 설계: 리그참여 모바일 와이어프레임 2·3번 화면
+@media (max-width: 640px) {
+  // ── 경기 목록: 경기마다 카드, 버튼은 아래에 크게 ──
+  .match-list-body { padding: 12px; }
+  .match-item-list { gap: 10px; }
+
+  .match-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid var(--c-border);
+    background: var(--c-surface-raised);
+
+    &:hover { background: var(--c-surface-raised); }
+  }
+
+  .match-item-info { gap: 8px 10px; }
+  .round-tag { font-size: 12px; padding: 3px 8px; }
+  .match-item-vs { flex-basis: 100%; order: 1; }
+  .my-team-name, .opp-team-name, .result-team-name { font-size: 16px; }
+  .vs-divider, .result-score-sep { font-size: 13px; }
+  .match-item-date { font-size: 13px; }
+
+  .match-item-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+
+    > button { flex: 1 1 0; min-height: 44px; font-size: 14px; }
+  }
+
+  .entry-done-badge, .entry-consent-badge {
+    flex-basis: 100%;
+    justify-content: center;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  // ── 엔트리 작성: 포인트 바 (창 위에 고정, 본문만 스크롤) ──
+  .entry-points-bar { padding: 10px 16px 12px; }
+  .epi-divider { margin: 0 10px; }
+  .epi-label { font-size: 12px; }
+  .epi-val { font-size: 14px; }
+  .epi-max, .epi-min { font-size: 12px; }
+
+  // ── 슬롯: 번호·종류를 위 한 줄로, 내용은 아래 전체 폭 ──
+  .slot-list { gap: 10px; padding: 12px; }
+
+  .slot-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .slot-label {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    gap: 8px;
+    padding-top: 0;
+  }
+
+  .slot-type-badge { font-size: 12px; padding: 2px 7px; }
+  .slot-content { gap: 10px; }
+
+  // 맵: 줄마다 썸네일·이름·밴·픽, 버튼은 손가락 크기
+  .slot-maps-row { gap: 8px; }
+
+  .map-chip {
+    gap: 8px;
+    padding: 6px 6px 6px 6px;
+    border-radius: 10px;
+  }
+
+  .map-chip-img { width: 56px; height: 42px; border-radius: 6px; }
+  .map-chip-img-empty { width: 56px; height: 42px; border-radius: 6px; }
+  .map-chip-name { font-size: 14px; }
+
+  .map-chip-ban, .map-chip-pick {
+    min-width: 56px;
+    min-height: 44px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // 팀 투표 지원자 바로가기
+  .slot-auto-note { font-size: 12px; margin: 0; }
+  .slot-voters { gap: 8px; margin-bottom: 0; }
+  .slot-voters-label { font-size: 13px; flex-basis: 100%; }
+  .slot-voter { min-height: 40px; padding: 0 14px; font-size: 14px; }
+  .slot-voter-note { font-size: 12px; }
+
+  // 선수 선택은 칸마다 한 줄 전체 폭
+  .slot-selects { flex-direction: column; gap: 8px; }
+
+  .random-toggle {
+    min-height: 44px;
+    padding: 0 12px 0 10px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+
+  .random-toggle-letter { width: 18px; height: 18px; font-size: 11px; }
+  .random-badge { font-size: 12px; padding: 4px 10px; }
+
+  // 에이스 결정전 티어 밴
+  .ace-ban-section { padding: 14px; }
+  .ace-ban-title { font-size: 14px; }
+  .ace-ban-hint { font-size: 12px; }
+  .ace-ban-tier-btn { min-height: 56px; }
+  .ace-ban-tier-sub { font-size: 11px; }
+
+  // ── 아래 고정 버튼: 취소 1 : 저장 2, 오류 문구는 버튼 위 한 줄 ──
+  .modal--entry .modal-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+
+    .entry-error { flex-basis: 100%; margin: 0; font-size: 13px; }
+    .btn-cancel, .btn-submit { min-height: 50px; border-radius: 12px; font-size: 15px; }
+    .btn-cancel { flex: 1; }
+    .btn-submit { flex: 2; }
+  }
+}
