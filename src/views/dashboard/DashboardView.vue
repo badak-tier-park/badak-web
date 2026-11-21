@@ -36,6 +36,7 @@
             >
               <span class="pd-race" :class="`race--${p.race.toLowerCase()}`">{{ p.race }}</span>
               <span class="pd-name">{{ p.nickname }}</span>
+              <span v-if="p.tier" class="pd-tier" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
             </li>
           </ul>
         </div>
