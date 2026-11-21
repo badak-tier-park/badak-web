@@ -244,4 +244,17 @@ function formatMult(v: number) {
   color: var(--c-text-muted);
   line-height: 1.5;
 }
+
+// 휴대폰: 아래에서 올라오는 시트(공통 모달). 금액 버튼은 손가락 크기, 입력은 16px 이상(iOS 확대 방지)
+@media (max-width: 640px) {
+  .bet-row { font-size: 14px; }
+  .bet-amount-row .btn-pill { min-height: 44px; min-width: 64px; }
+  .bet-amount-input { min-height: 44px; font-size: 18px; text-align: center; }
+  .bet-amount-quick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .bet-quick { min-height: 44px; font-size: 13px; }
+  .bet-summary-row { font-size: 14px; }
+  .bet-disclaimer { font-size: 12px; }
+  .modal-actions { display: grid; grid-template-columns: 1fr 2fr; }
+  .modal-actions .btn-cancel, .modal-actions .btn-confirm { min-height: 50px; border-radius: 12px; font-size: 15px; }
+}
 </style>

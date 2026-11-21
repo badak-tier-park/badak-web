@@ -292,3 +292,41 @@
 
 .result-info--win  { color: var(--c-success); font-weight: 700; }
 .result-info--lose { color: var(--c-danger);  font-weight: 700; }
+
+
+// ══ 휴대폰: 승부예측 (와이어프레임 5번) ═══════════════════════
+// 팀 버튼을 위아래로 크게(팀명 왼쪽 · 배당 오른쪽), 작은 글자는 12px 이상으로
+@media (max-width: 640px) {
+  .info-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .balance-label, .balance-league, .balance-unit { font-size: 12px; }
+  .balance-value { font-size: 24px; }
+  .info-bar-right { font-size: 12px; line-height: 1.5; }
+
+  .match-card-top { font-size: 12px; flex-wrap: wrap; row-gap: 6px; }
+  .prob-bar { height: 26px; font-size: 12px; }
+  .prob-bar-empty { font-size: 12px; }
+
+  .match-card-body { flex-direction: column; gap: 10px; }
+  .vs-divider { display: none; }
+
+  .team-btn {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    min-height: 60px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    text-align: left;
+
+    &:not(:disabled):hover { transform: none; }
+  }
+
+  // 강세·열세 표시는 버튼 위가 아니라 이름 앞에
+  .strength-tag { position: static; order: -1; font-size: 12px; flex-shrink: 0; }
+  .team-name { flex: 1; min-width: 0; font-size: 16px; text-align: left; }
+  .team-mult { font-size: 17px; }
+  .team-pool { font-size: 12px; min-width: 64px; text-align: right; }
+
+  .match-card-footer { font-size: 13px; flex-wrap: wrap; gap: 8px; }
+  .match-card-footer .btn-pill { min-height: 40px; font-size: 13px; }
+}
