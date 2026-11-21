@@ -1559,3 +1559,17 @@ $tabbar-h: 60px;
 
   .btn-info--hof { display: flex; }
 }
+
+
+// ══ 휴대폰: 리그 순위 (와이어프레임 7번) ═══════════════════════
+@media (max-width: 640px) {
+  .modal--result-standings .modal-body { padding: 12px; }
+  .standing-team { padding: 12px 14px; border-radius: 14px; }
+  .standing-team-header { flex-wrap: wrap; row-gap: 6px; }
+  .standing-rank { font-size: 20px; min-width: 24px; }
+  .standing-name { font-size: 16px; }
+  .standing-award, .standing-tie { font-size: 12px; }
+  .standing-stats { flex-basis: 100%; justify-content: flex-start; padding-left: 32px; }
+  .standing-record { font-size: 13px; }
+  .standing-pts-label { font-size: 12px; }
+}
