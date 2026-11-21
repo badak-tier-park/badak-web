@@ -84,25 +84,31 @@
 
             <div class="poll-slots">
               <div v-for="slot in POLL_SLOTS" :key="slot" class="poll-slot" :class="{ 'poll-slot--on': draft[slot]?.on }">
-                <div class="poll-slot-head">
+                <!-- 투표 중이면 머리줄 전체가 ✓ 토글 — 작은 원만 누르게 하면 휴대폰에서 빗나간다 -->
+                <button
+                  v-if="detail.poll.status === 'open'"
+                  type="button"
+                  class="poll-slot-head poll-slot-head--toggle"
+                  :aria-pressed="!!draft[slot]?.on"
+                  :aria-label="`${slot}경기 나가고 싶음`"
+                  title="나가고 싶음"
+                  @click="toggleSlot(slot)"
+                >
                   <span class="slot-num">{{ slot }}</span>
                   <span class="slot-type-badge" :class="{ 'slot-type-badge--team': slot === 4 }">
                     {{ slot === 4 ? '팀전' : '개인전' }}
                   </span>
-                  <button
-                    v-if="detail.poll.status === 'open'"
-                    type="button"
-                    class="poll-check"
-                    :class="{ 'poll-check--on': draft[slot]?.on }"
-                    :aria-pressed="!!draft[slot]?.on"
-                    :aria-label="`${slot}경기 나가고 싶음`"
-                    title="나가고 싶음"
-                    @click="toggleSlot(slot)"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <span class="poll-check" :class="{ 'poll-check--on': draft[slot]?.on }" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                       <path d="M2.5 7.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                  </button>
+                  </span>
+                </button>
+                <div v-else class="poll-slot-head">
+                  <span class="slot-num">{{ slot }}</span>
+                  <span class="slot-type-badge" :class="{ 'slot-type-badge--team': slot === 4 }">
+                    {{ slot === 4 ? '팀전' : '개인전' }}
+                  </span>
                 </div>
 
                 <!-- 맵 (썸네일 + 이름) -->
