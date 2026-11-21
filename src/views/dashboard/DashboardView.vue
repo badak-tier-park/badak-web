@@ -36,10 +36,17 @@
             >
               <span class="pd-race" :class="`race--${p.race.toLowerCase()}`">{{ p.race }}</span>
               <span class="pd-name">{{ p.nickname }}</span>
+              <span v-if="p.tier" class="pd-tier" :class="`tier-badge--${$tierClass(p.tier)}`">{{ p.tier }}</span>
             </li>
           </ul>
         </div>
 
+        <button
+          v-if="myNickname && selectedPlayer !== myNickname"
+          type="button"
+          class="btn-mine"
+          @click="selectPlayer(myNickname)"
+        >내 전적</button>
         <div class="season-filters">
           <button
             class="season-btn"
@@ -107,7 +114,7 @@
               v-for="race in ['T', 'Z', 'P']"
               :key="race"
               class="race-stat-card"
-              :class="`race-stat-card--${race.toLowerCase()}`"
+              :class="[`race-stat-card--${race.toLowerCase()}`, { 'race-stat-card--empty': !raceStats[race]?.wins && !raceStats[race]?.losses }]"
             >
               <div class="race-stat-top">
                 <span class="race-label" :class="`race--${race.toLowerCase()}`">{{ race }}</span>
@@ -117,6 +124,7 @@
                   :color-class="`donut-${race.toLowerCase()}`"
                 />
               </div>
+              <p class="race-empty">기록 없음</p>
               <div class="race-stat-nums">
                 <div class="race-stat-row">
                   <span class="rsr-label">승</span>
@@ -137,10 +145,22 @@
 
         <!-- ── Section 2: 맵별 승률 ── -->
         <section class="dash-section">
-          <h3 class="dash-section-title">맵별 승률</h3>
+          <div class="dash-section-head">
+            <h3 class="dash-section-title">맵별 승률</h3>
+            <div v-if="mapStats.length > 1" class="seg" role="group" aria-label="맵 정렬">
+              <button type="button" class="seg-btn" :class="{ active: mapSort === 'games' }" :aria-pressed="mapSort === 'games'" @click="mapSort = 'games'">판 수</button>
+              <button type="button" class="seg-btn" :class="{ active: mapSort === 'winrate' }" :aria-pressed="mapSort === 'winrate'" @click="mapSort = 'winrate'">승률</button>
+            </div>
+          </div>
           <div v-if="mapStats.length === 0" class="dash-empty">데이터 없음</div>
-          <div v-else class="map-stats-list" :key="chartKey">
-            <div v-for="(m, i) in mapStats" :key="m.map" class="map-stat-row" :style="{ '--bar-delay': `${i * 60}ms` }">
+          <div v-else class="map-stats-list" :class="{ 'map-stats-list--expanded': mapExpanded }" :key="chartKey">
+            <div
+              v-for="(m, i) in sortedMapStats"
+              :key="m.map"
+              class="map-stat-row"
+              :class="{ 'map-stat-row--extra': i >= MAP_PREVIEW }"
+              :style="{ '--bar-delay': `${i * 60}ms` }"
+            >
               <div class="map-name-cell">
                 <img
                   v-if="mapThumbMap[m.map]"
@@ -165,15 +185,28 @@
               </div>
               <span class="map-record">{{ m.wins }}W {{ m.losses }}L</span>
             </div>
+            <button
+              v-if="sortedMapStats.length > MAP_PREVIEW"
+              type="button"
+              class="map-more"
+              @click="mapExpanded = !mapExpanded"
+            >{{ mapExpanded ? '접기' : `전체 보기 (${sortedMapStats.length})` }}</button>
           </div>
         </section>
 
         <!-- ── Section 3 & 4: 그래프 ── -->
+        <div class="chart-range-row">
+          <span class="chart-range-label">그래프 기간</span>
+          <div class="seg" role="group" aria-label="그래프 기간">
+            <button type="button" class="seg-btn" :class="{ active: chartRange === 'all' }" :aria-pressed="chartRange === 'all'" @click="chartRange = 'all'">전체</button>
+            <button type="button" class="seg-btn" :class="{ active: chartRange === '30' }" :aria-pressed="chartRange === '30'" @click="chartRange = '30'">최근 30일</button>
+          </div>
+        </div>
         <div class="charts-row">
           <!-- APM 변화 -->
           <section class="dash-section dash-section--chart">
             <h3 class="dash-section-title">APM 변화</h3>
-            <div v-if="apmChartPoints.length < 2" class="dash-empty">데이터 부족</div>
+            <div v-if="apmChartPoints.length < 2" class="dash-empty">APM 기록이 있는 날이 2일 이상이면 그래프가 보여요</div>
             <div v-else class="chart-wrap">
               <svg
                 :key="chartKey"
@@ -234,8 +267,20 @@
           <!-- 일자별 게임 수 -->
           <section class="dash-section dash-section--chart">
             <h3 class="dash-section-title">일자별 게임 수</h3>
-            <div v-if="gameCountPoints.length === 0" class="dash-empty">데이터 없음</div>
-            <div v-else class="chart-wrap">
+            <div v-if="gameCountPoints.length === 0" class="dash-empty">이 기간에 기록된 게임이 없어요</div>
+            <!-- 휴대폰: 선 그래프 대신 막대 (최근 기록이 있는 날 14일까지) -->
+            <div v-if="gameCountBars.length" class="gc-bars" :key="`bars-${chartKey}`">
+              <div class="gc-bars-plot">
+                <div v-for="b in gameCountBars" :key="b.date" class="gc-bar-col" :title="`${b.date} · ${b.val}판`">
+                  <span class="gc-bar-val">{{ b.val }}</span>
+                  <span class="gc-bar" :style="{ height: b.pct + '%' }" />
+                </div>
+              </div>
+              <div class="gc-bars-axis">
+                <span v-for="b in gameCountBars" :key="b.date" class="gc-bar-date">{{ b.showLabel ? b.label : '' }}</span>
+              </div>
+            </div>
+            <div v-if="gameCountPoints.length" class="chart-wrap chart-wrap--games">
               <svg
                 :key="chartKey"
                 :viewBox="`0 0 ${CHART_W} ${CHART_H}`"
@@ -374,6 +419,17 @@ function hideDropdown() {
 // ── 시즌 필터 ─────────────────────────────────────────────
 const selectedSeasonId = ref<number | null>(null)
 
+// 로그인한 사용자의 닉네임 — 다른 선수를 보다가 [내 전적]으로 돌아온다
+const myNickname = ref<string | null>(null)
+
+// 맵별: 정렬 기준, 휴대폰에서 처음 보이는 개수(그 뒤는 [전체 보기])
+const MAP_PREVIEW = 5
+const mapSort = ref<'games' | 'winrate'>('games')
+const mapExpanded = ref(false)
+
+// 그래프 기간: 전체(기본, 예전과 같음) / 최근 30일
+const chartRange = ref<'all' | '30'>('all')
+
 // ── 필터링된 게임 ─────────────────────────────────────────
 const playerGames = computed(() => {
   if (!selectedPlayer.value) return []
@@ -447,6 +503,19 @@ const mapStats = computed(() => {
     .sort((a, b) => b.total - a.total)
 })
 
+const sortedMapStats = computed(() => {
+  if (mapSort.value === 'games') return mapStats.value
+  // 승률이 같으면 판 수가 많은 쪽을 위로
+  return [...mapStats.value].sort((a, b) => b.winRate - a.winRate || b.total - a.total)
+})
+
+// 그래프에 쓰는 게임 — 시즌 필터 위에 기간을 한 번 더 건다
+const chartGames = computed(() => {
+  if (chartRange.value === 'all') return filteredGames.value
+  const from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  return filteredGames.value.filter(g => (g.played_at?.slice(0, 10) ?? '') >= from)
+})
+
 // ── 차트 공통 설정 ────────────────────────────────────────
 function smoothLinePath(pts: { x: number; y: number }[]): string {
   if (pts.length < 2) return ''
@@ -492,7 +561,7 @@ function makeGridLines(max: number, h: number): { val: number; y: number }[] {
 const apmByDate = computed(() => {
   const map: Record<string, number[]> = {}
   const names = selectedPlayerNames.value
-  for (const g of filteredGames.value) {
+  for (const g of chartGames.value) {
     const date = g.played_at?.slice(0, 10)
     if (!date) continue
     const apm = names.has(g.winner_name?.trim() ?? '') ? g.winner_apm : g.loser_apm
@@ -549,7 +618,7 @@ const apmXLabels = computed(() => {
 // ── 게임 수 차트 ──────────────────────────────────────────
 const gameCountByDate = computed(() => {
   const map: Record<string, number> = {}
-  for (const g of filteredGames.value) {
+  for (const g of chartGames.value) {
     const date = g.played_at?.slice(0, 10)
     if (!date) continue
     map[date] = (map[date] ?? 0) + 1
@@ -591,8 +660,22 @@ const gameXLabels = computed(() => {
 })
 
 
-// ── 차트 키 (선수/시즌 변경 시 애니메이션 재생) ───────────
-const chartKey = computed(() => `${selectedPlayer.value}-${selectedSeasonId.value}`)
+// 휴대폰 막대그래프: 게임이 있었던 날 중 최근 14일, 날짜 글자는 겹치지 않게 4개 안팎만
+const gameCountBars = computed(() => {
+  const data = gameCountByDate.value.slice(-14)
+  const max = Math.max(1, ...data.map(d => d.val))
+  const step = Math.max(1, Math.ceil(data.length / 4))
+  return data.map((d, i) => ({
+    date: d.date,
+    val: d.val,
+    pct: Math.max(4, (d.val / max) * 100),
+    label: d.date.slice(5),
+    showLabel: i % step === 0 || i === data.length - 1,
+  }))
+})
+
+// ── 차트 키 (선수/시즌/기간 변경 시 애니메이션 재생) ───────
+const chartKey = computed(() => `${selectedPlayer.value}-${selectedSeasonId.value}-${chartRange.value}`)
 
 // ── 유틸 ─────────────────────────────────────────────────
 function winrateColorClass(rate: number) {
@@ -618,7 +701,10 @@ onMounted(async () => {
   const discordId = auth.user?.identities?.find(i => i.provider === 'discord')?.id ?? ''
   if (discordId) {
     const me = await getPlayerByDiscordId(discordId)
-    if (me) selectPlayer(me.nickname)
+    if (me) {
+      myNickname.value = me.nickname
+      selectPlayer(me.nickname)
+    }
   }
 
   loading.value = false
