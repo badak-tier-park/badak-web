@@ -71,7 +71,9 @@
 
   // 입력·선택이 많은 창(엔트리 작성, 경기 목록, 팀 투표)은 시트 대신 화면 전체를 쓴다.
   // 92% 시트는 위쪽이 남아 내용이 좁고, 하단 버튼이 홈 바에 붙어 누르기 어렵다
+  // padding-top(상태바 여백)이 높이에 더해지면 창이 화면보다 길어져 위가 상태바 밑으로 잘린다 → border-box
   .modal-backdrop .modal.modal--full-mobile {
+    box-sizing: border-box;
     height: 100vh;
     height: 100dvh;
     max-height: none;
