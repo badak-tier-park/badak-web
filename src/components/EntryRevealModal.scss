@@ -710,6 +710,7 @@
 // 위아래로 쌓는다(어느 팀인지는 data-team 라벨). 창은 화면 전체를 쓴다
 @media (max-width: 640px) {
   .reveal-modal {
+    box-sizing: border-box;
     height: 100vh;
     height: 100dvh;
     max-height: none;

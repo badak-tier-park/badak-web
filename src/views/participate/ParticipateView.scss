@@ -1407,6 +1407,7 @@ $tabbar-h: 60px;
 
   // 에이스 결정전 티어 밴
   .ace-ban-section { padding: 14px; }
+  .ace-ban-header { flex-direction: column; align-items: flex-start; gap: 4px; }
   .ace-ban-title { font-size: 14px; }
   .ace-ban-hint { font-size: 12px; }
   // 티어 10개를 한 줄에 두면 화면 밖으로 나가 가로 스크롤이 생긴다 → 5칸 2줄

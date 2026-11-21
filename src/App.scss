@@ -68,3 +68,11 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
+
+
+// 한글은 기본이 글자 단위 줄바꿈이라 좁은 휴대폰 칸에서 "티 / 어 밴"처럼 단어 중간이 끊긴다.
+// 단어(띄어쓰기) 단위로 줄을 바꾸고, 한 단어가 칸보다 길 때만(긴 닉네임 등) 단어 안에서 끊는다
+body {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
