@@ -284,8 +284,10 @@
       <div v-if="matchListModal.open" class="modal-backdrop">
         <div class="modal modal--match-list modal--full-mobile">
           <div class="modal-header">
-            <p class="modal-title">엔트리 제출</p>
-            <p class="modal-subtitle">{{ matchListModal.league?.name }}</p>
+            <div>
+              <p class="modal-title">엔트리 제출</p>
+              <p class="modal-subtitle">{{ matchListModal.league?.name }}</p>
+            </div>
             <button class="modal-close" @click="matchListModal.open = false">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>

@@ -642,6 +642,8 @@ $tabbar-h: 60px;
   gap: 5px;
   padding: 3px 7px 3px 3px;
   width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
   border-radius: 6px;
   border: 1px solid var(--c-border-faint);
   background: var(--c-surface-raised);
@@ -1320,7 +1322,7 @@ $tabbar-h: 60px;
     flex-wrap: wrap;
     gap: 8px;
 
-    > button { flex: 1 1 0; min-height: 44px; font-size: 14px; }
+    > button { flex: 1 1 0; min-height: 44px; font-size: 14px; justify-content: center; }
   }
 
   .entry-done-badge, .entry-consent-badge {
@@ -1407,7 +1409,9 @@ $tabbar-h: 60px;
   .ace-ban-section { padding: 14px; }
   .ace-ban-title { font-size: 14px; }
   .ace-ban-hint { font-size: 12px; }
-  .ace-ban-tier-btn { min-height: 56px; }
+  // 티어 10개를 한 줄에 두면 화면 밖으로 나가 가로 스크롤이 생긴다 → 5칸 2줄
+  .ace-ban-tiers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .ace-ban-tier-btn { min-height: 56px; min-width: 0; }
   .ace-ban-tier-sub { font-size: 11px; }
 
   // ── 아래 고정 버튼: 취소 1 : 저장 2, 오류 문구는 버튼 위 한 줄 ──

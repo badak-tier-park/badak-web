@@ -345,8 +345,8 @@
   .poll-banpick-row { gap: 8px; }
   .poll-bp-btn { min-width: 56px; min-height: 44px; border-radius: 10px; font-size: 14px; }
 
-  .poll-voter { font-size: 13px; padding: 4px 10px; }
-  .poll-voter-bp { font-size: 12px; }
+  .poll-voter { font-size: 13px; padding: 4px 10px; flex-wrap: wrap; row-gap: 2px; border-radius: 12px; }
+  .poll-voter-bp { font-size: 12px; white-space: nowrap; }
   .poll-voters-empty, .poll-novote { font-size: 13px; }
 
   // 하단 고정: 안내 → 버튼(닫기 1 : 저장 2)

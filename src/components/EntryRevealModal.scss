@@ -735,11 +735,14 @@
   .rse-map-thumb-wrap { width: 56px; height: 42px; }
   .rse-map-name { font-size: 13px; }
 
+  // 팀A는 포인트가 맨 앞이라 margin-left:auto만 주면 줄 전체가 오른쪽으로 밀린다.
+  // 포인트를 순서상 맨 뒤로 보내 두 팀 모두 "이름 · 종족 · 티어 … 포인트"로 맞춘다
   .rse-col,
   .rse-col--right {
     .rse-player { justify-content: flex-start; }
-    .rse-pt { margin-right: 0; margin-left: auto; }
+    .rse-pt { order: 99; margin-right: 0; margin-left: auto; }
     .rse-total { text-align: left; }
+    .rse-team-group { justify-content: flex-start; }
   }
 
   .rse-col[data-team]::before {
