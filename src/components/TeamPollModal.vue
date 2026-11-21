@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div class="modal-backdrop">
-      <div class="modal modal--lg poll-modal">
+      <div class="modal modal--lg modal--full-mobile poll-modal">
         <div class="modal-header">
           <div>
             <p class="modal-title">{{ detail ? '팀 투표' : '팀 투표 · 경기 목록' }}</p>

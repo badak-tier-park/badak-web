@@ -138,6 +138,26 @@
       </template>
     </div>
 
+    <!-- ── 휴대폰 하단 탭바: 홈 화면 앱에는 뒤로가기가 없어 엄지 닿는 곳에 이동을 둔다 ── -->
+    <nav class="mobile-tabbar" aria-label="리그 참여 메뉴">
+      <button type="button" class="mobile-tab" @click="$router.push({ name: 'home' })">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3 10l8-6 8 6v8a1 1 0 01-1 1h-4v-5H8v5H4a1 1 0 01-1-1v-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>홈</span>
+      </button>
+      <button type="button" class="mobile-tab" :class="{ active: activeTab === 'leagues' }" :aria-current="activeTab === 'leagues' ? 'page' : undefined" @click="activeTab = 'leagues'">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="3" y="4" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h16M8 2v4M14 2v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>리그</span>
+      </button>
+      <button type="button" class="mobile-tab" :class="{ active: activeTab === 'predictions' }" :aria-current="activeTab === 'predictions' ? 'page' : undefined" @click="activeTab = 'predictions'">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M11 6v5l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>승부예측</span>
+      </button>
+      <button type="button" class="mobile-tab" :class="{ active: activeTab === 'rankings' }" :aria-current="activeTab === 'rankings' ? 'page' : undefined" @click="activeTab = 'rankings'">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="3" y="12" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="7" width="4" height="12" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="15" y="3" width="4" height="16" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>
+        <span>랭킹</span>
+      </button>
+    </nav>
+
     <!-- ── 팀 투표 모달 ────────────────────────────────────── -->
     <TeamPollModal
       v-if="pollModal.league && myPlayerId"
@@ -219,7 +239,7 @@
     <!-- ── 경기 목록 모달 ──────────────────────────────────── -->
     <Teleport to="body">
       <div v-if="matchListModal.open" class="modal-backdrop">
-        <div class="modal modal--match-list">
+        <div class="modal modal--match-list modal--full-mobile">
           <div class="modal-header">
             <p class="modal-title">엔트리 제출</p>
             <p class="modal-subtitle">{{ matchListModal.league?.name }}</p>
@@ -300,7 +320,7 @@
     <!-- ── 공개된 경기 목록 모달 ──────────────────────────────── -->
     <Teleport to="body">
       <div v-if="revealListModal.open" class="modal-backdrop">
-        <div class="modal modal--match-list">
+        <div class="modal modal--match-list modal--full-mobile">
           <div class="modal-header">
             <div>
               <p class="modal-title">엔트리 확인</p>
@@ -362,7 +382,7 @@
     <!-- ── 경기 결과 목록 모달 ──────────────────────────────── -->
     <Teleport to="body">
       <div v-if="resultListModal.open" class="modal-backdrop">
-        <div class="modal modal--match-list">
+        <div class="modal modal--match-list modal--full-mobile">
           <div class="modal-header">
             <div>
               <p class="modal-title">경기 결과</p>
@@ -483,7 +503,7 @@
     <!-- ── 엔트리 제출 모달 ────────────────────────────────── -->
     <Teleport to="body">
       <div v-if="entryModal.open" class="modal-backdrop">
-        <div class="modal modal--entry">
+        <div class="modal modal--entry modal--full-mobile">
           <div class="modal-header">
             <div>
               <p class="modal-title">{{ entryModal.readonly ? '엔트리 확인' : '엔트리 작성' }}</p>
