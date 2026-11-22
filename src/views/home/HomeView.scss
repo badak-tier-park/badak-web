@@ -169,3 +169,15 @@
   .nav-card { padding: 11px 12px; gap: 9px; }
   .nav-card-icon { width: 28px; height: 28px; }
 }
+
+
+// 휴대폰: 메뉴 카드 설명이 10px 한 줄로 잘리던 것을 12px 두 줄까지
+@media (max-width: 640px) {
+  .nav-card-desc {
+    font-size: 12px;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}

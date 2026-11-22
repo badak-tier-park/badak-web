@@ -116,6 +116,20 @@
   flex-wrap: wrap;
 }
 
+// 투표 중: 머리줄 전체가 ✓ 토글 버튼
+.poll-slot-head--toggle {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover .poll-check:not(.poll-check--on) { border-color: var(--c-brand-border); color: var(--c-brand-text); }
+}
+
 .slot-num {
   font-size: 20px;
   font-weight: 800;
@@ -302,4 +316,42 @@
   font-size: 12px;
   color: var(--c-danger);
   text-align: right;
+}
+
+
+// ══ 휴대폰 (와이어프레임 4번) ═══════════════════════════════
+// 창은 화면 전체(.modal--full-mobile). 누르는 것은 44px 이상, 글자 12px 이상,
+// 저장 버튼은 아래 고정이고 안 고른 밴·픽 안내는 버튼 바로 위에 둔다
+@media (max-width: 640px) {
+  .poll-hint { font-size: 13px; }
+
+  // 경기 목록
+  .poll-match { flex-direction: column; align-items: stretch; gap: 12px; padding: 14px; border-radius: 14px; }
+  .poll-match-vs { font-size: 16px; }
+  .poll-match-date, .round-tag, .poll-state { font-size: 12px; }
+  .poll-match-actions { gap: 8px; }
+  .poll-match-actions .btn-pill { flex: 1; min-height: 44px; font-size: 14px; }
+
+  // 경기 칸
+  .poll-detail-bar .btn-pill { min-height: 40px; font-size: 13px; }
+  .poll-slots { gap: 10px; }
+  .poll-slot { padding: 14px; border-radius: 14px; gap: 10px; }
+  .poll-slot-head { min-height: 40px; }
+  .slot-type-badge { font-size: 12px; padding: 2px 7px; }
+  .poll-check { width: 36px; height: 36px; }
+
+  .map-chip-name { font-size: 13px; }
+  .poll-banpick-hint { font-size: 13px; }
+  .poll-banpick-row { gap: 8px; }
+  .poll-bp-btn { min-width: 56px; min-height: 44px; border-radius: 10px; font-size: 14px; }
+
+  .poll-voter { font-size: 13px; padding: 4px 10px; flex-wrap: wrap; row-gap: 2px; border-radius: 12px; }
+  .poll-voter-bp { font-size: 12px; white-space: nowrap; }
+  .poll-voters-empty, .poll-novote { font-size: 13px; }
+
+  // 하단 고정: 안내 → 버튼(닫기 1 : 저장 2)
+  .modal-footer { padding: 12px 16px; gap: 8px; }
+  .poll-problem { order: -1; text-align: left; font-size: 13px; }
+  .modal-actions { display: grid; grid-template-columns: 1fr 2fr; }
+  .modal-actions .btn-cancel, .modal-actions .btn-confirm { min-height: 50px; border-radius: 12px; font-size: 15px; }
 }

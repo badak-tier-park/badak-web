@@ -703,3 +703,63 @@
   .rse-map-thumb-wrap { width: 80px; height: 60px; }
   .rse-banned-maps .rse-map-item { width: 96px; }
 }
+
+
+// ══ 휴대폰: 엔트리 확인 · 경기 결과 상세 (와이어프레임 6·11번) ════════
+// 3열(팀A | 맵 | 팀B)은 휴대폰에서 이름이 잘린다. 경기마다 맵을 위에 두고 두 팀 선수를
+// 위아래로 쌓는다(어느 팀인지는 data-team 라벨). 창은 화면 전체를 쓴다
+@media (max-width: 640px) {
+  .reveal-modal {
+    box-sizing: border-box;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .reveal-title { font-size: 16px; }
+  .reveal-close { width: 44px; height: 44px; }
+
+  .reveal-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+
+  .rse-maps {
+    order: -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .rse-map-item { flex-direction: row; width: auto; padding: 4px 8px 4px 4px; }
+  .rse-map-thumb-wrap { width: 56px; height: 42px; }
+  .rse-map-name { font-size: 13px; }
+
+  // 팀A는 포인트가 맨 앞이라 margin-left:auto만 주면 줄 전체가 오른쪽으로 밀린다.
+  // 포인트를 순서상 맨 뒤로 보내 두 팀 모두 "이름 · 종족 · 티어 … 포인트"로 맞춘다
+  .rse-col,
+  .rse-col--right {
+    .rse-player { justify-content: flex-start; }
+    .rse-pt { order: 99; margin-right: 0; margin-left: auto; }
+    .rse-total { text-align: left; }
+    .rse-team-group { justify-content: flex-start; }
+  }
+
+  .rse-col[data-team]::before {
+    content: attr(data-team);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--c-text-muted);
+  }
+
+  // 빈 칸(에결 티어 밴 줄의 양옆)은 숨긴다
+  .ace-ban-col:empty { display: none; }
+
+  // 진 쪽도 읽히게: 글자를 줄이지 않는다
+  .rse-col--loser {
+    .rse-name-badge { font-size: 13px; padding: 2px 8px; }
+    .rse-race { font-size: 11px; }
+    .rse-pt { font-size: 12px; }
+  }
+}

@@ -624,3 +624,16 @@
 
   &:hover { color: var(--c-danger); border-color: var(--c-danger-border); }
 }
+
+
+// 휴대폰 글자 크기: 요일·날짜·더보기는 12px 이상, 일정 칩은 칸 폭(45px 안팎) 때문에 10.5px까지만.
+// 승부예측 상세(아래 시트)는 12px 이상
+@media (max-width: 640px) {
+  .cal-weekday { font-size: 12px; }
+  .cal-day { font-size: 13px; }
+  .cal-chip { font-size: 10.5px; }
+  .cal-more { font-size: 11px; }
+  .cal-detail-tag { font-size: 12px; }
+  .pred-points, .pred-prob-bar, .pred-prob-empty, .pred-strength, .pred-status,
+  .pred-race, .pred-pct, .pred-vs, .pred-footer, .pred-cancel { font-size: 12px; }
+}

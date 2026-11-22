@@ -59,3 +59,20 @@ html, body, #app {
   pointer-events: none;
   z-index: 0;
 }
+
+
+// 홈 화면 앱(PWA)처럼 쓰도록 확대를 막는다(운영진 결정, 2026-11). 핀치·입력칸 자동 확대는 index.html의
+// viewport(maximum-scale=1, user-scalable=no), 두 번 탭 확대는 touch-action으로 막는다
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+
+// 한글은 기본이 글자 단위 줄바꿈이라 좁은 휴대폰 칸에서 "티 / 어 밴"처럼 단어 중간이 끊긴다.
+// 단어(띄어쓰기) 단위로 줄을 바꾸고, 한 단어가 칸보다 길 때만(긴 닉네임 등) 단어 안에서 끊는다
+body {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}

@@ -48,6 +48,55 @@
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+// ── 휴대폰 하단 탭바 ─────────────────────────────────────
+// 데스크톱은 위쪽 탭을 그대로 쓰고, 휴대폰(640px 이하)에서만 위쪽 탭·뒤로 버튼을 숨기고 아래에 고정한다
+$tabbar-h: 60px;
+
+.mobile-tabbar { display: none; }
+
+@media (max-width: 640px) {
+  .participate-content {
+    // 고정 탭바에 마지막 카드가 가리지 않게
+    padding-bottom: calc(var(--page-pad-bottom) + #{$tabbar-h} + env(safe-area-inset-bottom));
+  }
+
+  .participate-content > .btn-back,
+  .participate-tabs { display: none; }
+
+  .mobile-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    height: calc(#{$tabbar-h} + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
+    background: var(--c-surface);
+    border-top: 1px solid var(--c-border);
+  }
+
+  .mobile-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: none;
+    background: none;
+    color: var(--c-text-muted);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    &.active { color: var(--c-brand-text); font-weight: 700; }
+  }
+}
+
 
 .btn-hof {
   display: flex;
@@ -593,6 +642,8 @@
   gap: 5px;
   padding: 3px 7px 3px 3px;
   width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
   border-radius: 6px;
   border: 1px solid var(--c-border-faint);
   background: var(--c-surface-raised);
@@ -1236,4 +1287,294 @@
   margin: 0 0 6px;
   font-size: 11px;
   color: var(--c-brand-text);
+}
+
+
+// ══ 휴대폰: 엔트리 제출 경기 목록 · 엔트리 작성 ══════════════════════
+// 데스크톱 배치(한 줄에 정보+버튼, 슬롯 라벨 좌측 고정)는 그대로 두고, 휴대폰에서만
+// 경기·슬롯을 세로 카드로 쌓고 누르는 것을 44px 이상, 글자를 12px 이상으로 키운다.
+// 설계: 리그참여 모바일 와이어프레임 2·3번 화면
+@media (max-width: 640px) {
+  // ── 경기 목록: 경기마다 카드, 버튼은 아래에 크게 ──
+  .match-list-body { padding: 12px; }
+  .match-item-list { gap: 10px; }
+
+  .match-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid var(--c-border);
+    background: var(--c-surface-raised);
+
+    &:hover { background: var(--c-surface-raised); }
+  }
+
+  .match-item-info { gap: 8px 10px; }
+  .round-tag { font-size: 12px; padding: 3px 8px; }
+  .match-item-vs { flex-basis: 100%; order: 1; }
+  .my-team-name, .opp-team-name, .result-team-name { font-size: 16px; }
+  .vs-divider, .result-score-sep { font-size: 13px; }
+  .match-item-date { font-size: 13px; }
+
+  .match-item-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+
+    > button { flex: 1 1 0; min-height: 44px; font-size: 14px; justify-content: center; }
+  }
+
+  .entry-done-badge, .entry-consent-badge {
+    flex-basis: 100%;
+    justify-content: center;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  // ── 엔트리 작성: 포인트 바 (창 위에 고정, 본문만 스크롤) ──
+  .entry-points-bar { padding: 10px 16px 12px; }
+  .epi-divider { margin: 0 10px; }
+  .epi-label { font-size: 12px; }
+  .epi-val { font-size: 14px; }
+  .epi-max, .epi-min { font-size: 12px; }
+
+  // ── 슬롯: 번호·종류를 위 한 줄로, 내용은 아래 전체 폭 ──
+  .slot-list { gap: 10px; padding: 12px; }
+
+  .slot-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .slot-label {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    gap: 8px;
+    padding-top: 0;
+  }
+
+  .slot-type-badge { font-size: 12px; padding: 2px 7px; }
+  .slot-content { gap: 10px; }
+
+  // 맵: 줄마다 썸네일·이름·밴·픽, 버튼은 손가락 크기
+  .slot-maps-row { gap: 8px; }
+
+  .map-chip {
+    gap: 8px;
+    padding: 6px 6px 6px 6px;
+    border-radius: 10px;
+  }
+
+  .map-chip-img { width: 56px; height: 42px; border-radius: 6px; }
+  .map-chip-img-empty { width: 56px; height: 42px; border-radius: 6px; }
+  .map-chip-name { font-size: 14px; }
+
+  .map-chip-ban, .map-chip-pick {
+    min-width: 56px;
+    min-height: 44px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // 팀 투표 지원자 바로가기
+  .slot-auto-note { font-size: 12px; margin: 0; }
+  .slot-voters { gap: 8px; margin-bottom: 0; }
+  .slot-voters-label { font-size: 13px; flex-basis: 100%; }
+  .slot-voter { min-height: 40px; padding: 0 14px; font-size: 14px; }
+  .slot-voter-note { font-size: 12px; }
+
+  // 선수 선택은 칸마다 한 줄 전체 폭
+  .slot-selects { flex-direction: column; gap: 8px; }
+
+  .random-toggle {
+    min-height: 44px;
+    padding: 0 12px 0 10px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+
+  .random-toggle-letter { width: 18px; height: 18px; font-size: 11px; }
+  .random-badge { font-size: 12px; padding: 4px 10px; }
+
+  // 에이스 결정전 티어 밴
+  .ace-ban-section { padding: 14px; }
+  .ace-ban-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .ace-ban-title { font-size: 14px; }
+  .ace-ban-hint { font-size: 12px; }
+  // 티어 10개를 한 줄에 두면 화면 밖으로 나가 가로 스크롤이 생긴다 → 5칸 2줄
+  .ace-ban-tiers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .ace-ban-tier-btn { min-height: 56px; min-width: 0; }
+  .ace-ban-tier-sub { font-size: 11px; }
+
+  // ── 아래 고정 버튼: 취소 1 : 저장 2, 오류 문구는 버튼 위 한 줄 ──
+  .modal--entry .modal-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+
+    .entry-error { flex-basis: 100%; margin: 0; font-size: 13px; }
+    .btn-cancel, .btn-submit { min-height: 50px; border-radius: 12px; font-size: 15px; }
+    .btn-cancel { flex: 1; }
+    .btn-submit { flex: 2; }
+  }
+}
+
+
+// ── 내 할 일 (리그 목록 위) ───────────────────────────────
+// 마감이 있는 엔트리, 열린 팀 투표, 진행 중 지목식을 리그 카드보다 먼저 보여 준다(데스크톱·휴대폰 공통)
+.todo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.todo-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+}
+
+.todo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-raised);
+
+  // 오늘 마감인데 아직 제출 전, 또는 지목식 진행 중
+  &--urgent {
+    border-color: var(--c-warning);
+    background: var(--c-warning-bg);
+  }
+
+  &--row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+}
+
+.todo-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.todo-meta {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+
+  &--urgent { color: var(--c-warning); }
+  &--ok { color: var(--c-success); }
+}
+
+.todo-main {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.todo-vs {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-muted);
+}
+
+.todo-btn {
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--c-brand-gradient);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &--outline {
+    background: transparent;
+    border: 1px solid var(--c-brand-border);
+    color: var(--c-brand-text);
+  }
+}
+
+// 명예의 전당 타일은 휴대폰에서만 (데스크톱은 헤더 버튼)
+.btn-info--hof { display: none; }
+
+// ══ 휴대폰: 리그 참여 홈 (와이어프레임 1번) ════════════════════
+@media (max-width: 640px) {
+  .todo-card--row .todo-btn { flex-shrink: 0; min-height: 44px; }
+  .todo-card:not(.todo-card--row) .todo-btn { align-self: stretch; min-height: 48px; font-size: 15px; }
+
+  // 헤더의 명예의 전당은 타일로 옮긴다
+  .btn-hof { display: none; }
+
+  .league-card { padding: 16px; align-items: stretch; }
+  .league-name { font-size: 18px; }
+
+  .league-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+
+    .btn-entry-submit { min-height: 48px; font-size: 15px; }
+  }
+
+  // 리그 정보 버튼 6개 → 3×2 타일 (아이콘 위, 글자 아래)
+  .league-card-info-btns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .btn-info {
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    min-height: 64px;
+    padding: 8px 4px;
+    border-radius: 12px;
+    border: 1px solid var(--c-border);
+    background: var(--c-surface);
+    font-size: 13px;
+    white-space: normal;
+
+    svg { width: 18px; height: 18px; }
+  }
+
+  .btn-info--hof { display: flex; }
+}
+
+
+// ══ 휴대폰: 리그 순위 (와이어프레임 7번) ═══════════════════════
+@media (max-width: 640px) {
+  .modal--result-standings .modal-body { padding: 12px; }
+  .standing-team { padding: 12px 14px; border-radius: 14px; }
+  .standing-team-header { flex-wrap: wrap; row-gap: 6px; }
+  .standing-rank { font-size: 20px; min-width: 24px; }
+  .standing-name { font-size: 16px; }
+  .standing-award, .standing-tie { font-size: 12px; }
+  .standing-stats { flex-basis: 100%; justify-content: flex-start; padding-left: 32px; }
+  .standing-record { font-size: 13px; }
+  .standing-pts-label { font-size: 12px; }
 }

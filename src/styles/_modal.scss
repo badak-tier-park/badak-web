@@ -69,9 +69,25 @@
     animation-name: modalSheetIn;
   }
 
+  // 입력·선택이 많은 창(엔트리 작성, 경기 목록, 팀 투표)은 시트 대신 화면 전체를 쓴다.
+  // 92% 시트는 위쪽이 남아 내용이 좁고, 하단 버튼이 홈 바에 붙어 누르기 어렵다
+  // padding-top(상태바 여백)이 높이에 더해지면 창이 화면보다 길어져 위가 상태바 밑으로 잘린다 → border-box
+  .modal-backdrop .modal.modal--full-mobile {
+    box-sizing: border-box;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+    padding-top: env(safe-area-inset-top);
+  }
+
   .modal .modal-header { padding-left: 18px; padding-right: 18px; }
   .modal .modal-body { padding-left: 18px; padding-right: 18px; }
   .modal .modal-footer { padding-left: 18px; padding-right: 18px; }
+  .modal .modal-title { font-size: 16px; }
+  // 닫기 버튼은 엄지로 누를 수 있는 크기(44px)로. 바깥 여백을 당겨 머리줄 높이는 그대로 둔다
+  .modal .modal-close { width: 44px; height: 44px; margin: -8px -10px -8px 0; }
 
   .field-row { flex-direction: column; }
 }

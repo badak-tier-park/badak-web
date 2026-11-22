@@ -37,7 +37,42 @@
       <div v-if="loadingLeagues" class="state-msg">불러오는 중...</div>
       <div v-else-if="!leagues.length" class="state-msg">현재 참여 가능한 리그가 없습니다.</div>
 
-      <div v-else class="league-list">
+      <template v-else>
+      <!-- 내 할 일: 마감이 있는 일(엔트리)·열린 팀 투표·지목식을 리그 카드보다 먼저 보여 준다 -->
+      <section v-if="todoEntries.length || draftTodo.length || pollTodo.length" class="todo-section">
+        <p class="todo-title">내 할 일</p>
+        <div v-for="league in draftTodo" :key="`d-${league.id}`" class="todo-card todo-card--urgent">
+          <span class="todo-meta todo-meta--urgent">지목식 진행 중</span>
+          <p class="todo-main">{{ league.name }}</p>
+          <button type="button" class="todo-btn" @click="$router.push({ name: 'captain-draft', params: { id: league.id } })">지목식 입장</button>
+        </div>
+        <div
+          v-for="t in todoEntries"
+          :key="`e-${t.schedule.id}`"
+          class="todo-card"
+          :class="{ 'todo-card--urgent': isTodoUrgent(t) }"
+        >
+          <span class="todo-meta" :class="{ 'todo-meta--urgent': isTodoUrgent(t) }">
+            {{ entryStatusMap.get(t.schedule.id) === 'submitted' ? '엔트리 제출 완료' : `엔트리 마감 · ${deadlineLabel(t.schedule)}` }}
+          </span>
+          <p class="todo-main">{{ matchTypeLabel(t.schedule) }} · {{ t.myTeamName }} <span class="todo-vs">vs</span> {{ t.opponentTeamName }}</p>
+          <button
+            type="button"
+            class="todo-btn"
+            :class="{ 'todo-btn--outline': entryStatusMap.get(t.schedule.id) === 'submitted' }"
+            @click="openMatchList(t.league)"
+          >{{ todoButtonLabel(t) }}</button>
+        </div>
+        <div v-for="league in pollTodo" :key="`p-${league.id}`" class="todo-card todo-card--row">
+          <div class="todo-row-text">
+            <span class="todo-meta todo-meta--ok">팀 투표 진행 중</span>
+            <p class="todo-main">{{ league.name }}</p>
+          </div>
+          <button type="button" class="todo-btn todo-btn--outline" @click="pollModal.league = league">투표하기</button>
+        </div>
+      </section>
+
+      <div class="league-list">
         <div v-for="league in leagues" :key="league.id" class="league-card">
           <div class="league-card-top">
             <span class="status-badge" :class="`status-badge--${getLeagueStatus(league)}`">
@@ -110,6 +145,13 @@
                 </svg>
                 리그 순위
               </button>
+              <!-- 휴대폰에서는 헤더의 명예의 전당 버튼 대신 리그 정보 타일에 둔다 -->
+              <button class="btn-info btn-info--hof" @click="$router.push({ name: 'hall-of-fame' })">
+                <svg width="12" height="12" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                  <path d="M5 2h8v4a4 4 0 01-8 0V2zM9 10v3M6 16h6M5 4H2.5a2.5 2.5 0 002.5 3M13 4h2.5a2.5 2.5 0 01-2.5 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                명예의 전당
+              </button>
             </div>
             <button
               v-if="league.draft_completed && (myCaptainLeagueIds.has(league.id) || pollLeagueIds.has(league.id))"
@@ -136,7 +178,28 @@
         </div>
       </div>
       </template>
+      </template>
     </div>
+
+    <!-- ── 휴대폰 하단 탭바: 홈 화면 앱에는 뒤로가기가 없어 엄지 닿는 곳에 이동을 둔다 ── -->
+    <nav class="mobile-tabbar" aria-label="리그 참여 메뉴">
+      <button type="button" class="mobile-tab" @click="$router.push({ name: 'home' })">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3 10l8-6 8 6v8a1 1 0 01-1 1h-4v-5H8v5H4a1 1 0 01-1-1v-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>홈</span>
+      </button>
+      <button type="button" class="mobile-tab" :class="{ active: activeTab === 'leagues' }" :aria-current="activeTab === 'leagues' ? 'page' : undefined" @click="activeTab = 'leagues'">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="3" y="4" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h16M8 2v4M14 2v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>리그</span>
+      </button>
+      <button type="button" class="mobile-tab" :class="{ active: activeTab === 'predictions' }" :aria-current="activeTab === 'predictions' ? 'page' : undefined" @click="activeTab = 'predictions'">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M11 6v5l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>승부예측</span>
+      </button>
+      <button type="button" class="mobile-tab" :class="{ active: activeTab === 'rankings' }" :aria-current="activeTab === 'rankings' ? 'page' : undefined" @click="activeTab = 'rankings'">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="3" y="12" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="7" width="4" height="12" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="15" y="3" width="4" height="16" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>
+        <span>랭킹</span>
+      </button>
+    </nav>
 
     <!-- ── 팀 투표 모달 ────────────────────────────────────── -->
     <TeamPollModal
@@ -219,10 +282,12 @@
     <!-- ── 경기 목록 모달 ──────────────────────────────────── -->
     <Teleport to="body">
       <div v-if="matchListModal.open" class="modal-backdrop">
-        <div class="modal modal--match-list">
+        <div class="modal modal--match-list modal--full-mobile">
           <div class="modal-header">
-            <p class="modal-title">엔트리 제출</p>
-            <p class="modal-subtitle">{{ matchListModal.league?.name }}</p>
+            <div>
+              <p class="modal-title">엔트리 제출</p>
+              <p class="modal-subtitle">{{ matchListModal.league?.name }}</p>
+            </div>
             <button class="modal-close" @click="matchListModal.open = false">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -300,7 +365,7 @@
     <!-- ── 공개된 경기 목록 모달 ──────────────────────────────── -->
     <Teleport to="body">
       <div v-if="revealListModal.open" class="modal-backdrop">
-        <div class="modal modal--match-list">
+        <div class="modal modal--match-list modal--full-mobile">
           <div class="modal-header">
             <div>
               <p class="modal-title">엔트리 확인</p>
@@ -362,7 +427,7 @@
     <!-- ── 경기 결과 목록 모달 ──────────────────────────────── -->
     <Teleport to="body">
       <div v-if="resultListModal.open" class="modal-backdrop">
-        <div class="modal modal--match-list">
+        <div class="modal modal--match-list modal--full-mobile">
           <div class="modal-header">
             <div>
               <p class="modal-title">경기 결과</p>
@@ -483,7 +548,7 @@
     <!-- ── 엔트리 제출 모달 ────────────────────────────────── -->
     <Teleport to="body">
       <div v-if="entryModal.open" class="modal-backdrop">
-        <div class="modal modal--entry">
+        <div class="modal modal--entry modal--full-mobile">
           <div class="modal-header">
             <div>
               <p class="modal-title">{{ entryModal.readonly ? '엔트리 확인' : '엔트리 작성' }}</p>
@@ -730,6 +795,7 @@ import { getPlayerByDiscordId, type PlayerRow } from '@/lib/players'
 import { getTeamNames } from '@/lib/teamNames'
 import {
   getEntries, saveEntries, submitEntry, cancelEntrySubmission, canCancelSubmission, getEntryStatusMap, computeFinalRosters,
+  ENTRY_DEADLINE_KST,
   consentReveal, checkBothConsented, getConsentedSet,
   getAceTierBan, saveAceTierBan, getEntriesForSchedules,
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS, MILITARY_DEDUCTION, calcEntryPoints, pointTiebreakWinner,
@@ -801,6 +867,60 @@ const submittingId = ref<number | null>(null)
 const cancelingId = ref<number | null>(null)
 // 팀 투표: 내가 팀원으로 들어 있는 열린 투표가 있는 리그(팀장·부팀장은 투표가 없어도 버튼이 보인다)
 const pollLeagueIds = ref(new Set<string>())
+
+// 이 경기에서 내가 엔트리 권한을 가진 팀(팀장 player_id). 팀장 본인이거나 부팀장인 팀
+function myTeamCaptainIdFor(leagueId: string, s: ScheduleRow): number | null {
+  if (s.team_a_captain_id === myPlayerId.value) return s.team_a_captain_id
+  if (s.team_b_captain_id === myPlayerId.value) return s.team_b_captain_id
+  const viceOf = myViceCaptainOfByLeague.value.get(leagueId) ?? null
+  if (viceOf !== null) {
+    if (s.team_a_captain_id === viceOf) return s.team_a_captain_id
+    if (s.team_b_captain_id === viceOf) return s.team_b_captain_id
+  }
+  return null
+}
+
+// ── 내 할 일 ─────────────────────────────────────────────────
+// 리그마다 우리 팀의 다음 경기(공개 전·미완료) 하나. 제출 상태는 entryStatusMap을 그대로 본다
+interface TodoEntry { league: LeagueRow; schedule: ScheduleRow; myTeamName: string; opponentTeamName: string }
+const todoEntries = ref<TodoEntry[]>([])
+const draftTodo = computed(() => leagues.value.filter(l => l.draft_started && !l.draft_completed && myCaptainLeagueIds.value.has(l.id)))
+const pollTodo = computed(() => leagues.value.filter(l => pollLeagueIds.value.has(l.id)))
+
+const todayKst = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+const isMatchToday = (s: ScheduleRow) => s.match_date === todayKst()
+const isTodoUrgent = (t: TodoEntry) => isMatchToday(t.schedule) && entryStatusMap.value.get(t.schedule.id) !== 'submitted'
+function deadlineLabel(s: ScheduleRow): string {
+  if (!s.match_date) return '날짜 미정'
+  if (isMatchToday(s)) return `오늘 ${ENTRY_DEADLINE_KST}`
+  return `${s.match_date.slice(5).replace('-', '/')} ${ENTRY_DEADLINE_KST}`
+}
+function todoButtonLabel(t: TodoEntry): string {
+  const st = entryStatusMap.value.get(t.schedule.id)
+  if (st === 'submitted') return '엔트리 확인'
+  if (st === 'saved') return '제출하러 가기'
+  return '엔트리 작성하기'
+}
+
+async function loadTodoEntries() {
+  const targets = leagues.value.filter(l => l.draft_completed && myCaptainLeagueIds.value.has(l.id))
+  const list = await Promise.all(targets.map(async (league): Promise<TodoEntry | null> => {
+    const [schedules, teamNames, players] = await Promise.all([
+      getSchedules(league.id), getTeamNames(league.id), getLeaguePlayers(league.id),
+    ])
+    const next = schedules
+      .filter(s => !s.is_completed && !s.is_entry_revealed && s.match_type !== 'super_ace' && myTeamCaptainIdFor(league.id, s) !== null)
+      .sort((a, b) => (a.match_date ?? '9999').localeCompare(b.match_date ?? '9999') || a.round - b.round)[0]
+    if (!next) return null
+    const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
+    const playerMap = new Map(players.map(p => [p.id, p]))
+    const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
+    const myCap = myTeamCaptainIdFor(league.id, next)!
+    const opp = next.team_a_captain_id === myCap ? next.team_b_captain_id : next.team_a_captain_id
+    return { league, schedule: next, myTeamName: teamName(myCap), opponentTeamName: teamName(opp) }
+  }))
+  todoEntries.value = list.filter((x): x is TodoEntry => x !== null)
+}
 const pollModal = reactive({ league: null as LeagueRow | null })
 async function refreshPollLeagues() {
   if (!myPlayerId.value) return
@@ -1314,6 +1434,8 @@ onMounted(async () => {
   const mergedConsent = new Set<number>()
   for (const s of consentSets) for (const v of s) mergedConsent.add(v)
   consentedSet.value = mergedConsent
+
+  try { await loadTodoEntries() } catch { /* 내 할 일만 안 보인다 — 리그 카드에서 그대로 들어갈 수 있다 */ }
 })
 
 // ── 경기 목록 모달 ────────────────────────────────────────────
@@ -1334,19 +1456,8 @@ async function openMatchList(league: LeagueRow) {
     const nameMap = new Map(teamNames.map(t => [t.captain_player_id, t.team_name]))
     const teamName = (id: number) => nameMap.get(id) || playerMap.get(id)?.nickname || `선수 ${id}`
 
-    // 부팀장으로 참여 중인 팀의 (실제 팀장) player_id
-    const viceOfCaptainId = myViceCaptainOfByLeague.value.get(league.id) ?? null
-
-    // 내가 권한을 가지는 팀 (팀장 player_id 기준)
-    const myTeamCaptainOf = (s: ScheduleRow): number | null => {
-      if (s.team_a_captain_id === myPlayerId.value) return s.team_a_captain_id
-      if (s.team_b_captain_id === myPlayerId.value) return s.team_b_captain_id
-      if (viceOfCaptainId !== null) {
-        if (s.team_a_captain_id === viceOfCaptainId) return s.team_a_captain_id
-        if (s.team_b_captain_id === viceOfCaptainId) return s.team_b_captain_id
-      }
-      return null
-    }
+    // 내가 권한을 가지는 팀 (팀장 player_id 기준, 부팀장 포함)
+    const myTeamCaptainOf = (s: ScheduleRow) => myTeamCaptainIdFor(league.id, s)
 
     matchListModal.matches = schedules
       .filter(s => !s.is_completed && !s.is_entry_revealed && s.match_type !== 'super_ace' && myTeamCaptainOf(s) !== null)
