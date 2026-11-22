@@ -26,6 +26,7 @@ ParticipateView 안의 RankingsTab)는 부모의 공통 클래스를 물려받�
   - 위험: `--c-danger`, `rgba(var(--c-danger-rgb), a)`
 - 초록·노랑·파랑 하드코딩(`#4ade80`, `#fbbf24`, `#60a5fa` 등)은 아직 남아 있다. 티어/종족
   색과 값이 같아 의미(성공? D티어?)를 확인하며 하나씩 바꿔야 해서 일괄 치환하지 않았다
+- 우승/준우승 메달 색은 `--medal-gold*` / `--medal-silver*`(theme.scss). 라이트에서는 글자색이 진해진다. 승률처럼 "좋다"를 뜻하는 초록은 `--c-success`
 - `--c-surface-raised`는 다크에서 2.5% 흰색이라 **거의 투명**하다. 카드 배경용이지 모달·팝오버
   배경으로 쓰면 뒤가 비친다 — 떠 있는 창은 `--c-surface`
 

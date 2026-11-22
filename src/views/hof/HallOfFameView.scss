@@ -76,7 +76,7 @@
   outline: none;
 
   &::placeholder { color: var(--c-text-faint); }
-  &:focus { border-color: var(--c-accent, #7c3aed); }
+  &:focus { border-color: var(--c-brand); }
 }
 
 // ── 페이지네이션 ───────────────────────────────────────────────
@@ -150,8 +150,7 @@
     border-top: 1px solid var(--c-border-faint);
   }
 
-  &--champion { background: rgba(245, 158, 11, 0.04); }
-  &--runner-up {}
+  &--champion { background: var(--medal-gold-tint); }
 }
 
 .hof-team-header {
@@ -175,15 +174,15 @@
   flex-shrink: 0;
 
   &--champion {
-    background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, 0.4);
+    background: var(--medal-gold-bg);
+    color: var(--medal-gold);
+    border: 1px solid var(--medal-gold-line);
   }
 
   &--runner-up {
-    background: rgba(148, 163, 184, 0.12);
-    color: #94a3b8;
-    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: var(--medal-silver-bg);
+    color: var(--medal-silver);
+    border: 1px solid var(--medal-silver-line);
   }
 }
 
@@ -226,14 +225,6 @@
   padding: 3px 4px 3px 10px;
   border-radius: 8px;
   background: var(--c-overlay);
-}
-
-.hof-member-race {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 20px;
-  line-height: 1.4;
 }
 
 // ── 역대 수상 기록 ────────────────────────────────────────────
@@ -285,13 +276,8 @@
   padding: 3px 10px;
   border-radius: 20px;
 
-  &--champion {
-    color: #f59e0b;
-  }
-
-  &--runner-up {
-    color: #94a3b8;
-  }
+  &--champion { color: var(--medal-gold); }
+  &--runner-up { color: var(--medal-silver); }
 }
 
 // ── 개인 전적 테이블 ──────────────────────────────────────────
@@ -339,7 +325,7 @@
 
   &--active {
     opacity: 1;
-    color: var(--c-accent, #7c3aed);
+    color: var(--c-brand-text);
   }
 }
 
@@ -373,7 +359,7 @@
 .hof-wins   { font-size: 13px; font-weight: 700; color: var(--c-text-bright); }
 .hof-losses { font-size: 13px; font-weight: 600; color: var(--c-text-muted); }
 
-.hof-rate--high { color: #4ade80; }
+.hof-rate--high { color: var(--c-success); }
 .hof-rate--mid  { color: var(--c-text); }
 .hof-rate--low  { color: var(--c-text-muted); }
 
@@ -384,13 +370,8 @@
   border-radius: 20px;
   white-space: nowrap;
 
-  &--champion {
-    color: #f59e0b;
-  }
-
-  &--runner-up {
-    color: #94a3b8;
-  }
+  &--champion { color: var(--medal-gold); }
+  &--runner-up { color: var(--medal-silver); }
 }
 
 .state-msg {
@@ -504,6 +485,7 @@
     overflow: hidden;
     clip: rect(0 0 0 0);
     white-space: nowrap;
+    font-size: 12px;
   }
   .hof-team-name {
     flex: 1;
@@ -526,5 +508,16 @@
   }
   .hof-league-name { text-align: left; padding-left: 14px; }
   .hof-members { padding: 2px 0 10px 28px; }
+  // 선수 칩의 티어·종족 배지가 10px라 휴대폰에서 읽기 어렵다 — 본문 기준 12px 이상으로 키운다
+  .hof-member-chip {
+    :deep(.tier-pill--sm) { min-width: 32px; height: 22px; padding: 0 7px; font-size: 12px; }
+    :deep(.race-pill--sm) { width: 22px; height: 22px; font-size: 12px; }
+  }
+
+  .hof-ar-name { text-align: left; }
+
+  // 페이지 이전/다음: 30px → 44px
+  .hof-pagination { gap: 16px; }
+  .hof-page-btn { width: 44px; height: 44px; font-size: 20px; }
   .hof-badge { font-size: 12px; padding: 0 2px; }
 }
