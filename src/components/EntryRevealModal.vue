@@ -165,6 +165,21 @@
               </div>
             </div>
 
+            <!-- 에결 티어(경기 시작 때 사다리) — 결과 모드에서 에결 줄이 따로 보이면 생략 -->
+            <div v-if="showAceTierLine" class="reveal-ace-tier-line">
+              <span class="reveal-ace-bans-title">에이스 결정전</span>
+              <template v-if="aceSlotResult?.ace_tier">
+                <span class="reveal-ace-tier" :class="`tier-badge--${$tierClass(aceSlotResult.ace_tier)}`">{{ aceSlotResult.ace_tier }} 티어</span>
+                <span v-if="aceMap" class="reveal-ace-tier-map">
+                  <span class="slot-map-thumb reveal-ace-tier-thumb">
+                    <img v-if="aceMap.thumbnail_url" :src="aceMap.thumbnail_url" alt="" />
+                  </span>
+                  {{ aceMap.name }}
+                </span>
+              </template>
+              <span v-else class="reveal-ace-bans-none">티어 사다리 전</span>
+            </div>
+
             <!-- 에결 티어 밴 (팀당 2개, 이전 경기는 1개) — 맨 아래 한 줄 -->
             <div v-if="aceTierBansA.length || aceTierBansB.length" class="reveal-ace-bans">
               <span class="reveal-ace-bans-title">에결 티어 밴</span>
@@ -185,7 +200,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getScheduleEntries, TIER_POINTS, getAceTierBans, aceBanTiers, calcEntryPoints, pointTiebreakWinner, INDIVIDUAL_SLOTS, TEAM_SLOT, type EntryRecord } from '@/lib/entries'
+import { getScheduleEntries, TIER_POINTS, getAceTierBans, aceBanTiers, calcEntryPoints, pointTiebreakWinner, isAceSkippedByPoints, INDIVIDUAL_SLOTS, TEAM_SLOT, type EntryRecord } from '@/lib/entries'
 import { tierPoint } from '@/lib/constants'
 import { getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
@@ -263,7 +278,11 @@ onMounted(async () => {
       getLeaguePlayers(props.leagueId),
       getMatchMaps(props.leagueId),
       getMaps(),
-      props.showResults ? getSlotResults(props.scheduleId) : Promise.resolve([] as SlotResult[]),
+      // 엔트리 확인 모드도 에결 티어(경기 시작 때 사다리로 정함)를 보여 주려고 읽는다.
+      // 못 읽어도 엔트리 확인은 되게 실패는 무시한다
+      props.showResults
+        ? getSlotResults(props.scheduleId)
+        : getSlotResults(props.scheduleId).catch(() => [] as SlotResult[]),
       getAceTierBans(props.scheduleId),
       getLeague(props.leagueId),
     ]))
@@ -298,8 +317,13 @@ onMounted(async () => {
     aceTierBansA.value = aceBanTiers(banForA)
     aceTierBansB.value = aceBanTiers(banForB)
 
+    // 엔트리 확인 모드: 에결 티어·맵만 쓴다(승패·대타는 결과 모드에서만 반영)
+    if (!props.showResults) {
+      aceSlotResult.value = slotResultsData.find(r => r.slot_num === 7) ?? null
+    }
+
     // 슬롯 결과 (showResults 모드)
-    if (slotResultsData.length) {
+    if (props.showResults && slotResultsData.length) {
       const wm = new Map<number, number>()
       const sm = new Map<number, string>()
       const subs = new Map<number, { teamA: number[] | null; teamB: number[] | null }>()
@@ -623,6 +647,14 @@ const acePlayerOf = (side: Side) =>
 const aceMap = computed(() => {
   const id = aceSlotResult.value?.selected_map_id
   return id ? allMapsById.value.get(id) ?? null : null
+})
+
+// 맨 아래 "에이스 결정전 · ○ 티어" 줄: 포인트 차이로 에결이 없는 경기는 숨기고,
+// 결과 모드는 에결을 치렀으면 에결 줄이 따로 있으니 생략, 안 치렀으면 정해 둔 티어가 있을 때만
+const showAceTierLine = computed(() => {
+  if (isAceSkippedByPoints(ptA.value, ptB.value, aceSkipGap.value)) return false
+  if (!props.showResults) return true
+  return !acePlayed.value && !!aceSlotResult.value?.ace_tier
 })
 
 const expandedBanSlots = ref<number[]>([])

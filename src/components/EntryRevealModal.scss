@@ -276,7 +276,8 @@
 .reveal-banpick-map { font-weight: 700; color: var(--c-text); }
 .reveal-banpick-by { color: var(--c-text-faint); }
 
-// ── 에결 티어 밴 — 맨 아래 한 줄 ─────────────────────────────
+// ── 에결 티어 · 티어 밴 — 맨 아래 한 줄씩 ──────────────────────
+.reveal-ace-tier-line,
 .reveal-ace-bans {
   display: flex;
   flex-wrap: wrap;
@@ -288,6 +289,23 @@
   border: 1px solid var(--c-border);
   background: var(--c-surface-raised);
   font-size: 12px;
+}
+
+.reveal-ace-tier-line + .reveal-ace-bans { margin-top: 6px; }
+
+.reveal-ace-tier-map {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 700;
+  color: var(--c-text-sub);
+}
+
+.reveal-ace-tier-thumb {
+  width: 32px;
+  height: 24px;
+  border-radius: 4px;
 }
 
 .reveal-ace-bans-title {
@@ -415,7 +433,8 @@
   .reveal-banpick { grid-area: detail; padding-left: 0; }
   .reveal-banpick-kind { font-size: 11px; }
 
-  .reveal-ace-bans { gap: 8px 14px; padding: 12px; }
+  .reveal-ace-tier-line, .reveal-ace-bans { gap: 8px 14px; padding: 12px; }
   .reveal-ace-bans-title { flex-basis: 100%; }
+  .reveal-ace-tier-line .reveal-ace-bans-title { flex-basis: auto; }
   .reveal-ace-bans-name { max-width: 50vw; }
 }
