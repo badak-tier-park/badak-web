@@ -112,6 +112,23 @@
               placeholder="선수 검색"
               @input="pagePlayers = 1"
             />
+            <!-- 휴대폰 전용: 표 머리글의 정렬 버튼(22px 높이) 대신 누르기 쉬운 칩. 다시 누르면 방향이 바뀐다 -->
+            <div class="hof-sort-chips" role="group" aria-label="정렬">
+              <button
+                type="button"
+                class="hof-sort-chip"
+                :class="{ 'hof-sort-chip--active': sortKey === 'wins' }"
+                :aria-pressed="sortKey === 'wins'"
+                @click="setSortKey('wins')"
+              >전적순<span v-if="sortKey === 'wins'" class="hof-sort-chip-dir" aria-hidden="true">{{ sortDir === 'desc' ? '↓' : '↑' }}</span></button>
+              <button
+                type="button"
+                class="hof-sort-chip"
+                :class="{ 'hof-sort-chip--active': sortKey === 'winRate' }"
+                :aria-pressed="sortKey === 'winRate'"
+                @click="setSortKey('winRate')"
+              >승률순<span v-if="sortKey === 'winRate'" class="hof-sort-chip-dir" aria-hidden="true">{{ sortDir === 'desc' ? '↓' : '↑' }}</span></button>
+            </div>
           </div>
           <div v-if="!filteredPlayerEntries.length" class="state-msg-inline">검색 결과가 없습니다.</div>
           <template v-else>

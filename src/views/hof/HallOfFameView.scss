@@ -406,15 +406,15 @@
   padding: 16px 0;
 }
 
+// 정렬 칩은 휴대폰에서만 (데스크톱은 표 머리글의 정렬 버튼을 쓴다)
+.hof-sort-chips { display: none; }
+
 // 섹션이 비었을 때 안내 — 데스크톱은 섹션을 통째로 생략하던 대로 숨기고, 휴대폰 탭에서만 보인다
 .hof-empty { display: none; }
 
 
 // ── 휴대폰 (640px 이하) — 이 블록은 파일 끝에 모은다 ───────────────
 @media (max-width: 640px) {
-  // iOS는 16px 미만 입력칸에 초점이 가면 화면을 확대한다
-  .hof-search { font-size: 16px; }
-
   // 하단 탭바가 대신하는 위쪽 뒤로가기는 숨기고, 고정 탭바에 마지막 줄이 가리지 않게 여백을 둔다
   .hof-content { @include tabbar.content-offset; }
   .hof-content > .btn-back { @include tabbar.hide-on-mobile; }
@@ -457,5 +457,37 @@
   // 칸 가득 왼쪽 정렬(#app의 가운데 정렬을 물려받는다) + 길면 말줄임
   .hof-td--name { text-align: left; }
   .hof-player-name { display: block; font-size: 15px; }
+
+  // 검색창 아래에 정렬 칩을 둔다. 검색창은 48px(누르기 쉽게) + 16px(iOS 확대 방지)
+  .hof-section-header { flex-direction: column; align-items: stretch; gap: 10px; text-align: left; }
+  // flex: 1을 그대로 두면 세로 배치에서 높이가 0으로 접힌다
+  .hof-search { flex: none; max-width: none; height: 48px; font-size: 16px; }
+
+  .hof-sort-chips { display: flex; gap: 8px; }
+  .hof-sort-chip {
+    flex: 1 1 0;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--c-border-strong);
+    background: var(--c-overlay);
+    color: var(--c-text-sub);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    &--active {
+      border-color: var(--c-brand-border);
+      background: var(--c-brand-bg);
+      color: var(--c-brand-text);
+      font-weight: 700;
+    }
+  }
+  .hof-sort-chip-dir { font-size: 14px; line-height: 1; }
   .hof-badge { font-size: 12px; padding: 0 2px; }
 }
