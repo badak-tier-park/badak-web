@@ -637,3 +637,13 @@
   .pred-points, .pred-prob-bar, .pred-prob-empty, .pred-strength, .pred-status,
   .pred-race, .pred-pct, .pred-vs, .pred-footer, .pred-cancel { font-size: 12px; }
 }
+
+// 휴대폰 누르는 영역: 이전/다음 달·시트 닫기 버튼은 손가락 크기(44px). 제목 줄이 26px → 44px로
+// 커지는 만큼 아래 여백을 줄여 달력이 밀려 내려가는 양을 줄인다
+@media (max-width: 640px) {
+  .home-cal-nav { gap: 2px; }
+  .cal-nav-btn { width: 44px; height: 44px; border-radius: 10px; }
+  .cal-month-label { min-width: 72px; }
+  .home-cal-header { margin-bottom: 8px; }
+  .cal-modal-close { width: 44px; height: 44px; margin: -8px -10px -8px 0; }
+}
