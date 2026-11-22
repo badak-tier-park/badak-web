@@ -1,4 +1,5 @@
 @use '../../styles/page';
+@use '../../styles/mobile-tabbar' as tabbar;
 
 .hof-page {
   min-height: 100vh;
@@ -405,8 +406,22 @@
   padding: 16px 0;
 }
 
+// 섹션이 비었을 때 안내 — 데스크톱은 섹션을 통째로 생략하던 대로 숨기고, 휴대폰 탭에서만 보인다
+.hof-empty { display: none; }
 
-// 휴대폰: iOS는 16px 미만 입력칸에 초점이 가면 화면을 확대한다
+
+// ── 휴대폰 (640px 이하) — 이 블록은 파일 끝에 모은다 ───────────────
 @media (max-width: 640px) {
+  // iOS는 16px 미만 입력칸에 초점이 가면 화면을 확대한다
   .hof-search { font-size: 16px; }
+
+  // 하단 탭바가 대신하는 위쪽 뒤로가기는 숨기고, 고정 탭바에 마지막 줄이 가리지 않게 여백을 둔다
+  .hof-content { @include tabbar.content-offset; }
+  .hof-content > .btn-back { @include tabbar.hide-on-mobile; }
+  .hof-hero { margin-bottom: 24px; }
+
+  // 탭: 선택된 섹션만 보인다
+  .hof-section--off { display: none; }
+  .hof-empty:not(.hof-section--off) { display: block; }
+  .hof-section { margin-bottom: 0; }
 }

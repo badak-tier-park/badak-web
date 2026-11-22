@@ -18,7 +18,7 @@
 
       <template v-else>
         <!-- ── 리그별 우승 기록 ── -->
-        <section v-if="leagueAwards.length" class="hof-section">
+        <section v-if="leagueAwards.length" class="hof-section" :class="{ 'hof-section--off': activeTab !== 'champions' }">
           <div class="hof-section-header">
             <h2 class="hof-section-title">리그 우승 기록</h2>
           </div>
@@ -76,9 +76,10 @@
             </div>
           </div>
         </section>
+        <p v-else class="state-msg-inline hof-empty" :class="{ 'hof-section--off': activeTab !== 'champions' }">아직 우승 기록이 없습니다.</p>
 
         <!-- ── 역대 수상 기록 ── -->
-        <section v-if="awardRecords.length" class="hof-section">
+        <section v-if="awardRecords.length" class="hof-section" :class="{ 'hof-section--off': activeTab !== 'awards' }">
           <div class="hof-section-header">
             <h2 class="hof-section-title">역대 수상 기록</h2>
           </div>
@@ -98,9 +99,10 @@
             <button class="hof-page-btn" :disabled="pageAwards === totalPagesAwards" @click="pageAwards++">›</button>
           </div>
         </section>
+        <p v-else class="state-msg-inline hof-empty" :class="{ 'hof-section--off': activeTab !== 'awards' }">아직 수상 기록이 없습니다.</p>
 
         <!-- ── 개인 전적 ── -->
-        <section class="hof-section">
+        <section class="hof-section" :class="{ 'hof-section--off': activeTab !== 'players' }">
           <div class="hof-section-header">
             <h2 class="hof-section-title">개인 전적</h2>
             <input
@@ -162,14 +164,19 @@
         </section>
       </template>
     </div>
+
+    <!-- 휴대폰 하단 탭바: 세 섹션을 탭으로 나눠 보여주고, 마지막 칸은 상위 화면(리그 참여)으로 간다 -->
+    <MobileTabBar :items="tabItems" :active="activeTab" label="명예의 전당 메뉴" @select="onTabSelect" />
   </div>
 </template>
 
 <script setup lang="ts">
 import TierBadge from '@/components/TierBadge.vue'
 import RaceBadge from '@/components/RaceBadge.vue'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
+import MobileTabBar, { type MobileTabItem } from '@/components/MobileTabBar.vue'
 import { getLeagues } from '@/lib/leagues'
 import { getPlayers } from '@/lib/players'
 import { getAllCompletedSchedules, getSlotResultsForSchedules } from '@/lib/schedules'
@@ -220,6 +227,35 @@ interface PlayerEntry {
 }
 
 const PAGE_SIZE = 10
+
+// 휴대폰에서는 세 섹션을 탭으로 나눠 한 번에 하나만 보여준다(데스크톱은 모두 이어서 보인다).
+// 탭은 주소의 ?tab=과 함께 움직여 새로고침·공유 때 같은 탭이 열린다
+const HOF_TABS = ['champions', 'awards', 'players'] as const
+type HofTab = (typeof HOF_TABS)[number]
+const route = useRoute()
+const router = useRouter()
+const tabFromQuery = (tab: unknown) => HOF_TABS.find(t => t === tab)
+const activeTab = ref<HofTab>(tabFromQuery(route.query.tab) ?? 'champions')
+watch(() => route.query.tab, (tab) => {
+  const t = tabFromQuery(tab)
+  if (t) activeTab.value = t
+})
+watch(activeTab, (t) => {
+  if (route.query.tab !== t) router.replace({ query: { ...route.query, tab: t } })
+  window.scrollTo({ top: 0 })
+})
+
+const tabItems: MobileTabItem[] = [
+  { key: 'champions', label: '우승 기록', icon: 'trophy' },
+  { key: 'awards', label: '수상 순위', icon: 'ranking' },
+  { key: 'players', label: '개인 전적', icon: 'person' },
+  { key: 'participate', label: '리그 참여', icon: 'back' },
+]
+// 홈 화면 앱에는 브라우저 뒤로가기가 없으므로 back()이 아니라 상위 화면으로 직접 이동한다
+function onTabSelect(key: string) {
+  if (key === 'participate') router.push({ name: 'participate' })
+  else activeTab.value = key as HofTab
+}
 
 const loading = ref(true)
 const leagueAwards = ref<LeagueAward[]>([])
