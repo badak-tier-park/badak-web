@@ -61,6 +61,9 @@ ParticipateView 안의 RankingsTab)는 부모의 공통 클래스를 물려받�
 - 일반 사용자 화면(리그 참여)은 휴대폰에서 **하단 탭바**로 이동한다 — 홈 화면 앱은 브라우저 뒤로가기가 없어
   엄지가 닿는 곳에 이동 수단이 있어야 한다. 위쪽 탭·`.btn-back`은 휴대폰에서 숨긴다.
   화면별 설계는 2026-11 모바일 와이어프레임(리그참여 9화면)을 따른다
+  - **새 화면은 공통 하단 탭바를 쓴다**: `components/MobileTabBar.vue` + `_mobile-tabbar.scss`(믹스인 `content-offset`으로 본문 하단 여백,
+    `hide-on-mobile`로 위쪽 `.btn-back` 숨김). 칸 중 하나를 상위 화면 이동(`router.push`, `back()` 금지)으로 둔다. 사용법은 파샬 머리 주석.
+    리그 참여는 아직 자체 `.mobile-tabbar`를 쓴다(나중에 이 파샬로 합친다)
 - **화면 확대를 막는다**(홈 화면 앱처럼, 운영진 결정 2026-11): `index.html` viewport의 `maximum-scale=1, user-scalable=no` +
   `html { touch-action: manipulation }`. 대신 글자가 작아 확대해야 읽히는 화면이 없어야 한다 — 휴대폰 본문 12px 이상,
   입력칸 16px(iOS는 16px 미만 입력칸에서 확대한다)
