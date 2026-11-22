@@ -217,8 +217,8 @@
                         <span class="ace-tier-ban-letter">{{ tier }}</span>
                         <span class="ace-tier-ban-sub">티어</span>
                         <div class="ace-tier-ban-tags">
-                          <span v-if="aceTierBansA.includes(tier)" class="ace-tier-ban-tag ace-tier-ban-tag--a">{{ teamAName }} 밴</span>
-                          <span v-if="aceTierBansB.includes(tier)" class="ace-tier-ban-tag ace-tier-ban-tag--b">{{ teamBName }} 밴</span>
+                          <span v-if="aceTierBansA.includes(tier)" class="ace-tier-ban-tag ace-tier-ban-tag--a"><span class="ace-tier-ban-tag-name">{{ teamAName }}</span>밴</span>
+                          <span v-if="aceTierBansB.includes(tier)" class="ace-tier-ban-tag ace-tier-ban-tag--b"><span class="ace-tier-ban-tag-name">{{ teamBName }}</span>밴</span>
                         </div>
                       </div>
                     </div>

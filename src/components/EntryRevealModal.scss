@@ -443,9 +443,10 @@
   padding: 12px 0;
   border-top: 1px solid var(--c-border);
 
-  // 티어 밴 행: 센터 컬럼을 넓게
+  // 티어 밴 행: 센터 컬럼을 넓게. minmax(0, …)가 아니면 티어 줄 폭이 그대로 최소 폭이 되어
+  // 창이 좁을 때(641~690px 등) 본문이 가로로 늘어난다
   .reveal-row:has(.ace-tier-ban-row) {
-    grid-template-columns: 0 1fr 0;
+    grid-template-columns: 0 minmax(0, 1fr) 0;
   }
 }
 
@@ -461,10 +462,13 @@
 }
 
 // 엔트리 확인 — 에이스 티어 밴 전체 표시
+// 넓은 창에서는 지금처럼 한 줄, 좁으면 줄바꿈(예전 width: max-content는 창 본문을 가로로 늘렸다)
 .ace-tier-ban-row {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
-  width: max-content;
+  max-width: 100%;
 }
 
 .ace-tier-ban-btn {
@@ -519,6 +523,8 @@
 }
 
 .ace-tier-ban-tag {
+  display: flex;
+  gap: 3px;
   font-size: 8px;
   font-weight: 700;
   padding: 1px 4px;
@@ -537,6 +543,13 @@
     background: rgba(96, 165, 250, 0.2);
     border: 1px solid rgba(96, 165, 250, 0.4);
   }
+}
+
+// 팀 이름만 말줄임하고 '밴'은 남긴다
+.ace-tier-ban-tag-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ace-ban-display {
@@ -762,4 +775,38 @@
     .rse-race { font-size: 11px; }
     .rse-pt { font-size: 12px; }
   }
+
+  // ── 엔트리 확인 창이 가로로 늘어나던 것 (360px 확인) ──
+  // 에결 티어 밴: 5칸 2줄. 팀별 밴이 2개라 태그가 한 칸에 둘까지 붙는다 → 팀 이름 말줄임
+  .reveal-ace .reveal-row:has(.ace-tier-ban-row) { grid-template-columns: minmax(0, 1fr); }
+  .ace-tier-ban-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: 100%;
+  }
+  .ace-tier-ban-btn { width: auto; min-width: 0; padding: 8px 3px 6px; }
+  .ace-tier-ban-letter { font-size: 18px; }
+  .ace-tier-ban-sub { font-size: 11px; }
+  .ace-tier-ban-tags { width: 100%; }
+  .ace-tier-ban-tag { max-width: 100%; box-sizing: border-box; font-size: 11px; gap: 2px; }
+
+  // 합계 줄: 팀 이름은 줄어들며 말줄임, 점수는 잘리지 않게
+  .reveal-totals { gap: 8px; padding: 12px; }
+  .reveal-total-item { flex-shrink: 1; min-width: 0; }
+  .reveal-total-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .reveal-total-pt { flex-shrink: 0; white-space: nowrap; }
+  .reveal-total-sep { min-width: 8px; }
+
+  // 결과 상세 머리줄: 띄어쓰기 없는 긴 팀 이름이 가운데 점수와 겹치지 않게 줄바꿈
+  .reveal-th { min-width: 0; overflow-wrap: anywhere; }
+  .reveal-th--winner { padding: 6px 4px; font-size: 15px; }
+
+  // WIN 배지: 두 팀 모두 "이름 · 종족 · 티어 … 포인트 WIN"(오른쪽 끝)
+  .rse-col,
+  .rse-col--right {
+    .rse-win-badge { order: 100; }
+  }
+
+  // 맵 밴/픽 정보 버튼: 누르는 영역 44px, 글자 12px
+  .btn-ban-toggle { min-height: 44px; font-size: 12px; }
 }
