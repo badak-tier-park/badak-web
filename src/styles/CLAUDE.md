@@ -64,6 +64,9 @@ ParticipateView 안의 RankingsTab)는 부모의 공통 클래스를 물려받�
 - **화면 확대를 막는다**(홈 화면 앱처럼, 운영진 결정 2026-11): `index.html` viewport의 `maximum-scale=1, user-scalable=no` +
   `html { touch-action: manipulation }`. 대신 글자가 작아 확대해야 읽히는 화면이 없어야 한다 — 휴대폰 본문 12px 이상,
   입력칸 16px(iOS는 16px 미만 입력칸에서 확대한다)
+- **누르는 요소는 44px 이상, 글자는 12px 이상**(입력칸은 16px). 화면 확대를 막았으니 손가락·눈이 닿는 크기가 곧 사용성이다.
+  `<12px` 글자를 새로 쓰면 그 scss 파일 끝 `@media (max-width: 640px)` 블록에서 12px로 올린다. 예외는 칸 폭이 정해진 홈 달력 칩뿐(10.5px).
+  헤더 버튼을 키울 때 **헤더 높이 54px은 바꾸지 않는다** — 대시보드 sticky 바가 `top: calc(54px + safe-area)`에 기대고 있다(44 < 54라 들어간다)
 - 표는 `<div class="table-scroll">`로 감싸고 표에 `min-width`를 준다. 열이 찌그러져 글자가
   세로로 쌓이는 것보다 옆으로 미는 편이 읽기 쉽다
 - 헤더는 375px에 출석·알림·테마·로그아웃 + 페이지 액션(`#actions`)이 한 줄에 들어가야 한다.
