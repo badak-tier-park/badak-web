@@ -33,7 +33,11 @@
                     <span class="hof-team-name">
                       {{ award.champion.teamName }}
                     </span>
-                    <button class="hof-members-toggle" @click="toggleMembers(award.leagueId, 'champion')">
+                    <button
+                      class="hof-members-toggle"
+                      :aria-expanded="expandedMembers.has(award.leagueId + '_champion')"
+                      @click="toggleMembers(award.leagueId, 'champion')"
+                    >
                       {{ expandedMembers.has(award.leagueId + '_champion') ? '접기' : '팀원 보기' }}
                     </button>
                   </div>
@@ -56,7 +60,11 @@
                     <span class="hof-team-name">
                       {{ award.runnerUp.teamName }}
                     </span>
-                    <button class="hof-members-toggle" @click="toggleMembers(award.leagueId, 'runner-up')">
+                    <button
+                      class="hof-members-toggle"
+                      :aria-expanded="expandedMembers.has(award.leagueId + '_runner-up')"
+                      @click="toggleMembers(award.leagueId, 'runner-up')"
+                    >
                       {{ expandedMembers.has(award.leagueId + '_runner-up') ? '접기' : '팀원 보기' }}
                     </button>
                   </div>
