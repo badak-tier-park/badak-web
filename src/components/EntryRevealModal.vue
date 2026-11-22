@@ -212,13 +212,13 @@
                         v-for="tier in ALL_TIERS"
                         :key="tier"
                         class="ace-tier-ban-btn"
-                        :class="[`tier-badge--${$tierClass(tier)}`, { 'ace-tier-ban-btn--banned': aceTierBanA === tier || aceTierBanB === tier }]"
+                        :class="[`tier-badge--${$tierClass(tier)}`, { 'ace-tier-ban-btn--banned': aceTierBansA.includes(tier) || aceTierBansB.includes(tier) }]"
                       >
                         <span class="ace-tier-ban-letter">{{ tier }}</span>
                         <span class="ace-tier-ban-sub">티어</span>
                         <div class="ace-tier-ban-tags">
-                          <span v-if="aceTierBanA === tier" class="ace-tier-ban-tag ace-tier-ban-tag--a">{{ teamAName }} 밴</span>
-                          <span v-if="aceTierBanB === tier" class="ace-tier-ban-tag ace-tier-ban-tag--b">{{ teamBName }} 밴</span>
+                          <span v-if="aceTierBansA.includes(tier)" class="ace-tier-ban-tag ace-tier-ban-tag--a">{{ teamAName }} 밴</span>
+                          <span v-if="aceTierBansB.includes(tier)" class="ace-tier-ban-tag ace-tier-ban-tag--b">{{ teamBName }} 밴</span>
                         </div>
                       </div>
                     </div>
@@ -317,7 +317,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getScheduleEntries, TIER_POINTS, getAceTierBans, calcEntryPoints, pointTiebreakWinner, INDIVIDUAL_SLOTS, TEAM_SLOT, type EntryRecord } from '@/lib/entries'
+import { getScheduleEntries, TIER_POINTS, getAceTierBans, aceBanTiers, calcEntryPoints, pointTiebreakWinner, INDIVIDUAL_SLOTS, TEAM_SLOT, type EntryRecord } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
@@ -382,8 +382,9 @@ const slotSubs = ref(new Map<number, { teamA: number[] | null; teamB: number[] |
 
 // 에이스 결정전
 const aceSlotResult = ref<SlotResult | null>(null)
-const aceTierBanA = ref<string | null>(null)
-const aceTierBanB = ref<string | null>(null)
+// 팀당 밴 티어 목록 — 2026-11-22부터 2개, 이전 경기는 1개(tier_ban2 null)
+const aceTierBansA = ref<string[]>([])
+const aceTierBansB = ref<string[]>([])
 const allMapsById = ref(new Map<string, MapInfo>())
 const aceSkipGap = ref<number | null>(null)
 const handicapGap = ref<number | null>(null)
@@ -428,8 +429,8 @@ onMounted(async () => {
     // 에이스 티어 밴
     const banForA = aceTierBans.find(b => b.captain_player_id === props.teamACaptainId)
     const banForB = aceTierBans.find(b => b.captain_player_id === props.teamBCaptainId)
-    aceTierBanA.value = banForA?.tier_ban ?? null
-    aceTierBanB.value = banForB?.tier_ban ?? null
+    aceTierBansA.value = aceBanTiers(banForA)
+    aceTierBansB.value = aceBanTiers(banForB)
 
     // 슬롯 결과 (showResults 모드)
     if (slotResultsData.length) {

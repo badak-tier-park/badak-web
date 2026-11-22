@@ -167,7 +167,7 @@
                       :key="'a' + tier"
                       class="ace-tier-chip"
                       :class="{
-                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_a_captain_id) : aceTierBanA === tier
+                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_a_captain_id) : aceTierBansA.includes(tier)
                       }"
                     >
                       {{ tier }}
@@ -203,7 +203,7 @@
                       :key="'b' + tier"
                       class="ace-tier-chip"
                       :class="{
-                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_b_captain_id) : aceTierBanB === tier
+                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_b_captain_id) : aceTierBansB.includes(tier)
                       }"
                     >
                       {{ tier }}
@@ -467,7 +467,7 @@ import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 
 import { getTeamNames } from '@/lib/teamNames'
 import { getSchedules, getPlayoffSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
-import { getScheduleEntries, computeFinalRosters, getAceTierBans, calcEntryPoints, isAceSkippedByPoints, decideMatch } from '@/lib/entries'
+import { getScheduleEntries, computeFinalRosters, getAceTierBans, aceBanTiers, calcEntryPoints, isAceSkippedByPoints, decideMatch } from '@/lib/entries'
 import { TIER_ORDER, tierPoint } from '@/lib/constants'
 import { getDraftPicks } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
@@ -541,8 +541,9 @@ const isSuperAce = computed(() => schedule.value?.match_type === 'super_ace')
 
 // 에이스 결정전 상태
 // 에이스 티어 밴 (엔트리 제출 시 각 팀장이 선택한 값)
-const aceTierBanA = ref<string | null>(null)
-const aceTierBanB = ref<string | null>(null)
+// 팀당 밴 티어 목록 — 2026-11-22부터 2개, 이전 경기는 1개(tier_ban2 null)
+const aceTierBansA = ref<string[]>([])
+const aceTierBansB = ref<string[]>([])
 
 // 슈퍼에이스: 결승 1·2세트에서 사용된 에이스 티어 (제외 대상)
 const superAceExcludedTiers = ref<string[]>([])
@@ -669,9 +670,7 @@ const aceTierCandidates = computed((): string[] => {
     const excluded = new Set(superAceExcludedTiers.value)
     return ALL_TIERS.filter(t => !excluded.has(t))
   }
-  const bans = new Set<string>()
-  if (aceTierBanA.value) bans.add(aceTierBanA.value)
-  if (aceTierBanB.value) bans.add(aceTierBanB.value)
+  const bans = new Set<string>([...aceTierBansA.value, ...aceTierBansB.value])
   return ALL_TIERS.filter(t => !bans.has(t))
 })
 
@@ -718,10 +717,7 @@ const aceMapCandidates = computed((): MapInfo[] => {
 const aceBannedTierSet = computed((): Set<string> => {
   if (aceBansIgnored.value) return new Set()
   if (isSuperAce.value) return new Set(superAceExcludedTiers.value)
-  const s = new Set<string>()
-  if (aceTierBanA.value) s.add(aceTierBanA.value)
-  if (aceTierBanB.value) s.add(aceTierBanB.value)
-  return s
+  return new Set<string>([...aceTierBansA.value, ...aceTierBansB.value])
 })
 
 const eligiblePlayersA = computed((): SlotPlayerInfo[] => {
@@ -1313,8 +1309,8 @@ onMounted(async () => {
     // 에이스 밴 복원 (엔트리 제출 시 저장된 값)
     const aceBans = await getAceTierBans(matchId)
     for (const ban of aceBans) {
-      if (ban.captain_player_id === match.team_a_captain_id) aceTierBanA.value = ban.tier_ban
-      else if (ban.captain_player_id === match.team_b_captain_id) aceTierBanB.value = ban.tier_ban
+      if (ban.captain_player_id === match.team_a_captain_id) aceTierBansA.value = aceBanTiers(ban)
+      else if (ban.captain_player_id === match.team_b_captain_id) aceTierBansB.value = aceBanTiers(ban)
     }
 
     // 에이스 데이터 복원
