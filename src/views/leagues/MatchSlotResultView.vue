@@ -340,89 +340,27 @@
       </template>
     </div>
 
-    <!-- 맵 사다리타기 모달 -->
-    <Teleport to="body">
-      <div v-if="ladderSlot != null" class="ladder-overlay">
-        <div class="ladder-modal">
-          <div class="ladder-header">
-            <span class="ladder-title">{{ ladderSlot === 7 ? '에이스 맵 선택' : `경기${ladderSlot} 맵 선택` }}</span>
-            <button class="ladder-close" @click="ladderSlot = null">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </div>
-          <div class="ladder-maps">
-            <button
-              v-for="m in currentLadderMaps"
-              :key="m.id"
-              class="ladder-map-btn"
-              :class="{ 'ladder-map-btn--selected': ladderPickResult === m.id }"
-              @click="ladderPickResult = m.id"
-            >
-              <div class="ladder-map-thumb">
-                <img v-if="m.thumbnail_url" :src="m.thumbnail_url" />
-                <div v-else class="ladder-map-thumb-empty" />
-              </div>
-              <span class="ladder-map-name">{{ m.name }}</span>
-            </button>
-          </div>
-          <div class="ladder-actions">
-            <button class="ladder-random-btn" :disabled="ladderPicking" @click="randomPick">
-              {{ ladderPicking ? '선택 중...' : '랜덤 선택' }}
-            </button>
-            <button class="btn-cancel" @click="ladderSlot = null">취소</button>
-            <button
-              class="btn-complete ladder-confirm-btn"
-              :disabled="!ladderPickResult || savingLadderMap"
-              @click="confirmLadder"
-            >
-              {{ savingLadderMap ? '저장 중...' : '확정' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- 사다리타기 = 마블 룰렛. 결과는 2초 보여 준 뒤 자동 저장(RouletteModal) -->
+    <!-- 맵: 2·3경기(양 팀 픽이 다르고 티어가 같을 때) 기본 '마지막 도착', 에결 맵(3:3) 기본 '첫 번째 도착' -->
+    <RouletteModal
+      v-if="ladderSlot != null"
+      :title="ladderSlot === 7 ? '에이스 결정전 맵 룰렛' : `경기${ladderSlot} 맵 룰렛`"
+      :candidates="mapRouletteCandidates"
+      :default-rule="ladderSlot === 7 ? ACE_ROULETTE_RULE : BANPICK_ROULETTE_RULE"
+      :save="saveLadderMap"
+      @close="ladderSlot = null"
+    />
 
-    <!-- 티어 사다리타기 모달 -->
-    <Teleport to="body">
-      <div v-if="tierLadderOpen" class="ladder-overlay">
-        <div class="ladder-modal">
-          <div class="ladder-header">
-            <span class="ladder-title">에이스 티어 선택</span>
-            <button class="ladder-close" @click="tierLadderOpen = false">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </div>
-          <div class="ladder-tier-list">
-            <button
-              v-for="tier in aceTierCandidates"
-              :key="tier"
-              class="ladder-tier-btn"
-              :class="[`tier-badge--${$tierClass(tier)}`, { 'ladder-tier-btn--selected': tierPickResult === tier }]"
-              @click="tierPickResult = tier"
-            >
-              {{ tier }} 티어
-            </button>
-          </div>
-          <div class="ladder-actions">
-            <button class="ladder-random-btn" :disabled="tierPicking" @click="randomTierPick">
-              {{ tierPicking ? '선택 중...' : '랜덤 선택' }}
-            </button>
-            <button class="btn-cancel" @click="tierLadderOpen = false">취소</button>
-            <button
-              class="btn-complete ladder-confirm-btn"
-              :disabled="!tierPickResult || savingTier"
-              @click="confirmTierLadder"
-            >
-              {{ savingTier ? '저장 중...' : '확정' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- 에결 티어: 경기 시작 때(엔트리 공개 후), 기본 '첫 번째 도착' -->
+    <RouletteModal
+      v-if="tierLadderOpen"
+      title="에이스 결정전 티어 룰렛"
+      :candidates="tierRouletteCandidates"
+      :default-rule="ACE_ROULETTE_RULE"
+      :save="saveAceTier"
+      @close="tierLadderOpen = false"
+    />
+
     <!-- 선수 교체 모달 -->
     <Teleport to="body">
       <div v-if="subModal" class="ladder-overlay">
@@ -469,12 +407,13 @@ import { isHandicapMatch, slotHandicap, type HandicapRow } from '@/lib/handicap'
 import TierBadge from '@/components/TierBadge.vue'
 import RaceBadge from '@/components/RaceBadge.vue'
 import HpBadge from '@/components/HpBadge.vue'
+import RouletteModal, { type RouletteCandidate, type RouletteRule } from '@/components/RouletteModal.vue'
 import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 
 import { getTeamNames } from '@/lib/teamNames'
 import { getSchedules, getPlayoffSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
 import { getScheduleEntries, computeFinalRosters, getAceTierBans, aceBanTiers, calcEntryPoints, isAceSkippedByPoints, decideMatch } from '@/lib/entries'
-import { TIER_ORDER, tierPoint } from '@/lib/constants'
+import { TIER_ORDER, tierPoint, tierClass } from '@/lib/constants'
 import { getDraftPicks } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
 import { getTeamPolls, getTeamPollVotes, type TeamPollVote } from '@/lib/teamPolls'
@@ -537,11 +476,13 @@ const entryBanMap = ref(new Map<number, Map<number, string | null>>())
 const entryPickMap = ref(new Map<number, Map<number, string | null>>())
 const ladderSelectedMaps = ref(new Map<number, string>())
 
-// 맵 사다리타기 모달 상태
+// 맵 사다리타기(룰렛) 창 — 열린 경기 번호
 const ladderSlot = ref<number | null>(null)
-const ladderPicking = ref(false)
-const ladderPickResult = ref<string | null>(null)
-const savingLadderMap = ref(false)
+
+// 룰렛 결과 규칙 기본값(창 안에서 매번 바꿀 수 있고 저장하지 않는다).
+// 2·3경기 맵은 '마지막 도착'(운영진 2026-11-23). 에결 티어·맵은 정해진 규칙이 없어 '첫 번째 도착'으로 둠(확인 필요)
+const BANPICK_ROULETTE_RULE: RouletteRule = 'last'
+const ACE_ROULETTE_RULE: RouletteRule = 'first'
 
 const isSuperAce = computed(() => schedule.value?.match_type === 'super_ace')
 
@@ -564,11 +505,8 @@ const aceData = reactive<{
   playerBId: number | null
 }>({ aceTier: null, playerAId: null, playerBId: null })
 
-// 티어 사다리타기 모달 상태
+// 티어 사다리타기(룰렛) 창
 const tierLadderOpen = ref(false)
-const tierPicking = ref(false)
-const tierPickResult = ref<string | null>(null)
-const savingTier = ref(false)
 
 // 로스터 (에이스 선수 드롭다운용)
 const rosterA = ref<SlotPlayerInfo[]>([])
@@ -1044,103 +982,40 @@ async function resetSub(slotNum: number, isTeamA: boolean, playerIndex: number) 
 
 function openLadder(slotNum: number) {
   ladderSlot.value = slotNum
-  ladderPickResult.value = ladderSelectedMaps.value.get(slotNum) ?? null
 }
 
-function randomPick() {
-  if (ladderPicking.value) return
-  ladderPicking.value = true
-  ladderPickResult.value = null
+// 룰렛 후보 — 사다리 창이 보여 주던 후보 그대로(맵: currentLadderMaps, 티어: aceTierCandidates)
+const mapRouletteCandidates = computed((): RouletteCandidate[] =>
+  currentLadderMaps.value.map(m => ({ key: m.id, label: m.name, thumb: m.thumbnail_url })))
+const tierRouletteCandidates = computed((): RouletteCandidate[] =>
+  aceTierCandidates.value.map(t => ({ key: t, label: t, tierClass: tierClass(t) })))
 
-  const candidates = currentLadderMaps.value
-  if (candidates.length === 0) { ladderPicking.value = false; return }
-
-  const startTime = Date.now()
-  const totalDuration = 9800 + Math.random() * 400
-  const minInterval = 50
-  const maxInterval = 500
-  const startIdx = Math.floor(Math.random() * candidates.length)
-  let idx = startIdx
-
-  const tick = () => {
-    const progress = Math.min((Date.now() - startTime) / totalDuration, 1)
-    const interval = minInterval + (maxInterval - minInterval) * (progress ** 2)
-    ladderPickResult.value = candidates[idx % candidates.length].id
-    idx++
-    if (progress < 1) setTimeout(tick, interval)
-    else ladderPicking.value = false
-  }
-  tick()
-}
-
-async function confirmLadder() {
-  if (!ladderSlot.value || !ladderPickResult.value) return
-  savingLadderMap.value = true
-  try {
-    await setSlotMap(matchId, ladderSlot.value, ladderPickResult.value)
-    const newMap = new Map(ladderSelectedMaps.value)
-    newMap.set(ladderSlot.value, ladderPickResult.value)
-    ladderSelectedMaps.value = newMap
-    ladderSlot.value = null
-  } catch (e: any) {
-    console.error(e)
-  } finally {
-    savingLadderMap.value = false
-  }
+/** 룰렛 결과 저장(맵). 실패하면 throw → 룰렛 창이 오류와 [다시 시도]를 보여 준다 */
+async function saveLadderMap(mapId: string) {
+  const slotNum = ladderSlot.value
+  if (slotNum == null) throw new Error('경기가 선택되지 않았습니다')
+  await setSlotMap(matchId, slotNum, mapId)
+  const newMap = new Map(ladderSelectedMaps.value)
+  newMap.set(slotNum, mapId)
+  ladderSelectedMaps.value = newMap
 }
 
 // ── 티어 사다리타기 ────────────────────────────────────────────────
 
 function openTierLadder() {
   tierLadderOpen.value = true
-  tierPickResult.value = null
 }
 
-function randomTierPick() {
-  if (tierPicking.value) return
-  tierPicking.value = true
-  tierPickResult.value = null
-
-  const candidates = aceTierCandidates.value
-  if (candidates.length === 0) { tierPicking.value = false; return }
-
-  const startTime = Date.now()
-  const totalDuration = 9800 + Math.random() * 400
-  const minInterval = 50
-  const maxInterval = 500
-  const startIdx = Math.floor(Math.random() * candidates.length)
-  let idx = startIdx
-
-  const tick = () => {
-    const progress = Math.min((Date.now() - startTime) / totalDuration, 1)
-    const interval = minInterval + (maxInterval - minInterval) * (progress ** 2)
-    tierPickResult.value = candidates[idx % candidates.length]
-    idx++
-    if (progress < 1) setTimeout(tick, interval)
-    else tierPicking.value = false
-  }
-  tick()
-}
-
-async function confirmTierLadder() {
-  if (!tierPickResult.value) return
-  savingTier.value = true
-  try {
-    await setAceSlotData(matchId, { aceTier: tierPickResult.value })
-    aceData.aceTier = tierPickResult.value
-    tierLadderOpen.value = false
-  } catch (e: any) {
-    console.error(e)
-  } finally {
-    savingTier.value = false
-  }
+/** 룰렛 결과 저장(에결 티어) */
+async function saveAceTier(tier: string) {
+  await setAceSlotData(matchId, { aceTier: tier })
+  aceData.aceTier = tier
 }
 
 async function resetAceTier() {
   try {
     await setAceSlotData(matchId, { aceTier: null })
     aceData.aceTier = null
-    tierPickResult.value = null
   } catch (e: any) {
     console.error(e)
   }

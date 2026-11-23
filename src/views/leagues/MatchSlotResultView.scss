@@ -209,119 +209,6 @@
   &:hover { background: var(--c-overlay); color: var(--c-text); }
 }
 
-.ladder-maps {
-  display: flex;
-  gap: 12px;
-  padding: 16px 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-.ladder-map-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-  border-radius: 10px;
-  border: 2px solid var(--c-border);
-  background: var(--c-surface-raised);
-  cursor: pointer;
-  transition: all 0.14s;
-
-  &:hover { border-color: rgba(var(--c-brand-rgb), 0.4); }
-
-  &--selected {
-    border-color: rgba(52, 211, 153, 0.6);
-    background: rgba(52, 211, 153, 0.06);
-  }
-}
-
-.ladder-map-thumb {
-  width: 120px;
-  height: 90px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--c-overlay);
-  flex-shrink: 0;
-
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
-}
-
-.ladder-map-thumb-empty { width: 100%; height: 100%; }
-
-.ladder-map-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--c-text-2);
-  text-align: center;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ladder-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px 16px;
-  border-top: 1px solid var(--c-border);
-  flex-shrink: 0;
-}
-
-.ladder-random-btn {
-  margin-right: auto;
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(var(--c-brand-rgb), 0.4);
-  background: rgba(var(--c-brand-rgb), 0.12);
-  color: var(--c-brand-text);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover:not(:disabled) { background: rgba(var(--c-brand-rgb), 0.22); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-.ladder-confirm-btn {
-  padding: 8px 20px;
-  font-size: 13px;
-}
-
-// ── 티어 사다리타기 모달 ──────────────────────────────────────────
-.ladder-tier-list {
-  display: flex;
-  gap: 10px;
-  padding: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-.ladder-tier-btn {
-  padding: 10px 20px;
-  border-radius: 10px;
-  border: 2px solid var(--c-border);
-  background: var(--c-surface-raised);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.14s;
-
-  &--selected {
-    border-color: rgba(52, 211, 153, 0.6);
-    background: rgba(52, 211, 153, 0.06);
-  }
-}
-
 // ── 에이스 결정전 카드 ────────────────────────────────────────────
 .ace-card {
   border-radius: 14px;
@@ -694,13 +581,6 @@
     color: #b45309;
     background: rgba(180, 83, 9, 0.10);
     border-color: rgba(180, 83, 9, 0.3);
-  }
-
-  .ladder-random-btn {
-    color: #7c3aed;
-    border-color: rgba(124, 58, 237, 0.4);
-    background: rgba(124, 58, 237, 0.10);
-    &:hover:not(:disabled) { background: rgba(124, 58, 237, 0.18); }
   }
 }
 

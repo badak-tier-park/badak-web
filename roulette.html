@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="robots" content="noindex" />
+    <title>사다리타기 룰렛</title>
+    <!--
+      마블 룰렛(lazygyu/roulette, MIT)을 같은 출처에서 띄우는 페이지. 앱(RouletteModal.vue)이 iframe으로 열고
+      postMessage로 후보를 보내고 결과를 받는다. 직접 열 일은 없다(관리자 경기 결과 입력 화면 전용)
+    -->
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+      #stage { position: fixed; inset: 0; }
+      #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <script type="module" src="/src/roulette-embed/main.ts"></script>
+  </body>
+</html>
