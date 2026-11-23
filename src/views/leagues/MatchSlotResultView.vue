@@ -151,8 +151,8 @@
             </div>
           </div>
 
-          <!-- 에이스 결정전 -->
-          <div v-if="showAce || isSuperAce" class="ace-card">
+          <!-- 에이스 결정전: ① 티어는 경기 시작 때(엔트리 공개 후)부터, ②③ 맵·결과는 3:3일 때 -->
+          <div v-if="showAceTier || isSuperAce" class="ace-card">
             <div class="ace-card-title">에이스 결정전</div>
 
             <!-- 1단계: 티어 밴 결과 표시 + 사다리 -->
@@ -184,7 +184,7 @@
                     </span>
                     <button v-if="!isCompleted && (!(isSuperAce && aceTierCandidates.length === 1) || noEligiblePlayers)" class="ace-reset-btn" @click="resetAceTier">초기화</button>
                   </template>
-                  <template v-else-if="!isCompleted">
+                  <template v-else-if="!isCompleted && aceTierLadderOpenable">
                     <button
                       class="slot-ladder-btn"
                       :disabled="aceTierCandidates.length === 0"
@@ -214,7 +214,12 @@
               </div>
             </div>
 
-            <!-- 2단계: 맵 사다리 -->
+            <!-- 2단계: 맵 사다리 (6경기까지 3:3일 때만) -->
+            <div v-if="!(showAce || isSuperAce)" class="ace-section ace-section--locked">
+              <div class="ace-section-label">② 맵 선택 · ③ 선수 선택 및 결과</div>
+              <span class="ace-locked-hint">6경기까지 3:3이면 진행</span>
+            </div>
+            <template v-else>
             <div class="ace-section" :class="{ 'ace-section--locked': !aceData.aceTier }">
               <div class="ace-section-label">② 맵 선택</div>
               <template v-if="aceData.aceTier">
@@ -309,6 +314,7 @@
               </template>
               <span v-else class="ace-locked-hint">티어 확정 후 진행</span>
             </div>
+            </template>
           </div>
         </div>
 
@@ -656,11 +662,22 @@ function isSlotLocked(slotNum: number): boolean {
 }
 const hasLockedSlots = computed(() => REGULAR_SLOTS.some(s => isSlotLocked(s.num)))
 
-const showAce = computed(() => {
-  if (score6A.value !== 3 || score6B.value !== 3) return false
+// 포인트 차이로 에결이 생략되는 경기면 시작부터 에결이 없다
+const aceNotSkipped = computed(() => {
   if (entryPointsA.value === 0 && entryPointsB.value === 0) return true
   return !isAceSkippedByPoints(entryPointsA.value, entryPointsB.value, aceSkipGap.value)
 })
+
+// 에결을 실제로 치르는 상황(6경기까지 3:3) — ② 맵 사다리 · ③ 선수·결과 입력은 이때만
+const showAce = computed(() => score6A.value === 3 && score6B.value === 3 && aceNotSkipped.value)
+
+// ① 티어 밴 + 티어 사다리는 경기 시작 때 한다(2026-11-22 운영진) — 엔트리가 공개된 경기면 0:0부터.
+// 3:3 전에 승패가 확정돼 에결을 안 치르게 돼도 이미 정한 티어는 지우지 않고 보여 준다
+const showAceTier = computed(() =>
+  aceNotSkipped.value && (showAce.value || !!schedule.value?.is_entry_revealed || !!aceData.aceTier))
+
+// 3:3 전에 승패가 확정되면 에결은 없으므로 새로 티어 사다리를 타지 않는다
+const aceTierLadderOpenable = computed(() => showAce.value || isSuperAce.value || !decision.value.decided)
 
 // 에이스 티어 후보 (super_ace: 결승 세트 사용 티어 제외 / 일반: 양팀 밴 제외)
 // aceBansIgnored = true 이면 밴 무효 → 전 티어 선택 가능
@@ -1148,9 +1165,10 @@ async function setAceWinner(captainId: number) {
 // 에이스 티어 확정 후 출전 가능 선수 체크:
 // - 한쪽만 없음 → 상대팀 자동 승리
 // - 양팀 다 없음 → 밴 무효, 티어 재선택
+// 티어를 경기 시작 때 정하므로, 자동 승리는 에결을 실제로 치를 때(3:3·슈퍼에이스)만 — 아니면 0:0에서 에결 승자가 기록된다
 watch(
-  [() => aceData.aceTier, rosterA, rosterB],
-  async ([tier]) => {
+  [() => aceData.aceTier, rosterA, rosterB, () => showAce.value || isSuperAce.value],
+  async ([tier, , , acePlaying]) => {
     if (!tier || isCompleted.value || !schedule.value) return
     const maxRank = tierPoint(tier)
     const hasA = rosterA.value.some(p => (tierPoint(p.tier)) <= maxRank)
@@ -1159,6 +1177,8 @@ watch(
       aceData.aceTier = null
       await setAceSlotData(matchId, { aceTier: null })
       aceBansIgnored.value = true
+    } else if (!acePlaying) {
+      return
     } else if (!hasA) {
       await setAceWinner(schedule.value.team_b_captain_id)
     } else if (!hasB) {
