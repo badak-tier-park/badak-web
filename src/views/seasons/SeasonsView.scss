@@ -182,3 +182,10 @@
   align-items: center;
   gap: 8px;
 }
+
+// 입력칸은 휴대폰에서 16px 이상(iOS가 16px 미만 입력칸에 초점이 가면 화면을 확대한다)
+@media (max-width: 640px) {
+  .season-input {
+    font-size: 16px;
+  }
+}

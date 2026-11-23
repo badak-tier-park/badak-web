@@ -998,3 +998,48 @@
     }
   }
 }
+
+// 휴대폰 글자 크기: 12px 미만이던 글자를 12px로. 확대가 막혀 있어(index.html viewport) 작은 글자는 읽을 방법이 없다
+@media (max-width: 640px) {
+  .topbar-round,
+  .topbar-done,
+  .topbar-seed-holder,
+  .topbar-draft-live,
+  .topbar-presence-chip,
+  .pool-count,
+  .tier-letter,
+  .tier-count,
+  .card-pick-num,
+  .card-seed,
+  .card-locked,
+  .log-panel-header,
+  .log-entry-num,
+  .log-entry-holder,
+  .log-seed-badge,
+  .log-team-label,
+  .log-player-name,
+  .captain-crown,
+  .captain-tier,
+  .captain-race,
+  .member-count,
+  .stat-chip,
+  .team-drop-hint,
+  .seed-order-tier {
+    font-size: 12px;
+  }
+  .card-race {
+    font-size: 12px;
+    width: auto;
+    min-width: 11px;
+  }
+  .seed-order-num {
+    font-size: 12px;
+    width: auto;
+    min-width: 14px;
+  }
+  .seed-order-race {
+    font-size: 12px;
+    width: auto;
+    min-width: 12px;
+  }
+}
