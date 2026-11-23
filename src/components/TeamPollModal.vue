@@ -74,11 +74,12 @@
                   @click="handleToggleStatus(false)"
                 >투표 마감</button>
                 <button
-                  v-else
+                  v-else-if="canReopen(detail.schedule)"
                   class="btn-pill btn-pill--sm btn-pill--green"
                   :disabled="busyId === detail.schedule.id"
                   @click="handleToggleStatus(true)"
                 >다시 열기</button>
+                <span v-else class="poll-reopen-note">엔트리 제출 후에는 다시 열 수 없습니다 (제출 취소 시 가능)</span>
               </template>
             </div>
 
@@ -186,7 +187,7 @@ import { getDraftPicks } from '@/lib/draft'
 import { getSchedules, type ScheduleRow } from '@/lib/schedules'
 import { getTeamNames } from '@/lib/teamNames'
 import { getMaps, type MapRow } from '@/lib/maps'
-import { computeFinalRosters } from '@/lib/entries'
+import { computeFinalRosters, getEntryStatusMap } from '@/lib/entries'
 import type { LeagueRow } from '@/lib/leagues'
 import type { PlayerRow } from '@/lib/players'
 import {
@@ -224,6 +225,8 @@ const mapsById = ref(new Map<string, MapRow>())
 const matchMapIds = ref(new Map<number, string[]>())
 const votes = ref<TeamPollVote[]>([])
 const busyId = ref<number | null>(null)
+/** 우리 팀이 엔트리를 제출한 경기 — 다시 열기는 제출 전·공개 전에만(서버 set_team_poll_status도 같은 조건으로 막는다) */
+const submittedScheduleIds = ref(new Set<number>())
 const actionError = ref<string | null>(null)
 
 function matchLabel(s: ScheduleRow): string {
@@ -284,6 +287,7 @@ async function load() {
       })
     const polls = (await getTeamPolls(mySchedules.map(s => s.id))).filter(p => p.captain_player_id === mine)
     votes.value = await getTeamPollVotes(polls.map(p => p.id))
+    await loadSubmitted(mine)
     matches.value = mySchedules.map(s => ({
       schedule: s,
       label: matchLabel(s),
@@ -297,6 +301,15 @@ async function load() {
   }
 }
 
+async function loadSubmitted(captainId: number) {
+  const status = await getEntryStatusMap(captainId)
+  submittedScheduleIds.value = new Set([...status].filter(([, st]) => st === 'submitted').map(([id]) => id))
+}
+
+// 엔트리 제출로 자동 마감된 투표에 [다시 열기]가 보이던 문제 — 제출됐거나 공개·종료된 경기는 숨긴다
+const canReopen = (s: ScheduleRow) =>
+  !s.is_entry_revealed && !s.is_completed && !submittedScheduleIds.value.has(s.id)
+
 const voterCount = (pollId: number) => new Set(votes.value.filter(v => v.poll_id === pollId).map(v => v.user_id)).size
 
 async function reloadPolls() {
@@ -304,6 +317,7 @@ async function reloadPolls() {
   const ids = matches.value.map(m => m.schedule.id)
   const polls = (await getTeamPolls(ids)).filter(p => p.captain_player_id === myCaptainId.value)
   votes.value = await getTeamPollVotes(polls.map(p => p.id))
+  await loadSubmitted(myCaptainId.value)
   matches.value = matches.value.map(m => ({ ...m, poll: polls.find(p => p.schedule_id === m.schedule.id) ?? null }))
   if (detail.value) {
     const fresh = matches.value.find(m => m.schedule.id === detail.value!.schedule.id)

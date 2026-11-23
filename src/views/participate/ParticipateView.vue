@@ -720,18 +720,27 @@
                 <div class="ace-ban-section">
                   <div class="ace-ban-header">
                     <span class="ace-ban-title">에이스 결정전 티어 밴</span>
-                    <span class="ace-ban-hint">상대가 출전시킬 수 없는 티어 1개를 선택하세요</span>
+                    <span v-if="!entryModal.readonly" class="ace-ban-count" :class="{ 'ace-ban-count--full': entryModal.aceTierBans.length >= ACE_TIER_BAN_COUNT }">
+                      {{ entryModal.aceTierBans.length }} / {{ ACE_TIER_BAN_COUNT }}
+                    </span>
+                    <span v-if="!entryModal.readonly" class="ace-ban-hint">
+                      {{ entryModal.aceTierBans.length >= ACE_TIER_BAN_COUNT
+                        ? '바꾸려면 고른 티어를 다시 눌러 해제하세요'
+                        : `상대가 출전시킬 수 없는 티어 ${ACE_TIER_BAN_COUNT}개를 선택하세요` }}
+                    </span>
                   </div>
-                  <div class="ace-ban-tiers">
+                  <div class="ace-ban-tiers" :class="{ 'ace-ban-tiers--full': entryModal.aceTierBans.length >= ACE_TIER_BAN_COUNT }">
                     <button
                       v-for="tier in ACE_TIERS"
                       :key="tier"
                       class="ace-ban-tier-btn"
-                      :class="[`tier-badge--${$tierClass(tier)}`, { 'ace-ban-tier-btn--selected': entryModal.aceTierBan === tier }]"
+                      :class="[`tier-badge--${$tierClass(tier)}`, { 'ace-ban-tier-btn--selected': entryModal.aceTierBans.includes(tier) }]"
                       type="button"
                       :disabled="entryModal.readonly"
-                      @click="!entryModal.readonly && (entryModal.aceTierBan = entryModal.aceTierBan === tier ? null : tier)"
+                      :aria-pressed="entryModal.aceTierBans.includes(tier)"
+                      @click="toggleAceTierBan(tier)"
                     >
+                      <span v-if="entryModal.aceTierBans.includes(tier)" class="ace-ban-tier-mark">밴</span>
                       <span class="ace-ban-tier-label">{{ tier }}</span>
                       <span class="ace-ban-tier-sub">티어</span>
                     </button>
@@ -797,7 +806,7 @@ import {
   getEntries, saveEntries, submitEntry, cancelEntrySubmission, canCancelSubmission, getEntryStatusMap, computeFinalRosters,
   ENTRY_DEADLINE_KST,
   consentReveal, checkBothConsented, getConsentedSet,
-  getAceTierBan, saveAceTierBan, getEntriesForSchedules,
+  getAceTierBan, saveAceTierBan, ACE_TIER_BAN_COUNT, getEntriesForSchedules,
   TIER_POINTS, INDIVIDUAL_SLOTS, TEAM_SLOT, BAN_SLOTS, MILITARY_DEDUCTION, calcEntryPoints, pointTiebreakWinner,
   type EntrySlot, type EntryStatus, type EntryRecord,
 } from '@/lib/entries'
@@ -853,6 +862,17 @@ const SLOT_CONFIG = [
 ] as const
 
 const ACE_TIERS = TIER_ORDER
+
+// 에결 티어 밴: 다시 누르면 해제, 2개가 찬 상태에서 다른 티어는 무시(먼저 하나를 해제해야 바꿀 수 있다)
+function toggleAceTierBan(tier: string) {
+  if (entryModal.readonly) return
+  const bans = entryModal.aceTierBans
+  if (bans.includes(tier)) {
+    entryModal.aceTierBans = bans.filter(t => t !== tier)
+  } else if (bans.length < ACE_TIER_BAN_COUNT) {
+    entryModal.aceTierBans = [...bans, tier]
+  }
+}
 
 // ── 상태 ─────────────────────────────────────────────────────
 const auth = useAuthStore()
@@ -1348,7 +1368,8 @@ interface EntryModalState {
   slotMaps: Record<number, SlotMapInfo[]>
   banSelections: Record<number, string | null>
   pickSelections: Record<number, string | null>
-  aceTierBan: string | null
+  /** 에이스 결정전 티어 밴 — 서로 다른 티어 ACE_TIER_BAN_COUNT(2)개 필수 */
+  aceTierBans: string[]
   /** 팀전(4경기) 한정: 랜덤 종족으로 출전하는 player id 집합 */
   randomIds: Set<number>
   soloMax: number
@@ -1374,7 +1395,7 @@ const entryModal = reactive<EntryModalState>({
   slotMaps: {},
   banSelections: {},
   pickSelections: {},
-  aceTierBan: null,
+  aceTierBans: [],
   randomIds: new Set<number>(),
   soloMax: 16,
   teamMax: 7,
@@ -1619,7 +1640,7 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   entryModal.slotMaps = {}
   entryModal.banSelections = {}
   entryModal.pickSelections = {}
-  entryModal.aceTierBan = null
+  entryModal.aceTierBans = []
   entryModal.poll = null
   entryModal.pollVotes = []
   entryModal.autoBanPick = {}
@@ -1633,7 +1654,7 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
   loadingEntry.value = true
 
   try {
-    const [captains, draftPicks, players, existing, matchMaps, allMaps, existingAceBan] = await Promise.all([
+    const [captains, draftPicks, players, existing, matchMaps, allMaps, existingAceBans] = await Promise.all([
       getCaptains(item.leagueId),
       getDraftPicks(item.leagueId),
       getLeaguePlayers(item.leagueId),
@@ -1684,7 +1705,7 @@ async function openEntryModal(item: MyMatchItem, readonly = false) {
         }
       }
     }
-    entryModal.aceTierBan = existingAceBan
+    entryModal.aceTierBans = existingAceBans
 
     // 팀 투표(참고용) — 못 불러와도 엔트리 작성에는 영향이 없다
     try {
@@ -1763,8 +1784,8 @@ async function handleEntrySubmit() {
     return
   }
 
-  if (!entryModal.aceTierBan) {
-    entryError.value = '에이스 결정전에서 밴할 티어를 선택해주세요.'
+  if (new Set(entryModal.aceTierBans).size !== ACE_TIER_BAN_COUNT) {
+    entryError.value = `에이스 결정전에서 밴할 티어 ${ACE_TIER_BAN_COUNT}개를 골라 주세요.`
     return
   }
 
@@ -1783,7 +1804,7 @@ async function handleEntrySubmit() {
     })
     await Promise.all([
       saveEntries(entryModal.schedule!.id, entryModal.captainPlayerId, slots),
-      saveAceTierBan(entryModal.schedule!.id, entryModal.captainPlayerId, entryModal.aceTierBan),
+      saveAceTierBan(entryModal.schedule!.id, entryModal.captainPlayerId, entryModal.aceTierBans),
     ])
     entryStatusMap.value.set(entryModal.schedule!.id, 'saved')
     // 경기 목록 모달의 상태도 갱신
@@ -1825,6 +1846,12 @@ async function handleSubmitEntry(item: MyMatchItem) {
   const scheduleId = item.schedule.id
   submittingId.value = scheduleId
   try {
+    // 밴 2개 규칙(2026-11-22) 전에 1개로 저장해 둔 엔트리가 그대로 제출되지 않게 — 저장 검증과 같은 기준
+    const aceBans = await getAceTierBan(scheduleId, item.myTeamCaptainId)
+    if (new Set(aceBans).size !== ACE_TIER_BAN_COUNT) {
+      alert(`에이스 결정전 티어 밴은 ${ACE_TIER_BAN_COUNT}개를 골라야 합니다.\n엔트리 작성에서 티어 ${ACE_TIER_BAN_COUNT}개를 골라 저장한 뒤 제출해 주세요.`)
+      return
+    }
     await submitEntry(scheduleId, item.myTeamCaptainId)
     entryStatusMap.value = new Map(entryStatusMap.value).set(scheduleId, 'submitted')
 
