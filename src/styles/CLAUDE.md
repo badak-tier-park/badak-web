@@ -26,6 +26,7 @@ ParticipateView 안의 RankingsTab)는 부모의 공통 클래스를 물려받�
   - 위험: `--c-danger`, `rgba(var(--c-danger-rgb), a)`
 - 초록·노랑·파랑 하드코딩(`#4ade80`, `#fbbf24`, `#60a5fa` 등)은 아직 남아 있다. 티어/종족
   색과 값이 같아 의미(성공? D티어?)를 확인하며 하나씩 바꿔야 해서 일괄 치환하지 않았다
+- 우승/준우승 메달 색은 `--medal-gold*` / `--medal-silver*`(theme.scss). 라이트에서는 글자색이 진해진다. 승률처럼 "좋다"를 뜻하는 초록은 `--c-success`
 - `--c-surface-raised`는 다크에서 2.5% 흰색이라 **거의 투명**하다. 카드 배경용이지 모달·팝오버
   배경으로 쓰면 뒤가 비친다 — 떠 있는 창은 `--c-surface`
 
@@ -61,6 +62,9 @@ ParticipateView 안의 RankingsTab)는 부모의 공통 클래스를 물려받�
 - 일반 사용자 화면(리그 참여)은 휴대폰에서 **하단 탭바**로 이동한다 — 홈 화면 앱은 브라우저 뒤로가기가 없어
   엄지가 닿는 곳에 이동 수단이 있어야 한다. 위쪽 탭·`.btn-back`은 휴대폰에서 숨긴다.
   화면별 설계는 2026-11 모바일 와이어프레임(리그참여 9화면)을 따른다
+  - **새 화면은 공통 하단 탭바를 쓴다**: `components/MobileTabBar.vue` + `_mobile-tabbar.scss`(믹스인 `content-offset`으로 본문 하단 여백,
+    `hide-on-mobile`로 위쪽 `.btn-back` 숨김). 칸 중 하나를 상위 화면 이동(`router.push`, `back()` 금지)으로 둔다. 사용법은 파샬 머리 주석.
+    리그 참여는 아직 자체 `.mobile-tabbar`를 쓴다(나중에 이 파샬로 합친다)
 - **화면 확대를 막는다**(홈 화면 앱처럼, 운영진 결정 2026-11): `index.html` viewport의 `maximum-scale=1, user-scalable=no` +
   `html { touch-action: manipulation }`. 대신 글자가 작아 확대해야 읽히는 화면이 없어야 한다 — 휴대폰 본문 12px 이상,
   입력칸 16px(iOS는 16px 미만 입력칸에서 확대한다)

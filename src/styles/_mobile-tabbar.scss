@@ -1,0 +1,70 @@
+// ── 휴대폰 하단 탭바 ──────────────────────────────────────
+// 홈 화면 앱에는 브라우저 뒤로가기가 없어 엄지가 닿는 아래쪽에 이동 수단을 둔다.
+// 데스크톱(640px 초과)에서는 숨기고 화면 위쪽의 기존 이동 수단을 그대로 쓴다.
+//
+// 쓰는 법 (컴포넌트 MobileTabBar.vue가 이 파샬의 `bar` 믹스인을 이미 포함한다):
+//   1. 화면 템플릿 맨 아래(.page 안, 본문 밖)에 <MobileTabBar :items="…" :active="…" @select="…" />
+//   2. 화면 scss: @use '../../styles/mobile-tabbar' as tabbar;
+//        .foo-content { @include tabbar.content-offset; }   // 고정 탭바에 마지막 줄이 가리지 않게
+//        .foo-content > .btn-back { @include tabbar.hide-on-mobile; }   // 탭바가 대체하는 위쪽 이동 수단
+//   3. 4칸 이하를 권장한다(375px에서 칸당 90px 이상 → 누르기 쉽다)
+// 탭바는 position: fixed라 애니메이션(transform)이 걸린 본문 안에 두면 위치가 어긋난다 — 본문 밖에 둔다.
+
+@use 'layout';
+
+$tabbar-h: 60px;
+
+// 고정 탭바에 본문 맨 아래가 가리지 않도록 하단 여백을 늘린다 (--page-pad-bottom이 safe-area를 이미 포함)
+@mixin content-offset {
+  @include layout.mobile {
+    padding-bottom: calc(var(--page-pad-bottom) + #{$tabbar-h});
+  }
+}
+
+// 탭바가 대신하는 요소(위쪽 뒤로가기 버튼·위쪽 탭)를 휴대폰에서 숨긴다
+@mixin hide-on-mobile {
+  @include layout.mobile { display: none; }
+}
+
+// MobileTabBar.vue 전용: 탭바 자체의 모양
+@mixin bar {
+  .mobile-tabbar { display: none; }
+
+  @include layout.mobile {
+    .mobile-tabbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 50;
+      display: grid;
+      grid-template-columns: repeat(var(--tabbar-cols, 4), minmax(0, 1fr));
+      height: calc(#{$tabbar-h} + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      box-sizing: border-box;
+      background: var(--c-surface);
+      border-top: 1px solid var(--c-border);
+    }
+
+    .mobile-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-width: 0;
+      border: none;
+      background: none;
+      color: var(--c-text-muted);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+
+      span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      &.active { color: var(--c-brand-text); font-weight: 700; }
+    }
+  }
+}
