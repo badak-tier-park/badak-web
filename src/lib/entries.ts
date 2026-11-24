@@ -362,26 +362,41 @@ export function computeFinalRosters(
 }
 
 // ── 에이스 티어 밴 ─────────────────────────────────────────────
+// 팀당 2개(tier_ban, tier_ban2) — 2026-11-22 운영진 결정. 이전 경기는 1개만 저장돼 tier_ban2가 null이다.
+export const ACE_TIER_BAN_COUNT = 2
+
+export interface AceTierBanRow {
+  captain_player_id: number
+  tier_ban: string | null
+  tier_ban2: string | null
+}
+
+/** 한 팀의 밴 티어 목록(빈 값 제외). 지난 경기는 1개, 이후는 2개 */
+export function aceBanTiers(row: Pick<AceTierBanRow, 'tier_ban' | 'tier_ban2'> | null | undefined): string[] {
+  if (!row) return []
+  return [row.tier_ban, row.tier_ban2].filter((t): t is string => !!t)
+}
+
 export async function getAceTierBan(
   scheduleId: number,
   captainPlayerId: number,
-): Promise<string | null> {
+): Promise<string[]> {
   const { data, error } = await supabase
     .from('league_match_ace_bans')
-    .select('tier_ban')
+    .select('tier_ban, tier_ban2')
     .eq('schedule_id', scheduleId)
     .eq('captain_player_id', captainPlayerId)
     .maybeSingle()
   if (error) throw error
-  return data?.tier_ban ?? null
+  return aceBanTiers(data)
 }
 
 export async function getAceTierBans(
   scheduleId: number,
-): Promise<Array<{ captain_player_id: number; tier_ban: string | null }>> {
+): Promise<AceTierBanRow[]> {
   const { data, error } = await supabase
     .from('league_match_ace_bans')
-    .select('captain_player_id, tier_ban')
+    .select('captain_player_id, tier_ban, tier_ban2')
     .eq('schedule_id', scheduleId)
   if (error) throw error
   return data ?? []
@@ -390,12 +405,17 @@ export async function getAceTierBans(
 export async function saveAceTierBan(
   scheduleId: number,
   captainPlayerId: number,
-  tierBan: string | null,
+  tierBans: string[],
 ): Promise<void> {
   const { error } = await supabase
     .from('league_match_ace_bans')
     .upsert(
-      { schedule_id: scheduleId, captain_player_id: captainPlayerId, tier_ban: tierBan },
+      {
+        schedule_id: scheduleId,
+        captain_player_id: captainPlayerId,
+        tier_ban: tierBans[0] ?? null,
+        tier_ban2: tierBans[1] ?? null,
+      },
       { onConflict: 'schedule_id,captain_player_id' },
     )
   if (error) throw error

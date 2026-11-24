@@ -300,3 +300,12 @@
   gap: 8px;
   margin-left: auto;
 }
+
+// 휴대폰 글자 크기: 12px 미만이던 글자를 12px로. 확대가 막혀 있어(index.html viewport) 작은 글자는 읽을 방법이 없다
+@media (max-width: 640px) {
+  .weekday,
+  .day-cell--today .day-num,
+  .event-more {
+    font-size: 12px;
+  }
+}

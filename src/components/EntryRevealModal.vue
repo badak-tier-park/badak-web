@@ -22,290 +22,173 @@
           <div v-else-if="loadError" class="reveal-state reveal-state--error">{{ loadError }}</div>
 
           <template v-else>
-            <!-- 팀 헤더 -->
-            <div class="reveal-teams-header">
-              <div class="reveal-th" :class="showResults && (scoreA > scoreB || tieBreakWinner === teamACaptainId) ? 'reveal-th--winner' : showResults && (scoreA < scoreB || tieBreakWinner === teamBCaptainId) ? 'reveal-th--loser' : ''">
-                {{ teamAName }}
-                <span v-if="showResults && (scoreA > scoreB || tieBreakWinner === teamACaptainId)" class="reveal-win-crown">👑</span>
+            <!-- 머리줄: 팀A 점수 팀B + 각 팀 엔트리 포인트 (관리자 경기 결과 입력과 같은 모양) -->
+            <div class="match-info-teams reveal-head">
+              <div class="match-team-col">
+                <span class="match-team-badge" :class="teamHeadClass('A')">
+                  <span class="reveal-team-name">{{ teamAName }}</span>
+                  <span v-if="isMatchWinner('A')" class="reveal-win-crown">👑</span>
+                </span>
+                <span class="match-team-pts">{{ totalPoints(teamACaptainId) }}pt</span>
               </div>
-              <div class="reveal-th-center">
-                <span v-if="showResults" class="reveal-score">{{ scoreA }} : {{ scoreB }}</span>
+              <div class="match-score-col">
+                <span v-if="showResults" class="match-score">{{ scoreA }} : {{ scoreB }}</span>
+                <span v-else class="reveal-vs">VS</span>
                 <span v-if="showResults && tieBreakWinner" class="reveal-tiebreak-note">포인트 룰</span>
+                <span v-if="showResults" class="reveal-match-points">승점 {{ matchPointsA }} : {{ matchPointsB }}</span>
               </div>
-              <div class="reveal-th reveal-th--right" :class="showResults && (scoreB > scoreA || tieBreakWinner === teamBCaptainId) ? 'reveal-th--winner' : showResults && (scoreB < scoreA || tieBreakWinner === teamACaptainId) ? 'reveal-th--loser' : ''">
-                <span v-if="showResults && (scoreB > scoreA || tieBreakWinner === teamBCaptainId)" class="reveal-win-crown">👑</span>
-                {{ teamBName }}
+              <div class="match-team-col match-team-col--right">
+                <span class="match-team-badge" :class="teamHeadClass('B')">
+                  <span class="reveal-team-name">{{ teamBName }}</span>
+                  <span v-if="isMatchWinner('B')" class="reveal-win-crown">👑</span>
+                </span>
+                <span class="match-team-pts">{{ totalPoints(teamBCaptainId) }}pt</span>
               </div>
             </div>
 
-            <!-- 슬롯별 행 -->
-            <div v-for="slot in SLOT_CONFIG" :key="slot.num" class="reveal-slot" :class="{ 'reveal-slot--team': slot.type === 'team' }">
-              <!-- 슬롯 라벨 (row 바깥) -->
-              <div class="rsl-center-label">
-                <span class="rsl-num">경기{{ slot.num }}</span>
-                <span v-if="slot.type === 'team'" class="rsl-type">팀전</span>
-              </div>
+            <!-- 경기마다 한 줄: 경기명 | 팀A 선수 | 작은 맵 | 팀B 선수 -->
+            <div class="slot-list">
+              <div v-for="slot in SLOT_CONFIG" :key="slot.num" class="slot-row reveal-slot-row">
+                <div class="slot-label">
+                  <span class="slot-num">경기{{ slot.num }}</span>
+                  <span class="slot-type" :class="slot.type === 'team' ? 'slot-type--team' : ''">
+                    {{ slot.type === 'team' ? '팀전' : '개인전' }}
+                  </span>
+                </div>
 
-              <!-- 3컬럼: 팀A | 맵 | 팀B -->
-              <div class="reveal-row">
-                <!-- 팀A 선수 -->
-                <div class="rse-col" :data-team="teamAName" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamACaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamACaptainId }">
-                  <!-- 팀전: 선수들 + WIN 배지를 한 row로 -->
-                  <template v-if="slot.type === 'team'">
-                    <div class="rse-team-group">
-                      <div class="rse-players">
-                        <div
-                          v-for="(pid, pidIdx) in getSlotPlayerIds(teamACaptainId, slot.num)"
-                          :key="pidIdx"
-                          class="rse-player"
-                        >
-                          <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                          <span class="rse-name">{{ playerName(pid) }}</span>
-                          <RaceBadge :race="playerRace(pid)" :random="isRandomPlayer(teamACaptainId, slot.num, pid)" size="sm" />
-                          <TierBadge :tier="playerTier(pid)" size="sm" />
-                          <span v-if="isSubstituted(teamACaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
-                        </div>
-                      </div>
-                      <span v-if="showResults && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
-                    </div>
-                    <div v-if="getSlotPlayerIds(teamACaptainId, slot.num).length" class="rse-total">
-                      합계 {{ slotTotal(teamACaptainId, slot.num) }}pt
-                    </div>
-                  </template>
-                  <!-- 개인전 -->
-                  <template v-else>
+                <div class="slot-teams">
+                  <template v-for="side in SIDES" :key="side">
                     <div
-                      v-for="(pid, pidIdx) in getSlotPlayerIds(teamACaptainId, slot.num)"
-                      :key="pid"
-                      class="rse-player"
+                      class="slot-team-cell"
+                      :class="[side === 'A' ? 'slot-team-cell--a' : 'slot-team-cell--b', slotCellClass(slot.num, side)]"
+                      :data-team="teamName(side)"
                     >
-                      <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                      <span class="rse-name">{{ playerName(pid) }}</span>
-                      <RaceBadge :race="playerRace(pid)" size="sm" />
-                      <TierBadge :tier="playerTier(pid)" size="sm" />
-                      <HpBadge v-if="pidIdx === 0 && hpBadge(slot.num, 'A')" :label="hpBadge(slot.num, 'A')!" :tip="hpTitle(slot.num)" />
-                      <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamACaptainId" class="rse-win-badge">WIN</span>
+                      <div class="slot-players">
+                        <div v-for="(pid, pidIdx) in getSlotPlayerIds(captainOf(side), slot.num)" :key="pidIdx" class="slot-player-row">
+                          <span class="slot-player-name">{{ playerName(pid) }}</span>
+                          <RaceBadge :race="playerRace(pid)" :random="slot.type === 'team' && isRandomPlayer(captainOf(side), slot.num, pid)" size="sm" />
+                          <TierBadge :tier="playerTier(pid)" size="sm" />
+                          <HpBadge v-if="slot.type !== 'team' && pidIdx === 0 && hpBadge(slot.num, side)" :label="hpBadge(slot.num, side)!" :tip="hpTitle(slot.num)" />
+                          <span v-if="isSubstituted(captainOf(side), slot.num, pidIdx)" class="rse-sub-badge">대체</span>
+                          <span class="reveal-pt">{{ playerPt(pid) }}pt</span>
+                        </div>
+                        <span v-if="slot.type === 'team' && getSlotPlayerIds(captainOf(side), slot.num).length" class="reveal-slot-total">
+                          합계 {{ slotTotal(captainOf(side), slot.num) }}pt
+                        </span>
+                      </div>
+                      <span v-if="showResults && slotWinner(slot.num) === captainOf(side)" class="win-tag">WIN</span>
+                    </div>
+
+                    <!-- 가운데(팀A 칸 다음): 확정 맵 / 사다리타기 / 맵 없음. 밴·픽은 작은 버튼으로 펼친다 -->
+                    <div v-if="side === 'A'" class="slot-center">
+                      <template v-if="slotMapRows[slot.num]?.length">
+                        <template v-if="slotMapResults[slot.num].isUndecided">
+                          <span class="reveal-ladder-chip">사다리타기</span>
+                          <span class="slot-map-name reveal-candidates">{{ candidateNames(slot.num) }}</span>
+                        </template>
+                        <div v-else-if="resolvedMap(slot.num)" class="slot-map">
+                          <div class="slot-map-thumb">
+                            <img v-if="resolvedMap(slot.num)!.thumbnail_url" :src="resolvedMap(slot.num)!.thumbnail_url!" alt="" />
+                            <div v-else class="slot-map-thumb-empty" />
+                          </div>
+                          <span class="slot-map-name">{{ resolvedMap(slot.num)!.name }}</span>
+                        </div>
+                        <span v-else class="slot-vs">vs</span>
+                        <button
+                          v-if="!showResults && hasBanPick(slot.num)"
+                          type="button"
+                          class="reveal-banpick-btn"
+                          :aria-expanded="expandedBanSlots.includes(slot.num)"
+                          @click="toggleBanInfo(slot.num)"
+                        >밴·픽 {{ expandedBanSlots.includes(slot.num) ? '▴' : '▾' }}</button>
+                      </template>
+                      <span v-else class="slot-vs">vs</span>
                     </div>
                   </template>
                 </div>
 
-                <!-- 맵 정보 (센터, 맵 이미지만) -->
-                <div class="rse-maps">
-                  <template v-if="slotMapRows[slot.num]?.length">
-                    <template v-for="m in slotMapRows[slot.num]" :key="m.id">
-                      <div v-if="slotMapResults[slot.num].matchMapIds.has(m.id)" class="rse-map-item">
-                        <div class="rse-map-thumb-wrap">
-                          <img v-if="m.thumbnail_url" :src="m.thumbnail_url" class="rse-map-thumb" />
-                          <div v-else class="rse-map-thumb-empty" />
-                        </div>
-                        <span class="rse-map-name">{{ m.name }}</span>
-                      </div>
-                    </template>
-                  </template>
-                  <div v-else class="rse-map-empty" />
-                </div>
-
-                <!-- 팀B 선수 -->
-                <div class="rse-col rse-col--right" :data-team="teamBName" :class="{ 'rse-col--winner': showResults && slotWinner(slot.num) === teamBCaptainId, 'rse-col--loser': showResults && slotWinner(slot.num) != null && slotWinner(slot.num) !== teamBCaptainId }">
-                  <!-- 팀전: WIN 배지 + 선수들을 한 row로 -->
-                  <template v-if="slot.type === 'team'">
-                    <div class="rse-team-group rse-team-group--right">
-                      <span v-if="showResults && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
-                      <div class="rse-players">
-                        <div
-                          v-for="(pid, pidIdx) in getSlotPlayerIds(teamBCaptainId, slot.num)"
-                          :key="pidIdx"
-                          class="rse-player"
-                        >
-                          <span v-if="isSubstituted(teamBCaptainId, slot.num, pidIdx)" class="rse-sub-badge">대체</span>
-                          <span class="rse-name">{{ playerName(pid) }}</span>
-                          <RaceBadge :race="playerRace(pid)" :random="isRandomPlayer(teamBCaptainId, slot.num, pid)" size="sm" />
-                          <TierBadge :tier="playerTier(pid)" size="sm" />
-                          <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div v-if="getSlotPlayerIds(teamBCaptainId, slot.num).length" class="rse-total rse-total--right">
-                      합계 {{ slotTotal(teamBCaptainId, slot.num) }}pt
-                    </div>
-                  </template>
-                  <!-- 개인전 -->
-                  <template v-else>
-                    <div
-                      v-for="(pid, pidIdx) in getSlotPlayerIds(teamBCaptainId, slot.num)"
-                      :key="pid"
-                      class="rse-player"
-                    >
-                      <span v-if="showResults && pidIdx === 0 && slotWinner(slot.num) === teamBCaptainId" class="rse-win-badge">WIN</span>
-                      <span class="rse-name">{{ playerName(pid) }}</span>
-                      <RaceBadge :race="playerRace(pid)" size="sm" />
-                      <TierBadge :tier="playerTier(pid)" size="sm" />
-                      <HpBadge v-if="pidIdx === 0 && hpBadge(slot.num, 'B')" :label="hpBadge(slot.num, 'B')!" :tip="hpTitle(slot.num)" />
-                      <span class="rse-pt">{{ playerPt(pid) }}pt</span>
-                    </div>
-                  </template>
+                <!-- 밴·픽 상세 (엔트리 확인) — 줄 아래 작은 글자 -->
+                <div v-if="!showResults && expandedBanSlots.includes(slot.num)" class="reveal-banpick">
+                  <span v-for="ban in slotMapResults[slot.num].bannedMapInfo" :key="`ban-${ban.mapId}`" class="reveal-banpick-item">
+                    <span class="reveal-banpick-kind reveal-banpick-kind--ban">밴</span>
+                    <span class="reveal-banpick-map">{{ getMapInfo(slot.num, ban.mapId)?.name }}</span>
+                    <span class="reveal-banpick-by">{{ byTeams(ban) }}</span>
+                  </span>
+                  <span
+                    v-for="pick in slotMapResults[slot.num].pickedMapInfo"
+                    :key="`pick-${pick.mapId}-${pick.byTeamA}-${pick.byTeamB}`"
+                    class="reveal-banpick-item"
+                  >
+                    <span class="reveal-banpick-kind reveal-banpick-kind--pick">픽</span>
+                    <span class="reveal-banpick-map">{{ getMapInfo(slot.num, pick.mapId)?.name }}</span>
+                    <span class="reveal-banpick-by">{{ byTeams(pick) }}</span>
+                  </span>
                 </div>
               </div>
 
-              <!-- 밴/픽 정보 (엔트리 확인) / 사다리타기 안내 -->
-              <div v-if="slotMapRows[slot.num]?.length" class="rse-ban-area">
-                <div v-if="slotMapResults[slot.num].isUndecided" class="rse-undecided">사다리타기로 결정</div>
-                <template v-if="!showResults && (slotMapResults[slot.num].bannedMapInfo.length || slotMapResults[slot.num].pickedMapInfo.length)">
-                  <button class="btn-ban-toggle" @click="toggleBanInfo(slot.num)">
-                    맵 밴/픽 정보
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="transition: transform 0.15s" :style="{ transform: expandedBanSlots.includes(slot.num) ? 'rotate(180deg)' : 'none' }">
-                      <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                  <template v-if="expandedBanSlots.includes(slot.num)">
-                    <div class="rse-banned-maps">
-                      <div
-                        v-for="ban in slotMapResults[slot.num].bannedMapInfo"
-                        :key="`ban-${ban.mapId}`"
-                        class="rse-map-item rse-map--banned"
-                      >
-                        <div class="rse-map-thumb-wrap">
-                          <img v-if="getMapInfo(slot.num, ban.mapId)?.thumbnail_url" :src="getMapInfo(slot.num, ban.mapId)!.thumbnail_url!" class="rse-map-thumb" />
-                          <div v-else class="rse-map-thumb-empty" />
-                        </div>
-                        <span class="rse-map-name">{{ getMapInfo(slot.num, ban.mapId)?.name }}</span>
-                        <div class="rse-ban-chips">
-                          <span v-if="ban.byTeamA" class="ban-chip ban-chip--a">{{ teamAName }} 밴</span>
-                          <span v-if="ban.byTeamB" class="ban-chip ban-chip--b">{{ teamBName }} 밴</span>
+              <!-- 에이스 결정전 (경기 결과: 실제로 치렀을 때만) -->
+              <div v-if="showResults && acePlayed" class="slot-row reveal-slot-row">
+                <div class="slot-label">
+                  <span class="slot-num">에결</span>
+                  <span class="slot-type slot-type--team">에이스</span>
+                </div>
+                <div class="slot-teams">
+                  <template v-for="side in SIDES" :key="side">
+                    <div
+                      class="slot-team-cell"
+                      :class="[side === 'A' ? 'slot-team-cell--a' : 'slot-team-cell--b', slotCellClass(7, side)]"
+                      :data-team="teamName(side)"
+                    >
+                      <div class="slot-players">
+                        <div v-if="acePlayerOf(side)" class="slot-player-row">
+                          <span class="slot-player-name">{{ playerName(acePlayerOf(side)!) }}</span>
+                          <RaceBadge :race="playerRace(acePlayerOf(side)!)" size="sm" />
+                          <TierBadge :tier="playerTier(acePlayerOf(side)!)" size="sm" />
+                          <span class="reveal-pt">{{ playerPt(acePlayerOf(side)!) }}pt</span>
                         </div>
                       </div>
-                      <div
-                        v-for="pick in slotMapResults[slot.num].pickedMapInfo"
-                        :key="`pick-${pick.mapId}-${pick.byTeamA}-${pick.byTeamB}`"
-                        class="rse-map-item rse-map--picked"
-                      >
-                        <div class="rse-map-thumb-wrap">
-                          <img v-if="getMapInfo(slot.num, pick.mapId)?.thumbnail_url" :src="getMapInfo(slot.num, pick.mapId)!.thumbnail_url!" class="rse-map-thumb" />
-                          <div v-else class="rse-map-thumb-empty" />
+                      <span v-if="slotWinner(7) === captainOf(side)" class="win-tag">WIN</span>
+                    </div>
+                    <div v-if="side === 'A'" class="slot-center">
+                      <span v-if="aceSlotResult?.ace_tier" class="reveal-ace-tier" :class="`tier-badge--${$tierClass(aceSlotResult.ace_tier)}`">{{ aceSlotResult.ace_tier }} 티어</span>
+                      <span v-else class="reveal-ladder-chip">티어 사다리타기</span>
+                      <div v-if="aceMap" class="slot-map">
+                        <div class="slot-map-thumb">
+                          <img v-if="aceMap.thumbnail_url" :src="aceMap.thumbnail_url" alt="" />
+                          <div v-else class="slot-map-thumb-empty" />
                         </div>
-                        <span class="rse-map-name">{{ getMapInfo(slot.num, pick.mapId)?.name }}</span>
-                        <div class="rse-ban-chips">
-                          <span v-if="pick.byTeamA" class="ban-chip ban-chip--pick-a">{{ teamAName }} 픽</span>
-                          <span v-if="pick.byTeamB" class="ban-chip ban-chip--pick-b">{{ teamBName }} 픽</span>
-                        </div>
+                        <span class="slot-map-name">{{ aceMap.name }}</span>
                       </div>
                     </div>
                   </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- 에결 티어(경기 시작 때 사다리) — 결과 모드에서 에결 줄이 따로 보이면 생략 -->
+            <div v-if="showAceTierLine" class="reveal-ace-tier-line">
+              <span class="reveal-ace-bans-title">에이스 결정전</span>
+              <template v-if="aceSlotResult?.ace_tier">
+                <span class="reveal-ace-tier" :class="`tier-badge--${$tierClass(aceSlotResult.ace_tier)}`">{{ aceSlotResult.ace_tier }} 티어</span>
+                <span v-if="aceMap" class="reveal-ace-tier-map">
+                  <span class="slot-map-thumb reveal-ace-tier-thumb">
+                    <img v-if="aceMap.thumbnail_url" :src="aceMap.thumbnail_url" alt="" />
+                  </span>
+                  {{ aceMap.name }}
+                </span>
+              </template>
+              <span v-else class="reveal-ace-bans-none">티어 사다리 전</span>
+            </div>
+
+            <!-- 에결 티어 밴 (팀당 2개, 이전 경기는 1개) — 맨 아래 한 줄 -->
+            <div v-if="aceTierBansA.length || aceTierBansB.length" class="reveal-ace-bans">
+              <span class="reveal-ace-bans-title">에결 티어 밴</span>
+              <span v-for="side in SIDES" :key="side" class="reveal-ace-bans-team">
+                <span class="reveal-ace-bans-name">{{ teamName(side) }}</span>
+                <template v-if="aceBansOf(side).length">
+                  <TierBadge v-for="t in aceBansOf(side)" :key="t" :tier="t" size="sm" />
                 </template>
-              </div>
-            </div>
-
-            <!-- 에이스 결정전 -->
-            <div v-if="!showResults || acePlayed" class="reveal-ace">
-              <div class="rsl-center-label">
-                <span class="rsl-num">에이스 결정전</span>
-              </div>
-
-              <!-- 에이스 티어 행 -->
-              <div class="reveal-row">
-                <div class="rse-col ace-ban-col"></div>
-                <div class="rse-maps">
-                  <!-- 엔트리 확인: 전체 티어 밴 표시 -->
-                  <template v-if="!showResults">
-                    <div class="ace-tier-ban-row">
-                      <div
-                        v-for="tier in ALL_TIERS"
-                        :key="tier"
-                        class="ace-tier-ban-btn"
-                        :class="[`tier-badge--${$tierClass(tier)}`, { 'ace-tier-ban-btn--banned': aceTierBanA === tier || aceTierBanB === tier }]"
-                      >
-                        <span class="ace-tier-ban-letter">{{ tier }}</span>
-                        <span class="ace-tier-ban-sub">티어</span>
-                        <div class="ace-tier-ban-tags">
-                          <span v-if="aceTierBanA === tier" class="ace-tier-ban-tag ace-tier-ban-tag--a">{{ teamAName }} 밴</span>
-                          <span v-if="aceTierBanB === tier" class="ace-tier-ban-tag ace-tier-ban-tag--b">{{ teamBName }} 밴</span>
-                        </div>
-                      </div>
-                    </div>
-                  </template>
-                  <!-- 경기 결과: 확정 티어 or 사다리타기 -->
-                  <template v-else>
-                    <div v-if="aceSlotResult?.ace_tier" class="ace-confirmed-tier">
-                      <span :class="`tier-badge--${$tierClass(aceSlotResult.ace_tier)}`" class="ace-tier-chip">{{ aceSlotResult.ace_tier }}</span>
-                      <span class="ace-tier-sub">에이스 티어</span>
-                    </div>
-                    <div v-else class="rse-undecided">티어 사다리타기</div>
-                  </template>
-                </div>
-                <div class="rse-col rse-col--right ace-ban-col"></div>
-              </div>
-
-              <!-- 선수 & 맵 행 -->
-              <div class="reveal-row">
-                <!-- 팀A 선수 -->
-                <div
-                  class="rse-col"
-                  :class="{
-                    'rse-col--winner': showResults && slotWinner(7) === teamACaptainId,
-                    'rse-col--loser': showResults && slotWinner(7) != null && slotWinner(7) !== teamACaptainId
-                  }"
-                >
-                  <div v-if="aceSlotResult?.ace_player_a_id" class="rse-player">
-                    <span class="rse-pt">{{ playerPt(aceSlotResult.ace_player_a_id) }}pt</span>
-                    <span class="rse-name">{{ playerName(aceSlotResult.ace_player_a_id) }}</span>
-                    <RaceBadge :race="playerRace(aceSlotResult.ace_player_a_id)" size="sm" />
-                    <TierBadge :tier="playerTier(aceSlotResult.ace_player_a_id)" size="sm" />
-                    <span v-if="showResults && slotWinner(7) === teamACaptainId" class="rse-win-badge">WIN</span>
-                  </div>
-                </div>
-
-                <!-- 맵 -->
-                <div class="rse-maps">
-                  <template v-if="aceSlotResult?.selected_map_id && allMapsById.get(aceSlotResult.selected_map_id)">
-                    <div class="rse-map-item">
-                      <div class="rse-map-thumb-wrap">
-                        <img v-if="allMapsById.get(aceSlotResult.selected_map_id)?.thumbnail_url" :src="allMapsById.get(aceSlotResult.selected_map_id)!.thumbnail_url!" class="rse-map-thumb" />
-                        <div v-else class="rse-map-thumb-empty" />
-                      </div>
-                      <span class="rse-map-name">{{ allMapsById.get(aceSlotResult.selected_map_id)?.name }}</span>
-                    </div>
-                  </template>
-                  <div v-else class="rse-map-empty" />
-                </div>
-
-                <!-- 팀B 선수 -->
-                <div
-                  class="rse-col rse-col--right"
-                  :class="{
-                    'rse-col--winner': showResults && slotWinner(7) === teamBCaptainId,
-                    'rse-col--loser': showResults && slotWinner(7) != null && slotWinner(7) !== teamBCaptainId
-                  }"
-                >
-                  <div v-if="aceSlotResult?.ace_player_b_id" class="rse-player">
-                    <span v-if="showResults && slotWinner(7) === teamBCaptainId" class="rse-win-badge">WIN</span>
-                    <span class="rse-name">{{ playerName(aceSlotResult.ace_player_b_id) }}</span>
-                    <RaceBadge :race="playerRace(aceSlotResult.ace_player_b_id)" size="sm" />
-                    <TierBadge :tier="playerTier(aceSlotResult.ace_player_b_id)" size="sm" />
-                    <span class="rse-pt">{{ playerPt(aceSlotResult.ace_player_b_id) }}pt</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 합계 -->
-            <div class="reveal-totals">
-              <div class="reveal-total-item" :class="showResults && scoreA > scoreB ? 'reveal-total-item--winner' : ''">
-                <span class="reveal-total-name">{{ teamAName }}</span>
-                <span class="reveal-total-pt">{{ totalPoints(teamACaptainId) }}pt</span>
-              </div>
-              <div class="reveal-total-sep" />
-              <div class="reveal-total-item reveal-total-item--right" :class="showResults && scoreB > scoreA ? 'reveal-total-item--winner' : ''">
-                <span class="reveal-total-pt">{{ totalPoints(teamBCaptainId) }}pt</span>
-                <span class="reveal-total-name">{{ teamBName }}</span>
-              </div>
-            </div>
-            <!-- 승점 -->
-            <div v-if="showResults" class="reveal-match-points">
-              <span class="rmp-label">승점</span>
-              <span class="rmp-score">
-                <span class="rmp-a">{{ matchPointsA }}</span>
-                <span class="rmp-sep">:</span>
-                <span class="rmp-b">{{ matchPointsB }}</span>
+                <span v-else class="reveal-ace-bans-none">없음</span>
               </span>
             </div>
           </template>
@@ -317,8 +200,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getScheduleEntries, TIER_POINTS, getAceTierBans, calcEntryPoints, pointTiebreakWinner, INDIVIDUAL_SLOTS, TEAM_SLOT, type EntryRecord } from '@/lib/entries'
-import { TIER_ORDER, tierPoint } from '@/lib/constants'
+import { getScheduleEntries, TIER_POINTS, getAceTierBans, aceBanTiers, calcEntryPoints, pointTiebreakWinner, isAceSkippedByPoints, INDIVIDUAL_SLOTS, TEAM_SLOT, type EntryRecord } from '@/lib/entries'
+import { tierPoint } from '@/lib/constants'
 import { getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 import { getMaps } from '@/lib/maps'
 import { getLeague, MATCH_SLOT_POINTS } from '@/lib/leagues'
@@ -355,8 +238,6 @@ const roundLabel = computed(() => {
 
 defineEmits<{ close: [] }>()
 
-const ALL_TIERS = TIER_ORDER
-
 const SLOT_CONFIG = [
   { num: 1, type: 'individual' },
   { num: 2, type: 'individual' },
@@ -382,8 +263,9 @@ const slotSubs = ref(new Map<number, { teamA: number[] | null; teamB: number[] |
 
 // 에이스 결정전
 const aceSlotResult = ref<SlotResult | null>(null)
-const aceTierBanA = ref<string | null>(null)
-const aceTierBanB = ref<string | null>(null)
+// 팀당 밴 티어 목록 — 2026-11-22부터 2개, 이전 경기는 1개(tier_ban2 null)
+const aceTierBansA = ref<string[]>([])
+const aceTierBansB = ref<string[]>([])
 const allMapsById = ref(new Map<string, MapInfo>())
 const aceSkipGap = ref<number | null>(null)
 const handicapGap = ref<number | null>(null)
@@ -396,7 +278,11 @@ onMounted(async () => {
       getLeaguePlayers(props.leagueId),
       getMatchMaps(props.leagueId),
       getMaps(),
-      props.showResults ? getSlotResults(props.scheduleId) : Promise.resolve([] as SlotResult[]),
+      // 엔트리 확인 모드도 에결 티어(경기 시작 때 사다리로 정함)를 보여 주려고 읽는다.
+      // 못 읽어도 엔트리 확인은 되게 실패는 무시한다
+      props.showResults
+        ? getSlotResults(props.scheduleId)
+        : getSlotResults(props.scheduleId).catch(() => [] as SlotResult[]),
       getAceTierBans(props.scheduleId),
       getLeague(props.leagueId),
     ]))
@@ -428,11 +314,16 @@ onMounted(async () => {
     // 에이스 티어 밴
     const banForA = aceTierBans.find(b => b.captain_player_id === props.teamACaptainId)
     const banForB = aceTierBans.find(b => b.captain_player_id === props.teamBCaptainId)
-    aceTierBanA.value = banForA?.tier_ban ?? null
-    aceTierBanB.value = banForB?.tier_ban ?? null
+    aceTierBansA.value = aceBanTiers(banForA)
+    aceTierBansB.value = aceBanTiers(banForB)
+
+    // 엔트리 확인 모드: 에결 티어·맵만 쓴다(승패·대타는 결과 모드에서만 반영)
+    if (!props.showResults) {
+      aceSlotResult.value = slotResultsData.find(r => r.slot_num === 7) ?? null
+    }
 
     // 슬롯 결과 (showResults 모드)
-    if (slotResultsData.length) {
+    if (props.showResults && slotResultsData.length) {
       const wm = new Map<number, number>()
       const sm = new Map<number, string>()
       const subs = new Map<number, { teamA: number[] | null; teamB: number[] | null }>()
@@ -705,6 +596,65 @@ const slotMapResults = computed<Record<number, SlotMapResult>>(() => {
     results[n] = { matchMapIds, bannedMapInfo, pickedMapInfo, isUndecided }
   }
   return results
+})
+
+// ── 화면 도우미 (팀A/팀B를 같은 템플릿으로 그린다) ───────────────
+type Side = 'A' | 'B'
+const SIDES: readonly Side[] = ['A', 'B']
+const captainOf = (side: Side) => (side === 'A' ? props.teamACaptainId : props.teamBCaptainId)
+const teamName = (side: Side) => (side === 'A' ? props.teamAName : props.teamBName)
+const aceBansOf = (side: Side) => (side === 'A' ? aceTierBansA.value : aceTierBansB.value)
+
+function isMatchWinner(side: Side): boolean {
+  if (!props.showResults) return false
+  const mine = side === 'A' ? scoreA.value : scoreB.value
+  const other = side === 'A' ? scoreB.value : scoreA.value
+  return mine > other || tieBreakWinner.value === captainOf(side)
+}
+function teamHeadClass(side: Side): string {
+  if (!props.showResults) return ''
+  if (isMatchWinner(side)) return 'reveal-team--winner'
+  return isMatchWinner(side === 'A' ? 'B' : 'A') ? 'reveal-team--loser' : ''
+}
+function slotCellClass(slotNum: number, side: Side): string {
+  if (!props.showResults) return ''
+  const w = slotWinner(slotNum)
+  if (w == null) return ''
+  return w === captainOf(side) ? 'slot-team-cell--winner' : 'slot-team-cell--loser'
+}
+
+/** 확정 맵 1개(밴·픽·사다리 결과까지 반영). 후보가 여럿이면 null */
+function resolvedMap(slotNum: number): MapInfo | null {
+  const ids = [...(slotMapResults.value[slotNum]?.matchMapIds ?? [])]
+  if (ids.length !== 1) return null
+  return getMapInfo(slotNum, ids[0]) ?? allMapsById.value.get(ids[0]) ?? null
+}
+function candidateNames(slotNum: number): string {
+  return [...(slotMapResults.value[slotNum]?.matchMapIds ?? [])]
+    .map(id => getMapInfo(slotNum, id)?.name ?? '')
+    .filter(Boolean)
+    .join(' / ')
+}
+function hasBanPick(slotNum: number): boolean {
+  const r = slotMapResults.value[slotNum]
+  return !!r && (r.bannedMapInfo.length > 0 || r.pickedMapInfo.length > 0)
+}
+function byTeams(x: { byTeamA: boolean; byTeamB: boolean }): string {
+  return [x.byTeamA ? props.teamAName : '', x.byTeamB ? props.teamBName : ''].filter(Boolean).join(' · ')
+}
+const acePlayerOf = (side: Side) =>
+  (side === 'A' ? aceSlotResult.value?.ace_player_a_id : aceSlotResult.value?.ace_player_b_id) ?? null
+const aceMap = computed(() => {
+  const id = aceSlotResult.value?.selected_map_id
+  return id ? allMapsById.value.get(id) ?? null : null
+})
+
+// 맨 아래 "에이스 결정전 · ○ 티어" 줄: 포인트 차이로 에결이 없는 경기는 숨기고,
+// 결과 모드는 에결을 치렀으면 에결 줄이 따로 있으니 생략, 안 치렀으면 정해 둔 티어가 있을 때만
+const showAceTierLine = computed(() => {
+  if (isAceSkippedByPoints(ptA.value, ptB.value, aceSkipGap.value)) return false
+  if (!props.showResults) return true
+  return !acePlayed.value && !!aceSlotResult.value?.ace_tier
 })
 
 const expandedBanSlots = ref<number[]>([])

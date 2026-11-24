@@ -67,6 +67,8 @@
   안내만 띄운다 — 지목식·엔트리 입력 중 새로고침되면 입력이 날아간다
 - 서비스워커는 앱 껍데기만 캐시한다. **Supabase 응답을 캐시하지 않는다**(오래된 리그 데이터로
   판정이 틀어진다). `api/`는 SPA 폴백에서 제외해야 한다
+- `roulette.html`(관리자 사다리타기용 마블 룰렛 iframe, 원본 `src/vendor/roulette`)도 SPA 폴백·미리 받기에서 뺀다 —
+  폴백되면 iframe에 앱이 뜨고, 미리 받으면 box2d(수백 KB)를 모든 사용자가 설치 때 받는다(`vite.config.ts`)
 - 로그인 유지는 Supabase 세션(localStorage의 리프레시 토큰)이 한다. `flowType`은 implicit 유지 —
   PKCE는 로그인을 시작한 저장소에서만 코드를 교환할 수 있어 iOS 홈 화면 앱에서 실패할 수 있다
 - 디스코드 로그인은 `prompt=none` — 이미 승인한 사용자는 동의 화면 없이 돌아온다

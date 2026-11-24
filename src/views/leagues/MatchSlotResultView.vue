@@ -151,8 +151,8 @@
             </div>
           </div>
 
-          <!-- 에이스 결정전 -->
-          <div v-if="showAce || isSuperAce" class="ace-card">
+          <!-- 에이스 결정전: ① 티어는 경기 시작 때(엔트리 공개 후)부터, ②③ 맵·결과는 3:3일 때 -->
+          <div v-if="showAceTier || isSuperAce" class="ace-card">
             <div class="ace-card-title">에이스 결정전</div>
 
             <!-- 1단계: 티어 밴 결과 표시 + 사다리 -->
@@ -167,7 +167,7 @@
                       :key="'a' + tier"
                       class="ace-tier-chip"
                       :class="{
-                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_a_captain_id) : aceTierBanA === tier
+                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_a_captain_id) : aceTierBansA.includes(tier)
                       }"
                     >
                       {{ tier }}
@@ -184,7 +184,7 @@
                     </span>
                     <button v-if="!isCompleted && (!(isSuperAce && aceTierCandidates.length === 1) || noEligiblePlayers)" class="ace-reset-btn" @click="resetAceTier">초기화</button>
                   </template>
-                  <template v-else-if="!isCompleted">
+                  <template v-else-if="!isCompleted && aceTierLadderOpenable">
                     <button
                       class="slot-ladder-btn"
                       :disabled="aceTierCandidates.length === 0"
@@ -203,7 +203,7 @@
                       :key="'b' + tier"
                       class="ace-tier-chip"
                       :class="{
-                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_b_captain_id) : aceTierBanB === tier
+                        'ace-tier-chip--banned': isSuperAce ? !!superAceBanFor(tier, schedule!.team_b_captain_id) : aceTierBansB.includes(tier)
                       }"
                     >
                       {{ tier }}
@@ -214,7 +214,12 @@
               </div>
             </div>
 
-            <!-- 2단계: 맵 사다리 -->
+            <!-- 2단계: 맵 사다리 (6경기까지 3:3일 때만) -->
+            <div v-if="!(showAce || isSuperAce)" class="ace-section ace-section--locked">
+              <div class="ace-section-label">② 맵 선택 · ③ 선수 선택 및 결과</div>
+              <span class="ace-locked-hint">6경기까지 3:3이면 진행</span>
+            </div>
+            <template v-else>
             <div class="ace-section" :class="{ 'ace-section--locked': !aceData.aceTier }">
               <div class="ace-section-label">② 맵 선택</div>
               <template v-if="aceData.aceTier">
@@ -309,6 +314,7 @@
               </template>
               <span v-else class="ace-locked-hint">티어 확정 후 진행</span>
             </div>
+            </template>
           </div>
         </div>
 
@@ -334,89 +340,27 @@
       </template>
     </div>
 
-    <!-- 맵 사다리타기 모달 -->
-    <Teleport to="body">
-      <div v-if="ladderSlot != null" class="ladder-overlay">
-        <div class="ladder-modal">
-          <div class="ladder-header">
-            <span class="ladder-title">{{ ladderSlot === 7 ? '에이스 맵 선택' : `경기${ladderSlot} 맵 선택` }}</span>
-            <button class="ladder-close" @click="ladderSlot = null">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </div>
-          <div class="ladder-maps">
-            <button
-              v-for="m in currentLadderMaps"
-              :key="m.id"
-              class="ladder-map-btn"
-              :class="{ 'ladder-map-btn--selected': ladderPickResult === m.id }"
-              @click="ladderPickResult = m.id"
-            >
-              <div class="ladder-map-thumb">
-                <img v-if="m.thumbnail_url" :src="m.thumbnail_url" />
-                <div v-else class="ladder-map-thumb-empty" />
-              </div>
-              <span class="ladder-map-name">{{ m.name }}</span>
-            </button>
-          </div>
-          <div class="ladder-actions">
-            <button class="ladder-random-btn" :disabled="ladderPicking" @click="randomPick">
-              {{ ladderPicking ? '선택 중...' : '랜덤 선택' }}
-            </button>
-            <button class="btn-cancel" @click="ladderSlot = null">취소</button>
-            <button
-              class="btn-complete ladder-confirm-btn"
-              :disabled="!ladderPickResult || savingLadderMap"
-              @click="confirmLadder"
-            >
-              {{ savingLadderMap ? '저장 중...' : '확정' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- 사다리타기 = 마블 룰렛. 결과는 2초 보여 준 뒤 자동 저장(RouletteModal) -->
+    <!-- 맵: 2·3경기(양 팀 픽이 다르고 티어가 같을 때) 기본 '마지막 도착', 에결 맵(3:3) 기본 '첫 번째 도착' -->
+    <RouletteModal
+      v-if="ladderSlot != null"
+      :title="ladderSlot === 7 ? '에이스 결정전 맵 룰렛' : `경기${ladderSlot} 맵 룰렛`"
+      :candidates="mapRouletteCandidates"
+      :default-rule="ladderSlot === 7 ? ACE_ROULETTE_RULE : BANPICK_ROULETTE_RULE"
+      :save="saveLadderMap"
+      @close="ladderSlot = null"
+    />
 
-    <!-- 티어 사다리타기 모달 -->
-    <Teleport to="body">
-      <div v-if="tierLadderOpen" class="ladder-overlay">
-        <div class="ladder-modal">
-          <div class="ladder-header">
-            <span class="ladder-title">에이스 티어 선택</span>
-            <button class="ladder-close" @click="tierLadderOpen = false">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </div>
-          <div class="ladder-tier-list">
-            <button
-              v-for="tier in aceTierCandidates"
-              :key="tier"
-              class="ladder-tier-btn"
-              :class="[`tier-badge--${$tierClass(tier)}`, { 'ladder-tier-btn--selected': tierPickResult === tier }]"
-              @click="tierPickResult = tier"
-            >
-              {{ tier }} 티어
-            </button>
-          </div>
-          <div class="ladder-actions">
-            <button class="ladder-random-btn" :disabled="tierPicking" @click="randomTierPick">
-              {{ tierPicking ? '선택 중...' : '랜덤 선택' }}
-            </button>
-            <button class="btn-cancel" @click="tierLadderOpen = false">취소</button>
-            <button
-              class="btn-complete ladder-confirm-btn"
-              :disabled="!tierPickResult || savingTier"
-              @click="confirmTierLadder"
-            >
-              {{ savingTier ? '저장 중...' : '확정' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- 에결 티어: 경기 시작 때(엔트리 공개 후), 기본 '첫 번째 도착' -->
+    <RouletteModal
+      v-if="tierLadderOpen"
+      title="에이스 결정전 티어 룰렛"
+      :candidates="tierRouletteCandidates"
+      :default-rule="ACE_ROULETTE_RULE"
+      :save="saveAceTier"
+      @close="tierLadderOpen = false"
+    />
+
     <!-- 선수 교체 모달 -->
     <Teleport to="body">
       <div v-if="subModal" class="ladder-overlay">
@@ -463,12 +407,13 @@ import { isHandicapMatch, slotHandicap, type HandicapRow } from '@/lib/handicap'
 import TierBadge from '@/components/TierBadge.vue'
 import RaceBadge from '@/components/RaceBadge.vue'
 import HpBadge from '@/components/HpBadge.vue'
+import RouletteModal, { type RouletteCandidate, type RouletteRule } from '@/components/RouletteModal.vue'
 import { getCaptains, getMatchMaps, getLeaguePlayers } from '@/lib/leagueDetail'
 
 import { getTeamNames } from '@/lib/teamNames'
 import { getSchedules, getPlayoffSchedules, getSlotResults, setSlotResult, setSlotMap, setAceSlotData, setSlotSubstitution, completeMatch, type ScheduleRow } from '@/lib/schedules'
-import { getScheduleEntries, computeFinalRosters, getAceTierBans, calcEntryPoints, isAceSkippedByPoints, decideMatch } from '@/lib/entries'
-import { TIER_ORDER, tierPoint } from '@/lib/constants'
+import { getScheduleEntries, computeFinalRosters, getAceTierBans, aceBanTiers, calcEntryPoints, isAceSkippedByPoints, decideMatch } from '@/lib/entries'
+import { TIER_ORDER, tierPoint, tierClass } from '@/lib/constants'
 import { getDraftPicks } from '@/lib/draft'
 import { getMaps } from '@/lib/maps'
 import { getTeamPolls, getTeamPollVotes, type TeamPollVote } from '@/lib/teamPolls'
@@ -531,18 +476,21 @@ const entryBanMap = ref(new Map<number, Map<number, string | null>>())
 const entryPickMap = ref(new Map<number, Map<number, string | null>>())
 const ladderSelectedMaps = ref(new Map<number, string>())
 
-// 맵 사다리타기 모달 상태
+// 맵 사다리타기(룰렛) 창 — 열린 경기 번호
 const ladderSlot = ref<number | null>(null)
-const ladderPicking = ref(false)
-const ladderPickResult = ref<string | null>(null)
-const savingLadderMap = ref(false)
+
+// 룰렛 결과 규칙 기본값(창 안에서 매번 바꿀 수 있고 저장하지 않는다).
+// 2·3경기 맵은 '마지막 도착'(운영진 2026-11-23). 에결 티어·맵은 정해진 규칙이 없어 '첫 번째 도착'으로 둠(확인 필요)
+const BANPICK_ROULETTE_RULE: RouletteRule = 'last'
+const ACE_ROULETTE_RULE: RouletteRule = 'first'
 
 const isSuperAce = computed(() => schedule.value?.match_type === 'super_ace')
 
 // 에이스 결정전 상태
 // 에이스 티어 밴 (엔트리 제출 시 각 팀장이 선택한 값)
-const aceTierBanA = ref<string | null>(null)
-const aceTierBanB = ref<string | null>(null)
+// 팀당 밴 티어 목록 — 2026-11-22부터 2개, 이전 경기는 1개(tier_ban2 null)
+const aceTierBansA = ref<string[]>([])
+const aceTierBansB = ref<string[]>([])
 
 // 슈퍼에이스: 결승 1·2세트에서 사용된 에이스 티어 (제외 대상)
 const superAceExcludedTiers = ref<string[]>([])
@@ -557,11 +505,8 @@ const aceData = reactive<{
   playerBId: number | null
 }>({ aceTier: null, playerAId: null, playerBId: null })
 
-// 티어 사다리타기 모달 상태
+// 티어 사다리타기(룰렛) 창
 const tierLadderOpen = ref(false)
-const tierPicking = ref(false)
-const tierPickResult = ref<string | null>(null)
-const savingTier = ref(false)
 
 // 로스터 (에이스 선수 드롭다운용)
 const rosterA = ref<SlotPlayerInfo[]>([])
@@ -655,11 +600,22 @@ function isSlotLocked(slotNum: number): boolean {
 }
 const hasLockedSlots = computed(() => REGULAR_SLOTS.some(s => isSlotLocked(s.num)))
 
-const showAce = computed(() => {
-  if (score6A.value !== 3 || score6B.value !== 3) return false
+// 포인트 차이로 에결이 생략되는 경기면 시작부터 에결이 없다
+const aceNotSkipped = computed(() => {
   if (entryPointsA.value === 0 && entryPointsB.value === 0) return true
   return !isAceSkippedByPoints(entryPointsA.value, entryPointsB.value, aceSkipGap.value)
 })
+
+// 에결을 실제로 치르는 상황(6경기까지 3:3) — ② 맵 사다리 · ③ 선수·결과 입력은 이때만
+const showAce = computed(() => score6A.value === 3 && score6B.value === 3 && aceNotSkipped.value)
+
+// ① 티어 밴 + 티어 사다리는 경기 시작 때 한다(2026-11-22 운영진) — 엔트리가 공개된 경기면 0:0부터.
+// 3:3 전에 승패가 확정돼 에결을 안 치르게 돼도 이미 정한 티어는 지우지 않고 보여 준다
+const showAceTier = computed(() =>
+  aceNotSkipped.value && (showAce.value || !!schedule.value?.is_entry_revealed || !!aceData.aceTier))
+
+// 3:3 전에 승패가 확정되면 에결은 없으므로 새로 티어 사다리를 타지 않는다
+const aceTierLadderOpenable = computed(() => showAce.value || isSuperAce.value || !decision.value.decided)
 
 // 에이스 티어 후보 (super_ace: 결승 세트 사용 티어 제외 / 일반: 양팀 밴 제외)
 // aceBansIgnored = true 이면 밴 무효 → 전 티어 선택 가능
@@ -669,9 +625,7 @@ const aceTierCandidates = computed((): string[] => {
     const excluded = new Set(superAceExcludedTiers.value)
     return ALL_TIERS.filter(t => !excluded.has(t))
   }
-  const bans = new Set<string>()
-  if (aceTierBanA.value) bans.add(aceTierBanA.value)
-  if (aceTierBanB.value) bans.add(aceTierBanB.value)
+  const bans = new Set<string>([...aceTierBansA.value, ...aceTierBansB.value])
   return ALL_TIERS.filter(t => !bans.has(t))
 })
 
@@ -718,10 +672,7 @@ const aceMapCandidates = computed((): MapInfo[] => {
 const aceBannedTierSet = computed((): Set<string> => {
   if (aceBansIgnored.value) return new Set()
   if (isSuperAce.value) return new Set(superAceExcludedTiers.value)
-  const s = new Set<string>()
-  if (aceTierBanA.value) s.add(aceTierBanA.value)
-  if (aceTierBanB.value) s.add(aceTierBanB.value)
-  return s
+  return new Set<string>([...aceTierBansA.value, ...aceTierBansB.value])
 })
 
 const eligiblePlayersA = computed((): SlotPlayerInfo[] => {
@@ -1031,103 +982,40 @@ async function resetSub(slotNum: number, isTeamA: boolean, playerIndex: number) 
 
 function openLadder(slotNum: number) {
   ladderSlot.value = slotNum
-  ladderPickResult.value = ladderSelectedMaps.value.get(slotNum) ?? null
 }
 
-function randomPick() {
-  if (ladderPicking.value) return
-  ladderPicking.value = true
-  ladderPickResult.value = null
+// 룰렛 후보 — 사다리 창이 보여 주던 후보 그대로(맵: currentLadderMaps, 티어: aceTierCandidates)
+const mapRouletteCandidates = computed((): RouletteCandidate[] =>
+  currentLadderMaps.value.map(m => ({ key: m.id, label: m.name, thumb: m.thumbnail_url })))
+const tierRouletteCandidates = computed((): RouletteCandidate[] =>
+  aceTierCandidates.value.map(t => ({ key: t, label: t, tierClass: tierClass(t) })))
 
-  const candidates = currentLadderMaps.value
-  if (candidates.length === 0) { ladderPicking.value = false; return }
-
-  const startTime = Date.now()
-  const totalDuration = 9800 + Math.random() * 400
-  const minInterval = 50
-  const maxInterval = 500
-  const startIdx = Math.floor(Math.random() * candidates.length)
-  let idx = startIdx
-
-  const tick = () => {
-    const progress = Math.min((Date.now() - startTime) / totalDuration, 1)
-    const interval = minInterval + (maxInterval - minInterval) * (progress ** 2)
-    ladderPickResult.value = candidates[idx % candidates.length].id
-    idx++
-    if (progress < 1) setTimeout(tick, interval)
-    else ladderPicking.value = false
-  }
-  tick()
-}
-
-async function confirmLadder() {
-  if (!ladderSlot.value || !ladderPickResult.value) return
-  savingLadderMap.value = true
-  try {
-    await setSlotMap(matchId, ladderSlot.value, ladderPickResult.value)
-    const newMap = new Map(ladderSelectedMaps.value)
-    newMap.set(ladderSlot.value, ladderPickResult.value)
-    ladderSelectedMaps.value = newMap
-    ladderSlot.value = null
-  } catch (e: any) {
-    console.error(e)
-  } finally {
-    savingLadderMap.value = false
-  }
+/** 룰렛 결과 저장(맵). 실패하면 throw → 룰렛 창이 오류와 [다시 시도]를 보여 준다 */
+async function saveLadderMap(mapId: string) {
+  const slotNum = ladderSlot.value
+  if (slotNum == null) throw new Error('경기가 선택되지 않았습니다')
+  await setSlotMap(matchId, slotNum, mapId)
+  const newMap = new Map(ladderSelectedMaps.value)
+  newMap.set(slotNum, mapId)
+  ladderSelectedMaps.value = newMap
 }
 
 // ── 티어 사다리타기 ────────────────────────────────────────────────
 
 function openTierLadder() {
   tierLadderOpen.value = true
-  tierPickResult.value = null
 }
 
-function randomTierPick() {
-  if (tierPicking.value) return
-  tierPicking.value = true
-  tierPickResult.value = null
-
-  const candidates = aceTierCandidates.value
-  if (candidates.length === 0) { tierPicking.value = false; return }
-
-  const startTime = Date.now()
-  const totalDuration = 9800 + Math.random() * 400
-  const minInterval = 50
-  const maxInterval = 500
-  const startIdx = Math.floor(Math.random() * candidates.length)
-  let idx = startIdx
-
-  const tick = () => {
-    const progress = Math.min((Date.now() - startTime) / totalDuration, 1)
-    const interval = minInterval + (maxInterval - minInterval) * (progress ** 2)
-    tierPickResult.value = candidates[idx % candidates.length]
-    idx++
-    if (progress < 1) setTimeout(tick, interval)
-    else tierPicking.value = false
-  }
-  tick()
-}
-
-async function confirmTierLadder() {
-  if (!tierPickResult.value) return
-  savingTier.value = true
-  try {
-    await setAceSlotData(matchId, { aceTier: tierPickResult.value })
-    aceData.aceTier = tierPickResult.value
-    tierLadderOpen.value = false
-  } catch (e: any) {
-    console.error(e)
-  } finally {
-    savingTier.value = false
-  }
+/** 룰렛 결과 저장(에결 티어) */
+async function saveAceTier(tier: string) {
+  await setAceSlotData(matchId, { aceTier: tier })
+  aceData.aceTier = tier
 }
 
 async function resetAceTier() {
   try {
     await setAceSlotData(matchId, { aceTier: null })
     aceData.aceTier = null
-    tierPickResult.value = null
   } catch (e: any) {
     console.error(e)
   }
@@ -1152,9 +1040,10 @@ async function setAceWinner(captainId: number) {
 // 에이스 티어 확정 후 출전 가능 선수 체크:
 // - 한쪽만 없음 → 상대팀 자동 승리
 // - 양팀 다 없음 → 밴 무효, 티어 재선택
+// 티어를 경기 시작 때 정하므로, 자동 승리는 에결을 실제로 치를 때(3:3·슈퍼에이스)만 — 아니면 0:0에서 에결 승자가 기록된다
 watch(
-  [() => aceData.aceTier, rosterA, rosterB],
-  async ([tier]) => {
+  [() => aceData.aceTier, rosterA, rosterB, () => showAce.value || isSuperAce.value],
+  async ([tier, , , acePlaying]) => {
     if (!tier || isCompleted.value || !schedule.value) return
     const maxRank = tierPoint(tier)
     const hasA = rosterA.value.some(p => (tierPoint(p.tier)) <= maxRank)
@@ -1163,6 +1052,8 @@ watch(
       aceData.aceTier = null
       await setAceSlotData(matchId, { aceTier: null })
       aceBansIgnored.value = true
+    } else if (!acePlaying) {
+      return
     } else if (!hasA) {
       await setAceWinner(schedule.value.team_b_captain_id)
     } else if (!hasB) {
@@ -1313,8 +1204,8 @@ onMounted(async () => {
     // 에이스 밴 복원 (엔트리 제출 시 저장된 값)
     const aceBans = await getAceTierBans(matchId)
     for (const ban of aceBans) {
-      if (ban.captain_player_id === match.team_a_captain_id) aceTierBanA.value = ban.tier_ban
-      else if (ban.captain_player_id === match.team_b_captain_id) aceTierBanB.value = ban.tier_ban
+      if (ban.captain_player_id === match.team_a_captain_id) aceTierBansA.value = aceBanTiers(ban)
+      else if (ban.captain_player_id === match.team_b_captain_id) aceTierBansB.value = aceBanTiers(ban)
     }
 
     // 에이스 데이터 복원

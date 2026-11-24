@@ -168,7 +168,11 @@
 
   .rank-table td { display: block; padding: 0; border: none; }
   .rank-table .col-rank { grid-area: rank; width: auto; text-align: left; }
-  .rank-table .col-user { grid-area: user; justify-content: flex-start; flex-wrap: wrap; gap: 6px; font-size: 15px; }
+  // td { display: block }이 .col-user의 flex를 덮어써 gap이 사라지고 닉네임과 종족 배지가 붙었다 → flex를 되살린다.
+  // 긴 닉네임은 말줄임, 배지는 줄어들지 않게
+  .rank-table .col-user { grid-area: user; display: flex; justify-content: flex-start; flex-wrap: nowrap; gap: 6px; min-width: 0; font-size: 15px; }
+  .rank-table .col-user > :not(.rank-nick) { flex-shrink: 0; }
+  .rank-nick { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rank-table .col-points { grid-area: points; width: auto; font-size: 15px; font-weight: 700; text-align: right; }
   .rank-table .col-correct { grid-area: correct; width: auto; text-align: left; font-size: 12px; color: var(--c-text-muted); }
   .rank-table .col-acc { grid-area: acc; width: 120px; font-size: 12px; text-align: right; }

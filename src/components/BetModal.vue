@@ -249,7 +249,9 @@ function formatMult(v: number) {
 @media (max-width: 640px) {
   .bet-row { font-size: 14px; }
   .bet-amount-row .btn-pill { min-height: 44px; min-width: 64px; }
-  .bet-amount-input { min-height: 44px; font-size: 18px; text-align: center; }
+  .bet-amount-row .btn-pill { flex-shrink: 0; }
+  // 입력칸의 기본 최소 폭(글자 수 기준) 때문에 390px에서 +100 버튼이 밖으로 밀렸다 → 남는 폭만 쓰게
+  .bet-amount-input { flex: 1 1 0; width: 0; min-width: 0; min-height: 44px; font-size: 18px; text-align: center; }
   .bet-amount-quick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
   .bet-quick { min-height: 44px; font-size: 13px; }
   .bet-summary-row { font-size: 14px; }

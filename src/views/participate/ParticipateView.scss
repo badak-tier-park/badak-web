@@ -1004,12 +1004,30 @@ $tabbar-h: 60px;
   color: var(--c-text-faint);
 }
 
+// 몇 개 골랐는지(0/2 → 2/2). 다 고르면 초록으로 바뀐다
+.ace-ban-count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text-muted);
+  background: var(--c-badge-bg);
+
+  &--full {
+    color: var(--c-success);
+    background: var(--c-success-bg);
+  }
+}
+
 .ace-ban-tiers {
   display: flex;
   gap: 8px;
 }
 
+// 고른 티어가 한눈에 보여야 한다(촬영 때 선택 표시가 약하다는 지적) —
+// 안 고른 칸은 흐리게, 고른 칸은 위험색 테두리·링 + '밴' 표시
 .ace-ban-tier-btn {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1020,23 +1038,52 @@ $tabbar-h: 60px;
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.15s;
-  opacity: 0.7;
+  opacity: 0.5;
 
-  &:hover {
-    opacity: 0.9;
+  &:hover:not(:disabled) {
+    opacity: 0.8;
     transform: translateY(-1px);
   }
 
-  &--selected {
+  &:disabled {
+    cursor: default;
+  }
+
+  &--selected,
+  &--selected:hover:not(:disabled) {
     opacity: 1;
-    border-color: currentColor;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.06);
+    border-color: var(--c-danger);
+    box-shadow: 0 0 0 3px rgba(var(--c-danger-rgb), 0.25);
     transform: translateY(-1px);
 
     .ace-ban-tier-label {
       font-size: 18px;
     }
   }
+}
+
+// 2개를 다 골랐으면 나머지는 더 흐리게 — 눌러도 바뀌지 않는다는 표시
+.ace-ban-tiers--full .ace-ban-tier-btn:not(.ace-ban-tier-btn--selected) {
+  opacity: 0.3;
+  cursor: default;
+
+  &:hover {
+    opacity: 0.3;
+    transform: none;
+  }
+}
+
+.ace-ban-tier-mark {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: var(--c-bg);
+  background: var(--c-danger);
 }
 
 .ace-ban-tier-label {
@@ -1407,13 +1454,15 @@ $tabbar-h: 60px;
 
   // 에이스 결정전 티어 밴
   .ace-ban-section { padding: 14px; }
-  .ace-ban-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .ace-ban-header { flex-wrap: wrap; align-items: center; gap: 4px 8px; }
   .ace-ban-title { font-size: 14px; }
-  .ace-ban-hint { font-size: 12px; }
+  .ace-ban-count { font-size: 12px; }
+  .ace-ban-hint { flex-basis: 100%; font-size: 12px; }
   // 티어 10개를 한 줄에 두면 화면 밖으로 나가 가로 스크롤이 생긴다 → 5칸 2줄
   .ace-ban-tiers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .ace-ban-tier-btn { min-height: 56px; min-width: 0; }
   .ace-ban-tier-sub { font-size: 11px; }
+  .ace-ban-tier-mark { font-size: 12px; top: -7px; right: -4px; }
 
   // ── 아래 고정 버튼: 취소 1 : 저장 2, 오류 문구는 버튼 위 한 줄 ──
   .modal--entry .modal-footer {
@@ -1574,7 +1623,32 @@ $tabbar-h: 60px;
   .standing-rank { font-size: 20px; min-width: 24px; }
   .standing-name { font-size: 16px; }
   .standing-award, .standing-tie { font-size: 12px; }
-  .standing-stats { flex-basis: 100%; justify-content: flex-start; padding-left: 32px; }
+  // border-box가 아니면 폭 100% + 왼쪽 여백 32px만큼 카드 밖으로 넘친다
+  .standing-stats { flex-basis: 100%; box-sizing: border-box; min-width: 0; justify-content: flex-start; padding-left: 32px; }
   .standing-record { font-size: 13px; }
   .standing-pts-label { font-size: 12px; }
+}
+
+
+// ══ 휴대폰: 가로 넘침 정리 (2026-11-22 360px 점검) ═══════════════
+@media (max-width: 640px) {
+  // 리그 카드 티어 칩 10개가 한 줄을 넘어 페이지 전체가 가로로 밀렸다
+  .meta-item { flex-wrap: wrap; min-width: 0; }
+
+  // 'A VS B': 긴 쪽 이름이 폭을 다 먹어 짧은 쪽이 세 줄로 쪼개졌다 → 양쪽 같은 폭, VS는 가운데
+  .match-item-vs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+
+    > :first-child { text-align: right; }
+    > :last-child { text-align: left; }
+  }
+  .match-item-vs .my-team-name,
+  .match-item-vs .opp-team-name,
+  .match-item-vs .result-team-name { min-width: 0; overflow-wrap: anywhere; }
+
+  // '팀 투표 진행 중' 카드: #app의 가운데 정렬을 물려받아 위아래 줄이 엇갈렸다
+  .todo-row-text { text-align: left; }
 }

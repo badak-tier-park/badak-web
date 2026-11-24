@@ -16,5 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
+  // 마블 룰렛 원본 코드(lazygyu/roulette)와 그 iframe 진입점은 우리 strict 설정으로 검사하지 않는다(src/vendor/roulette/README.md)
+  "exclude": ["src/vendor/**", "src/roulette-embed/**"]
 }

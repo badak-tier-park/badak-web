@@ -173,3 +173,21 @@
     color: var(--c-text-sub);
   }
 }
+
+// 휴대폰 글자 크기: 12px 미만이던 글자를 12px로. 확대가 막혀 있어(index.html viewport) 작은 글자는 읽을 방법이 없다
+@media (max-width: 640px) {
+  .lp-optional,
+  .lp-version,
+  .lp-has-image,
+  .lp-meta,
+  .lp-existing {
+    font-size: 12px;
+  }
+}
+
+// 입력칸은 휴대폰에서 16px 이상(iOS가 16px 미만 입력칸에 초점이 가면 화면을 확대한다)
+@media (max-width: 640px) {
+  .lp-input {
+    font-size: 16px;
+  }
+}
