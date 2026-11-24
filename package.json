@@ -9,20 +9,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.119.0",
-    "@tiptap/extension-color": "^3.33.1",
-    "@tiptap/extension-text-align": "^3.33.1",
+    "@supabase/supabase-js": "^2.119.2",
+    "@tiptap/extension-color": "^3.35.0",
+    "@tiptap/extension-text-align": "^3.35.0",
     "@tiptap/extension-text-style": "^3.22.0",
-    "@tiptap/starter-kit": "^3.33.1",
-    "@tiptap/vue-3": "^3.33.1",
+    "@tiptap/starter-kit": "^3.35.0",
+    "@tiptap/vue-3": "^3.35.0",
     "@vuepic/vue-datepicker": "^14.0.0",
     "box2d-wasm": "7.0.0",
     "date-fns": "^4.4.0",
     "exceljs": "^4.4.0",
     "pinia": "^4.1.0",
     "tslib": "^2.9.1",
-    "vue": "^3.5.45",
-    "vue-router": "^5.5.0"
+    "vue": "^3.5.46",
+    "vue-router": "^5.5.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
