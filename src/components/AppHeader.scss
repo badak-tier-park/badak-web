@@ -400,6 +400,9 @@
 }
 
 .notif-item {
+  // 목록(.notif-list)이 높이가 정해진 세로 flex라 항목이 줄어들 수 있다. 휴대폰에서 min-height를 주면
+  // 기본 min-height:auto(내용 높이)가 사라져 항목이 44px까지 눌리고 글자가 다음 항목 위로 넘친다 → 줄지 않게
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 3px;

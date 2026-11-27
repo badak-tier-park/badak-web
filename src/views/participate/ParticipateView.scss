@@ -1632,8 +1632,17 @@ $tabbar-h: 60px;
 
 // ══ 휴대폰: 가로 넘침 정리 (2026-11-22 360px 점검) ═══════════════
 @media (max-width: 640px) {
-  // 리그 카드 티어 칩 10개가 한 줄을 넘어 페이지 전체가 가로로 밀렸다
-  .meta-item { flex-wrap: wrap; min-width: 0; }
+  // 리그 카드 티어 칩 10개가 한 줄을 넘어 페이지 전체가 가로로 밀렸다. 줄바꿈으로 풀면 E 하나만 아랫줄로
+  // 떨어져서, 10칸 같은 폭 한 줄로 나눈다(티어가 적은 리그도 칩 크기가 같게 10칸 기준. 넘으면 다음 줄)
+  .league-meta { flex-wrap: nowrap; }
+  .league-meta > .meta-item {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 3px;
+    width: 100%;
+    min-width: 0;
+  }
+  .league-meta > .meta-item .tier-chip { min-width: 0; padding: 2px 0; }
 
   // 'A VS B': 긴 쪽 이름이 폭을 다 먹어 짧은 쪽이 세 줄로 쪼개졌다 → 양쪽 같은 폭, VS는 가운데
   .match-item-vs {
